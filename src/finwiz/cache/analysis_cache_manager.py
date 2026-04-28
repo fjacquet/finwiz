@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -23,6 +25,7 @@ from finwiz.cache._helpers import (
     log_cache_stats as _log_cache_stats,
 )
 from finwiz.cache._models import CachedAnalysis, CrewAnalysisResult
+from finwiz.cache._paths import safe_asset_class, safe_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +45,10 @@ class AnalysisCacheManager:
         self.cache_dir = Path(cache_dir)
         self.ttl_hours = ttl_hours
         self.cache_enabled = True
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        # Don't mkdir here unguarded — verify_cache_directory() handles it
+        # inside try/except and flips cache_enabled=False on failure. An
+        # unguarded mkdir would crash startup on a non-creatable path
+        # instead of degrading gracefully.
         self.verify_cache_directory()
         self.stats = {"cache_hits": 0, "cache_misses": 0, "cache_stores": 0, "cache_cleanups": 0}
         logger.info(f"AnalysisCacheManager initialized: cache_dir={cache_dir}, ttl_hours={ttl_hours}, cache_enabled={self.cache_enabled}")
@@ -52,11 +58,19 @@ class AnalysisCacheManager:
         return verify_cache_directory(self)
 
     def _get_cache_path(self, ticker: str, asset_class: str) -> Path:
-        """Build cache file path: cache/portfolio_analysis/{asset_class}/{ticker}_{date}.json."""
-        asset_dir = self.cache_dir / asset_class
+        """Build cache file path: cache/portfolio_analysis/{asset_class}/{ticker}_{date}.json.
+
+        Both `ticker` and `asset_class` are validated against strict regexes
+        before they reach the filesystem — defense-in-depth against path
+        traversal even if a caller somehow bypasses upstream Pydantic
+        validation.
+        """
+        ticker_clean = safe_ticker(ticker)
+        asset_class_clean = safe_asset_class(asset_class)
+        asset_dir = self.cache_dir / asset_class_clean
         asset_dir.mkdir(exist_ok=True)
         date_str = datetime.now().strftime("%Y-%m-%d")
-        filename = f"{ticker.upper()}_{date_str}.json"
+        filename = f"{ticker_clean}_{date_str}.json"
         return asset_dir / filename
 
     def _find_most_recent_cache(self, ticker: str, asset_class: str) -> Path | None:
@@ -136,8 +150,21 @@ class AnalysisCacheManager:
                 "version": "1.0",
                 "cache_manager_version": "2.0",
             }
-            with open(cache_path, "w", encoding="utf-8") as f:
-                json.dump(cache_data, f, indent=2, default=str)
+            # Atomic write: serialize to a sibling temp file, then os.replace.
+            # Prevents partial / torn writes on interrupt or concurrent reads.
+            payload = json.dumps(cache_data, indent=2, default=str)
+            tmp_fd, tmp_path = tempfile.mkstemp(prefix=f".{cache_path.name}.", suffix=".tmp", dir=str(cache_path.parent))
+            try:
+                with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                    f.write(payload)
+                os.replace(tmp_path, cache_path)
+            except Exception:
+                # Clean up the temp file if the rename never happened
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise
 
             if not cache_path.exists():
                 logger.error(f"❌ Cache write verification failed: File not found after write: {cache_path}")
@@ -190,8 +217,13 @@ _cache_manager: AnalysisCacheManager | None = None
 
 
 def get_analysis_cache_manager(ttl_hours: int | None = None) -> AnalysisCacheManager:
-    """Return the process-wide AnalysisCacheManager (creates one on first call)."""
+    """Return the process-wide AnalysisCacheManager (creates one on first call).
+
+    `ttl_hours=0` is preserved (means "always stale"); only `None` falls
+    back to the 24h default.
+    """
     global _cache_manager
     if _cache_manager is None or (ttl_hours is not None and _cache_manager.ttl_hours != ttl_hours):
-        _cache_manager = AnalysisCacheManager(ttl_hours=ttl_hours or 24)
+        effective_ttl = 24 if ttl_hours is None else ttl_hours
+        _cache_manager = AnalysisCacheManager(ttl_hours=effective_ttl)
     return _cache_manager

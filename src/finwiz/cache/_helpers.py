@@ -63,7 +63,12 @@ def find_most_recent_cache(cache_dir: Path, ticker: str, asset_class: str) -> Pa
 
 
 def convert_to_crew_analysis_result(analysis: Any, ticker: str, asset_class: str) -> CrewAnalysisResult:
-    """Coerce a dict / Pydantic / DeepAnalysisResult into CrewAnalysisResult."""
+    """Coerce a dict / Pydantic / DeepAnalysisResult into CrewAnalysisResult.
+
+    `quality_score` is preserved when present in the source dict — earlier
+    versions hard-coded it to None, silently dropping the field on
+    cache round-trips.
+    """
     if isinstance(analysis, dict):
         return CrewAnalysisResult(
             ticker=ticker.upper(),
@@ -72,7 +77,7 @@ def convert_to_crew_analysis_result(analysis: Any, ticker: str, asset_class: str
             analyzed_at=datetime.fromisoformat(analysis["analysis_timestamp"]) if "analysis_timestamp" in analysis else datetime.now(),
             fundamental_score=analysis.get("fundamental_score"),
             technical_score=analysis.get("technical_score"),
-            quality_score=None,
+            quality_score=analysis.get("quality_score"),
             risk_score=analysis.get("risk_score"),
             composite_score=analysis["composite_score"],
             grade=analysis["grade"],
@@ -90,7 +95,15 @@ def convert_to_crew_analysis_result(analysis: Any, ticker: str, asset_class: str
 
 
 def clear_stale_cache(manager: AnalysisCacheManager) -> int:
-    """Walk the cache dir and remove entries past their TTL; return removed count."""
+    """Walk the cache dir and remove entries past their TTL; return removed count.
+
+    Only removes files for confirmed corruption (JSONDecodeError or Pydantic
+    ValidationError) or genuine staleness. Transient I/O failures
+    (PermissionError, OSError) are logged as warnings but the file is left
+    intact so a temporary glitch doesn't silently delete user data.
+    """
+    from pydantic import ValidationError
+
     removed_count = 0
     try:
         for asset_dir in manager.cache_dir.iterdir():
@@ -101,14 +114,26 @@ def clear_stale_cache(manager: AnalysisCacheManager) -> int:
                     with open(cache_file, encoding="utf-8") as f:
                         cache_data = json.load(f)
                     cached_analysis = CachedAnalysis.model_validate(cache_data)
-                    if not cached_analysis.is_fresh(manager.ttl_hours):
+                except (json.JSONDecodeError, ValidationError) as e:
+                    # Confirmed corruption — safe to delete
+                    logger.warning(f"Removing corrupted cache file {cache_file}: {e}")
+                    try:
+                        cache_file.unlink()
+                        removed_count += 1
+                    except OSError as unlink_err:
+                        logger.warning(f"Could not unlink corrupted cache {cache_file}: {unlink_err}")
+                    continue
+                except (PermissionError, OSError) as e:
+                    # Transient I/O — leave the file alone
+                    logger.warning(f"Skipping cache file {cache_file} due to I/O error: {e}")
+                    continue
+                if not cached_analysis.is_fresh(manager.ttl_hours):
+                    try:
                         cache_file.unlink()
                         removed_count += 1
                         logger.debug(f"Removed stale cache: {cache_file.name} (age: {cached_analysis.age_hours:.1f}h)")
-                except Exception as e:
-                    logger.warning(f"Error processing cache file {cache_file}: {e}")
-                    cache_file.unlink()
-                    removed_count += 1
+                    except OSError as unlink_err:
+                        logger.warning(f"Could not unlink stale cache {cache_file}: {unlink_err}")
         if removed_count > 0:
             logger.info(f"Cache cleanup completed: removed {removed_count} stale entries")
             manager.stats["cache_cleanups"] += removed_count

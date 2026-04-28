@@ -10,7 +10,12 @@ from pathlib import Path
 
 import pytest
 
-from finwiz.cache.analysis_cache_manager import AnalysisCacheManager, CrewAnalysisResult
+from finwiz.cache import analysis_cache_manager as acm_module
+from finwiz.cache.analysis_cache_manager import (
+    AnalysisCacheManager,
+    CrewAnalysisResult,
+    get_analysis_cache_manager,
+)
 
 
 class TestAnalysisCacheManager:
@@ -167,3 +172,109 @@ class TestAnalysisCacheManager:
         assert date_str in cache_path.name
         assert cache_path.name.startswith("AAPL_")
         assert cache_path.name.endswith(".json")
+
+    # --- regression tests for PR #27 review findings -------------------
+
+    def test_get_cache_path_rejects_path_traversal_ticker(self, cache_manager):
+        """#4: ticker with path-traversal sequences raises ValueError."""
+        for evil in ["../../etc/passwd", "..", "a/b", "a\\b"]:
+            with pytest.raises(ValueError, match="invalid ticker"):
+                cache_manager._get_cache_path(evil, "stock")
+
+    def test_get_cache_path_rejects_path_traversal_asset_class(self, cache_manager):
+        """#4: asset_class with path-traversal sequences raises ValueError."""
+        for evil in ["../etc", "..", "a/b", "STOCK!", "with space"]:
+            with pytest.raises(ValueError, match="invalid asset_class"):
+                cache_manager._get_cache_path("AAPL", evil)
+
+    def test_quality_score_round_trips_through_cache(self, cache_manager):
+        """#2: quality_score must survive a dict-input round-trip."""
+        analysis_dict = {
+            "crew_name": "deep_analysis",
+            "fundamental_score": 0.9,
+            "technical_score": 0.8,
+            "quality_score": 0.77,
+            "risk_score": 0.7,
+            "composite_score": 0.85,
+            "grade": "A",
+        }
+        cache_manager.cache_analysis("AAPL", "stock", analysis_dict)
+        cached = cache_manager.get_cached_analysis("AAPL", "stock")
+        assert cached is not None
+        assert cached.analysis.quality_score == 0.77
+
+    def test_clear_stale_keeps_files_on_transient_io_error(self, cache_manager, sample_analysis, mocker):
+        """#3: PermissionError during read leaves the file intact."""
+        cache_manager.cache_analysis("AAPL", "stock", sample_analysis)
+        cache_path = cache_manager._get_cache_path("AAPL", "stock")
+        assert cache_path.exists()
+
+        # Stub `open` only inside _helpers.clear_stale_cache to raise
+        # PermissionError on the first read attempt.
+        real_open = open
+
+        def fake_open(path, *args, **kwargs):
+            if str(path) == str(cache_path):
+                raise PermissionError("simulated transient I/O")
+            return real_open(path, *args, **kwargs)
+
+        mocker.patch("finwiz.cache._helpers.open", side_effect=fake_open)
+
+        removed = cache_manager.clear_stale_cache()
+
+        assert removed == 0  # no removal because read failed transiently
+        assert cache_path.exists()  # file is untouched
+
+    def test_clear_stale_removes_file_on_corrupted_json(self, cache_manager, sample_analysis):
+        """#3: confirmed JSONDecodeError is still treated as corruption."""
+        cache_manager.cache_analysis("AAPL", "stock", sample_analysis)
+        cache_path = cache_manager._get_cache_path("AAPL", "stock")
+        cache_path.write_text("not valid json {{{", encoding="utf-8")
+
+        removed = cache_manager.clear_stale_cache()
+
+        assert removed == 1
+        assert not cache_path.exists()
+
+    def test_atomic_write_no_temp_files_left_behind(self, cache_manager, sample_analysis):
+        """#5: successful write leaves no .tmp sidecar files."""
+        cache_manager.cache_analysis("AAPL", "stock", sample_analysis)
+        asset_dir = cache_manager.cache_dir / "stock"
+        tmp_files = list(asset_dir.glob("*.tmp"))
+        assert tmp_files == []
+
+    def test_atomic_write_cleans_up_on_failure(self, cache_manager, sample_analysis, mocker):
+        """#5: a failed os.replace removes the temp file (no orphaned .tmp)."""
+        # Make os.replace blow up so the rename never lands.
+        mocker.patch("finwiz.cache.analysis_cache_manager.os.replace", side_effect=OSError("simulated rename failure"))
+
+        # cache_analysis swallows exceptions and logs; the orphan-cleanup
+        # path is what we want to exercise.
+        cache_manager.cache_analysis("AAPL", "stock", sample_analysis)
+
+        asset_dir = cache_manager.cache_dir / "stock"
+        tmp_files = list(asset_dir.glob("*.tmp"))
+        assert tmp_files == [], f"orphaned tmp files: {tmp_files}"
+
+    def test_init_disables_cache_when_dir_not_writable(self, tmp_path, mocker):
+        """#1: a non-writable cache_dir flips cache_enabled=False instead of crashing."""
+        cache_dir = tmp_path / "blocked"
+        # Patch verify_cache_directory to simulate the unwritable case.
+        mocker.patch(
+            "finwiz.cache.analysis_cache_manager.verify_cache_directory",
+            side_effect=lambda mgr: setattr(mgr, "cache_enabled", False) or False,
+        )
+        manager = AnalysisCacheManager(cache_dir=str(cache_dir))
+        assert manager.cache_enabled is False
+
+    def test_get_analysis_cache_manager_preserves_ttl_zero(self, mocker):
+        """#6: explicit ttl_hours=0 is preserved; only None falls back to 24."""
+        mocker.patch.object(acm_module, "_cache_manager", None)
+        manager = get_analysis_cache_manager(ttl_hours=0)
+        assert manager.ttl_hours == 0  # NOT 24
+
+    def test_get_analysis_cache_manager_default_when_none(self, mocker):
+        """#6: ttl_hours=None still defaults to 24."""
+        mocker.patch.object(acm_module, "_cache_manager", None)
+        manager = get_analysis_cache_manager()
+        assert manager.ttl_hours == 24
