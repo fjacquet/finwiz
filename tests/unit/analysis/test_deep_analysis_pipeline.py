@@ -461,7 +461,7 @@ class TestAnalyzeHolding:
             return_value=None,
         )
         mocker.patch(
-            "finwiz.analysis.stages.qualify.generate_qualitative",
+            "finwiz.analysis.stages.qualify._try_ai_qualify",
             return_value=mock_qualitative_insights,
         )
         mocker.patch(
