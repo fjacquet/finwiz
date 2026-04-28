@@ -488,7 +488,16 @@ class TestAnalyzeHolding:
 
         result, enriched = analyze_holding("AAPL", "stock", "Apple Inc.")
 
-        assert result == mock_deep_analysis_result
+        # emit copies fact_pack from enriched.qualitative onto the result via
+        # model_copy, so equality must compare against the fact-pack-augmented
+        # expected. Compare on the canonical core fields instead of full ==.
+        assert result.ticker == mock_deep_analysis_result.ticker
+        assert result.grade == mock_deep_analysis_result.grade
+        assert result.composite_score == mock_deep_analysis_result.composite_score
+        assert result.recommendation == mock_deep_analysis_result.recommendation
+        # fact_pack must propagate end-to-end (qualify attaches → emit copies)
+        assert result.fact_pack is not None
+        assert result.fact_pack.corporate_structure == _fake_fp.corporate_structure
         assert enriched.ticker == "AAPL"
         assert enriched.final_grade == "A"
 

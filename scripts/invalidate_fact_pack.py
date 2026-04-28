@@ -13,7 +13,7 @@ from finwiz.cache.fact_pack_cache import FactPackCache
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2:
+    if len(argv) != 2:
         print("usage: invalidate_fact_pack.py <TICKER> | --all", file=sys.stderr)
         return 2
     cache = FactPackCache()

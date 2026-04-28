@@ -47,7 +47,7 @@ class TestFactPackCache:
         old_time = (datetime.now(UTC) - timedelta(days=10)).isoformat()
         data["payload"]["fetched_at"] = old_time
         # Don't update freshness — derive_freshness will recompute on load
-        path.write_text(json.dumps(data))
+        path.write_text(json.dumps(data, default=str))
         loaded = cache.get("DELL")
         assert loaded is not None
         assert loaded.freshness == "stale"
@@ -60,7 +60,7 @@ class TestFactPackCache:
         data = json.loads(path.read_text())
         too_old = (datetime.now(UTC) - timedelta(days=20)).isoformat()
         data["payload"]["fetched_at"] = too_old
-        path.write_text(json.dumps(data))
+        path.write_text(json.dumps(data, default=str))
         assert cache.get("DELL") is None
 
     def test_get_returns_none_on_schema_version_mismatch(self, tmp_path: Path) -> None:

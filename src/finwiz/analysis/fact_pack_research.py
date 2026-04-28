@@ -12,7 +12,7 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from finwiz.analysis._helpers import _today_french
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
@@ -39,6 +39,24 @@ class _FactPackRaw(BaseModel):
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
+    @field_validator("recent_events")
+    @classmethod
+    def _check_event_lengths(cls, v: list[str]) -> list[str]:
+        for i, ev in enumerate(v):
+            if len(ev) > 200:
+                raise ValueError(f"recent_events[{i}] exceeds 200 chars (got {len(ev)})")
+            if not ev.strip():
+                raise ValueError(f"recent_events[{i}] is empty")
+        return v
+
+    @field_validator("source_citations")
+    @classmethod
+    def _check_citation_urls(cls, v: list[str]) -> list[str]:
+        for i, url in enumerate(v):
+            if not (url.startswith("http://") or url.startswith("https://")):
+                raise ValueError(f"source_citations[{i}] is not http/https URL: {url!r}")
+        return v
+
 
 _SYSTEM_FR = (
     "Tu es un assistant de recherche financière strict. Tu réponds UNIQUEMENT "
@@ -56,7 +74,6 @@ def _build_prompt(ticker: str, company_name: str, sector: str | None, industry: 
         f"Date du jour : {today}.\n\n"
         f"Recherche les faits VÉRIFIÉS et ACTUELS sur {company_name} ({ticker}, "
         f"{sector_str} / {industry_str}).\n\n"
-        "Tu dois remplir EXACTEMENT trois champs :\n\n"
         "1. **corporate_structure** (≤2000 chars) : structure actuelle de l'entité — "
         "société-mère, filiales, divisions, et toute cession ou acquisition majeure "
         "des 24 derniers mois. Exemple type : "
@@ -132,8 +149,18 @@ def fetch_fact_pack_sync(
         loop = None
 
     if loop and loop.is_running():
-        # We're inside an event loop — run in a worker thread to avoid nested-loop errors
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            return pool.submit(asyncio.run, coro).result(timeout=timeout + 5.0)
+        # We're inside an event loop — run in a worker thread to avoid nested-loop errors.
+        # Use shutdown(wait=False, cancel_futures=True) so a timeout doesn't block on
+        # the worker thread during executor shutdown.
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        try:
+            future = executor.submit(asyncio.run, coro)
+            try:
+                return future.result(timeout=timeout + 5.0)
+            except concurrent.futures.TimeoutError:
+                future.cancel()
+                return None
+        finally:
+            executor.shutdown(wait=False, cancel_futures=True)
 
     return asyncio.run(coro)

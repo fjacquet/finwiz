@@ -10,9 +10,23 @@ from __future__ import annotations
 from datetime import datetime
 from html import escape
 from typing import Any
+from urllib.parse import urlparse
 
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
+
+
+def _is_safe_url(url: str) -> bool:
+    """Defense-in-depth: only allow http/https citation URLs in rendered HTML.
+
+    Pydantic validates URLs at fact-pack ingestion, but a stale cache or future
+    schema drift could leak a `javascript:` / `data:` scheme into the report.
+    Block them here so the renderer is the last line of defense.
+    """
+    try:
+        return urlparse(url).scheme in ("http", "https")
+    except (ValueError, TypeError):
+        return False
 
 
 def generate_strategic_posture_section(posture: dict | None) -> str:
@@ -615,8 +629,9 @@ def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
             f"(confidence {fact_pack.confidence:.2f})</span>"
         )
 
-    if fact_pack.source_citations:
-        citations = " ".join(f'<a href="{escape(url, quote=True)}" rel="noopener" target="_blank">[{i + 1}]</a>' for i, url in enumerate(fact_pack.source_citations[:5]))
+    safe_citations = [url for url in fact_pack.source_citations if _is_safe_url(url)]
+    if safe_citations:
+        citations = " ".join(f'<a href="{escape(url, quote=True)}" rel="noopener" target="_blank">[{i + 1}]</a>' for i, url in enumerate(safe_citations[:5]))
         pill += f' <small class="muted">Sources: {citations}</small>'
 
     return f'<div class="fact-pack-footer">{pill}</div>'

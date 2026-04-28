@@ -56,12 +56,18 @@ structural, not advisory.
   `allow_degrade`. The trust-spine invariant from ADR-009 stays intact:
   only `qualify` may DEGRADE.
 - Behavior:
-  - cache fresh (<7d) -> OK with cached payload
+  - cache fresh (<3d) OR recent (3-7d) -> OK with cached payload (no
+    Perplexity call)
   - cache stale (7-14d) + Perplexity OK -> OK with new payload
+    (`freshness="fresh"`)
   - cache stale (7-14d) + Perplexity fails -> OK with cached payload,
     `freshness="stale"` (renderer maps to amber pill)
   - no cache + Perplexity fails -> raise -> @stage records FAILED ->
     `run_pipeline` short-circuits to `AnalysePending`
+
+  Freshness boundaries are derived by `FactPack.derive_freshness()` from
+  `fetched_at`: <3d=fresh, 3-7d=recent, 7-14d=stale, >14d raises (cache
+  must have evicted).
 
 **Prompt template** (`src/finwiz/crews/deep_analysis/config/tasks.yaml`):
 - New FACT PACK section before CONTEXT block declaring the fact pack

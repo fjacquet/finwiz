@@ -54,8 +54,8 @@ def _fact_pack_inner(
     """
     cache = _get_cache()
     cached = cache.get(ticker)
-    if cached is not None and cached.freshness == "fresh":
-        logger.debug(f"fact_pack cache fresh for {ticker}")
+    if cached is not None and cached.freshness in ("fresh", "recent"):
+        logger.debug(f"fact_pack cache hit ({cached.freshness}) for {ticker}")
         return cached
 
     # Try live fetch (cache stale or miss)

@@ -10,6 +10,7 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis, QualitativeInsights, QuantitativeAnalysis
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
 
 def _make_analysis_context(ticker: str, ledger: RunLedger) -> Any:
@@ -103,6 +104,25 @@ def test_three_holding_pipeline_ok_degraded_failed(tmp_path: Path, mocker: Any) 
     mocker.patch(
         "finwiz.analysis.stages.emit._build_verdict_inner",
         side_effect=_verdict_inner,
+    )
+
+    # -- fact_pack mock --------------------------------------------------------
+    # Stub the fact_pack stage with a fresh FactPack so it never touches Perplexity
+    # or the disk cache. FAILED_TKR never reaches fact_pack (collect raises first).
+    from datetime import UTC, datetime
+
+    fake_fact_pack = FactPack(
+        corporate_structure="Test Corp — independent.",
+        recent_events=[],
+        leadership="CEO Test",
+        fetched_at=datetime.now(UTC),
+        freshness="fresh",
+        confidence=0.9,
+        source_citations=[],
+    )
+    mocker.patch(
+        "finwiz.analysis.stages.fact_pack._fact_pack_inner",
+        return_value=fake_fact_pack,
     )
 
     # -- run pipeline for each ticker ------------------------------------------

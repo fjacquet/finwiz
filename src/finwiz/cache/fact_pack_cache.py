@@ -62,7 +62,7 @@ class FactPackCache:
             fetched_at = datetime.fromisoformat(payload["fetched_at"])
             payload["freshness"] = FactPack.derive_freshness(fetched_at)
             return FactPack.model_validate(payload)
-        except (KeyError, ValueError) as e:
+        except (KeyError, ValueError, TypeError) as e:
             logger.warning(f"fact_pack cache entry invalid for {ticker}: {e}")
             return None
 

@@ -51,12 +51,50 @@ class TestProvenanceFooter:
         assert 'href="https://example.com/a"' in html
         assert 'rel="noopener"' in html
 
-    def test_malicious_url_in_citation_is_escaped(self) -> None:
-        # Defense in depth — escape html in URLs even though our schema validates them
+    def test_malicious_url_in_citation_is_filtered_out(self) -> None:
+        """Defense in depth: non-http(s) citation URLs are dropped entirely.
+
+        `_is_safe_url` runs at render time, after Pydantic validation, so even
+        a stale cache that somehow holds a `"><script>` payload won't reach
+        the rendered HTML — the URL has no http/https scheme and is filtered
+        before escaping.
+        """
         fp = _build_fp(days_old=0, citations=['"><script>alert(1)</script>'])
         html = _fact_pack_provenance_footer(fp)
         assert "<script>" not in html
-        assert "&lt;script&gt;" in html or "&quot;" in html
+        assert "alert(1)" not in html
+        # No "Sources:" footer because all citations were filtered out
+        assert "Sources:" not in html
+
+    def test_javascript_url_in_citation_filtered_out(self) -> None:
+        """`javascript:` URLs are blocked even when the rest looks innocuous."""
+        fp = _build_fp(
+            days_old=0,
+            citations=[
+                "javascript:alert(1)",
+                "https://example.com/safe",
+            ],
+        )
+        html = _fact_pack_provenance_footer(fp)
+        # The javascript: URL must not survive
+        assert "javascript:" not in html
+        assert "alert(1)" not in html
+        # The https:// URL is preserved
+        assert 'href="https://example.com/safe"' in html
+        # The footer renders only the safe link, numbered [1]
+        assert "[1]" in html
+        assert "[2]" not in html
+
+    def test_data_url_in_citation_filtered_out(self) -> None:
+        """`data:` URLs are blocked too — only http/https survive _is_safe_url."""
+        fp = _build_fp(
+            days_old=0,
+            citations=["data:text/html,<script>alert(1)</script>"],
+        )
+        html = _fact_pack_provenance_footer(fp)
+        assert "data:" not in html
+        assert "<script>" not in html
+        assert "Sources:" not in html
 
     def test_french_date_format_in_pill(self) -> None:
         fp = _build_fp(days_old=0)

@@ -11,11 +11,12 @@ TASKS_YAML = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
 
 def test_tasks_yaml_includes_fact_pack_section() -> None:
     raw = TASKS_YAML.read_text(encoding="utf-8")
-    # The FACT PACK block must mention the 4 placeholders we render
+    # The FACT PACK block must mention the 5 placeholders we render
     assert "{corporate_structure}" in raw
     assert "{recent_events}" in raw
     assert "{leadership}" in raw
     assert "{fact_pack_freshness}" in raw
+    assert "{fact_pack_confidence}" in raw
 
 
 def test_tasks_yaml_contains_anti_hallucination_rule() -> None:

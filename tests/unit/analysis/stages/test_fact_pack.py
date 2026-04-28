@@ -66,6 +66,26 @@ class TestFactPackStage:
         assert result.payload.freshness == "fresh"
         spy.assert_not_called()
 
+    def test_cache_recent_returns_ok_no_perplexity_call(self, tmp_path: Path, mocker: Any, patched_cache: FactPackCache) -> None:
+        """Cache aged 3-7d (`recent`) is still a hit — no Perplexity call.
+
+        Pins the v5.2 contract that `recent` is a cache hit, not just `fresh`.
+        Earlier wording in ADR-010 said "<7d" without distinguishing fresh vs.
+        recent; this test locks the actual stage behavior so a regression to
+        "only fresh hits" would be caught.
+        """
+        patched_cache.put("DELL", _build_fp(days_old=5))  # in the recent band
+        spy = mocker.patch(
+            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            return_value=_build_fp(),
+        )
+        ctx = _build_ctx(tmp_path, mocker)
+        result = fact_pack(ctx, {})
+        assert result.provenance.outcome == StageOutcome.OK
+        assert result.payload is not None
+        assert result.payload.freshness == "recent"
+        spy.assert_not_called()
+
     def test_cache_miss_fetches_and_caches(self, tmp_path: Path, mocker: Any, patched_cache: FactPackCache) -> None:
         mocker.patch(
             "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
