@@ -535,6 +535,8 @@ class ReportingOrchestrator:
             macro_snapshot=macro_snapshot,
             economic_calendar=economic_calendar,
             portfolio_strategic_posture=portfolio_strategic_posture,
+            run_ledger=getattr(self.state, "run_ledger", None),
+            deep_analysis_coverage=getattr(self.state, "deep_analysis_coverage", None),
         )
 
         return report_path
