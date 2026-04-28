@@ -15,14 +15,17 @@ from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import _emit_pending, emit
 from finwiz.analysis.stages.emit import build_verdict as build_verdict
-from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel, qualify
-from finwiz.analysis.stages.quantify import calculate_quantitative, quantify
-from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize, synthesize_enriched_analysis
+from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel as _run_qualitative_and_strategic_in_parallel
+from finwiz.analysis.stages.qualify import qualify
+from finwiz.analysis.stages.quantify import calculate_quantitative as calculate_quantitative
+from finwiz.analysis.stages.quantify import quantify
+from finwiz.analysis.stages.synthesize import _compute_options_probabilities, synthesize
+from finwiz.analysis.stages.synthesize import synthesize_enriched_analysis as synthesize_enriched_analysis
+from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
     from finwiz.flow_state_models import DeepAnalysisResult
-    from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 
 logger = logging.getLogger(__name__)
 
@@ -33,9 +36,9 @@ def run_pipeline(
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
     """Sequential orchestration of the five deep-analysis stages.
 
-    All phases (collect, quantify, qualify, synthesize, emit) use the @stage
-    decorator and StageResult contract. Failed stages fall back to legacy helpers
-    or _emit_pending to keep the return type stable.
+    Any stage that returns FAILED (payload is None) immediately short-circuits to
+    an AnalysePending placeholder. Silent fall-through to downstream stages is
+    structurally impossible: every FAILED outcome exits early via _emit_pending.
     """
     start = time.time()
 
@@ -57,48 +60,43 @@ def run_pipeline(
         extras={"analysis_ctx": ctx, "prefetched_data": prefetched_data},
     )
 
-    # Phase 1: Collect — typed StageResult contract via @stage decorator.
+    # Phase 1: Collect — any FAILED result short-circuits to AnalysePending.
     cr = collect(stage_ctx)
     if cr.payload is None:
-        # Pipeline cannot proceed without raw data; fall through with empty dict
-        # so existing tests don't break (FAILED branch is rare in current tests).
-        raw_data: dict[str, Any] = {}
-    else:
-        raw_data = cr.payload.data
+        return _emit_pending(stage_ctx, reason=cr.provenance.reason), EnrichedAnalysis.model_construct()
+    raw_data: dict[str, Any] = cr.payload.data
 
-    # Phase 2: Quantify — typed StageResult contract via @stage decorator.
+    # Phase 2: Quantify — any FAILED result short-circuits to AnalysePending.
     options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
     qr = quantify(stage_ctx, raw_data)
     if qr.payload is None:
-        # Scorer failed; fall through with a sentinel so downstream stages can still run.
-        quant = calculate_quantitative(ctx, raw_data)[1]
-    else:
-        quant = qr.payload
-    # Pull the partial result stashed by quantify (or recompute for fallback path).
-    result = stage_ctx.extras.get("partial_result") or calculate_quantitative(ctx, raw_data)[0]
+        return _emit_pending(stage_ctx, reason=qr.provenance.reason), EnrichedAnalysis.model_construct()
+    quant = qr.payload
+    # Pull the partial result stashed by quantify into stage_ctx.extras.
+    # synthesize is the last writer of partial_result; nothing after it re-assigns.
+    result = stage_ctx.extras.get("partial_result")
+    if result is None:
+        return _emit_pending(stage_ctx, reason="quantify stage did not seed partial_result"), EnrichedAnalysis.model_construct()
 
-    # Phase 3: Qualify — typed StageResult contract via @stage decorator.
-    # Strategic Perplexity research still runs in parallel via the legacy parallel helper;
-    # only the qualitative crew call is migrated here. The parallel helper internally
-    # calls generate_qualitative (the legacy shim) so the strategic path is unaffected.
+    # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
+    # Strategic Perplexity research runs independently for stocks (not via the legacy
+    # parallel helper, which silently swallows qualify failures).
     qr3 = qualify(stage_ctx, quant, raw_data)
     if qr3.payload is None:
-        # Qualify failed; fall through using the parallel helper for both qual + strategic.
-        qual, strategic = _run_qualitative_and_strategic_in_parallel(ctx, quant, raw_data)
-    else:
-        qual = qr3.payload
-        # Run strategic research independently for stocks.
-        from finwiz.analysis.stages.qualify import _safe_strategic
+        return _emit_pending(stage_ctx, reason=qr3.provenance.reason), EnrichedAnalysis.model_construct()
+    qual = qr3.payload
+    # Run strategic research independently for stocks.
+    from finwiz.analysis.stages.qualify import _safe_strategic
 
-        do_strategic = ctx.asset_class == "stock"
-        sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
-        industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
-        description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-        strategic = _safe_strategic(ctx.ticker, sector, industry, description) if do_strategic else None
+    do_strategic = ctx.asset_class == "stock"
+    sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
+    industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
+    description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
+    strategic = _safe_strategic(ctx.ticker, sector, industry, description) if do_strategic else None
     if strategic is not None:
         qual = qual.model_copy(update={"strategic_analysis": strategic})
 
-    # Phase 4: Synthesize — typed StageResult contract via @stage decorator.
+    # Phase 4: Synthesize — any FAILED result short-circuits to AnalysePending.
     processing_time = time.time() - start
     sentiment_summary = _build_sentiment_summary(raw_data)
     stage_ctx.extras["processing_time"] = processing_time
@@ -108,13 +106,12 @@ def run_pipeline(
     stage_ctx.extras["qualify_outcome"] = qr3.provenance.outcome
     sr4 = synthesize(stage_ctx, quant, qual, raw_data)
     if sr4.payload is None:
-        # Synthesize failed; fall back to legacy direct call.
-        enriched = synthesize_enriched_analysis(ctx, quant, qual, processing_time, sentiment_summary=sentiment_summary, options_probs=options_probs)
-    else:
-        enriched = sr4.payload
+        return _emit_pending(stage_ctx, reason=sr4.provenance.reason), EnrichedAnalysis.model_construct()
+    enriched = sr4.payload
 
-    # Phase 5: Emit — final assembly: strategic recompute + return.
-    stage_ctx.extras["partial_result"] = result
+    # Phase 5: Emit — synthesize is the last writer of partial_result; do not
+    # re-assign here. emit reads stage_ctx.extras["partial_result"] directly so it
+    # sees the confidence downgrade that synthesize may have applied.
     stage_ctx.extras["strategic"] = strategic
     er = emit(stage_ctx, enriched)
     if er.payload is None:

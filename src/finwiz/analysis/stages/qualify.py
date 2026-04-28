@@ -53,33 +53,40 @@ def _try_ai_qualify(
     crew = _get_analysis_crew(ctx.asset_class)
     crew_inputs = _build_crew_inputs(ctx, quant, raw_data)
 
+    import asyncio
+    import concurrent.futures
+    import traceback
+
+    from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
+
     try:
-        import asyncio
-        import concurrent.futures
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
 
-        from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
-
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            loop = None
+    try:
         if loop and loop.is_running():
             with concurrent.futures.ThreadPoolExecutor() as pool:
                 future = pool.submit(asyncio.run, execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
                 crew_result = future.result()
         else:
             crew_result = asyncio.run(execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
-        qual = _extract_qualitative(crew_result, quant)
-        if qual is not None and _has_qualitative_content(qual):
-            logger.info(f"Qualitative insights generated for {ctx.ticker}")
-            return qual
-        logger.warning(f"AI returned empty qualitative content for {ctx.ticker}")
-        return None
-    except Exception as e:
-        import traceback
+    except (OSError, TimeoutError):
+        # Transient I/O or timeout — let @stage decorator retry then record FAILED.
+        raise
+    except Exception:
+        # Any other hard failure (network protocol error, provider error, etc.) —
+        # re-raise so the @stage decorator captures it as FAILED, not DEGRADED.
+        raise
 
-        logger.error(f"AI analysis failed for {ctx.ticker}: {e}\nTraceback:\n{traceback.format_exc()}")
-        return None
+    # Only return None when the AI call succeeded but returned empty/null content.
+    # This is the one legitimate trigger for the DEGRADED branch.
+    qual = _extract_qualitative(crew_result, quant)
+    if qual is not None and _has_qualitative_content(qual):
+        logger.info(f"Qualitative insights generated for {ctx.ticker}")
+        return qual
+    logger.warning(f"AI returned empty qualitative content for {ctx.ticker}: traceback=\n{traceback.format_stack()[-1]}")
+    return None
 
 
 def _python_proxy_qualify(ctx: AnalysisContext, quant: QuantitativeAnalysis) -> QualitativeInsights:
