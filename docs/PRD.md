@@ -1,7 +1,7 @@
 # Product Requirements Document -- FinWiz
 
-**Version:** 1.0
-**Date:** 2026-04-09
+**Version:** 1.1
+**Date:** 2026-04-28
 **Status:** Active
 
 ## 1. Product Vision
@@ -33,10 +33,12 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
   2. `calculate_quantitative()` -- Python scorer computes composite grade ($0)
   3. `generate_qualitative()` -- AI crew produces narrative insights (~$0.05)
   4. `synthesize()` -- Python merges quantitative and qualitative ($0)
-- **Investment discovery** -- Separate AI crews screen stocks, ETFs, and crypto for A+ opportunities.
+- **Investment discovery** -- Separate AI crews screen stocks, ETFs, and crypto for A+ opportunities. Runs unconditionally on every flow execution (no kill switch).
 - **Alternative matching** -- Suggest replacements for underperforming holdings.
 - **HTML reporting** -- Generate styled reports for portfolio review, deep analysis, discovery, and rebalancing.
-- **Feature flags** -- Toggle optional capabilities: `DEEP_ANALYSIS_ENABLED`, `PERPLEXITY_RESEARCH_ENABLED`, batch prefetch.
+- **RunLedger artifact** -- Every flow run writes a JSONL ledger to `output/run_ledger/<run_id>.jsonl` capturing each pipeline stage (ticker, stage, status, duration, error). Provides replayable post-mortem without re-running.
+- **TrustBanner UX** -- Report header displays a 4-state trust banner (green / amber / red / blocked) derived deterministically from ledger coverage. Blocked state shows an explicit "NE PAS prendre de décisions sur ce rapport" warning when coverage falls below threshold.
+- **Feature flags** -- Toggle optional capabilities: `PERPLEXITY_RESEARCH_ENABLED`, batch prefetch.
 
 ## 5. Non-Functional Requirements
 
@@ -50,6 +52,8 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 | Python version | >=3.12, <3.13 | Required by CrewAI and TA-Lib |
 | Line length | 180 characters | Configured in ruff |
 | File size | 300 lines max | Enforced by `make check-file-size` |
+| Trust banner accuracy | 0 false positives on silent failure | Regression test guards v0.3.0 silent-success class; TrustBanner derived from RunLedger, not self-reported crew status |
+| Pipeline stage isolation | Each stage independently testable; AST-enforced no-aggregate-timeout rule | `make check-stage-contract` runs at CI; aggregate `asyncio.wait_for` is a build failure |
 
 ## 6. Architecture Principles
 
@@ -58,6 +62,7 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 - **Context scoping (ADR-006)** -- Send summarized metrics to AI, never raw data dumps.
 - **Token optimization (ADR-007)** -- Deduplicate prompt boilerplate, cap LLM response lengths, guard against token overflow.
 - **Python wins** -- When AI and Python scores disagree, Python takes precedence.
+- **Trust spine (ADR-009)** -- Silent failure must be structurally impossible: typed `StageResult[T]` contracts per stage, persistent `RunLedger` JSONL evidence, and honest degradation (Python fallbacks surface as DEGRADED with amber report badge, never as silent OK).
 
 ## 7. Scope Boundaries
 
@@ -86,5 +91,6 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 
 - `docs/explanations/ARCHITECTURE.md` -- System architecture
 - `docs/adr/` -- Architecture Decision Records
+  - [ADR-009: Trust Spine](adr/ADR-009-trust-spine.md) -- Typed stage contracts, RunLedger, honest degradation
 - `CLAUDE.md` -- Development guide
 - `CHANGELOG.md` -- Version history
