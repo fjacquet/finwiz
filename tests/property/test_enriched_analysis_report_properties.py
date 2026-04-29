@@ -133,6 +133,59 @@ def enriched_analysis_strategy(draw):
     }
 
 
+class TestRendererToleratesSkippedAnalysis:
+    """Regression: the 2026-04-28 run crashed the renderer on quantitative=None.
+
+    When the per-holding pipeline skipped scoring (e.g. CriticalFieldError on
+    missing volatility) or qualitative analysis, the orchestrator still
+    attempted to render an EnrichedAnalysis with ``quantitative=None`` /
+    ``qualitative=None`` — and the renderer raised ``AttributeError: 'NoneType'
+    object has no attribute 'get'`` at line 206. After the fix, those cases
+    must render an "Analyse Skippée" banner instead of crashing.
+    """
+
+    def _minimal_skipped_payload(self, **overrides):
+        payload = {
+            "ticker": "ASML",
+            "company_name": "ASML Holding",
+            "asset_class": "stock",
+            "analysis_date": datetime.now(),
+            "executive_summary": "",
+            "investment_rationale": "",
+            "final_grade": "N/A",
+            "final_recommendation": "WAIT",
+            "recommendation_confidence": "low",
+            "final_score": 0.0,
+            "report_word_count": 0,
+            "unique_insights_count": 0,
+            "processing_time_seconds": 0.0,
+            "llm_cost_dollars": 0.0,
+            "quantitative": None,
+            "qualitative": None,
+            "rationale": "Missing critical fields ['volatility (missing)']",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_render_enriched_with_quantitative_none(self):
+        generator = EnrichedAnalysisReportGenerator()
+        html = generator.generate_report(self._minimal_skipped_payload())
+        assert "Analyse Skippée" in html or "Analyse Skipp" in html
+        assert "volatility" in html.lower()
+
+    def test_render_enriched_with_qualitative_none(self):
+        generator = EnrichedAnalysisReportGenerator()
+        # quantitative present but qualitative missing — also a skipped state
+        # because both must be present for a real verdict in the original code.
+        payload = self._minimal_skipped_payload(
+            quantitative=None,
+            qualitative=None,
+            rationale="circuit breaker open for deep_analysis_etf",
+        )
+        html = generator.generate_report(payload)
+        assert "circuit breaker" in html.lower() or "skipp" in html.lower()
+
+
 class TestEnrichedAnalysisReportProperties:
     """Property-based tests for EnrichedAnalysisReportGenerator."""
 

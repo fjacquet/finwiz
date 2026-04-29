@@ -33,6 +33,21 @@ def _safe_int(value: Any, default: int = 0) -> int:
     return int(value)
 
 
+def _finite_returns_from_values(values: list[float]) -> np.ndarray:
+    """Compute period-over-period returns and drop non-finite entries.
+
+    Returns an empty array when fewer than 2 finite values are available or
+    when every period contains a zero divisor (which would yield NaN/inf in
+    ``np.diff(values) / values[:-1]``).
+    """
+    arr = np.asarray(values, dtype=float)
+    if arr.size < 2:
+        return np.empty(0, dtype=float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        returns = np.diff(arr) / arr[:-1]
+    return returns[np.isfinite(returns)]
+
+
 class BacktestingPerformanceAnalyzer:
     """Performance analysis utilities for backtesting results."""
 
@@ -185,12 +200,14 @@ class BacktestingPerformanceAnalyzer:
             return 0.0
 
         values = [value for _, value in portfolio_values]
-        returns = np.diff(values) / values[:-1]
+        returns = _finite_returns_from_values(values)
 
-        if len(returns) == 0:
+        if returns.size == 0:
             return 0.0
 
         daily_vol = np.std(returns)
+        if not np.isfinite(daily_vol):
+            return 0.0
         annualized_vol = daily_vol * np.sqrt(252)  # Assuming 252 trading days
 
         return float(annualized_vol * 100)  # Convert to percentage
@@ -201,12 +218,15 @@ class BacktestingPerformanceAnalyzer:
             return None
 
         values = [value for _, value in portfolio_values]
-        returns = np.diff(values) / values[:-1]
+        returns = _finite_returns_from_values(values)
 
-        if len(returns) == 0:
+        if returns.size == 0:
             return None
 
-        return float(np.percentile(returns, (1 - confidence) * 100) * 100)
+        pct = np.percentile(returns, (1 - confidence) * 100)
+        if not np.isfinite(pct):
+            return None
+        return float(pct * 100)
 
     def calculate_cvar(self, portfolio_values: list[tuple[str, float]], confidence: float) -> float | None:
         """Calculate Conditional Value at Risk."""
@@ -215,16 +235,19 @@ class BacktestingPerformanceAnalyzer:
             return None
 
         values = [value for _, value in portfolio_values]
-        returns = np.diff(values) / values[:-1]
+        returns = _finite_returns_from_values(values)
 
         # CVaR is the average of returns below VaR threshold
         threshold = var / 100  # Convert back to decimal
         tail_returns = returns[returns <= threshold]
 
-        if len(tail_returns) == 0:
+        if tail_returns.size == 0:
             return var
 
-        return float(np.mean(tail_returns) * 100)
+        mean = np.mean(tail_returns)
+        if not np.isfinite(mean):
+            return var
+        return float(mean * 100)
 
     def calculate_benchmark_metrics(self, portfolio_values: dict[str, float], benchmark_symbol: str, start_date: datetime, end_date: datetime) -> tuple[float, float, float]:
         """Calculate benchmark comparison metrics."""

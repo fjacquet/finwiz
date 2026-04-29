@@ -68,6 +68,19 @@ deep_qualitative_analysis_task:
     5. Investment Synthesis: Thesis (200+ words), bull/base/bear cases (100+ words each),
        scenario probabilities as floats summing to 1.0, and a concrete action plan.
 
+    🔒 CHAMPS PYTHON-CONTRÔLÉS — NE PAS INCLURE DANS TA SORTIE :
+    Python alimente lui-même les champs suivants à partir de sources
+    déterministes ; les inclure dans ta réponse n'a AUCUN effet et déclenche
+    des cycles de validation inutiles :
+    - `fact_pack` (et tous ses sous-champs : `corporate_structure`,
+      `recent_events`, `leadership`, `fetched_at`, `freshness`,
+      `confidence`, `source_citations`)
+    - `analysis_timestamp`
+
+    Le FACT PACK affiché en haut de ce prompt est en lecture seule pour toi —
+    cite-le si nécessaire dans tes narratifs (sec_insights, fundamental_context,
+    contextual_risks), mais ne le ré-émets PAS comme champ JSON.
+
     REQUIRED investment_synthesis structure (all fields mandatory):
     "investment_synthesis": {
       "investment_thesis": "...",

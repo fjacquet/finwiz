@@ -13,6 +13,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+from pydantic import ValidationError
+
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -107,6 +109,14 @@ async def execute_crew_with_timeout(
         _crew_failures[crew_name] = 0
         logger.info(f"Crew {crew_name} completed successfully")
         return result
+
+    except ValidationError:
+        # Deterministic schema failure — backoff doesn't help (the LLM's next
+        # output will fail the same validator). Re-raise without incrementing
+        # the breaker counter so a thrashing schema mismatch doesn't trip the
+        # breaker on healthy upstream providers. The 2026-04-28 ETF cascade
+        # was driven by exactly this confounder.
+        raise
 
     except (TimeoutError, Exception) as exc:
         # Track failure

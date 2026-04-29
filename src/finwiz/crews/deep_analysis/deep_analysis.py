@@ -140,11 +140,18 @@ class DeepAnalysisCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        # Import Pydantic models for Task output_pydantic (use raw classes)
+        # Import Pydantic models for Task output_pydantic (use raw classes).
+        # The crew emits the *bridging* schema _QualitativeInsightsRaw — it
+        # excludes ``fact_pack`` and ``analysis_timestamp`` (Python supplies
+        # both), which removes the LLM/Pydantic thrash that exhausted the
+        # 600s per-holding budget on 2026-04-28. Promotion to the canonical
+        # QualitativeInsights happens in qualify._extract_qualitative.
+        from finwiz.analysis.stages.qualify import _QualitativeInsightsRaw
         from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 
         # Store raw Pydantic classes for Task.output_pydantic
         self.QualitativeInsights = QualitativeInsights
+        self.QualitativeInsightsRaw = _QualitativeInsightsRaw
 
         # Make Pydantic models available for CrewAI resolution (wrapped versions)
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
@@ -264,7 +271,11 @@ class DeepAnalysisCrew:
         """
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
-            output_pydantic=self.QualitativeInsights,  # Pydantic model for structured output
+            # Use the bridging schema (no fact_pack, no analysis_timestamp).
+            # Python promotes the raw payload back to QualitativeInsights in
+            # qualify._extract_qualitative — the LLM never has to satisfy
+            # FactPack's freshness model_validator or its 200/1000-char caps.
+            output_pydantic=self.QualitativeInsightsRaw,
         )
 
     @crew
