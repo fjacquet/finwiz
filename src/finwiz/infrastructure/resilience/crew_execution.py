@@ -19,8 +19,11 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Configuration — loaded lazily from ResilienceConfig
-CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
+# Configuration — loaded lazily from ResilienceConfig.
+# Default bumped from 600 → 900 s after the 2026-04-29 run had DELL succeed
+# at 1488 s (asyncio.wait_for cannot interrupt sync crew.kickoff() inside a
+# ThreadPoolExecutor; we want enough budget to keep long-tail successes).
+CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
 
 
 def _get_failure_threshold() -> int:

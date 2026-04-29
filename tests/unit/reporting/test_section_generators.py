@@ -50,6 +50,43 @@ def test_pending_holding_row_never_renders_amber_badge() -> None:
     assert "badge-amber" not in html
 
 
+# ---------------------------------------------------------------------------
+# WS-C.4 — Pending row surfaces the upstream rationale (2026-04-29 fix)
+# ---------------------------------------------------------------------------
+
+
+def test_pending_row_surfaces_specific_rationale_when_provided() -> None:
+    """Round-2 fix: pending rows must display the *specific* upstream
+    rationale (e.g. timeout, breaker) instead of the hardcoded generic
+    placeholder. The renderer falls back to the placeholder ONLY when no
+    rationale is present.
+    """
+    holding = _build_holding(grade="N/A", confidence="low")
+    holding.rationale_bullets = ["Analyse interrompue : crew dépassé 900s — voir logs"]
+    html = _render_holding_row(holding)
+    assert "crew dépassé 900s" in html
+    # The generic fallback message should NOT appear when a specific rationale exists.
+    assert "Analyse approfondie non disponible — relancer l'analyse pour obtenir un verdict." not in html
+
+
+def test_pending_row_falls_back_to_generic_when_no_rationale() -> None:
+    holding = _build_holding(grade="N/A", confidence="low")
+    holding.rationale_bullets = []  # No upstream rationale
+    html = _render_holding_row(holding)
+    assert "Analyse approfondie non disponible" in html
+
+
+def test_pending_row_html_escapes_rationale() -> None:
+    """The rationale flows through Jinja-style escape() to prevent XSS via
+    LLM-controlled error messages leaking into the HTML report.
+    """
+    holding = _build_holding(grade="N/A", confidence="low")
+    holding.rationale_bullets = ["<script>alert('x')</script>"]
+    html = _render_holding_row(holding)
+    assert "<script>" not in html
+    assert "&lt;script&gt;" in html
+
+
 def test_confidence_badge_returns_empty_for_high() -> None:
     """_confidence_badge returns empty string for high-confidence holdings."""
     holding = _build_holding(grade="A", confidence="high")

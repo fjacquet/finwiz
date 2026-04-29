@@ -114,3 +114,128 @@ class TestSafeInt:
     def test_should_handle_negative_int(self):
         """Negative integers pass through."""
         assert _safe_int(-3) == -3
+
+
+# ---------------------------------------------------------------------------
+# WS-B — Backtester resilience regression tests (2026-04-29 follow-up)
+# ---------------------------------------------------------------------------
+
+
+class _FakeDataManager:
+    """Minimal data manager that returns a configurable benchmark frame.
+
+    Hand-rolled stub — pytest-mock is overkill for a storage-only stand-in.
+    """
+
+    def __init__(self, frame):
+        self._frame = frame
+
+    def fetch_historical_data(self, *_args, **_kwargs):
+        return self._frame
+
+
+class _FakeConfig:
+    risk_free_rate = 0.045
+
+
+class TestCalculateBenchmarkMetricsResilience:
+    """The 2026-04-29 run failed when the benchmark frame was empty or
+    misaligned with the holding's trading days. Calling ``.iloc[0]`` on an
+    empty Series raised ``IndexError``, which propagated up through
+    ``calculate_performance_metrics`` and made the scorer mark
+    ``volatility="missing"``. The function must now degrade gracefully.
+    """
+
+    def _make_analyzer(self, frame):
+        return BacktestingPerformanceAnalyzer(data_manager=_FakeDataManager(frame), config=_FakeConfig())  # type: ignore[arg-type]
+
+    def test_empty_benchmark_returns_neutral_defaults(self):
+        import pandas as pd
+
+        analyzer = self._make_analyzer(pd.DataFrame(columns=["Close"]))
+        result = analyzer.calculate_benchmark_metrics(
+            portfolio_values={"2026-04-01": 100.0, "2026-04-02": 102.0},
+            benchmark_symbol="^GSPC",
+            start_date=__import__("datetime").datetime(2026, 4, 1),
+            end_date=__import__("datetime").datetime(2026, 4, 2),
+        )
+        assert result == (0.0, 0.0, 1.0)
+
+    def test_one_row_benchmark_returns_neutral_defaults(self):
+        import pandas as pd
+
+        frame = pd.DataFrame({"Close": [100.0]}, index=pd.to_datetime(["2026-04-01"]))
+        analyzer = self._make_analyzer(frame)
+        result = analyzer.calculate_benchmark_metrics(
+            portfolio_values={"2026-04-01": 100.0, "2026-04-02": 102.0},
+            benchmark_symbol="^GSPC",
+            start_date=__import__("datetime").datetime(2026, 4, 1),
+            end_date=__import__("datetime").datetime(2026, 4, 2),
+        )
+        assert result == (0.0, 0.0, 1.0)
+
+    def test_zero_initial_benchmark_returns_neutral_defaults(self):
+        import pandas as pd
+
+        frame = pd.DataFrame(
+            {"Close": [0.0, 100.0]},
+            index=pd.to_datetime(["2026-04-01", "2026-04-02"]),
+        )
+        analyzer = self._make_analyzer(frame)
+        result = analyzer.calculate_benchmark_metrics(
+            portfolio_values={"2026-04-01": 100.0, "2026-04-02": 102.0},
+            benchmark_symbol="^GSPC",
+            start_date=__import__("datetime").datetime(2026, 4, 1),
+            end_date=__import__("datetime").datetime(2026, 4, 2),
+        )
+        assert result == (0.0, 0.0, 1.0)
+
+
+class TestCalculatePerformanceMetricsShortPortfolio:
+    """When Backtrader never produced ≥2 portfolio_values entries (empty
+    data feed, all-NaN inputs, date-range collapse), downstream metric
+    extraction is meaningless. The pre-validation guard returns a lawful
+    BacktestResult (volatility=0.0) instead of letting the IndexError
+    bubble up to mark the holding as "missing volatility".
+    """
+
+    def test_empty_portfolio_values_returns_safe_result(self):
+        from datetime import datetime
+
+        analyzer = BacktestingPerformanceAnalyzer(data_manager=_FakeDataManager(None), config=_FakeConfig())  # type: ignore[arg-type]
+
+        class _Strat:
+            portfolio_values = []
+
+        result = analyzer.calculate_performance_metrics(
+            strategy_instance=_Strat(),  # type: ignore[arg-type]
+            symbol="ASML",
+            start_date=datetime(2026, 4, 1),
+            end_date=datetime(2026, 4, 30),
+            initial_value=10000.0,
+            final_value=10000.0,
+        )
+        assert result.volatility == 0.0
+        assert result.var_95 is None
+        assert result.cvar_95 is None
+        assert result.symbol == "ASML"
+
+    def test_one_entry_portfolio_values_returns_safe_result(self):
+        from datetime import datetime
+
+        analyzer = BacktestingPerformanceAnalyzer(data_manager=_FakeDataManager(None), config=_FakeConfig())  # type: ignore[arg-type]
+
+        class _Strat:
+            portfolio_values = [("2026-04-01", 10000.0)]
+
+        result = analyzer.calculate_performance_metrics(
+            strategy_instance=_Strat(),  # type: ignore[arg-type]
+            symbol="AAPL",
+            start_date=datetime(2026, 4, 1),
+            end_date=datetime(2026, 4, 30),
+            initial_value=10000.0,
+            final_value=10000.0,
+        )
+        assert result.volatility == 0.0
+        assert result.total_trades == 0
+        assert result.symbol == "AAPL"

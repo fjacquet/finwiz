@@ -3,12 +3,36 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from finwiz.schemas.portfolio_review import Alternative, HoldingDecision
 from finwiz.scoring.grading_system import score_to_grade
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_analysis_date(deep_result: Any) -> datetime | None:
+    """Read the deep-analysis timestamp tolerantly.
+
+    Historical bug: merge.py referenced ``deep_result.analyzed_at`` which is
+    not a field on :class:`DeepAnalysisResult` (the field is
+    ``analysis_timestamp``, an ISO-8601 string). The whole merge sat in a
+    broad ``try/except`` so the typo failed silently in production for
+    every successful holding. This helper accepts either name and any
+    str-or-datetime shape, returning ``None`` when nothing usable is found.
+    """
+    raw = getattr(deep_result, "analyzed_at", None) or getattr(deep_result, "analysis_timestamp", None)
+    if raw is None:
+        return None
+    if isinstance(raw, datetime):
+        return raw
+    if isinstance(raw, str):
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+    return None
 
 
 def merge_deep_analysis_from_flow_state(
@@ -34,15 +58,32 @@ def merge_deep_analysis_from_flow_state(
                 deep_result = deep_analysis_results[ticker]
 
                 decision.crew_analysis_used = deep_result.crew_name
-                # DeepAnalysisResult uses analysis_timestamp (str); cache models use analyzed_at (datetime).
-                # Use getattr with None fallback so both shapes work without crashing.
-                decision.analysis_date = getattr(deep_result, "analyzed_at", None) or getattr(deep_result, "analysis_timestamp", None)
+                decision.analysis_date = _coerce_analysis_date(deep_result)
                 decision.composite_score = deep_result.composite_score
                 decision.grade = deep_result.grade
 
-                grade_info = score_to_grade(deep_result.composite_score)
-                decision.grade_description = grade_info.description
-                decision.recommended_action = grade_info.action
+                # Pending / synthetic-failure result (timeout, breaker open,
+                # upstream stage failed) — preserve the *specific* rationale
+                # so the renderer can surface it to the user. Without this,
+                # every pending row would show the generic
+                # "Analyse approfondie non disponible" message regardless of
+                # why it actually failed.
+                if deep_result.grade == "N/A":
+                    decision.grade_description = "Analyse approfondie non disponible"
+                    decision.recommended_action = getattr(deep_result, "recommendation", None) or "Analyse en attente — ne pas décider sur ce holding"
+                    rationale = getattr(deep_result, "rationale", None)
+                    decision.rationale_bullets = (
+                        [rationale]
+                        if rationale
+                        else [
+                            "Analyse approfondie non disponible pour ce holding lors de cette exécution.",
+                            "Aucun verdict d'investissement n'est rendu — relancer l'analyse pour obtenir un grade.",
+                        ]
+                    )
+                else:
+                    grade_info = score_to_grade(deep_result.composite_score)
+                    decision.grade_description = grade_info.description
+                    decision.recommended_action = grade_info.action
 
                 decision.data_freshness = "fresh" if not deep_result.cached else "recent"
                 decision.confidence = getattr(deep_result, "confidence", "high")
