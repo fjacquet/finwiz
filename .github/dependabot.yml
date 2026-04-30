@@ -1,0 +1,65 @@
+# Dependabot config — weekly automated dependency updates.
+#
+# Strategy
+# --------
+# - Two ecosystems: Python (uv-managed pyproject.toml + uv.lock) and
+#   GitHub Actions (workflow YAMLs).
+# - Weekly cadence on Mondays — predictable review window, low PR noise.
+# - Patch + minor updates GROUPED into single PRs per ecosystem to avoid
+#   one-PR-per-bump churn. Major bumps stay separate so they get individual
+#   review (most likely place for breaking changes).
+# - PR limit bounded so a noisy upstream burst can't flood the queue.
+#
+# Adding a manual upgrade path: set `versioning-strategy: increase` so
+# Dependabot prefers raising the minimum specified version when it can
+# (rather than re-pinning the entire range).
+
+version: 2
+updates:
+  # Python — uv reads pyproject.toml; Dependabot's `pip` ecosystem covers it.
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 5
+    versioning-strategy: "increase"
+    labels:
+      - "dependencies"
+      - "python"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      python-patch-and-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
+
+  # GitHub Actions — keeps `uses:` pinned versions current (security-relevant
+  # since Actions execute with repo token scope).
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Paris"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    groups:
+      actions-patch-and-minor:
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+          - "minor"
