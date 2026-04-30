@@ -19,19 +19,31 @@ def _coerce_analysis_date(deep_result: Any) -> datetime | None:
     not a field on :class:`DeepAnalysisResult` (the field is
     ``analysis_timestamp``, an ISO-8601 string). The whole merge sat in a
     broad ``try/except`` so the typo failed silently in production for
-    every successful holding. This helper accepts either name and any
-    str-or-datetime shape, returning ``None`` when nothing usable is found.
+    every successful holding.
+
+    CodeRabbit follow-up: the previous ``getattr(... "analyzed_at") or
+    getattr(... "analysis_timestamp")`` shape used a single ``or``-chain,
+    which short-circuited as soon as ``analyzed_at`` was truthy — even if it
+    couldn't be parsed. We now try each candidate independently and return
+    the first one that yields a real datetime.
     """
-    raw = getattr(deep_result, "analyzed_at", None) or getattr(deep_result, "analysis_timestamp", None)
-    if raw is None:
-        return None
-    if isinstance(raw, datetime):
-        return raw
-    if isinstance(raw, str):
-        try:
-            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
-        except ValueError:
+
+    def _parse(raw: Any) -> datetime | None:
+        if raw is None:
             return None
+        if isinstance(raw, datetime):
+            return raw
+        if isinstance(raw, str):
+            try:
+                return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+        return None
+
+    for attr in ("analyzed_at", "analysis_timestamp"):
+        result = _parse(getattr(deep_result, attr, None))
+        if result is not None:
+            return result
     return None
 
 

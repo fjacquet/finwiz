@@ -175,15 +175,31 @@ class TestRendererToleratesSkippedAnalysis:
 
     def test_render_enriched_with_qualitative_none(self):
         generator = EnrichedAnalysisReportGenerator()
-        # quantitative present but qualitative missing — also a skipped state
-        # because both must be present for a real verdict in the original code.
+        # CodeRabbit follow-up: actually exercise the "quant present / qual
+        # missing" path. The OR-based ``analysis_skipped`` predicate must
+        # treat any side missing as "skipped" so the renderer doesn't try to
+        # access ``qualitative.ai_confidence`` and crash. We provide a
+        # complete-enough quant block but leave qualitative=None.
         payload = self._minimal_skipped_payload(
-            quantitative=None,
+            quantitative={
+                "composite_score": 0.5,
+                "fundamental_score": 0.5,
+                "technical_score": 0.5,
+                "risk_score": 0.5,
+                "grade": "C",
+                "preliminary_recommendation": "HOLD",
+                "fundamental_metrics": {},
+                "technical_indicators": {},
+                "risk_metrics": {},
+            },
             qualitative=None,
             rationale="circuit breaker open for deep_analysis_etf",
         )
         html = generator.generate_report(payload)
-        assert "circuit breaker" in html.lower() or "skipp" in html.lower()
+        # Renderer must take the skipped branch (no full qual section) and
+        # surface the upstream rationale.
+        assert "Analyse Skipp" in html or "skipp" in html.lower()
+        assert "circuit breaker" in html.lower()
 
 
 class TestEnrichedAnalysisReportProperties:

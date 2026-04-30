@@ -33,7 +33,17 @@ def test_tasks_yaml_is_valid_yaml() -> None:
     assert "deep_qualitative_analysis_task" in parsed
 
 
-def test_tasks_yaml_perplexity_budget_is_one() -> None:
-    """Perplexity call budget must be reduced to 1 (fact pack pre-loads common checks)."""
+def test_tasks_yaml_has_no_external_tool_block() -> None:
+    """Round-2 fix (2026-04-29): the asset_analyst agent runs with zero tools.
+
+    The fact_pack stage already runs Perplexity deterministically before
+    qualify, so the prompt must NOT advertise a verification tool the agent
+    doesn't have. Mismatch between prompt and reality risks the LLM emitting
+    unsupported tool calls — and was a major contributor to the 600s budget
+    exhaustion on the 2026-04-29 run (DELL spent 24 minutes in the agent
+    reasoning loop).
+    """
     raw = TASKS_YAML.read_text(encoding="utf-8")
-    assert "Maximum 1 appel" in raw or "Maximum 1 call" in raw
+    assert "OUTIL DE VÉRIFICATION" not in raw
+    assert "Perplexity Sonar Search" not in raw
+    assert "Maximum 1 appel" not in raw  # old budget directive must be gone

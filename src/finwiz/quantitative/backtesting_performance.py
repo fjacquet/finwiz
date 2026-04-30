@@ -323,8 +323,16 @@ class BacktestingPerformanceAnalyzer:
             date = portfolio_dates[i]
             prev_date = portfolio_dates[i - 1]
 
-            # Portfolio return
-            port_return = (portfolio_values[date] - portfolio_values[prev_date]) / portfolio_values[prev_date]
+            # Portfolio return — guard against zero-or-non-finite previous value.
+            # Without this, a flat-zero portfolio_value at prev_date raises
+            # ZeroDivisionError or yields NaN that contaminates the
+            # benchmark-vs-portfolio covariance below. (CodeRabbit follow-up.)
+            prev_value = portfolio_values[prev_date]
+            if not np.isfinite(prev_value) or prev_value == 0:
+                continue
+            port_return = (portfolio_values[date] - prev_value) / prev_value
+            if not np.isfinite(port_return):
+                continue
             portfolio_returns.append(port_return)
 
             # Benchmark return for same period

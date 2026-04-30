@@ -227,8 +227,13 @@ class EnrichedAnalysisReportGenerator:
         # ADR-011: pass tactical price targets through for the per-ticker detail panel.
         template_vars["price_targets"] = quant.get("price_targets") if quant else None
 
-        # ADR-011 + WS1.2: signal a skipped analysis state for the renderer.
-        template_vars["analysis_skipped"] = not quant and not qual
+        # If EITHER side is missing the report cannot show a real verdict, so
+        # render the "skipped" banner. Codex/CodeRabbit P2 fix: the previous
+        # ``and not`` predicate let a partial-quant payload (e.g. quant present
+        # but qual missing because the qualify stage timed out) reach the
+        # full-render branch and crash on missing nested fields like
+        # ``qualitative.ai_confidence``.
+        template_vars["analysis_skipped"] = not quant or not qual
         template_vars["analysis_skipped_reason"] = data.get("rationale") or data.get("skip_reason") or "Stage failure — see provenance"
 
         # Extract sentiment summary for report enrichment (Phase 16)

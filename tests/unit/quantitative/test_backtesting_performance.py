@@ -70,14 +70,24 @@ class TestVolatilityNaNSafe:
 
     def test_calculate_cvar_falls_back_to_var_when_tail_empty(self):
         analyzer = _make_analyzer()
-        # Two strictly increasing values produce one positive return; the tail
-        # below VaR is empty, which historically returned the VaR value as a
-        # fallback. Confirm that path still works after the NaN guard.
-        portfolio_values = [("d1", 100.0), ("d2", 110.0)]
+        # Use a series of equal positive returns so np.percentile produces a
+        # threshold ABOVE every realised return — the ``returns <= threshold``
+        # mask is then empty, exercising the "tail empty, fall back to VaR"
+        # branch deterministically. (CodeRabbit follow-up: the previous
+        # 2-point input made VaR equal the only return, so the fallback path
+        # was not actually triggered.)
+        portfolio_values = [
+            ("d1", 100.0),
+            ("d2", 110.0),
+            ("d3", 121.0),
+            ("d4", 133.1),
+        ]
+        var = analyzer.calculate_var(portfolio_values, 0.95)
         cvar = analyzer.calculate_cvar(portfolio_values, 0.95)
-        # Either a finite number (fallback to var) or None — never NaN.
-        if cvar is not None:
-            assert np.isfinite(cvar)
+        assert cvar is not None
+        assert np.isfinite(cvar)
+        # When the tail is empty, the function returns var verbatim.
+        assert cvar == var
 
 
 class TestSafeInt:
