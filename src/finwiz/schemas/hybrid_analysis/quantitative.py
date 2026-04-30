@@ -10,6 +10,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
+from finwiz.schemas.portfolio_review import PriceTargets
 
 
 class QuantitativeAnalysis(BaseModel):
@@ -61,6 +62,14 @@ class QuantitativeAnalysis(BaseModel):
 
     # Template-based rationale (to be enhanced by AI)
     python_rationale: str = Field(..., min_length=10, description="Template-generated rationale from Python")
+
+    # ADR-011: tactical 3-6 month price target + stop-loss floor.
+    # Optional because compute_tactical_pricing returns None for short / stale /
+    # degenerate history.
+    price_targets: PriceTargets | None = Field(
+        default=None,
+        description="Tactical 3-6 month price target and stop-loss floor (ADR-011)",
+    )
 
     model_config = {
         "str_strip_whitespace": True,

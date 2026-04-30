@@ -58,6 +58,10 @@ class DeepAnalysisResult(BaseModel):
     # the report renderer's provenance footer. Avoid circular import via late binding.
     fact_pack: Any = Field(default=None, description="FactPack from v5.2 fact_pack stage (Any to avoid circular import)")
 
+    # ADR-011: tactical price targets surfaced to the merge / renderer.
+    # Optional Any to avoid a circular import with hybrid_analysis.PriceTargets.
+    price_targets: Any = Field(default=None, description="Tactical PriceTargets (ADR-011); Any to avoid circular import")
+
     # Sentiment scoring (Phase 14)
     sentiment_score: float | None = Field(None, ge=-1.0, le=1.0, description="Sentiment score from news analysis (-1 bearish to +1 bullish). None = no news data.")
     sentiment_confidence: float | None = Field(None, ge=0.0, le=1.0, description="Confidence in sentiment score. None = no news data.")

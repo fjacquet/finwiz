@@ -213,6 +213,11 @@ class EnrichedAnalysisReportGenerator:
             template_vars["technical_indicators"] = quant.get("technical_indicators", {})
             template_vars["risk_metrics"] = quant.get("risk_metrics", {})
 
+            # ADR-011: pass tactical price targets through for the per-ticker detail panel.
+            template_vars["price_targets"] = quant.get("price_targets") if quant else None
+        else:
+            template_vars["price_targets"] = None
+
         # Extract nested qualitative data for easier template access
         if "qualitative" in data:
             qual = data["qualitative"]

@@ -136,3 +136,51 @@ def test_holding_decision_accepts_typical_ticker_formats() -> None:
             confidence="high",
         )
         assert h.ticker == ticker
+
+
+# ---------------------------------------------------------------------------
+# ADR-011: compact target/sell columns
+# ---------------------------------------------------------------------------
+
+
+def test_holding_row_renders_target_and_sell_columns_when_present() -> None:
+    """ADR-011: holdings with price_targets show two extra columns."""
+    from datetime import UTC, datetime
+
+    from finwiz.schemas.portfolio_review import PriceTargets
+
+    holding = _build_holding(grade="A", confidence="high")
+    holding.price_targets = PriceTargets(
+        current_price=100.0,
+        currency="USD",
+        buy_target_primary=120.0,
+        sell_target_primary=85.0,
+        buy_rationale="rationale-up",
+        sell_rationale="rationale-down",
+        data_as_of=datetime.now(tz=UTC),
+    )
+    html = _render_holding_row(holding)
+    # The two values appear in the row.
+    assert "120.00" in html or "$120" in html
+    assert "85.00" in html or "$85" in html
+    # Delta annotations appear (target +20%, sell -15%).
+    assert "+20" in html or "20.0%" in html
+    assert "-15" in html or "−15" in html or "15.0%" in html
+
+
+def test_holding_row_renders_dash_when_price_targets_missing() -> None:
+    """No price_targets -> both ADR-011 cells render the muted em-dash placeholder."""
+    holding = _build_holding(grade="A", confidence="high")
+    holding.price_targets = None
+    html = _render_holding_row(holding)
+    # Em-dash appears at least twice (once per ADR-011 column).
+    assert html.count("—") >= 2
+
+
+def test_pending_row_includes_price_target_placeholders() -> None:
+    """Pending rows must keep the table grid aligned with em-dashes for the new columns."""
+    holding = _build_holding(grade="N/A", confidence="low")
+    holding.price_targets = None  # pending rows never have price_targets
+    html = _render_holding_row(holding)
+    # Pending row already has em-dashes for grade/score; ADR-011 columns add 2 more.
+    assert html.count("—") >= 4

@@ -229,6 +229,28 @@ def _get_deep_analysis_link(ticker: str, asset_class: str) -> str:
     return f"{asset_class_lower}/{ticker}_report.html"
 
 
+def _format_target_cell(price_targets: Any, kind: str) -> str:
+    """Render one of the two ADR-011 compact columns ('target' or 'sell').
+
+    Returns ``<td class="muted">—</td>`` when there is no usable price_targets.
+    Otherwise produces ``<td>$X.XX<br><small>±Y.Y%</small></td>`` with HTML
+    escaping for safety. The ± delta is computed against ``price_targets.current_price``.
+    """
+    if price_targets is None:
+        return '<td class="muted">—</td>'
+    current = getattr(price_targets, "current_price", None)
+    if current is None or current <= 0:
+        return '<td class="muted">—</td>'
+    value = price_targets.buy_target_primary if kind == "target" else price_targets.sell_target_primary
+    if value is None:
+        return '<td class="muted">—</td>'
+    delta_pct = (value - current) / current * 100
+    sign = "+" if delta_pct >= 0 else "−"  # use Unicode minus for tasteful negatives
+    abs_pct = abs(delta_pct)
+    # f-string formatted floats — no operator-supplied content, but escape for defense in depth.
+    return f"<td>${value:,.2f}<br><small>{sign}{abs_pct:.1f}%</small></td>"
+
+
 def _confidence_badge(holding: HoldingDecision) -> str:
     """Render the amber 'Insight IA indisponible' badge when confidence is low.
 
@@ -270,6 +292,8 @@ def _render_holding_row(holding: HoldingDecision) -> str:
           <td class="muted">—</td>
           <td class="muted">—</td>
           <td><small class="muted">Analyse approfondie non disponible — relancer l'analyse pour obtenir un verdict.</small></td>
+          <td class="muted">—</td>
+          <td class="muted">—</td>
         </tr>"""
 
     deep_analysis_link = _get_deep_analysis_link(ticker, holding.asset_class or "stock")
@@ -284,6 +308,9 @@ def _render_holding_row(holding: HoldingDecision) -> str:
     # Render fact pack provenance footer if the holding carries one (v5.2+)
     fp = getattr(holding, "fact_pack", None)
     fact_pack_footer = _fact_pack_provenance_footer(fp) if fp is not None else ""
+    # ADR-011: compact target/sell columns
+    target_cell = _format_target_cell(holding.price_targets, kind="target")
+    sell_cell = _format_target_cell(holding.price_targets, kind="sell")
     return f"""
         <tr>
           <td><strong>{ticker_html}</strong><br><small>{name_safe}</small></td>
@@ -292,6 +319,8 @@ def _render_holding_row(holding: HoldingDecision) -> str:
           <td>{composite_score:.3f}</td>
           <td>{rec_badge}</td>
           <td><small>{rationale_safe}</small>{fact_pack_footer}</td>
+          {target_cell}
+          {sell_cell}
         </tr>"""
 
 
@@ -318,6 +347,8 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
           <th>Score</th>
           <th>Recommendation</th>
           <th>Rationale</th>
+          <th>Objectif (3-6 mo)</th>
+          <th>Niveau de vente</th>
         </tr>
       </thead>
       <tbody>

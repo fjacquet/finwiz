@@ -731,6 +731,30 @@
             {% endif %}
         </div>
 
+        {% if price_targets %}
+        <!-- ADR-011: Tactical price targets detail panel -->
+        <div class="section">
+            <h2>🎯 Objectifs Tactiques (3-6 mois)</h2>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <h4>Objectif de cours</h4>
+                    <p class="metric-value">${{ "%.2f"|format(price_targets.buy_target_primary) }}</p>
+                    <small>{{ price_targets.buy_rationale }}</small>
+                </div>
+                <div class="metric-card">
+                    <h4>Niveau de vente</h4>
+                    <p class="metric-value">${{ "%.2f"|format(price_targets.sell_target_primary) }}</p>
+                    <small>{{ price_targets.sell_rationale }}</small>
+                </div>
+                <div class="metric-card">
+                    <h4>Prix actuel</h4>
+                    <p class="metric-value">${{ "%.2f"|format(price_targets.current_price) }}</p>
+                    <small>{{ price_targets.currency }}</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Quantitative Metrics -->
         <div class="section">
             <h2>📊 Métriques Quantitatives (Python)</h2>

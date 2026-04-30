@@ -205,6 +205,12 @@ class DeepAnalysisOrchestrator:
             try:
                 # Functional pipeline - returns BOTH DeepAnalysisResult AND EnrichedAnalysis
                 result, enriched = analyze_holding(ticker, asset_class, company_name, ledger=self._ledger, run_id=self._ledger.run_id)
+
+                # ADR-011: copy tactical price targets onto the result so the merge layer
+                # can propagate them to HoldingDecision without reaching back into _enriched_analyses.
+                if enriched is not None and getattr(enriched.quantitative, "price_targets", None) is not None:
+                    result = result.model_copy(update={"price_targets": enriched.quantitative.price_targets})
+
                 results[ticker] = result
 
                 # Store enriched analysis for HTML generation
@@ -383,6 +389,10 @@ class DeepAnalysisOrchestrator:
 
         for ticker, result, enriched in completed:
             if result:
+                # ADR-011: copy tactical price targets onto the result so the merge layer
+                # can propagate them to HoldingDecision without reaching back into _enriched_analyses.
+                if enriched is not None and getattr(enriched.quantitative, "price_targets", None) is not None:
+                    result = result.model_copy(update={"price_targets": enriched.quantitative.price_targets})
                 results[ticker] = result
                 if enriched:
                     self._enriched_analyses[ticker] = enriched

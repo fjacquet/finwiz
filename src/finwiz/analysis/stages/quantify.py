@@ -8,11 +8,46 @@ from typing import TYPE_CHECKING, Any
 from finwiz.analysis.stages._resilience import StageContext, stage
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
+from finwiz.schemas.portfolio_review import PriceTargets
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
 
 logger = logging.getLogger(__name__)
+
+
+def _maybe_compute_price_targets(
+    ctx: AnalysisContext,
+    raw_data: dict[str, Any],
+) -> PriceTargets | None:
+    """Best-effort tactical pricing. Logs and returns None on any failure.
+
+    Failure paths (all return None, never raise upward):
+    - Missing price_history or current_price in raw_data.
+    - compute_tactical_pricing returns None (short / stale / degenerate history).
+    - compute_tactical_pricing itself raises (defensive — pricing is non-critical).
+    """
+    from typing import Literal, cast
+
+    from finwiz.quantitative.tactical_pricing import compute_tactical_pricing
+
+    history = raw_data.get("price_history")
+    current = raw_data.get("current_price")
+    if history is None or current is None:
+        return None
+    currency = str(raw_data.get("currency") or "USD")
+    asset_class = cast(Literal["stock", "etf", "crypto"], ctx.asset_class)
+    try:
+        return compute_tactical_pricing(
+            ticker=ctx.ticker,
+            asset_class=asset_class,
+            price_history=history,
+            current_price=float(current),
+            currency=currency,
+        )
+    except Exception as exc:
+        logger.warning(f"tactical_pricing failed for {ctx.ticker}: {exc}")
+        return None
 
 
 def _calculate_quantitative_inner(
@@ -25,7 +60,11 @@ def _calculate_quantitative_inner(
     logger.info(f"Calculating quantitative metrics for {ctx.ticker}")
     scorer = DeepAnalysisScorer()
     result = scorer.calculate_composite_score(ctx.ticker, ctx.asset_class, raw_data)
-    quant = _result_to_quantitative(result)
+
+    # ADR-011: best-effort tactical price_targets. Never fails the pipeline.
+    price_targets = _maybe_compute_price_targets(ctx, raw_data)
+
+    quant = _result_to_quantitative(result, price_targets=price_targets)
     logger.info(f"Quantitative: {ctx.ticker} grade={quant.grade} score={quant.composite_score:.2f}")
     return result, quant
 
@@ -55,7 +94,7 @@ def calculate_quantitative(
     return _calculate_quantitative_inner(ctx, raw_data)
 
 
-def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
+def _result_to_quantitative(result: DeepAnalysisResult, *, price_targets: PriceTargets | None = None) -> QuantitativeAnalysis:
     """Convert DeepAnalysisResult to QuantitativeAnalysis schema."""
     from datetime import datetime
 
@@ -88,4 +127,5 @@ def _result_to_quantitative(result: DeepAnalysisResult) -> QuantitativeAnalysis:
         ),
         confidence_level=result.confidence_level,
         python_rationale=result.rationale,
+        price_targets=price_targets,
     )

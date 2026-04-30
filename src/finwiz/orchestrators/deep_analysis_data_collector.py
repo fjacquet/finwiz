@@ -98,6 +98,9 @@ class DeepAnalysisDataCollector:
         if asset_class.lower() in ("stock", "etf") and flattened.get("current_price"):
             self._collect_options_iv(ticker, float(flattened["current_price"]), flattened)
 
+        # ADR-011: expose Close price history for tactical pricing (all asset classes, fails silently)
+        self._collect_price_history(ticker, flattened)
+
         self.logger.info(f"✅ Python collected {len(flattened)} fields: {list(flattened.keys())[:10]}")
         return flattened
 
@@ -400,6 +403,33 @@ class DeepAnalysisDataCollector:
                 self.logger.info(f"✅ Options IV fetched for {ticker}: bull_iv={bull_iv:.3f}, bear_iv={bear_iv:.3f}, T={T:.2f}y")
         except Exception as exc:
             self.logger.warning(f"Options IV fetch skipped for {ticker}: {exc}")
+
+    def _collect_price_history(self, ticker: str, raw_data: dict[str, Any]) -> None:
+        """Fetch 1y daily Close prices and expose as raw_data["price_history"] (pd.Series).
+
+        Reuses the cached HistoricalDataManager — no duplicate yfinance network call when
+        _collect_quantitative_data already fetched for the same ticker/period.
+        Fails silently: price_history simply remains absent from raw_data.
+        """
+        try:
+            from datetime import datetime, timedelta
+
+            from finwiz.quantitative.data import get_historical_data_manager
+
+            end_date = datetime.now()
+            start_date = end_date - timedelta(days=365)
+            data_manager = get_historical_data_manager()
+            hist = data_manager.fetch_historical_data(ticker, start_date, end_date)
+            if hist is None or hist.empty:
+                return
+            close_col = "Close" if "Close" in hist.columns else hist.columns[0]
+            closes = hist[close_col].dropna()
+            if closes.empty:
+                return
+            raw_data["price_history"] = closes
+            self.logger.debug(f"price_history exposed for {ticker}: {len(closes)} days")
+        except Exception as exc:
+            self.logger.warning(f"price_history fetch skipped for {ticker}: {exc}")
 
     def flatten_collected_data(self, data: dict[str, Any]) -> dict[str, Any]:
         """

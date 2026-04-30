@@ -34,7 +34,9 @@ def merge_deep_analysis_from_flow_state(
                 deep_result = deep_analysis_results[ticker]
 
                 decision.crew_analysis_used = deep_result.crew_name
-                decision.analysis_date = deep_result.analyzed_at
+                # DeepAnalysisResult uses analysis_timestamp (str); cache models use analyzed_at (datetime).
+                # Use getattr with None fallback so both shapes work without crashing.
+                decision.analysis_date = getattr(deep_result, "analyzed_at", None) or getattr(deep_result, "analysis_timestamp", None)
                 decision.composite_score = deep_result.composite_score
                 decision.grade = deep_result.grade
 
@@ -45,6 +47,8 @@ def merge_deep_analysis_from_flow_state(
                 decision.data_freshness = "fresh" if not deep_result.cached else "recent"
                 decision.confidence = getattr(deep_result, "confidence", "high")
                 decision.fact_pack = getattr(deep_result, "fact_pack", None)
+                # ADR-011: propagate tactical price targets through to the renderer.
+                decision.price_targets = getattr(deep_result, "price_targets", None)
 
                 holdings_with_deep_analysis += 1
                 logger.debug(f"Merged deep analysis for {ticker}: grade={deep_result.grade}")
