@@ -170,3 +170,74 @@ class TestDeepAnalysisCrew:
 
         # Verify no references to risk_assessor in the source code
         assert "risk_assessor" not in source.lower(), "Found reference to risk_assessor in crew code"
+
+
+# ---------------------------------------------------------------------------
+# WS-A — Qualify-stage speed regression tests (2026-04-29 follow-up)
+# ---------------------------------------------------------------------------
+
+
+class TestAssetAnalystToolless:
+    """Round-2 fix: the asset_analyst agent now runs without any tool.
+
+    On the 2026-04-29 run DELL spent 24 minutes inside the CrewAI agent
+    reasoning loop while ``PerplexitySearchTool`` was attached. The
+    deterministic ``fact_pack`` stage already ran Perplexity before qualify,
+    so the agent has nothing it could verify Python hasn't already verified.
+    Removing the tool collapses ``max_iter`` to 1 in practice (no tool calls
+    means the LLM returns text on the first iteration and exits).
+    """
+
+    def test_build_asset_analyst_tools_returns_empty_list(self) -> None:
+        from finwiz.crews.deep_analysis.deep_analysis import _build_asset_analyst_tools
+
+        assert _build_asset_analyst_tools() == []
+
+    def test_build_asset_analyst_tools_returns_empty_even_with_pplx_key(self, monkeypatch) -> None:
+        # Setting PPLX_API_KEY must NOT re-add the tool — the tool is gone for good.
+        monkeypatch.setenv("PPLX_API_KEY", "fake-key-for-test")
+        from finwiz.crews.deep_analysis.deep_analysis import _build_asset_analyst_tools
+
+        assert _build_asset_analyst_tools() == []
+
+    def test_tasks_yaml_has_no_perplexity_instruction(self) -> None:
+        # The prompt must not contradict reality by telling the LLM it has a
+        # Perplexity tool when it doesn't.
+        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        text = config_path.read_text(encoding="utf-8")
+        assert "OUTIL DE VÉRIFICATION" not in text
+        assert "Perplexity Sonar Search" not in text
+
+
+class TestCrewMaxIter:
+    """The crew's ``max_iter`` was reduced from 5 to 2 to bound the agent
+    reasoning loop. With zero tools this is defense-in-depth, but it also
+    documents the contract: the LLM is expected to return on its first pass.
+    """
+
+    def test_crew_source_uses_max_iter_2(self) -> None:
+        # Source-level check (rather than instantiating the Crew, which the
+        # other tests in this file deliberately avoid).
+        path = Path("src/finwiz/crews/deep_analysis/deep_analysis.py")
+        text = path.read_text(encoding="utf-8")
+        assert "max_iter=2" in text
+        assert "max_iter=5" not in text
+
+
+class TestPerHoldingTimeoutDefault:
+    """``FINWIZ_HOLDING_TIMEOUT`` default bumped 600 → 900 s. Verified by
+    reading the source (env-var fallbacks are baked in at import time, so a
+    monkeypatch test would only assert the env-var path, not the literal).
+    """
+
+    def test_crew_execution_default_is_900s(self) -> None:
+        path = Path("src/finwiz/infrastructure/resilience/crew_execution.py")
+        text = path.read_text(encoding="utf-8")
+        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "900")' in text
+        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "600")' not in text
+
+    def test_orchestrator_default_is_900s(self) -> None:
+        path = Path("src/finwiz/orchestrators/deep_analysis_orchestrator.py")
+        text = path.read_text(encoding="utf-8")
+        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "900")' in text
+        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "600")' not in text

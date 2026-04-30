@@ -13,12 +13,17 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
+from pydantic import ValidationError
+
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Configuration — loaded lazily from ResilienceConfig
-CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
+# Configuration — loaded lazily from ResilienceConfig.
+# Default bumped from 600 → 900 s after the 2026-04-29 run had DELL succeed
+# at 1488 s (asyncio.wait_for cannot interrupt sync crew.kickoff() inside a
+# ThreadPoolExecutor; we want enough budget to keep long-tail successes).
+CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
 
 
 def _get_failure_threshold() -> int:
@@ -107,6 +112,14 @@ async def execute_crew_with_timeout(
         _crew_failures[crew_name] = 0
         logger.info(f"Crew {crew_name} completed successfully")
         return result
+
+    except ValidationError:
+        # Deterministic schema failure — backoff doesn't help (the LLM's next
+        # output will fail the same validator). Re-raise without incrementing
+        # the breaker counter so a thrashing schema mismatch doesn't trip the
+        # breaker on healthy upstream providers. The 2026-04-28 ETF cascade
+        # was driven by exactly this confounder.
+        raise
 
     except (TimeoutError, Exception) as exc:
         # Track failure

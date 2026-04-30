@@ -12,7 +12,7 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from finwiz.analysis._helpers import _today_french
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
@@ -24,38 +24,110 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+_EVENT_MAX_CHARS = 200
+_LEADERSHIP_MAX_CHARS = 1000
+_CORPORATE_STRUCTURE_MAX_CHARS = 2000
+_PLACEHOLDER = "Information indisponible"
+
+
 class _FactPackRaw(BaseModel):
     """Subset of FactPack returned by Perplexity (Python adds freshness + fetched_at).
 
     Mirrors FactPack but excludes Python-controlled fields. AI cannot supply
     `fetched_at` or `freshness` — Python is authoritative.
+
+    Round-2 fix (2026-04-29): the validators below used to *raise* when the
+    LLM returned overlong events (200-char cap) or non-http(s) citation URLs,
+    which made the deterministic Perplexity fetch fail intermittently and
+    short-circuited the whole pipeline to "Analyse en attente". The new
+    validators are *truncating / filtering* — they normalize the LLM's output
+    and log a warning, but never raise. The canonical :class:`FactPack`
+    schema keeps strict validation; this bridging schema is lenient.
     """
 
-    corporate_structure: str = Field(min_length=1, max_length=2000)
+    corporate_structure: str = Field(default=_PLACEHOLDER, max_length=_CORPORATE_STRUCTURE_MAX_CHARS)
     recent_events: list[str] = Field(default_factory=list, max_length=10)
-    leadership: str = Field(min_length=1, max_length=1000)
-    confidence: float = Field(ge=0.0, le=1.0)
+    leadership: str = Field(default=_PLACEHOLDER, max_length=_LEADERSHIP_MAX_CHARS)
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     source_citations: list[str] = Field(default_factory=list, max_length=20)
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
-    @field_validator("recent_events")
+    @model_validator(mode="before")
     @classmethod
-    def _check_event_lengths(cls, v: list[str]) -> list[str]:
-        for i, ev in enumerate(v):
-            if len(ev) > 200:
-                raise ValueError(f"recent_events[{i}] exceeds 200 chars (got {len(ev)})")
-            if not ev.strip():
-                raise ValueError(f"recent_events[{i}] is empty")
-        return v
+    def _normalize_llm_payload(cls, data: object) -> object:
+        """Truncate / filter LLM output instead of raising.
 
-    @field_validator("source_citations")
-    @classmethod
-    def _check_citation_urls(cls, v: list[str]) -> list[str]:
-        for i, url in enumerate(v):
-            if not (url.startswith("http://") or url.startswith("https://")):
-                raise ValueError(f"source_citations[{i}] is not http/https URL: {url!r}")
-        return v
+        - Truncates ``recent_events[i]`` to 200 chars (logs warning per truncation).
+        - Drops empty / whitespace-only entries from ``recent_events``.
+        - Truncates ``leadership`` to 1000 chars and ``corporate_structure``
+          to 2000 chars.
+        - Drops non-http(s) URLs from ``source_citations``.
+        - Substitutes a French placeholder when prose fields are empty.
+        """
+        if not isinstance(data, dict):
+            return data
+
+        events = data.get("recent_events")
+        if isinstance(events, list):
+            normalized: list[str] = []
+            for i, ev in enumerate(events):
+                if not isinstance(ev, str):
+                    continue
+                stripped = ev.strip()
+                if not stripped:
+                    continue
+                if len(stripped) > _EVENT_MAX_CHARS:
+                    logger.warning(
+                        f"recent_events[{i}] truncated from {len(stripped)} to {_EVENT_MAX_CHARS} chars",
+                    )
+                    stripped = stripped[:_EVENT_MAX_CHARS].rstrip()
+                normalized.append(stripped)
+            data["recent_events"] = normalized
+
+        leadership = data.get("leadership")
+        if isinstance(leadership, str):
+            stripped = leadership.strip()
+            if not stripped:
+                data["leadership"] = _PLACEHOLDER
+            elif len(stripped) > _LEADERSHIP_MAX_CHARS:
+                logger.warning(
+                    f"leadership truncated from {len(stripped)} to {_LEADERSHIP_MAX_CHARS} chars",
+                )
+                data["leadership"] = stripped[:_LEADERSHIP_MAX_CHARS].rstrip()
+            else:
+                data["leadership"] = stripped
+
+        corporate = data.get("corporate_structure")
+        if isinstance(corporate, str):
+            stripped = corporate.strip()
+            if not stripped:
+                data["corporate_structure"] = _PLACEHOLDER
+            elif len(stripped) > _CORPORATE_STRUCTURE_MAX_CHARS:
+                logger.warning(
+                    f"corporate_structure truncated from {len(stripped)} to {_CORPORATE_STRUCTURE_MAX_CHARS} chars",
+                )
+                data["corporate_structure"] = stripped[:_CORPORATE_STRUCTURE_MAX_CHARS].rstrip()
+            else:
+                data["corporate_structure"] = stripped
+
+        citations = data.get("source_citations")
+        if isinstance(citations, list):
+            kept: list[str] = []
+            dropped = 0
+            for url in citations:
+                if not isinstance(url, str):
+                    dropped += 1
+                    continue
+                if not (url.startswith("http://") or url.startswith("https://")):
+                    dropped += 1
+                    continue
+                kept.append(url)
+            if dropped:
+                logger.warning(f"Dropped {dropped} non-http(s) entries from source_citations")
+            data["source_citations"] = kept
+
+        return data
 
 
 _SYSTEM_FR = (

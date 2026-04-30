@@ -9,7 +9,10 @@ from __future__ import annotations
 
 import json
 import logging
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.analysis._helpers import _build_crew_inputs, _get_analysis_crew
 from finwiz.analysis.stages._qualify_fallbacks import (
@@ -18,10 +21,17 @@ from finwiz.analysis.stages._qualify_fallbacks import (
 )
 from finwiz.analysis.stages._resilience import StageContext, stage
 from finwiz.schemas.hybrid_analysis import (
+    ContextualRiskInsights,
     EnrichedAnalysis,
+    FundamentalContextInsights,
+    InvestmentSynthesis,
     QualitativeInsights,
     QuantitativeAnalysis,
+    SecAnalysisInsights,
+    TechnicalStrategyInsights,
 )
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
 from finwiz.schemas.stage_contract import StageOutcome, StageProvenance, StageResult
 
 if TYPE_CHECKING:
@@ -30,6 +40,52 @@ if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
 
 logger = logging.getLogger(__name__)
+
+
+class _QualitativeInsightsRaw(BaseModel):
+    """Bridging schema for the LLM's qualitative output.
+
+    Mirrors :class:`QualitativeInsights` minus the Python-controlled fields
+    that produced the 2026-04-28 LLM/Pydantic thrash:
+
+    * ``fact_pack`` is dropped — Python fetches verified facts via
+      :mod:`finwiz.analysis.fact_pack_research` and overlays them on
+      promotion. The LLM never has to satisfy ``FactPack``'s freshness
+      ``model_validator`` or its 200/1000-char string caps.
+    * ``analysis_timestamp`` is dropped — Python sets it on promotion.
+
+    ``extra="ignore"`` so any of those keys the LLM still emits are dropped
+    silently rather than triggering a retry loop.
+    """
+
+    investment_synthesis: InvestmentSynthesis | None = Field(default=None)
+    sec_insights: SecAnalysisInsights | None = Field(default=None)
+    fundamental_context: FundamentalContextInsights | None = Field(default=None)
+    technical_strategy: TechnicalStrategyInsights | None = Field(default=None)
+    contextual_risks: ContextualRiskInsights | None = Field(default=None)
+    strategic_analysis: StrategicAnalysis | None = Field(default=None)
+    ai_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+
+    model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
+
+
+def _promote_to_qualitative(
+    raw: _QualitativeInsightsRaw,
+    fact_pack: FactPack | None = None,
+) -> QualitativeInsights:
+    """Promote a raw LLM-bridging payload to the canonical schema.
+
+    Python attaches the deterministic ``fact_pack`` (if available) and a
+    fresh ``analysis_timestamp``. Validation runs against the public schema
+    so internal Python code paths still benefit from strict validation.
+    """
+    return QualitativeInsights.model_validate(
+        {
+            **raw.model_dump(),
+            "fact_pack": fact_pack,
+            "analysis_timestamp": datetime.now(UTC),
+        },
+    )
 
 
 def _try_ai_qualify(
@@ -82,7 +138,7 @@ def _try_ai_qualify(
 
     # Only return None when the AI call succeeded but returned empty/null content.
     # This is the one legitimate trigger for the DEGRADED branch.
-    qual = _extract_qualitative(crew_result, quant)
+    qual = _extract_qualitative(crew_result, quant, fact_pack=fact_pack)
     if qual is not None and _has_qualitative_content(qual):
         logger.info(f"Qualitative insights generated for {ctx.ticker}")
         return qual
@@ -224,15 +280,37 @@ def _has_qualitative_content(qual: QualitativeInsights | None) -> bool:
     return any([has_sec, has_fundamental, has_technical, has_risks, has_synthesis, has_confidence])
 
 
-def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -> QualitativeInsights:
-    """Extract QualitativeInsights from crew result."""
+def _extract_qualitative(
+    crew_result: CrewOutput,
+    quant: QuantitativeAnalysis,
+    fact_pack: FactPack | None = None,
+) -> QualitativeInsights:
+    """Extract QualitativeInsights from a crew result.
+
+    The deep-analysis crew now emits :class:`_QualitativeInsightsRaw` (no
+    fact_pack, no analysis_timestamp). When that bridging schema is found,
+    promote it via :func:`_promote_to_qualitative` so Python attaches the
+    deterministic fact_pack and a fresh timestamp.
+
+    Older code paths that still produce :class:`QualitativeInsights` directly
+    continue to work — we just hand them through.
+    """
+
+    def _coerce(candidate: Any) -> QualitativeInsights | None:
+        """Return a canonical QualitativeInsights from raw or canonical input."""
+        if isinstance(candidate, QualitativeInsights):
+            return candidate
+        if isinstance(candidate, _QualitativeInsightsRaw):
+            return _promote_to_qualitative(candidate, fact_pack=fact_pack)
+        return None
+
     # Try to get pydantic model directly
     if hasattr(crew_result, "pydantic") and crew_result.pydantic:
-        # Case 1: Direct QualitativeInsights
-        if isinstance(crew_result.pydantic, QualitativeInsights):
-            qual = crew_result.pydantic
-            if _has_qualitative_content(qual):
-                return qual
+        # Case 1: Direct QualitativeInsights or _QualitativeInsightsRaw
+        coerced = _coerce(crew_result.pydantic)
+        if coerced is not None and _has_qualitative_content(coerced):
+            return coerced
+        if coerced is not None:
             logger.warning("QualitativeInsights from pydantic has no content, trying fallback")
 
         # Case 2: EnrichedAnalysis containing QualitativeInsights
@@ -247,12 +325,11 @@ def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -
     if hasattr(crew_result, "tasks_output") and crew_result.tasks_output:
         for task_output in crew_result.tasks_output:
             if hasattr(task_output, "pydantic"):
-                # Check for direct QualitativeInsights
-                if isinstance(task_output.pydantic, QualitativeInsights):
-                    qual = task_output.pydantic
-                    if _has_qualitative_content(qual):
-                        logger.info("Extracted QualitativeInsights from tasks_output")
-                        return qual
+                # Check for direct QualitativeInsights or raw bridging schema
+                coerced = _coerce(task_output.pydantic)
+                if coerced is not None and _has_qualitative_content(coerced):
+                    logger.info("Extracted QualitativeInsights from tasks_output")
+                    return coerced
                 # Check for EnrichedAnalysis containing qualitative
                 if isinstance(task_output.pydantic, EnrichedAnalysis) and task_output.pydantic.qualitative:
                     qual = task_output.pydantic.qualitative
@@ -260,18 +337,26 @@ def _extract_qualitative(crew_result: CrewOutput, quant: QuantitativeAnalysis) -
                         logger.info("Extracted QualitativeInsights from tasks_output EnrichedAnalysis")
                         return qual
 
-    # Try to parse from raw output
+    # Try to parse from raw output. Prefer the bridging schema (it's what the
+    # crew is asked to produce now); fall back to the canonical schema for
+    # legacy outputs.
     if hasattr(crew_result, "raw") and crew_result.raw:
         try:
             data = json.loads(crew_result.raw)
             # Try to extract qualitative from EnrichedAnalysis-shaped JSON
             if "qualitative" in data and isinstance(data["qualitative"], dict):
-                qual = QualitativeInsights(**data["qualitative"])
+                qual = _promote_to_qualitative(
+                    _QualitativeInsightsRaw.model_validate(data["qualitative"]),
+                    fact_pack=fact_pack,
+                )
                 if _has_qualitative_content(qual):
                     logger.info("Extracted QualitativeInsights from raw JSON qualitative field")
                     return qual
-            # Try direct QualitativeInsights parse
-            qual = QualitativeInsights(**data)
+            # Try direct parse via the bridging schema
+            qual = _promote_to_qualitative(
+                _QualitativeInsightsRaw.model_validate(data),
+                fact_pack=fact_pack,
+            )
             if _has_qualitative_content(qual):
                 return qual
             logger.warning("Parsed QualitativeInsights has no content, using fallback")

@@ -139,3 +139,55 @@ async def test_reset_circuit_breakers(mocker):
 
     assert result == "fresh_start"
     assert _crew_failures["reset_test"] == 0
+
+
+@pytest.mark.asyncio
+async def test_validation_error_does_not_increment_breaker(mocker):
+    """Pydantic ValidationError must NOT trip the circuit breaker.
+
+    Regression for the 2026-04-28 ETF cascade: the LLM kept producing payloads
+    that failed FactPack's freshness model_validator, CrewAI retried, and the
+    breaker tripped on what was really a deterministic schema mismatch. Backoff
+    cannot fix a schema mismatch — exclude these from the failure counter.
+    """
+    from pydantic import BaseModel, ValidationError
+
+    class _Schema(BaseModel):
+        x: int
+
+    def kickoff_raises(inputs=None):
+        # Force a real ValidationError (not a synthesized subclass).
+        _Schema(x="not-an-int")  # type: ignore[arg-type]
+
+    crew = _make_crew(mocker, side_effect=kickoff_raises)
+
+    with pytest.raises(ValidationError):
+        await execute_crew_with_timeout("schema_thrash", crew, {"ticker": "X"}, timeout=10)
+
+    # No counter increment, no breaker entry.
+    assert _crew_failures.get("schema_thrash", 0) == 0
+    assert "schema_thrash" not in _crew_circuit_open
+
+
+def test_emit_pending_distinguishes_breaker_open_reason() -> None:
+    """_emit_pending must produce a distinctive French rationale when the
+    upstream reason names the circuit breaker, so users can tell a breaker-
+    induced skip apart from a generic pending row.
+    """
+    from pathlib import Path
+
+    from finwiz.analysis.stages._ledger import RunLedger
+    from finwiz.analysis.stages._resilience import StageContext
+    from finwiz.analysis.stages.emit import _emit_pending
+
+    ledger = RunLedger(run_id="r-test", artifact_dir=Path("/tmp/finwiz-test-ledger"))
+    ctx = StageContext(ticker="EXSA.DE", run_id="r-test", ledger=ledger, extras={})
+
+    breaker_reason = "Circuit breaker open for deep_analysis_etf"
+    pending = _emit_pending(ctx, reason=breaker_reason)
+    assert "circuit breaker ouvert" in pending.rationale
+    assert "réessayer" in pending.rationale
+
+    # Generic pending stays distinct.
+    other = _emit_pending(ctx, reason="qualify timed out")
+    assert "circuit breaker" not in other.rationale.lower()

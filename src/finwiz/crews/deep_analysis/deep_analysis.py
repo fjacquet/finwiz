@@ -91,22 +91,21 @@ apply_json_repair_patch()
 
 
 def _build_asset_analyst_tools() -> list[Any]:
-    """Return PerplexitySearchTool when PPLX_API_KEY is set, else empty list.
+    """Return an empty tool list — agent runs on prompt + fact_pack only.
 
-    Falls back gracefully when the env var is missing (CI without secrets,
-    local dev without a Perplexity key) instead of crashing crew construction
-    with a Pydantic ValidationError. The prompt's anti-hallucination rules
-    still apply in zero-tool mode — fact verification is just unavailable.
+    The earlier design gave the agent a ``PerplexitySearchTool`` for "bounded
+    fact verification". In practice it added 10-15 s per tool call plus an
+    extra agent reasoning iteration to interpret the result, and on the
+    2026-04-29 run the slowest holding (DELL) sat in the agent loop for
+    24 minutes. Since the ``fact_pack`` stage already runs Perplexity
+    deterministically before qualify, and ``analysis/_helpers._build_crew_inputs``
+    interpolates the verified facts directly into the prompt, the agent has
+    *nothing* it could verify that Python hasn't already verified.
+
+    Removing the tool also lets ``max_iter`` collapse to 1 in practice — with
+    no tools to call, the LLM returns text on the first iteration and exits.
     """
-    import os
-
-    if not os.getenv("PPLX_API_KEY"):
-        logger.warning("PPLX_API_KEY not set — asset_analyst falling back to zero-tool mode. Fact verification disabled; relying solely on prompt anti-hallucination rules.")
-        return []
-
-    from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
-
-    return [PerplexitySearchTool()]
+    return []
 
 
 @CrewBase
@@ -140,11 +139,18 @@ class DeepAnalysisCrew:
         with open(current_dir / "config" / "tasks.yaml") as f:
             self.tasks_config = yaml.safe_load(f)
 
-        # Import Pydantic models for Task output_pydantic (use raw classes)
+        # Import Pydantic models for Task output_pydantic (use raw classes).
+        # The crew emits the *bridging* schema _QualitativeInsightsRaw — it
+        # excludes ``fact_pack`` and ``analysis_timestamp`` (Python supplies
+        # both), which removes the LLM/Pydantic thrash that exhausted the
+        # 600s per-holding budget on 2026-04-28. Promotion to the canonical
+        # QualitativeInsights happens in qualify._extract_qualitative.
+        from finwiz.analysis.stages.qualify import _QualitativeInsightsRaw
         from finwiz.schemas.hybrid_analysis.qualitative import QualitativeInsights
 
         # Store raw Pydantic classes for Task.output_pydantic
         self.QualitativeInsights = QualitativeInsights
+        self.QualitativeInsightsRaw = _QualitativeInsightsRaw
 
         # Make Pydantic models available for CrewAI resolution (wrapped versions)
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)
@@ -264,7 +270,11 @@ class DeepAnalysisCrew:
         """
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
-            output_pydantic=self.QualitativeInsights,  # Pydantic model for structured output
+            # Use the bridging schema (no fact_pack, no analysis_timestamp).
+            # Python promotes the raw payload back to QualitativeInsights in
+            # qualify._extract_qualitative — the LLM never has to satisfy
+            # FactPack's freshness model_validator or its 200/1000-char caps.
+            output_pydantic=self.QualitativeInsightsRaw,
         )
 
     @crew
@@ -299,7 +309,7 @@ class DeepAnalysisCrew:
             tasks=crew_tasks,  # Dynamic task list based on configuration
             process=Process.sequential,
             verbose=True,
-            max_iter=5,  # ⚡ OPTIMIZED: Reduced to 5 (fail fast, prevent context bloat from retries)
+            max_iter=2,  # ⚡ With zero tools the agent returns on iteration 1; 2 is defense-in-depth
             respect_context_window=True,
             allow_delegation=False,
             max_rpm=20,

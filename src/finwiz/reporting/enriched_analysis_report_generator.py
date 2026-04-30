@@ -200,32 +200,41 @@ class EnrichedAnalysisReportGenerator:
         else:
             template_vars["analysis_date"] = datetime.now()
 
-        # Extract nested quantitative data for easier template access
-        if "quantitative" in data:
-            quant = data["quantitative"]
-            template_vars["composite_score"] = quant.get("composite_score", 0.0)
-            template_vars["fundamental_score"] = quant.get("fundamental_score", 0.0)
-            template_vars["technical_score"] = quant.get("technical_score", 0.0)
-            template_vars["risk_score"] = quant.get("risk_score", 0.0)
-            template_vars["grade"] = quant.get("grade", "N/A")
-            template_vars["preliminary_recommendation"] = quant.get("preliminary_recommendation", "HOLD")
-            template_vars["fundamental_metrics"] = quant.get("fundamental_metrics", {})
-            template_vars["technical_indicators"] = quant.get("technical_indicators", {})
-            template_vars["risk_metrics"] = quant.get("risk_metrics", {})
+        # Extract nested quantitative/qualitative data for easier template access.
+        # When the per-holding pipeline skipped scoring or qualitative analysis
+        # (e.g. missing critical fields, breaker-induced bypass), the matching
+        # field is None — the reporter must still render a "skipped" card
+        # rather than crash on ``None.get(...)``.
+        quant = data.get("quantitative") or {}
+        qual = data.get("qualitative") or {}
 
-            # ADR-011: pass tactical price targets through for the per-ticker detail panel.
-            template_vars["price_targets"] = quant.get("price_targets") if quant else None
-        else:
-            template_vars["price_targets"] = None
+        template_vars["composite_score"] = quant.get("composite_score", 0.0)
+        template_vars["fundamental_score"] = quant.get("fundamental_score", 0.0)
+        template_vars["technical_score"] = quant.get("technical_score", 0.0)
+        template_vars["risk_score"] = quant.get("risk_score", 0.0)
+        template_vars["grade"] = quant.get("grade", "N/A")
+        template_vars["preliminary_recommendation"] = quant.get("preliminary_recommendation", "HOLD")
+        template_vars["fundamental_metrics"] = quant.get("fundamental_metrics", {})
+        template_vars["technical_indicators"] = quant.get("technical_indicators", {})
+        template_vars["risk_metrics"] = quant.get("risk_metrics", {})
 
-        # Extract nested qualitative data for easier template access
-        if "qualitative" in data:
-            qual = data["qualitative"]
-            template_vars["sec_insights"] = qual.get("sec_insights") or {}
-            template_vars["fundamental_context"] = qual.get("fundamental_context") or {}
-            template_vars["technical_strategy"] = qual.get("technical_strategy") or {}
-            template_vars["contextual_risks"] = qual.get("contextual_risks") or {}
-            template_vars["investment_synthesis"] = qual.get("investment_synthesis") or {}
+        template_vars["sec_insights"] = qual.get("sec_insights") or {}
+        template_vars["fundamental_context"] = qual.get("fundamental_context") or {}
+        template_vars["technical_strategy"] = qual.get("technical_strategy") or {}
+        template_vars["contextual_risks"] = qual.get("contextual_risks") or {}
+        template_vars["investment_synthesis"] = qual.get("investment_synthesis") or {}
+
+        # ADR-011: pass tactical price targets through for the per-ticker detail panel.
+        template_vars["price_targets"] = quant.get("price_targets") if quant else None
+
+        # If EITHER side is missing the report cannot show a real verdict, so
+        # render the "skipped" banner. Codex/CodeRabbit P2 fix: the previous
+        # ``and not`` predicate let a partial-quant payload (e.g. quant present
+        # but qual missing because the qualify stage timed out) reach the
+        # full-render branch and crash on missing nested fields like
+        # ``qualitative.ai_confidence``.
+        template_vars["analysis_skipped"] = not quant or not qual
+        template_vars["analysis_skipped_reason"] = data.get("rationale") or data.get("skip_reason") or "Stage failure — see provenance"
 
         # Extract sentiment summary for report enrichment (Phase 16)
         sentiment_summary = data.get("sentiment_summary", None)

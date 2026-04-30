@@ -229,7 +229,14 @@ class TestDeepAnalysisOrchestrator:
         assert "GOOGL" in result
 
     def test_should_handle_analysis_failure_gracefully(self, mocker, orchestrator):
-        """Test that analysis failures are handled gracefully."""
+        """Test that analysis failures surface a synthetic pending result.
+
+        Round-2 fix (2026-04-29): instead of swallowing the failure and
+        returning an empty dict, the orchestrator now produces a
+        ``DeepAnalysisResult`` with ``grade="N/A"`` and a specific
+        ``rationale`` that the merge layer + section_generators can render
+        in the HTML report (e.g. "Analyse interrompue : RuntimeError ...").
+        """
 
         def failing_analysis(ticker, asset_class, company_name="", **kwargs):
             raise RuntimeError("Analysis failed")
@@ -243,8 +250,29 @@ class TestDeepAnalysisOrchestrator:
 
         result = orchestrator.run_deep_analysis_on_holdings(holdings)
 
-        # Should return empty dict on failure (graceful degradation)
-        assert result == {}
+        assert "FAIL" in result
+        pending = result["FAIL"]
+        assert pending.grade == "N/A"
+        assert "RuntimeError" in pending.rationale
+        assert "Analyse interrompue" in pending.rationale
+
+    def test_make_synthetic_pending_uses_specific_rationale(self):
+        """The static helper that the timeout / exception arms use to build
+        a pending DeepAnalysisResult must preserve the *specific* rationale
+        passed in. Previously the timeout path returned ``(ticker, None, None)``
+        and the renderer fell back to a generic placeholder, hiding the
+        actual reason from the user.
+        """
+        pending = DeepAnalysisOrchestrator._make_synthetic_pending(
+            ticker="ASML",
+            asset_class="stock",
+            rationale="Analyse interrompue : crew dépassé 900s — voir logs",
+        )
+        assert pending.ticker == "ASML"
+        assert pending.asset_class == "stock"
+        assert pending.grade == "N/A"
+        assert pending.recommendation == "WAIT"
+        assert "crew dépassé 900s" in pending.rationale
 
     def test_should_skip_invalid_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test that holdings without ticker or asset_class are skipped."""

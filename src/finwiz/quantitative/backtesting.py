@@ -139,21 +139,66 @@ class BacktestingEngine:
 
             # Extract strategy instance
             strategy_instance = results[0]
-
-            # Calculate performance metrics
-            backtest_result = self.performance_analyzer.calculate_performance_metrics(strategy_instance, symbol, start_date, end_date, initial_value, final_value, benchmark_symbol)
-
-            self.logger.info(
-                f"Backtest completed: Total Return={backtest_result.total_return:.2f}%, "
-                f"Sharpe Ratio={backtest_result.sharpe_ratio:.2f}, "
-                f"Max Drawdown={backtest_result.max_drawdown:.2f}%"
-            )
-
-            return backtest_result
-
         except Exception as e:
+            # Cerebro itself failed (data feed, analyzer setup, etc.). Bubble
+            # up — the caller still wants visibility into "no backtest at all".
             self.logger.error(f"Error during backtest execution: {e}")
             raise
+
+        # Calculate performance metrics with a safe-default fallback. The
+        # 2026-04-29 run had AAPL fail here with `list index out of range`
+        # from a benchmark date misalignment in calculate_benchmark_metrics;
+        # the exception bubbled up, the scorer marked `volatility="missing"`,
+        # and the holding was skipped entirely. With the fallback the
+        # backtest still produces a lawful BacktestResult (volatility=0.0,
+        # var/cvar=None) so qualitative analysis can still run.
+        try:
+            backtest_result = self.performance_analyzer.calculate_performance_metrics(
+                strategy_instance,
+                symbol,
+                start_date,
+                end_date,
+                initial_value,
+                final_value,
+                benchmark_symbol,
+            )
+        except Exception as perf_error:
+            self.logger.error(
+                f"⚠️  Performance metrics failed for {symbol}: {perf_error}. "
+                "Falling back to safe BacktestResult (volatility=0.0, var/cvar=None). "
+                "This is a known fallback, NOT an assumption — the holding will still be analyzed.",
+                exc_info=True,
+            )
+            backtest_result = BacktestResult(
+                strategy_name=getattr(strategy_class, "__name__", "unknown"),
+                symbol=symbol,
+                start_date=start_date,
+                end_date=end_date,
+                initial_capital=float(initial_value),
+                final_value=float(final_value) if final_value > 0 else float(initial_value),
+                total_return=0.0,
+                annualized_return=0.0,
+                volatility=0.0,
+                sharpe_ratio=0.0,
+                max_drawdown=0.0,
+                total_trades=0,
+                winning_trades=0,
+                losing_trades=0,
+                var_95=None,
+                cvar_95=None,
+                calmar_ratio=None,
+                benchmark_return=None,
+                alpha=None,
+                beta=None,
+            )
+
+        self.logger.info(
+            f"Backtest completed: Total Return={backtest_result.total_return:.2f}%, "
+            f"Sharpe Ratio={backtest_result.sharpe_ratio:.2f}, "
+            f"Max Drawdown={backtest_result.max_drawdown:.2f}%",
+        )
+
+        return backtest_result
 
     def run_multi_strategy_backtest(self, strategies: list[tuple[type, dict[str, Any]]], symbol: str, start_date: datetime, end_date: datetime) -> list[BacktestResult]:
         """

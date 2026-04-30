@@ -221,7 +221,14 @@ class DeepAnalysisOrchestrator:
 
             except Exception as e:
                 self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
-                # Continue with other holdings
+                # Surface the specific exception so the report can show
+                # "Analyse interrompue : <Type> ..." instead of falling back to
+                # the generic "Analyse approfondie non disponible" placeholder.
+                results[ticker] = self._make_synthetic_pending(
+                    ticker=ticker,
+                    asset_class=asset_class,
+                    rationale=f"Analyse interrompue : {type(e).__name__} — voir logs",
+                )
 
         self.logger.info(f"Deep analysis completed: {len(results)}/{len(holdings)} holdings analyzed")
         return results
@@ -268,6 +275,43 @@ class DeepAnalysisOrchestrator:
     def get_enriched_analysis(self, ticker: str) -> Any | None:
         """Get stored enriched analysis for a ticker."""
         return self._enriched_analyses.get(ticker)
+
+    @staticmethod
+    def _make_synthetic_pending(ticker: str, asset_class: str, rationale: str) -> DeepAnalysisResult:
+        """Build a synthetic pending result so the rationale reaches the renderer.
+
+        Without this, the orchestrator returned ``(ticker, None, None)`` and
+        downstream merge / renderer applied a generic "Analyse approfondie non
+        disponible" placeholder — losing the *specific* reason (timeout,
+        breaker open, etc.) that the user needs to see. Mirrors the shape
+        produced by ``finwiz.analysis.stages.emit._emit_pending``.
+        """
+        return DeepAnalysisResult.model_construct(
+            ticker=ticker,
+            asset_class=asset_class or "unknown",
+            crew_name="pipeline",
+            composite_score=0.0,
+            grade="N/A",
+            recommendation="WAIT",
+            rationale=rationale,
+            risk_details={},
+            fundamental_score=None,
+            technical_score=None,
+            risk_score=None,
+            fundamental_details={},
+            technical_details={},
+            data_freshness_hours=0.0,
+            confidence_level=0.0,
+            confidence="low",
+            warnings=["upstream stage failure — analysis incomplete"],
+            data_quality=None,
+            lineage=None,
+            cached=False,
+            sentiment_score=None,
+            sentiment_confidence=None,
+            macro_score=None,
+            macro_regime=None,
+        )
 
     async def run_deep_analysis_concurrent(self, holdings: list[dict[str, Any]], max_workers: int | None = None) -> dict[str, DeepAnalysisResult]:
         """
@@ -323,8 +367,15 @@ class DeepAnalysisOrchestrator:
                 return (ticker, result, enriched)
             except Exception as e:
                 self.logger.error(f"Concurrent analysis failed for {ticker}: {e}", exc_info=True)
-                # Failure is recorded by the @stage decorator on emit; no manual append needed.
-                return (ticker, None, None)
+                # Surface the specific exception in a synthetic pending result so
+                # the report renderer can show "Analyse interrompue : <Type> ..."
+                # instead of falling back to the generic placeholder.
+                pending = self._make_synthetic_pending(
+                    ticker=ticker,
+                    asset_class=asset_class,
+                    rationale=f"Analyse interrompue : {type(e).__name__} — voir logs",
+                )
+                return (ticker, pending, None)
 
         # Use a semaphore to limit concurrency - this ensures timeout starts when work begins
         # NOT when it's queued (which was the bug causing all timeouts at same second)
@@ -332,8 +383,10 @@ class DeepAnalysisOrchestrator:
         completed: list[tuple[str, DeepAnalysisResult | None, Any | None]] = []
         semaphore = asyncio.Semaphore(max_workers)
 
-        # Per-holding timeout - prevents one stuck ticker blocking all
-        PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
+        # Per-holding timeout - prevents one stuck ticker blocking all.
+        # Default 900 s after the 2026-04-29 run (DELL succeeded at 1488 s,
+        # asyncio.wait_for cannot interrupt sync crew.kickoff() in a thread).
+        PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
 
         async def analyze_with_timeout(holding: dict[str, Any], executor: Any) -> tuple[str, DeepAnalysisResult | None, Any | None]:
             """Wrap analysis with per-holding timeout that starts when work begins."""
@@ -350,11 +403,24 @@ class DeepAnalysisOrchestrator:
                 except TimeoutError:
                     self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
                     # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
-                    return (ticker, None, None)
+                    # Surface the timeout reason in a synthetic pending result so
+                    # the renderer can show "crew dépassé Xs — voir logs" instead
+                    # of a generic placeholder.
+                    pending = self._make_synthetic_pending(
+                        ticker=ticker,
+                        asset_class=str(holding.get("asset_class") or "unknown"),
+                        rationale=(f"Analyse interrompue : crew dépassé {PER_HOLDING_TIMEOUT}s — voir logs"),
+                    )
+                    return (ticker, pending, None)
                 except Exception as e:
                     self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
                     # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
-                    return (ticker, None, None)
+                    pending = self._make_synthetic_pending(
+                        ticker=ticker,
+                        asset_class=str(holding.get("asset_class") or "unknown"),
+                        rationale=(f"Analyse interrompue : {type(e).__name__} — voir logs"),
+                    )
+                    return (ticker, pending, None)
 
         # NO AGGREGATE TIMEOUT. Each holding has its own PER_HOLDING_TIMEOUT
         # (analyze_with_timeout above). An aggregate cap would discard already
