@@ -231,6 +231,76 @@ class TestEnrichedAnalysisReportProperties:
         assert "monitoring" in html_content.lower() or "surveillance" in html_content.lower(), "Report must contain monitoring points"
         assert "exit" in html_content.lower() or "sortie" in html_content.lower(), "Report must contain exit triggers"
 
+
+class TestRendererShowsPriceTargets:
+    """ADR-011: per-ticker HTML report shows a Targets panel when price_targets
+    is present; gracefully omits it when None.
+    """
+
+    def _payload_with_targets(self) -> dict:
+        return {
+            "ticker": "AAPL",
+            "company_name": "Apple Inc.",
+            "asset_class": "stock",
+            "analysis_date": datetime.now(),
+            "executive_summary": "summary " * 250,  # past 200-word floor
+            "investment_rationale": "rat " * 600,
+            "final_grade": "A",
+            "final_recommendation": "BUY",
+            "recommendation_confidence": "HIGH",
+            "final_score": 0.85,
+            "report_word_count": 2200,
+            "unique_insights_count": 6,
+            "processing_time_seconds": 5.0,
+            "llm_cost_dollars": 0.05,
+            "quantitative": {
+                "composite_score": 0.85,
+                "fundamental_score": 0.85,
+                "technical_score": 0.85,
+                "risk_score": 1.5,
+                "grade": "A",
+                "preliminary_recommendation": "BUY",
+                "fundamental_metrics": {},
+                "technical_indicators": {},
+                "risk_metrics": {},
+                "price_targets": {
+                    "current_price": 100.0,
+                    "currency": "USD",
+                    "buy_target_primary": 120.0,
+                    "sell_target_primary": 85.0,
+                    "buy_rationale": "Objectif: drift + résistance — confiance élevée.",
+                    "sell_rationale": "Plancher: ATR floor — confiance élevée.",
+                },
+            },
+            "qualitative": {"ai_confidence": 0.9},
+        }
+
+    def test_detail_panel_renders_when_price_targets_present(self) -> None:
+        gen = EnrichedAnalysisReportGenerator()
+        html = gen.generate_report(self._payload_with_targets())
+        # Section heading present.
+        assert "Objectifs Tactiques" in html or "🎯" in html
+        # Both numbers visible.
+        assert "120.00" in html or "$120" in html
+        assert "85.00" in html or "$85" in html
+        # Confidence rationale text appears (escaped or as-is).
+        assert "élevée" in html or "élev" in html  # may be HTML-escaped accent
+
+    def test_detail_panel_omitted_when_price_targets_none(self) -> None:
+        payload = self._payload_with_targets()
+        payload["quantitative"]["price_targets"] = None
+        gen = EnrichedAnalysisReportGenerator()
+        html = gen.generate_report(payload)
+        # Section heading must NOT appear.
+        assert "Objectifs Tactiques" not in html
+
+    def test_detail_panel_omitted_when_price_targets_missing_from_quant(self) -> None:
+        payload = self._payload_with_targets()
+        del payload["quantitative"]["price_targets"]
+        gen = EnrichedAnalysisReportGenerator()
+        html = gen.generate_report(payload)
+        assert "Objectifs Tactiques" not in html
+
     # Additional property: Report generation succeeds for valid data
     @given(enriched_data=enriched_analysis_strategy())
     @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
