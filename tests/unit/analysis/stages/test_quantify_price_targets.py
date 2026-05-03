@@ -47,7 +47,7 @@ def test_quantify_attaches_price_targets_when_history_available(mocker: Any) -> 
     )
     end = pd.Timestamp.now().normalize()
     idx = pd.bdate_range(end=end, periods=250)
-    prices = pd.Series(np.linspace(100.0, 130.0, 250), index=idx, dtype=float)
+    prices = pd.Series(np.linspace(100.0, 130.0, len(idx)), index=idx, dtype=float)
     raw = {"current_price": 130.0, "price_history": prices}
     ctx = AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Apple")
     _result, quant = calculate_quantitative(ctx, raw)
@@ -76,7 +76,7 @@ def test_quantify_no_price_targets_when_current_price_missing(mocker: Any) -> No
     )
     end = pd.Timestamp.now().normalize()
     idx = pd.bdate_range(end=end, periods=250)
-    prices = pd.Series(np.linspace(100.0, 130.0, 250), index=idx, dtype=float)
+    prices = pd.Series(np.linspace(100.0, 130.0, len(idx)), index=idx, dtype=float)
     raw = {"price_history": prices}  # no current_price
     ctx = AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Apple")
     _result, quant = calculate_quantitative(ctx, raw)
@@ -95,7 +95,7 @@ def test_quantify_swallows_tactical_pricing_failures(mocker: Any) -> None:
     )
     end = pd.Timestamp.now().normalize()
     idx = pd.bdate_range(end=end, periods=250)
-    prices = pd.Series(np.linspace(100.0, 130.0, 250), index=idx, dtype=float)
+    prices = pd.Series(np.linspace(100.0, 130.0, len(idx)), index=idx, dtype=float)
     raw = {"current_price": 130.0, "price_history": prices}
     ctx = AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Apple")
     _result, quant = calculate_quantitative(ctx, raw)
