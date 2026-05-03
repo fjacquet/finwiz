@@ -51,7 +51,7 @@ plot = "finwiz.main:plot"
 dev = [
   "ruff>=0.4.8,<1.0.0",
   "pytest>=8.4.1",
-  "pytest-mock>=3.14.1",
+  "pytest-mock>=3.15.1",
 ]
 
 [build-system]
@@ -379,7 +379,7 @@ package=true
 dev = [
     "mypy>=1.17.1",
     "pytest-asyncio>=1.1.0",
-    "pytest-mock>=3.14.1",
+    "pytest-mock>=3.15.1",
     "pytest-timeout>=2.4.0",
     "types-pyyaml>=6.0.12.20250822",
     "faker>=33.1.0",
