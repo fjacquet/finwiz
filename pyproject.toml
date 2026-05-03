@@ -387,7 +387,7 @@ dev = [
     "types-requests>=2.32.4.20250913",
     "types-psutil>=7.0.0.20251001",
     "pandas-stubs>=3.0.0.260204",
-    "scipy-stubs>=1.16.2.0",
+    "scipy-stubs>=1.17.1.4",
     "hypothesis>=6.148.1",
     "pre-commit>=4.5.1",
 ]
