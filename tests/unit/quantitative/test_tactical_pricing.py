@@ -13,7 +13,9 @@ from finwiz.schemas.portfolio_review import PriceTargets
 
 def _series(values: list[float], freq: str = "B") -> pd.Series:
     """Build a business-day-indexed price series ending today."""
-    end = pd.Timestamp.now().normalize()
+    # Snap to most recent business day so periods=N yields exactly N dates
+    # regardless of whether the test runs on a weekend.
+    end = pd.tseries.offsets.BDay(0).rollback(pd.Timestamp.now().normalize())
     idx = pd.bdate_range(end=end, periods=len(values))
     return pd.Series(values, index=idx, dtype=float)
 
@@ -114,7 +116,7 @@ class TestEdgeCases:
         assert result is None
 
     def test_stale_history_returns_none(self) -> None:
-        end = pd.Timestamp.now().normalize() - pd.Timedelta(days=10)
+        end = pd.tseries.offsets.BDay(0).rollback(pd.Timestamp.now().normalize() - pd.Timedelta(days=10))
         idx = pd.bdate_range(end=end, periods=120)
         prices = pd.Series([100.0] * 120, index=idx, dtype=float)
         result = compute_tactical_pricing(
@@ -208,7 +210,7 @@ class TestEdgeCases:
 class TestTimezone:
     def test_tz_aware_history_does_not_crash(self) -> None:
         """yfinance returns tz-aware indexes; the helper must not crash on them."""
-        end = pd.Timestamp.now(tz="America/New_York").normalize()
+        end = pd.tseries.offsets.BDay(0).rollback(pd.Timestamp.now(tz="America/New_York").normalize())
         idx = pd.bdate_range(end=end, periods=150, tz="America/New_York")
         prices = pd.Series(np.linspace(100.0, 130.0, 150), index=idx)
         result = compute_tactical_pricing(
