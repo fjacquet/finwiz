@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.3.0] - 2026-05-03
+
+### Added
+
+- **Tactical price targets and sell-level floors per holding (ADR-011)** --
+  Per-holding `PriceTargets` (buy/sell primary + secondary) computed from
+  price history, support/resistance, ATR floors, and asset-class-specific
+  caps (25% stocks/ETFs, 40% crypto). Surfaced in HTML report rationale.
+  See `src/finwiz/quantitative/tactical_pricing.py` and PR #38.
+
+### Fixed
+
+- **Deep analysis cascade for 2026-04-28 across 3 workstreams** -- repaired
+  cascade failure that propagated through the analysis pipeline. See PR #28.
+- **Test suite robust to weekend run dates** -- `pd.bdate_range(end=Sunday,
+  periods=N)` returns `N-1` business days because pandas drops a period
+  when end is non-business. Affected `test_quantify_price_targets.py` (3
+  tests) and `test_tactical_pricing.py` (15 tests). Snap end to the most
+  recent business day via `BDay(0).rollback` before calling `bdate_range`.
+
+### Changed
+
+- **Dependabot enabled** for weekly dependency updates (PR #29).
+- **Dependency bumps:** fastapi, beautifulsoup4, pytest-mock, pandas-stubs,
+  scipy-stubs, plus CI actions (checkout, setup-uv, upload-pages-artifact).
+- **Task Master AI integration removed** -- never used in practice; deleted
+  `AGENTS.md`, `docs/setup/CLAUDE_007_TASKMASTER_SETUP.md`, and local-only
+  `.vscode/mcp.json` / `amp.mcpServers` settings.
+- **AGENTS.md/CLAUDE.md deduplication** -- removed duplicated grepai and
+  code-review-graph sections (CLAUDE.md is single source of truth).
+
 ## [5.2.0] - 2026-04-28
 
 ### Added
