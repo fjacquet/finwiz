@@ -367,10 +367,27 @@ class TestPortfolioAwareDiscovery:
             "AMZN": [0.0, 0.01, 0.01, -0.02, 0.02, 0.0],
             "NFLX": [0.02, -0.01, 0.0, 0.01, 0.01, 0.0],
         }
+        # Default (empty) gap profile -> fail-soft path.
         self._wire(pipeline, mocker, universe=["TSLA", "AMZN", "NFLX"], signals={}, returns=rets)
         candidates = pipeline._gather_portfolio_aware_candidates()
         assert {c.ticker for c in candidates} == {"TSLA", "AMZN", "NFLX"}
-        assert all(c.portfolio_fit_score is not None for c in candidates)
+        # Recall preserved AND every candidate still scored (not collapsed to 0).
+        assert all(c.composite_score > 0 for c in candidates)
+
+    def test_empty_profile_preserves_standalone_score(self, pipeline, mocker):
+        """Fail-soft: an empty gap profile must NOT halve scores (regression for PR #45 Codex P2).
+
+        composite_score must equal the standalone factor score, not factor x 0.5,
+        so A/A+ grades and the 0.80 enrichment cutoff stay reachable.
+        """
+        from finwiz.discovery.market_data import factor_score_from_returns
+
+        rets = {"TSLA": [0.05, 0.04, 0.06, 0.03, 0.05, 0.04]}  # strong momentum
+        self._wire(pipeline, mocker, universe=["TSLA"], signals={}, returns=rets)
+        candidates = pipeline._gather_portfolio_aware_candidates()
+        expected = factor_score_from_returns(rets["TSLA"])
+        assert candidates[0].composite_score == pytest.approx(expected)
+        assert candidates[0].portfolio_fit_score is None
 
     def test_multiplicative_blend_and_gap_fill(self, pipeline, mocker):
         """final = factor x portfolio_fit: over-held sector ~0, gap sector ~factor."""

@@ -87,7 +87,7 @@ class PortfolioFitScorer:
         sector: str | None = None,
         returns: list[float] | None = None,
         risk_score: float | None = None,
-    ) -> tuple[float, str | None]:
+    ) -> tuple[float | None, str | None]:
         """Compute ``portfolio_fit`` and the gap label this candidate addresses.
 
         Args:
@@ -99,9 +99,13 @@ class PortfolioFitScorer:
         Returns:
             ``(fit, gap_filled)`` where ``fit`` is in ``[0, 1]`` and ``gap_filled``
             names the sector the candidate diversifies into (or ``None``).
+            ``fit`` is ``None`` when no fit signal is computable (empty profile or
+            no usable inputs); callers MUST treat ``None`` as "no adjustment"
+            (use the standalone score) rather than a multiplier, so the cascade
+            degrades to standalone-factor ranking instead of halving every score.
         """
         if profile is None or getattr(profile, "is_empty", True):
-            return NEUTRAL_FIT, None
+            return None, None
 
         terms: list[tuple[float, float]] = []  # (weight, value)
         gap_filled: str | None = None
@@ -127,11 +131,11 @@ class PortfolioFitScorer:
             terms.append((self.thresholds.weight_fit_risk, risk_reduction))
 
         if not terms:
-            return NEUTRAL_FIT, gap_filled
+            return None, gap_filled
 
         total_weight = sum(w for w, _ in terms)
         if total_weight <= 0.0:
-            return NEUTRAL_FIT, gap_filled
+            return None, gap_filled
 
         fit = sum(w * v for w, v in terms) / total_weight
         return _clamp01(fit), gap_filled
@@ -144,16 +148,19 @@ class PortfolioFitScorer:
         sector: str | None = None,
         returns: list[float] | None = None,
         risk_score: float | None = None,
-    ) -> tuple[float, str | None]:
+    ) -> tuple[float | None, str | None]:
         """Score a candidate as a replacement for a specific underperformer slot.
 
         Same blend as :meth:`score`, but a candidate matching the slot's sector
         is rewarded (it fills the freed slot), so alternatives stay on-theme
-        while still favoring diversification and lower risk.
+        while still favoring diversification and lower risk. Returns ``None`` fit
+        only when there is no signal at all (no computable blend and no slot match).
         """
         fit, gap_filled = self.score(profile, sector=sector, returns=returns, risk_score=risk_score)
         if slot_sector and sector and sector == slot_sector:
-            # Nudge toward same-sector replacements without overriding the blend.
-            fit = _clamp01(0.5 * fit + 0.5)
+            # Same-sector match IS a signal: nudge up from the base blend (or from
+            # neutral 0.5 when the blend itself was unavailable) without overriding it.
+            base = NEUTRAL_FIT if fit is None else fit
+            fit = _clamp01(0.5 * base + 0.5)
             gap_filled = gap_filled or slot_sector
         return fit, gap_filled

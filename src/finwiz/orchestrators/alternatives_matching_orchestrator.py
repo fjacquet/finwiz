@@ -174,7 +174,8 @@ class AlternativesMatchingOrchestrator:
 
             def _fit(alt: dict[str, Any]) -> float:
                 fit, _ = scorer.score_for_slot(profile, slot_sector, sector=alt.get("sector"))
-                return fit
+                # None = no fit signal; treat as neutral for a stable sort.
+                return 0.5 if fit is None else fit
 
             return sorted(alternatives, key=_fit, reverse=True)
         except Exception as e:

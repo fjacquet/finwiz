@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
-from finwiz.scoring.discovery.portfolio_fit_scorer import NEUTRAL_FIT, PortfolioFitScorer
+from finwiz.scoring.discovery.portfolio_fit_scorer import PortfolioFitScorer
 
 
 @pytest.fixture
@@ -27,16 +27,18 @@ def _profile(**overrides) -> PortfolioGapProfile:
     return PortfolioGapProfile(**base)
 
 
-def test_empty_profile_returns_neutral(scorer: PortfolioFitScorer) -> None:
+def test_empty_profile_returns_none_fit(scorer: PortfolioFitScorer) -> None:
+    # None signals "no adjustment" so callers preserve the standalone score
+    # (degrade to pre-cascade ranking) rather than multiplying by neutral 0.5.
     profile = PortfolioGapProfile(is_empty=True)
     fit, gap = scorer.score(profile, sector="Technology")
-    assert fit == NEUTRAL_FIT
+    assert fit is None
     assert gap is None
 
 
-def test_no_usable_inputs_returns_neutral(scorer: PortfolioFitScorer) -> None:
+def test_no_usable_inputs_returns_none_fit(scorer: PortfolioFitScorer) -> None:
     fit, gap = scorer.score(_profile())  # no sector/returns/risk supplied
-    assert fit == NEUTRAL_FIT
+    assert fit is None
 
 
 def test_underweight_sector_scores_high_and_labels_gap(scorer: PortfolioFitScorer) -> None:

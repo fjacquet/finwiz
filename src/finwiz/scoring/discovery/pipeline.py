@@ -229,8 +229,13 @@ class NewcomerDiscoveryPipeline:
                 returns=series,
                 risk_score=None,
             )
-            final = max(0.0, min(1.0, factor * fit))
+            # fit is None when no portfolio-fit signal is computable (empty gap
+            # profile or no usable inputs): degrade to the standalone factor score
+            # rather than multiplying by a neutral 0.5, which would halve every
+            # score and make A/A+ grades + the 0.80 enrichment cutoff unreachable.
+            final = factor if fit is None else max(0.0, min(1.0, factor * fit))
             grade_info = score_to_grade(final)
+            fit_desc = "n/a (standalone)" if fit is None else f"{fit:.2f}"
             meta = signal_meta.get(key, {})
             candidates.append(
                 NewcomerCandidate(
@@ -245,7 +250,7 @@ class NewcomerDiscoveryPipeline:
                     gap_filled=gap,
                     momentum_score=factor,
                     sector=sectors.get(key),
-                    rationale=(f"factor {factor:.2f} x portfolio_fit {fit:.2f} = {final:.2f}" + (f"; fills {gap}" if gap else "")),
+                    rationale=(f"factor {factor:.2f} x portfolio_fit {fit_desc} = {final:.2f}" + (f"; fills {gap}" if gap else "")),
                 )
             )
         logger.info("Portfolio-aware scoring produced %d scored %s candidates", len(candidates), self.asset_class)
