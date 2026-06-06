@@ -64,7 +64,10 @@ class ReportEnrichmentMixin:
 
         # Read every enriched JSON file once; the three extractors below all
         # distill from this single parsed set (avoids re-globbing + re-parsing 3x).
-        enriched_records = list(self._iter_enriched_records())
+        # Filter to the current portfolio's tickers so leftover *_enriched.json from
+        # a prior run (the non-session-scoped output/{asset_class} dir is never
+        # cleared) can't surface stale holdings in sentiment/strategic/insights.
+        enriched_records = self._filter_records_to_holdings(self._iter_enriched_records(), portfolio_review)
 
         # Extract holdings sentiment from enriched JSON files
         holdings_sentiment = self._extract_holdings_sentiment(deep_analysis_results, records=enriched_records)
@@ -170,6 +173,22 @@ class ReportEnrichmentMixin:
                         yield asset_class, data
                 # First existing dir wins (highest priority); stop probing fallbacks.
                 break
+
+    @staticmethod
+    def _filter_records_to_holdings(
+        records: Iterator[tuple[str, dict[str, Any]]] | list[tuple[str, dict[str, Any]]],
+        portfolio_review: PortfolioReview,
+    ) -> list[tuple[str, dict[str, Any]]]:
+        """Keep only enriched records whose ticker is in the current portfolio.
+
+        Guards against stale ``*_enriched.json`` from a prior run leaking in via the
+        non-session-scoped ``output/{asset_class}`` dir. When the portfolio carries
+        no tickers, no filter is applied (degrades to the unfiltered set).
+        """
+        tickers = {h.ticker for h in portfolio_review.holdings if getattr(h, "ticker", None)}
+        if not tickers:
+            return list(records)
+        return [(asset_class, data) for asset_class, data in records if data.get("ticker") in tickers]
 
     def _extract_holdings_insights(
         self,

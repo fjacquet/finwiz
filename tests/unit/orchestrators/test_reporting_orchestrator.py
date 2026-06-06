@@ -587,6 +587,49 @@ class TestHoldingsInsightsExtraction:
         assert orchestrator._extract_holdings_insights(None) is None
 
 
+class TestRecordFilteringToHoldings:
+    """_filter_records_to_holdings drops stale tickers left in output/{asset_class}."""
+
+    @staticmethod
+    def _review(*tickers: str) -> PortfolioReview:
+        from datetime import datetime
+
+        from finwiz.schemas.common import RiskAssessmentStandardized
+
+        holdings = [
+            HoldingDecision(
+                ticker=t,
+                name=t,
+                asset_class="stock",
+                currency="USD",
+                decision="KEEP",
+                grade="A",
+                composite_score=0.8,
+                grade_description="x",
+                recommended_action="Keep",
+                risk=RiskAssessmentStandardized(score=2.0, level="Low"),
+                rationale_bullets=["x"],
+            )
+            for t in tickers
+        ]
+        return PortfolioReview(as_of=datetime.now(), holdings=holdings)
+
+    def test_drops_records_not_in_portfolio(self):
+        records = [("stock", {"ticker": "AAPL"}), ("stock", {"ticker": "STALE"}), ("stock", {"ticker": "MSFT"})]
+        kept = ReportingOrchestrator._filter_records_to_holdings(records, self._review("AAPL", "MSFT"))
+        assert [d["ticker"] for _ac, d in kept] == ["AAPL", "MSFT"]
+
+    def test_no_filter_when_portfolio_has_no_tickers(self):
+        records = [("stock", {"ticker": "AAPL"}), ("stock", {"ticker": "STALE"})]
+        kept = ReportingOrchestrator._filter_records_to_holdings(records, self._review())
+        assert len(kept) == 2
+
+    def test_accepts_iterator_input(self):
+        records = iter([("stock", {"ticker": "AAPL"}), ("stock", {"ticker": "GONE"})])
+        kept = ReportingOrchestrator._filter_records_to_holdings(records, self._review("AAPL"))
+        assert [d["ticker"] for _ac, d in kept] == ["AAPL"]
+
+
 class TestSentimentAndStrategicExtraction:
     """Regression: sentiment + strategic extractors must read the canonical output/{asset_class}.
 
