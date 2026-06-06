@@ -701,6 +701,90 @@ class TestSentimentAndStrategicExtraction:
         assert set(result.keys()) == {"ETH-USD"}
 
 
+class TestIterEnrichedFiles:
+    """_iter_enriched_files is the shared directory resolver (paths, not parsed dicts)."""
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _touch(base, ticker: str) -> None:
+        base.mkdir(parents=True, exist_ok=True)
+        (base / f"{ticker}_enriched.json").write_text(json.dumps({"ticker": ticker}))
+
+    def test_yields_paths_from_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        self._touch(tmp_path / "output" / "crypto", "BTC-USD")
+
+        results = list(orchestrator._iter_enriched_files())
+
+        assert len(results) == 1
+        asset_class, path = results[0]
+        assert asset_class == "crypto"
+        assert path.name == "BTC-USD_enriched.json"
+        # Records iterator (built on top) still parses the same file.
+        assert orchestrator._extract_holdings_insights({"BTC-USD": {}}) is None  # no qualitative payload
+
+    def test_first_existing_dir_wins(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        self._touch(tmp_path / "output" / "enriched" / "default" / "stock", "AAPL")
+        self._touch(tmp_path / "output" / "stock", "STALE")  # lower priority, ignored
+
+        tickers = {p.name for _ac, p in orchestrator._iter_enriched_files()}
+
+        assert tickers == {"AAPL_enriched.json"}
+
+    def test_empty_when_no_dirs(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        assert list(orchestrator._iter_enriched_files()) == []
+
+
+class TestGenerateEnrichedHtmlReports:
+    """generate_enriched_html_reports now resolves files via _iter_enriched_files.
+
+    Regression: it previously scanned only output/enriched/... so a real kickoff
+    (which writes to output/{asset_class}) produced nothing.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    def test_generates_from_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch, mocker):
+        monkeypatch.chdir(tmp_path)
+        base = tmp_path / "output" / "stock"
+        base.mkdir(parents=True, exist_ok=True)
+        (base / "AAPL_enriched.json").write_text(json.dumps({"ticker": "AAPL"}))
+
+        # Stub the report generator so we don't depend on Jinja templates.
+        mock_gen = mocker.Mock()
+        mocker.patch(
+            "finwiz.reporting.enriched_analysis_report_generator.EnrichedAnalysisReportGenerator",
+            return_value=mock_gen,
+        )
+
+        result = orchestrator.generate_enriched_html_reports()
+
+        assert "stock" in result
+        assert [p.name for p in result["stock"]] == ["AAPL_enriched.html"]
+        mock_gen.generate_and_save_report.assert_called_once()
+
+    def test_counts_failures_fail_soft(self, orchestrator, tmp_path, monkeypatch, mocker):
+        monkeypatch.chdir(tmp_path)
+        base = tmp_path / "output" / "etf"
+        base.mkdir(parents=True, exist_ok=True)
+        (base / "SPY_enriched.json").write_text("{not valid json")
+
+        mocker.patch(
+            "finwiz.reporting.enriched_analysis_report_generator.EnrichedAnalysisReportGenerator",
+            return_value=mocker.Mock(),
+        )
+
+        # Bad JSON is caught per-file; no asset entry, no raise.
+        assert orchestrator.generate_enriched_html_reports() == {}
+
+
 class TestHTMLAutoGeneration:
     """Tests for HTML auto-generation functionality."""
 

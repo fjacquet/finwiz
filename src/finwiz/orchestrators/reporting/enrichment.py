@@ -139,19 +139,19 @@ class ReportEnrichmentMixin:
             self.logger.debug(f"Live cost summary unavailable: {e}")
             return None
 
-    def _iter_enriched_records(self) -> Iterator[tuple[str, dict[str, Any]]]:
-        """Yield ``(asset_class, enriched_json)`` for the current run's enriched files.
+    def _iter_enriched_files(self) -> Iterator[tuple[str, Path]]:
+        """Yield ``(asset_class, json_file_path)`` for the current run's enriched files.
 
-        Single source of truth for locating per-holding enriched JSON, shared by
-        every extractor below so the directory list cannot drift between them.
+        Single source of truth for *locating* per-holding enriched JSON, shared by
+        :meth:`_iter_enriched_records` and by ``CrewHtmlMixin.generate_enriched_html_reports``
+        so the directory list cannot drift between them.
 
         ``DeepAnalysisOrchestrator._store_enriched_analysis`` writes the canonical
         files to ``output/{asset_class}/{ticker}_enriched.json``; the
         ``output/enriched/...`` dirs are session-scoped overrides used by some
-        pipelines. Per asset class, probe in priority order and read **only** the
+        pipelines. Per asset class, probe in priority order and use **only** the
         first directory that exists, so a prior run's files in a lower-priority
-        directory don't leak into this report. Fail-soft: unreadable/invalid
-        files are skipped with a debug log.
+        directory don't leak in.
         """
         session_id = self.state.session_id or "default"
         for asset_class in ["stock", "etf", "crypto"]:
@@ -163,16 +163,24 @@ class ReportEnrichmentMixin:
                 enriched_dir = Path(base_dir)
                 if not enriched_dir.exists():
                     continue
-                for json_file in enriched_dir.glob("*_enriched.json"):
-                    try:
-                        data = json.loads(json_file.read_text())
-                    except Exception as e:
-                        self.logger.debug(f"Could not read enriched file {json_file}: {e}")
-                        continue
-                    if isinstance(data, dict):
-                        yield asset_class, data
+                yield from ((asset_class, json_file) for json_file in enriched_dir.glob("*_enriched.json"))
                 # First existing dir wins (highest priority); stop probing fallbacks.
                 break
+
+    def _iter_enriched_records(self) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Yield ``(asset_class, enriched_json)`` for the current run's enriched files.
+
+        Parses each file located by :meth:`_iter_enriched_files`. Fail-soft:
+        unreadable/invalid files are skipped with a debug log.
+        """
+        for asset_class, json_file in self._iter_enriched_files():
+            try:
+                data = json.loads(json_file.read_text())
+            except Exception as e:
+                self.logger.debug(f"Could not read enriched file {json_file}: {e}")
+                continue
+            if isinstance(data, dict):
+                yield asset_class, data
 
     @staticmethod
     def _filter_records_to_holdings(
