@@ -96,7 +96,13 @@ def get_returns(
         for t in missing:
             cached = disk.get(t)
             if isinstance(cached, list):
-                series = [float(x) for x in cached]
+                try:
+                    series = [float(x) for x in cached]
+                except (TypeError, ValueError):
+                    # Corrupted cache entry -> treat as a miss and re-fetch, rather
+                    # than aborting get_returns() and breaking the fail-soft path.
+                    still_missing.append(t)
+                    continue
                 _returns_memo[t] = series
                 out[t] = series
             else:

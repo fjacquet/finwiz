@@ -306,11 +306,17 @@ class DiscoveryOrchestrator:
         except (ValueError, TypeError):
             size = 15
 
-        ranked = sorted(
-            opportunities,
-            key=lambda o: o.get("composite_score", 0.0) if isinstance(o, dict) else 0.0,
-            reverse=True,
-        )
+        def _score(o: Any) -> float:
+            # composite_score may be present-but-None or non-numeric; coerce so
+            # sorted() never mixes None with floats (TypeError) on the fast path.
+            if not isinstance(o, dict):
+                return 0.0
+            try:
+                return float(o.get("composite_score") or 0.0)
+            except (TypeError, ValueError):
+                return 0.0
+
+        ranked = sorted(opportunities, key=_score, reverse=True)
         shortlist = ranked[:size]
 
         self.state.opportunity_shortlist = shortlist

@@ -171,6 +171,6 @@ def load_gap_profile() -> PortfolioGapProfile:
             with GAP_PROFILE_PATH.open(encoding="utf-8") as f:
                 data = json.load(f)
             return PortfolioGapProfile(**data)
-    except (OSError, ValueError, TypeError) as e:
+    except Exception as e:  # incl. pydantic ValidationError (not a ValueError in v2) on schema drift
         logger.warning("Failed to load gap profile, using empty: %s", e)
     return PortfolioGapProfile(is_empty=True)

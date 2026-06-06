@@ -73,6 +73,18 @@ class TestDiscoveryOrchestrator:
         assert tickers == ["HIGH", "MID"]  # top-2, ranked desc, LOW dropped
         assert (tmp_path / "output" / "discovery" / "opportunity_shortlist.json").exists()
 
+    def test_shortlist_sort_tolerates_none_scores(self, orchestrator, monkeypatch, tmp_path):
+        """composite_score present-but-None must not crash the shortlist sort."""
+        monkeypatch.chdir(tmp_path)
+        orchestrator.state.stock_opportunities = [
+            {"ticker": "NONE1", "composite_score": None},
+            {"ticker": "HIGH", "composite_score": 0.9},
+            {"ticker": "NOSCORE"},
+        ]
+        orchestrator.check_investment_discovery()
+        assert orchestrator.state.shortlist_ready is True
+        assert orchestrator.state.opportunity_shortlist[0]["ticker"] == "HIGH"
+
     def test_should_handle_crypto_discovery_failure(self, orchestrator, mocker):
         """Test crypto discovery error handling."""
         # Arrange
