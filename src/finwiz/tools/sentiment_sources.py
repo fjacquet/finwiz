@@ -327,62 +327,6 @@ class SentimentDataSources:
 
         return base_terms
 
-    def get_source_reliability_score(self, publisher: str) -> float:
-        """Get reliability score for a news source."""
-        if not publisher:
-            return 0.5
-
-        publisher_lower = publisher.lower()
-
-        # Tier 1: Highest reliability (Financial news specialists)
-        tier1_sources = [
-            "bloomberg",
-            "reuters",
-            "wall street journal",
-            "financial times",
-            "marketwatch",
-            "yahoo finance",
-            "cnbc",
-            "seeking alpha",
-            "barron's",
-        ]
-
-        # Tier 2: High reliability (Major news outlets)
-        tier2_sources = [
-            "associated press",
-            "bbc",
-            "npr",
-            "washington post",
-            "new york times",
-            "guardian",
-            "axios",
-            "forbes",
-            "fortune",
-        ]
-
-        # Tier 3: Medium reliability (General news)
-        tier3_sources = ["cnn", "usa today", "politico", "time", "newsweek", "abc news", "cbs news", "nbc news", "fox business"]
-
-        # Check tiers
-        for source in tier1_sources:
-            if source in publisher_lower:
-                return 1.0
-
-        for source in tier2_sources:
-            if source in publisher_lower:
-                return 0.8
-
-        for source in tier3_sources:
-            if source in publisher_lower:
-                return 0.6
-
-        # Special handling for Perplexity Sonar
-        if "perplexity" in publisher_lower or "sonar" in publisher_lower:
-            return 0.9
-
-        # Default for unknown sources
-        return 0.4
-
     def estimate_article_reach(self, article: dict[str, Any]) -> str:
         """Estimate the potential reach/impact of an article based on source."""
         publisher = article.get("publisher", "").lower()

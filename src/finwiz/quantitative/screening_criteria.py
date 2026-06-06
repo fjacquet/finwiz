@@ -100,54 +100,6 @@ class CriteriaEvaluator:
 
         return True
 
-    @staticmethod
-    def calculate_criteria_score(stock_data: "StockData", filter_criteria: ScreeningFilter) -> float:
-        """Calculate score for individual criteria."""
-        import numpy as np
-
-        value = CriteriaEvaluator.get_criteria_value(stock_data, filter_criteria.criteria)
-
-        if value is None:
-            return 0.0
-
-        # Normalize score based on criteria type
-        criteria = filter_criteria.criteria
-
-        if criteria in [
-            ScreeningCriteria.ROE,
-            ScreeningCriteria.ROA,
-            ScreeningCriteria.REVENUE_GROWTH,
-            ScreeningCriteria.EARNINGS_GROWTH,
-            ScreeningCriteria.DIVIDEND_YIELD,
-        ]:
-            # Higher is better
-            return min(max(value * 100, 0), 100)  # Scale to 0-100
-
-        elif criteria in [ScreeningCriteria.PE_RATIO, ScreeningCriteria.PB_RATIO, ScreeningCriteria.DEBT_TO_EQUITY]:
-            # Lower is better (within reason)
-            optimal_range: tuple[float, float]
-            if criteria == ScreeningCriteria.PE_RATIO:
-                optimal_range = (10, 20)
-            elif criteria == ScreeningCriteria.PB_RATIO:
-                optimal_range = (1, 3)
-            else:  # DEBT_TO_EQUITY
-                optimal_range = (0, 0.5)
-
-            if optimal_range[0] <= value <= optimal_range[1]:
-                return 100
-            elif value < optimal_range[0]:
-                return 50 + (value / optimal_range[0]) * 50
-            else:
-                return max(100 - (value - optimal_range[1]) * 20, 0)
-
-        elif criteria == ScreeningCriteria.MARKET_CAP:
-            # Logarithmic scale for market cap
-            return float(min(np.log10(value / 1e9) * 20, 100))
-
-        else:
-            # Default scoring
-            return float(min(max(value * 50, 0), 100))
-
 
 # Import StockData for type hints
 from finwiz.quantitative.screening_filters import StockData  # noqa: E402
