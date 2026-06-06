@@ -148,8 +148,15 @@ class ReportEnrichmentMixin:
         insights: dict[str, dict] = {}
         session_id = self.state.session_id or "default"
 
+        # `_store_enriched_analysis` writes the canonical files to `output/{asset_class}`;
+        # the `output/enriched/...` dirs are session-scoped overrides when present.
+        # Probe in priority order and use the first that exists (data_loading.py:57).
         for asset_class in ["stock", "etf", "crypto"]:
-            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
+            for base_dir in [
+                f"output/enriched/{session_id}/{asset_class}",
+                f"output/enriched/{asset_class}",
+                f"output/{asset_class}",
+            ]:
                 enriched_dir = Path(base_dir)
                 if not enriched_dir.exists():
                     continue
@@ -167,7 +174,8 @@ class ReportEnrichmentMixin:
                             insights[ticker] = distilled
                     except Exception as e:
                         self.logger.debug(f"Could not extract insights from {json_file}: {e}")
-                # Prefer the session-scoped dir exclusively (see _extract_holdings_strategic).
+                # Use the first existing dir exclusively, so a prior run's enriched
+                # files in a lower-priority dir don't leak into this report.
                 break
 
         return insights if insights else None

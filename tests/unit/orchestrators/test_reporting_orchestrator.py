@@ -551,6 +551,38 @@ class TestHoldingsInsightsExtraction:
         # Act / Assert
         assert orchestrator._extract_holdings_insights({"SPY": {}}) is None
 
+    def test_distills_from_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        # Regression: a real kickoff writes to output/{asset_class} (not output/enriched/...).
+        # The extractor must find files there or the Quintessence section silently vanishes.
+        monkeypatch.chdir(tmp_path)
+        qualitative = {"investment_synthesis": {"investment_thesis": "Real layout thesis.", "final_recommendation": "BUY"}}
+        self._write_enriched(tmp_path / "output" / "crypto", "BTC-USD", qualitative, final_grade="B")
+
+        result = orchestrator._extract_holdings_insights({"BTC-USD": {}})
+
+        assert result is not None
+        assert result["BTC-USD"]["thesis"] == "Real layout thesis."
+        assert result["BTC-USD"]["report_link"] == "crypto/BTC-USD_report.html"
+
+    def test_session_dir_takes_precedence_over_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        # Both dirs exist; the session-scoped dir wins (no stale leakage from output/{asset}).
+        monkeypatch.chdir(tmp_path)
+        self._write_enriched(
+            tmp_path / "output" / "enriched" / "default" / "stock",
+            "AAPL",
+            {"investment_synthesis": {"investment_thesis": "Session thesis.", "final_recommendation": "BUY"}},
+        )
+        self._write_enriched(
+            tmp_path / "output" / "stock",
+            "AAPL",
+            {"investment_synthesis": {"investment_thesis": "Stale asset-dir thesis.", "final_recommendation": "SELL"}},
+        )
+
+        result = orchestrator._extract_holdings_insights({"AAPL": {}})
+
+        assert result is not None
+        assert result["AAPL"]["thesis"] == "Session thesis."
+
     def test_returns_none_when_no_deep_analysis(self, orchestrator):
         assert orchestrator._extract_holdings_insights(None) is None
 
