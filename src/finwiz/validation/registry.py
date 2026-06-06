@@ -82,14 +82,6 @@ class SchemaRegistry:
         crew_schemas = self._crew_schemas.get(crew_type, {})
         return crew_schemas.get(output_type)
 
-    def list_schemas(self) -> list[str]:
-        """List all registered schema names."""
-        return list(self._schemas.keys())
-
-    def list_crew_schemas(self) -> dict[str, list[str]]:
-        """List all registered crew schemas by crew type."""
-        return {crew_type: list(schemas.keys()) for crew_type, schemas in self._crew_schemas.items()}
-
     def _initialize_default_schemas(self) -> None:
         """Initialize default schemas from existing finwiz models."""
         try:

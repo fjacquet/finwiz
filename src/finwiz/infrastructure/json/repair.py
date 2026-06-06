@@ -115,21 +115,6 @@ def _escape_newlines_in_strings(text: str) -> str:
     JSON strings cannot contain literal newlines - they must be escaped as \\n.
     Only processes strings that actually contain newlines.
     """
-    import re
-
-    def escape_string_content(match: re.Match[str]) -> str:
-        """Escape newlines within a single matched string."""
-        full_match: str = match.group(0)
-        # Only modify if there are actual newlines in the string
-        if "\n" not in full_match and "\r" not in full_match:
-            return full_match
-
-        # Extract content between quotes and escape newlines
-        content = match.group(1)
-        content = content.replace("\n", "\\n")
-        content = content.replace("\r", "\\r")
-        return f'"{content}"'
-
     # Match complete JSON strings: "content"
     # This regex matches a quoted string that may span multiple lines
     # Pattern: " followed by (non-quote chars or escaped chars)* followed by "
@@ -506,34 +491,3 @@ def safe_json_loads(json_str: str) -> Any:
         logger.warning("JSON parse failed, attempting repair...")
         repaired = repair_json(json_str)
         return json.loads(repaired)
-
-
-def validate_and_repair_json(
-    json_str: str,
-    expected_keys: list[str] | None = None,
-) -> dict[str, Any]:
-    """
-    Validate and repair JSON, optionally checking for expected keys.
-
-    Args:
-        json_str: JSON string to validate
-        expected_keys: Optional list of keys that must be present
-
-    Returns:
-        Parsed and validated JSON object
-
-    Raises:
-        ValueError: If JSON is invalid or missing expected keys
-
-    """
-    data = safe_json_loads(json_str)
-
-    if not isinstance(data, dict):
-        raise ValueError(f"Expected JSON object (dict), got {type(data)}")
-
-    if expected_keys:
-        missing = set(expected_keys) - set(data.keys())
-        if missing:
-            raise ValueError(f"Missing required keys: {missing}")
-
-    return data

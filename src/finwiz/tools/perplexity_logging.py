@@ -69,23 +69,6 @@ class PerplexityFeatureFlagTracker:
             "fallback_strategy": flag_status.get("fallback_strategy", "unknown"),
         }
 
-    @staticmethod
-    def log_circuit_breaker_state_change(old_state: bool, new_state: bool, failure_count: int) -> None:
-        """Log circuit breaker state changes."""
-        state_change = "opened" if new_state and not old_state else "closed" if not new_state and old_state else "unchanged"
-
-        if state_change != "unchanged":
-            logger.warning(
-                f"Perplexity circuit breaker {state_change}",
-                extra={
-                    "operation": "circuit_breaker_state_change",
-                    "old_state": "open" if old_state else "closed",
-                    "new_state": "open" if new_state else "closed",
-                    "failure_count": failure_count,
-                    "timestamp": time.time(),
-                },
-            )
-
 
 class PerplexityOperationLogger:
     """Structured logging for Perplexity operations with content redaction."""

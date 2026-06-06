@@ -218,36 +218,6 @@ class CostAnalyzer:
         return perform_cost_benefit_analysis(total_costs, trade_recommendations, portfolio, config)
 
     # Private helper methods for backward compatibility
-    def _get_broker_fee_structure(self, broker_type: BrokerType) -> BrokerFeeStructure:
-        """Get fee structure for broker type."""
-        return get_broker_fee_structure(broker_type)
-
-    def _calculate_total_commission_costs(self, trade_recommendations: list[TradeRecommendation]) -> float:
-        """Calculate total commission costs for all trades."""
-        return calculate_total_commission_costs(trade_recommendations, self.calculate_commission_cost)
-
-    def _calculate_total_spread_costs(
-        self,
-        trade_recommendations: list[TradeRecommendation],
-        market_data: dict[str, Any] | None,
-    ) -> float:
-        """Calculate total spread costs for all trades."""
-        return calculate_total_spread_costs(trade_recommendations, self.estimate_bid_ask_spread, market_data)
-
-    def _calculate_total_market_impact_costs(
-        self,
-        trade_recommendations: list[TradeRecommendation],
-        portfolio: PortfolioAnalysis,
-        market_data: dict[str, Any] | None,
-    ) -> float:
-        """Calculate total market impact costs for all trades."""
-        return calculate_total_market_impact_costs(
-            trade_recommendations,
-            portfolio,
-            self.estimate_market_impact,
-            market_data,
-        )
-
     def _calculate_break_even_days(
         self,
         total_costs: float,
@@ -256,40 +226,6 @@ class CostAnalyzer:
     ) -> int | None:
         """Calculate break-even period in days."""
         return calculate_break_even_days(total_costs, trade_recommendations, portfolio)
-
-    def _estimate_rebalancing_benefit(
-        self,
-        trade_recommendations: list[TradeRecommendation],
-        portfolio: PortfolioAnalysis,
-        config: PortfolioConfiguration | None,
-    ) -> float:
-        """Estimate annual benefit from rebalancing."""
-        from finwiz.quantitative.cost_analysis import estimate_rebalancing_benefit
-
-        return estimate_rebalancing_benefit(trade_recommendations, portfolio, config)
-
-    def _generate_cost_benefit_recommendation(
-        self,
-        total_costs: float,
-        expected_benefit: float,
-        cost_percentage: float,
-        break_even_days: int | None,
-    ) -> tuple[str, str]:
-        """Generate cost-benefit recommendation and rationale."""
-        from finwiz.quantitative.cost_analysis import generate_cost_benefit_recommendation
-
-        return generate_cost_benefit_recommendation(total_costs, expected_benefit, cost_percentage, break_even_days)
-
-    def _generate_alternative_approaches(
-        self,
-        total_costs: float,
-        cost_percentage: float,
-        trade_recommendations: list[TradeRecommendation],
-    ) -> list[str]:
-        """Generate alternative rebalancing approaches."""
-        from finwiz.quantitative.cost_analysis import generate_alternative_approaches
-
-        return generate_alternative_approaches(total_costs, cost_percentage, trade_recommendations)
 
     def _is_etf(self, symbol: str) -> bool:
         """Check if symbol is likely an ETF."""
@@ -308,18 +244,6 @@ class CostAnalyzer:
         from finwiz.quantitative.cost_calculators import is_large_cap
 
         return is_large_cap(symbol, market_data)
-
-    def _is_mid_cap(self, symbol: str, market_data: dict[str, Any] | None) -> bool:
-        """Check if symbol is mid cap."""
-        from finwiz.quantitative.cost_calculators import is_mid_cap
-
-        return is_mid_cap(symbol, market_data)
-
-    def _is_small_cap(self, symbol: str, market_data: dict[str, Any] | None) -> bool:
-        """Check if symbol is small cap."""
-        from finwiz.quantitative.cost_calculators import is_small_cap
-
-        return is_small_cap(symbol, market_data)
 
     def _estimate_avg_daily_volume_value(self, symbol: str, market_data: dict[str, Any] | None) -> float:
         """Estimate average daily volume value."""

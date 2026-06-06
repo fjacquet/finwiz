@@ -242,6 +242,16 @@ class ScoringThresholds:
     weight_risk_drawdown: float = 0.30  # 30% drawdown
     weight_risk_beta: float = 0.20  # 20% beta
 
+    # Portfolio-fit weights (Portfolio-Aware Opportunity Cascade)
+    # Used by PortfolioFitScorer to rank discovery candidates by marginal
+    # contribution to the current portfolio. Final candidate score is
+    # multiplicative: standalone_factor_score x portfolio_fit.
+    # When the sector term is unavailable, its weight is redistributed
+    # proportionally across the remaining two terms.
+    weight_fit_sector: float = 0.40  # 40% sector-gap match
+    weight_fit_diversification: float = 0.40  # 40% low correlation to holdings
+    weight_fit_risk: float = 0.20  # 20% risk-concentration reduction
+
     # ============================================================================
     # ADDITIVE OVERLAY WEIGHTS (v4 Data Intelligence)
     # These are ADDITIVE on top of the 40/30/30 composite — not redistributed.

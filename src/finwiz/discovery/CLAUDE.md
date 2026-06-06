@@ -23,6 +23,7 @@ discovery/
 | `breakout_detector.py` | `BreakoutDetector` | Detect price/volume breakout patterns |
 | `momentum_scanner.py` | `MomentumScanner` | Scan for momentum signals (RSI, volume, ROC) |
 | `candidate_scorer.py` | `CandidateScorer` | Score and grade candidates (A+ to F) |
+| `market_data.py` | `get_returns`, `get_sectors`, `factor_score_from_returns` | Batched prices/sectors (per-day file cache) + standalone factor score for the Portfolio-Aware Opportunity Cascade |
 
 ## Usage
 

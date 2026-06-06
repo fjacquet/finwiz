@@ -11,7 +11,7 @@ import time
 from collections import defaultdict, deque
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from finwiz.config.features.flags import is_feature_enabled
@@ -71,13 +71,6 @@ class MetricsCollector:
         if tags:
             tagged_name = f"{name}:{','.join(f'{k}={v}' for k, v in tags.items())}"
             self.counters[tagged_name] += value
-
-    def record_gauge(self, name: str, value: float, tags: dict[str, str] | None = None) -> None:
-        """Record a gauge metric."""
-        self.gauges[name] = value
-
-        metric_point = MetricPoint(timestamp=datetime.now(), value=value, tags=tags or {})
-        self.metrics[name].append(metric_point)
 
     def record_histogram(self, name: str, value: float, tags: dict[str, str] | None = None) -> None:
         """Record a histogram metric."""
@@ -140,14 +133,6 @@ class MetricsCollector:
             }
 
         return summary
-
-    def get_recent_metrics(self, name: str, minutes: int = 5) -> list[MetricPoint]:
-        """Get recent metrics for a specific metric name."""
-        if name not in self.metrics:
-            return []
-
-        cutoff_time = datetime.now() - timedelta(minutes=minutes)
-        return [point for point in self.metrics[name] if point.timestamp >= cutoff_time]
 
     def get_health_status(self) -> dict[str, Any]:
         """Get overall health status of the application."""
@@ -266,18 +251,6 @@ def get_performance_monitor() -> PerformanceMonitor:
     if _performance_monitor is None:
         _performance_monitor = PerformanceMonitor(get_metrics_collector())
     return _performance_monitor
-
-
-def monitor_performance(operation_name: str | None = None) -> Callable:
-    """Monitor function performance."""
-    if not is_feature_enabled("monitoring"):
-        # Return a no-op decorator if monitoring is disabled
-        def no_op_decorator(func: Callable) -> Callable:
-            return func
-
-        return no_op_decorator
-
-    return get_performance_monitor().monitor_function(operation_name)
 
 
 def monitor_operation(operation_name: str) -> Any:

@@ -203,61 +203,6 @@ class PerplexityPerformanceBenchmark:
             response_time_ms = PerplexityPerformanceMonitor.calculate_operation_time(start_time)
             result.add_result(response_time_ms, False, str(e))
 
-    async def validate_performance_requirements(self, sample_size: int = 20, max_failure_rate: float = 0.05) -> dict[str, Any]:
-        """
-        Validate that Perplexity integration meets performance requirements.
-
-        Args:
-            sample_size: Number of requests to test
-            max_failure_rate: Maximum acceptable failure rate (default 5%)
-
-        Returns:
-            Validation results with pass/fail status
-
-        """
-        logger.info(f"Validating Perplexity performance requirements with {sample_size} requests")
-
-        # Define test cases for validation
-        test_cases = [
-            {"ticker": "AAPL", "query": "Apple financial news", "asset_type": "stock", "analysis_type": "sentiment"},
-            {"ticker": "SPY", "query": "SPY ETF analysis", "asset_type": "etf", "analysis_type": "technical"},
-            {"ticker": "BTC-USD", "query": "Bitcoin market analysis", "asset_type": "crypto", "analysis_type": "fundamental"},
-        ]
-
-        # Run benchmark
-        benchmark_result = await self.benchmark_response_times(test_cases=test_cases, iterations=sample_size // len(test_cases), concurrent_requests=1)
-
-        summary = benchmark_result.get_performance_summary()
-
-        # Validate requirements
-        meets_response_time_req = summary["meets_2x_baseline_requirement"]
-        meets_failure_rate_req = summary["failure_rate"] <= (max_failure_rate * 100)
-
-        validation_result = {
-            "validation_passed": meets_response_time_req and meets_failure_rate_req,
-            "response_time_requirement_met": meets_response_time_req,
-            "failure_rate_requirement_met": meets_failure_rate_req,
-            "performance_summary": summary,
-            "requirements": {
-                "max_response_time_ms": PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS,
-                "max_failure_rate_percent": max_failure_rate * 100,
-                "baseline_response_time_ms": PerplexityPerformanceMonitor.BASELINE_RESPONSE_TIME_MS,
-            },
-            "validation_timestamp": time.time(),
-        }
-
-        # Log validation results
-        if validation_result["validation_passed"]:
-            logger.info("✅ Perplexity performance validation PASSED")
-        else:
-            logger.warning("❌ Perplexity performance validation FAILED")
-            if not meets_response_time_req:
-                logger.warning(f"Response time requirement failed: {summary['compliance_rate']} < 0.95")
-            if not meets_failure_rate_req:
-                logger.warning(f"Failure rate requirement failed: {summary['failure_rate']}% > {max_failure_rate * 100}%")
-
-        return validation_result
-
     def generate_performance_report(self, benchmark_results: list[PerplexityBenchmarkResult]) -> dict[str, Any]:
         """
         Generate a comprehensive performance report from multiple benchmark results.

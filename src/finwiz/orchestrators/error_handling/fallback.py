@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from finwiz.orchestrators.error_handling.recovery import DataRepairSuggestion
-    from finwiz.validation.int_manager import ValidationResult
 
 logger = logging.getLogger(__name__)
 
@@ -105,56 +104,6 @@ class FallbackHandlers:
             # Field doesn't exist, nothing to remove
             pass
 
-    def create_fallback_data(self, original_data: dict, error_report: ValidationResult) -> dict[str, Any]:
-        """
-        Create fallback data when repair attempts fail.
-
-        Args:
-            original_data: The original data that failed validation
-            error_report: The validation error report
-
-        Returns:
-            Fallback data structure with minimal valid content
-
-        """
-        from datetime import datetime
-
-        fallback_data = {
-            "metadata": {
-                "crew_name": original_data.get("metadata", {}).get("crew_name", "unknown"),
-                "execution_timestamp": datetime.now().isoformat(),
-                "schema_version": 1,
-                "fallback_mode": True,
-                "original_errors": len(error_report.error_analyses),
-            },
-            "validation_status": {
-                "is_valid": False,
-                "validation_timestamp": datetime.now().isoformat(),
-                "validation_errors": [analysis.error_message for analysis in error_report.error_analyses],
-                "validation_warnings": [],
-                "fallback_applied": True,
-            },
-            "data_sources": [],
-            "freshness_status": {
-                "dependencies_met": False,
-                "is_fresh": False,
-                "age_hours": 999.0,
-                "max_age_hours": 24,
-                "refresh_recommended": True,
-                "last_updated": datetime.now().isoformat(),
-            },
-        }
-
-        # Try to preserve any valid data from the original
-        try:
-            if "data" in original_data and isinstance(original_data["data"], dict):
-                fallback_data["data"] = self._sanitize_data_section(original_data["data"])
-        except Exception as e:
-            logger.warning(f"Could not preserve original data: {e}")
-            fallback_data["data"] = {}
-
-        return fallback_data
-
     def _sanitize_data_section(self, data_section: dict[str, Any]) -> dict[str, Any]:
         """
         Sanitize a data section to remove problematic fields.
@@ -185,42 +134,3 @@ class FallbackHandlers:
                 continue
 
         return sanitized
-
-    def apply_emergency_fallback(self, crew_name: str) -> dict[str, Any]:
-        """
-        Apply emergency fallback when all other recovery attempts fail.
-
-        Args:
-            crew_name: Name of the crew that failed
-
-        Returns:
-            Minimal emergency fallback data structure
-
-        """
-        from datetime import datetime
-
-        return {
-            "metadata": {
-                "crew_name": crew_name,
-                "execution_timestamp": datetime.now().isoformat(),
-                "schema_version": 1,
-                "emergency_fallback": True,
-            },
-            "validation_status": {
-                "is_valid": False,
-                "validation_timestamp": datetime.now().isoformat(),
-                "validation_errors": ["Emergency fallback applied - original data could not be recovered"],
-                "validation_warnings": [],
-                "emergency_mode": True,
-            },
-            "data_sources": [],
-            "freshness_status": {
-                "dependencies_met": False,
-                "is_fresh": False,
-                "age_hours": 999.0,
-                "max_age_hours": 24,
-                "refresh_recommended": True,
-                "last_updated": datetime.now().isoformat(),
-            },
-            "data": {},
-        }

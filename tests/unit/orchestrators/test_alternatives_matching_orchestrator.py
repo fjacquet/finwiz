@@ -34,6 +34,36 @@ class TestAlternativesMatchingOrchestrator:
         """Create orchestrator instance."""
         return AlternativesMatchingOrchestrator(state)
 
+    def test_rerank_by_slot_fit_prefers_gap_filling_sector(self, orchestrator, mocker):
+        """Slot re-rank reorders alternatives by portfolio fit when flag is on."""
+        mocker.patch(
+            "finwiz.config.features.flags.is_feature_enabled",
+            side_effect=lambda name, *a, **k: name == "portfolio_aware_discovery",
+        )
+        # Portfolio is all-Technology; the underperformer slot JNJ is Healthcare.
+        orchestrator.state.portfolio_gap_profile = {
+            "sector_weights": {"Technology": 1.0},
+            "underweight_sectors": ["Healthcare"],
+            "underperformer_slots": [{"ticker": "JNJ", "asset_class": "stock", "grade": "D", "sector": "Healthcare"}],
+            "holding_returns": {},
+            "is_empty": False,
+        }
+        alts = [
+            {"ticker": "TECHX", "sector": "Technology"},  # over-held -> low fit
+            {"ticker": "HEALX", "sector": "Healthcare"},  # gap + same slot -> high fit
+        ]
+        reranked = orchestrator._rerank_by_slot_fit("JNJ", alts)
+        assert reranked[0]["ticker"] == "HEALX"
+
+    def test_rerank_is_noop_when_flag_off(self, orchestrator, mocker):
+        """Re-rank preserves order when portfolio_aware_discovery is disabled."""
+        mocker.patch(
+            "finwiz.config.features.flags.is_feature_enabled",
+            side_effect=lambda name, *a, **k: name != "portfolio_aware_discovery",
+        )
+        alts = [{"ticker": "A", "sector": "X"}, {"ticker": "B", "sector": "Y"}]
+        assert orchestrator._rerank_by_slot_fit("JNJ", alts) == alts
+
     def test_should_return_empty_dict_when_disabled(self, orchestrator, mocker):
         """Test alternative matching returns empty dict when disabled."""
         # Arrange

@@ -56,6 +56,35 @@ class TestDiscoveryOrchestrator:
         mock_analyze.assert_called_once_with("test_session")
         orchestrator.availability_tracker.track_data_source.assert_called_once()
 
+    def test_consolidation_emits_ranked_shortlist(self, orchestrator, monkeypatch, tmp_path):
+        """check_investment_discovery writes a top-N shortlist ranked by composite_score."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("OPPORTUNITY_SHORTLIST_SIZE", "2")
+        orchestrator.state.stock_opportunities = [
+            {"ticker": "LOW", "composite_score": 0.3},
+            {"ticker": "HIGH", "composite_score": 0.9},
+        ]
+        orchestrator.state.etf_opportunities = [{"ticker": "MID", "composite_score": 0.6}]
+
+        orchestrator.check_investment_discovery()
+
+        assert orchestrator.state.shortlist_ready is True
+        tickers = [o["ticker"] for o in orchestrator.state.opportunity_shortlist]
+        assert tickers == ["HIGH", "MID"]  # top-2, ranked desc, LOW dropped
+        assert (tmp_path / "output" / "discovery" / "opportunity_shortlist.json").exists()
+
+    def test_shortlist_sort_tolerates_none_scores(self, orchestrator, monkeypatch, tmp_path):
+        """composite_score present-but-None must not crash the shortlist sort."""
+        monkeypatch.chdir(tmp_path)
+        orchestrator.state.stock_opportunities = [
+            {"ticker": "NONE1", "composite_score": None},
+            {"ticker": "HIGH", "composite_score": 0.9},
+            {"ticker": "NOSCORE"},
+        ]
+        orchestrator.check_investment_discovery()
+        assert orchestrator.state.shortlist_ready is True
+        assert orchestrator.state.opportunity_shortlist[0]["ticker"] == "HIGH"
+
     def test_should_handle_crypto_discovery_failure(self, orchestrator, mocker):
         """Test crypto discovery error handling."""
         # Arrange

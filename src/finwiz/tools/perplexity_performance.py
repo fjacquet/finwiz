@@ -169,17 +169,3 @@ class PerplexityFeatureFlagTracker:
         if self.total_requests == 0:
             return 0.0
         return self.total_failures / self.total_requests
-
-    def get_status_summary(self) -> dict[str, Any]:
-        """Get a summary of the current feature flag status."""
-        return {
-            "feature_enabled": self.feature_enabled,
-            "consecutive_failures": self.consecutive_failures,
-            "consecutive_successes": self.consecutive_successes,
-            "total_requests": self.total_requests,
-            "total_failures": self.total_failures,
-            "failure_rate": round(self.get_failure_rate(), 4),
-            "failure_threshold": self.failure_threshold,
-            "recovery_threshold": self.recovery_threshold,
-            "last_failure_time": self.last_failure_time,
-        }

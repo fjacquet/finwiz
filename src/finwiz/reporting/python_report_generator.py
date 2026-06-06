@@ -394,12 +394,6 @@ class PythonReportGenerator:
     # Individual reports are now generated on-the-fly by
     # DeepAnalysisOrchestrator._store_enriched_analysis()
 
-    def _generate_individual_report_html(self, ticker: str, result: dict[str, Any]) -> str:
-        """Generate HTML for individual deep analysis report (delegates to module)."""
-        from finwiz.reporting.individual_report_generator import generate_individual_report_html
-
-        return generate_individual_report_html(ticker, result)
-
 
 def generate_python_report(
     portfolio_review: PortfolioReview,

@@ -60,14 +60,6 @@ class IntegrationLogHandler:
         except Exception as e:
             self.logger.warning(f"Could not set up file logging: {e}")
 
-    def add_custom_handler(self, handler: logging.Handler) -> None:
-        """Add a custom log handler."""
-        self.logger.addHandler(handler)
-
-    def remove_handler(self, handler: logging.Handler) -> None:
-        """Remove a log handler."""
-        self.logger.removeHandler(handler)
-
     def get_logger(self) -> logging.Logger:
         """Get the configured logger instance."""
         return self.logger

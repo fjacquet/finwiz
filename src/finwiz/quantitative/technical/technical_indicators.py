@@ -185,21 +185,6 @@ class TALibWrappers:
         return talib.WILLR(high_prices.astype(np.float64), low_prices.astype(np.float64), close_prices.astype(np.float64), timeperiod=period)
 
     @staticmethod
-    def obv(close_prices: np.ndarray, volume: np.ndarray) -> np.ndarray:
-        """
-        On Balance Volume wrapper.
-
-        Args:
-            close_prices: Array of closing prices
-            volume: Array of volume data
-
-        Returns:
-            Array of OBV values
-
-        """
-        return talib.OBV(close_prices.astype(np.float64), volume.astype(np.float64))
-
-    @staticmethod
     def momentum(close_prices: np.ndarray, period: int = 10) -> np.ndarray:
         """
         Momentum wrapper.

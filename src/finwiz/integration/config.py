@@ -126,52 +126,6 @@ def load_integration_config(config_path: Path | None = None) -> IntegrationConfi
     return IntegrationConfig(**config_data)
 
 
-def load_crew_dependency_config(config_path: Path | None = None) -> CrewDependencyConfig:
-    """
-    Load crew dependency configuration from file.
-
-    Args:
-        config_path: Path to configuration file (optional)
-
-    Returns:
-        CrewDependencyConfig instance with loaded configuration
-
-    """
-    config_data = {}
-
-    # Load from YAML file if provided
-    if config_path and config_path.exists():
-        with open(config_path, encoding="utf-8") as f:
-            file_config = yaml.safe_load(f)
-            if "crew_dependencies" in file_config:
-                config_data = file_config["crew_dependencies"]
-
-    return CrewDependencyConfig(**config_data)
-
-
-def load_data_quality_config(config_path: Path | None = None) -> DataQualityConfig:
-    """
-    Load data quality configuration from file.
-
-    Args:
-        config_path: Path to configuration file (optional)
-
-    Returns:
-        DataQualityConfig instance with loaded configuration
-
-    """
-    config_data = {}
-
-    # Load from YAML file if provided
-    if config_path and config_path.exists():
-        with open(config_path, encoding="utf-8") as f:
-            file_config = yaml.safe_load(f)
-            if "data_quality" in file_config:
-                config_data = file_config["data_quality"]
-
-    return DataQualityConfig(**config_data)
-
-
 def _get_env_overrides() -> dict[str, Any]:
     """Get configuration overrides from environment variables."""
     env_overrides: dict[str, Any] = {}

@@ -191,10 +191,6 @@ class AnalysisCacheManager:
         except Exception as e:
             logger.error(f"❌ Error caching analysis for {ticker}: {e}", exc_info=True)
 
-    def _convert_to_crew_analysis_result(self, analysis: Any, ticker: str, asset_class: str) -> CrewAnalysisResult:
-        """Backwards-compat shim — see _helpers.convert_to_crew_analysis_result."""
-        return convert_to_crew_analysis_result(analysis, ticker, asset_class)
-
     def is_fresh(self, cached_at: datetime) -> bool:
         """Return True if `cached_at` is within the manager's TTL window."""
         age = datetime.now() - cached_at

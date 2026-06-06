@@ -127,9 +127,13 @@ class AlternativesMatchingOrchestrator:
 
                 if alternatives:
                     # Convert Alternative objects to dictionaries for storage (Requirement 4.3)
-                    alternatives_data[ticker] = [alt.model_dump(mode="json") for alt in alternatives]
-                    alternatives_count += len(alternatives)
-                    self.logger.info(f"Found {len(alternatives)} alternatives for {ticker} (grade: {grade})")
+                    alt_dicts = [alt.model_dump(mode="json") for alt in alternatives]
+                    # Portfolio-Aware Opportunity Cascade: re-rank by fit to this
+                    # underperformer's slot using the shared PortfolioFitScorer.
+                    alt_dicts = self._rerank_by_slot_fit(ticker, alt_dicts)
+                    alternatives_data[ticker] = alt_dicts
+                    alternatives_count += len(alt_dicts)
+                    self.logger.info(f"Found {len(alt_dicts)} alternatives for {ticker} (grade: {grade})")
                 else:
                     # Requirement 4.4: Return empty list when no alternatives found
                     self.logger.info(f"No alternatives found for {ticker} (grade: {grade})")
@@ -141,6 +145,42 @@ class AlternativesMatchingOrchestrator:
         self.logger.info(f"Alternative matching completed: {alternatives_count} alternatives for {len(alternatives_data)} holdings")
 
         return alternatives_data
+
+    def _rerank_by_slot_fit(self, slot_ticker: str, alternatives: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Re-rank a holding's alternatives by portfolio fit to its freed slot.
+
+        Defensive and flag-gated: when the ``portfolio_aware_discovery`` flag is
+        off, the gap profile is empty, or alternative dicts lack a ``sector``,
+        the input ordering is preserved (stable no-op).
+        """
+        try:
+            from finwiz.config.features.flags import is_feature_enabled
+
+            if not is_feature_enabled("portfolio_aware_discovery") or len(alternatives) < 2:
+                return alternatives
+
+            from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
+            from finwiz.scoring.discovery.portfolio_fit_scorer import PortfolioFitScorer
+
+            profile = PortfolioGapProfile(**(self.state.portfolio_gap_profile or {}))
+            if profile.is_empty:
+                return alternatives
+
+            slot_sector = next(
+                (s.sector for s in profile.underperformer_slots if s.ticker.upper() == slot_ticker.upper()),
+                None,
+            )
+            scorer = PortfolioFitScorer()
+
+            def _fit(alt: dict[str, Any]) -> float:
+                fit, _ = scorer.score_for_slot(profile, slot_sector, sector=alt.get("sector"))
+                # None = no fit signal; treat as neutral for a stable sort.
+                return 0.5 if fit is None else fit
+
+            return sorted(alternatives, key=_fit, reverse=True)
+        except Exception as e:
+            self.logger.debug(f"Slot re-rank skipped for {slot_ticker}: {e}")
+            return alternatives
 
     def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
         """

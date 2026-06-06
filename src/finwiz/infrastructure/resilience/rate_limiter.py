@@ -102,18 +102,6 @@ class RateLimiter:
         while history and now - history[0].timestamp > 3600:
             history.popleft()
 
-    def _get_current_stats(self, history: deque, config: RateLimitConfig, now: float) -> dict[str, int]:
-        """Get current request counts for different time windows."""
-        minute_count = sum(1 for r in history if now - r.timestamp <= 60)
-        hour_count = sum(1 for r in history if now - r.timestamp <= 3600)
-        day_count = sum(1 for r in history if now - r.timestamp <= 86400)
-
-        return {
-            "minute_count": minute_count,
-            "hour_count": hour_count,
-            "day_count": day_count,
-        }
-
     def get_retry_delay(self, provider: APIProvider, attempt: int) -> float:
         """Calculate exponential backoff delay for retry attempts."""
         config = self.config.get(provider)

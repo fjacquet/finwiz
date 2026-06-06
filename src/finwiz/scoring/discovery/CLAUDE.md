@@ -6,9 +6,20 @@ Discovery pipeline orchestrator that coordinates all discovery components into a
 
 ```
 scoring/discovery/
-├── __init__.py       # Exports: NewcomerDiscoveryPipeline
-└── pipeline.py       # NewcomerDiscoveryPipeline: orchestrates discovery + enrichment + output
+├── __init__.py                # Exports: NewcomerDiscoveryPipeline
+├── pipeline.py                # NewcomerDiscoveryPipeline: orchestrates discovery + enrichment + output
+└── portfolio_fit_scorer.py    # PortfolioFitScorer: marginal fit to current portfolio (gap-fill ranking)
 ```
+
+## Portfolio-Aware Opportunity Cascade
+
+When the ``portfolio_aware_discovery`` feature flag is enabled (default), the
+pipeline scores the WHOLE universe by ``standalone_factor x portfolio_fit``
+(`_gather_portfolio_aware_candidates`) instead of signal-gated screening:
+breakout/momentum become factor *inputs*, not filters, so recall is no longer
+gated. `PortfolioFitScorer` consumes the `PortfolioGapProfile` built by
+`GapProfileOrchestrator` (Phase 3.6, persisted to `output/discovery/gap_profile.json`).
+Flag off → legacy signal-gated path.
 
 ## Entry Points
 

@@ -94,28 +94,6 @@ class ReportConsolidator:
 
         logger.info(f"Initialized ReportConsolidator for session {session_id}")
 
-    def get_html_report_paths(self) -> list[HTMLReportPath]:
-        """
-        Get collected HTML report paths for final report template.
-
-        Returns:
-            List of HTMLReportPath objects collected during consolidation
-
-        """
-        return self._html_report_paths
-
-    def get_html_paths_for_template(self) -> tuple[list[dict], int]:
-        """
-        Get HTML paths formatted for final report template.
-
-        Returns:
-            Tuple of (list of path dicts, count of individual reports)
-            Each dict contains: ticker, crew, path
-
-        """
-        paths_for_template = [{"ticker": hp.ticker, "crew": hp.crew, "path": hp.path, "asset_class": hp.asset_class} for hp in self._html_report_paths]
-        return paths_for_template, len(paths_for_template)
-
     def consolidate_reports(self, crew_export_paths: dict[str, list[str]]) -> ConsolidatedReportExport:
         """
         Consolidate all crew JSON exports into a single report with error recovery.

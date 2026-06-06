@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
 from pathlib import Path
 from threading import Lock
 
@@ -79,10 +78,3 @@ class RunLedger:
 
     def to_banner(self) -> TrustBanner:
         return TrustBanner.from_coverage(self.coverage())
-
-    def entries_for(self, ticker: str) -> list[RunLedgerEntry]:
-        return [e for e in self.entries if e.ticker == ticker]
-
-    def append_many(self, entries: Iterable[RunLedgerEntry]) -> None:
-        for e in entries:
-            self.record(e)

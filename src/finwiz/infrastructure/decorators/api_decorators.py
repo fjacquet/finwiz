@@ -212,39 +212,3 @@ class APICallContext:
 
 
 # Utility functions for common API patterns
-
-
-async def safe_api_call(provider: APIProvider, func: Callable, *args: Any, endpoint: str = "", default_return: Any = None, **kwargs: Any) -> Any:
-    """
-    Make a safe API call with rate limiting and error handling.
-
-    Args:
-        provider: API provider for rate limiting
-        func: Function to call
-        *args: Positional arguments for the function
-        endpoint: Specific endpoint
-        default_return: Value to return on error
-        **kwargs: Keyword arguments for the function
-
-    Returns:
-        Function result or default_return on error
-
-    """
-    try:
-        return await with_rate_limit(provider, func, *args, endpoint=endpoint, **kwargs)
-    except Exception as e:
-        logger.error(f"API call failed for {provider} {endpoint}: {e}")
-        return default_return
-
-
-def get_api_stats() -> dict[str, Any]:
-    """Get statistics for all API providers."""
-    from finwiz.infrastructure.resilience.rate_limiter import get_rate_limiter
-
-    limiter = get_rate_limiter()
-    stats = {}
-
-    for provider in APIProvider:
-        stats[provider.value] = limiter.get_stats(provider)
-
-    return stats

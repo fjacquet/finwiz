@@ -69,14 +69,6 @@ class CrewDataAccessor:
         """Get stock crew data with freshness validation."""
         return self.get_crew_data("stock", max_age_hours)
 
-    def get_etf_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """Get ETF crew data with freshness validation."""
-        return self.get_crew_data("etf", max_age_hours)
-
-    def get_crypto_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """Get crypto crew data with freshness validation."""
-        return self.get_crew_data("crypto", max_age_hours)
-
     def get_discovery_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """Get discovery crew data with freshness validation."""
         return self.get_crew_data("discovery", max_age_hours)

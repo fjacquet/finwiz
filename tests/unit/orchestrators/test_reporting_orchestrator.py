@@ -341,8 +341,8 @@ class TestReportingOrchestrator:
         template_file = template_dir / "test_template.html"
         template_file.write_text("<h1>{{ title }}</h1><p>{{ content }}</p>")
 
-        # Mock the template directory path
-        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=template_dir)
+        # Point the (package-relative) template dir at our tmp templates
+        mocker.patch("finwiz.orchestrators.reporting.crew_html._TEMPLATE_DIR", template_dir)
 
         export_data = {"title": "Test Report", "content": "This is a test"}
 
@@ -390,7 +390,7 @@ class TestReportingOrchestrator:
             json.dump(discovery_data, f)
 
         # Mock Path to return our temp path
-        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=discovery_path)
+        mocker.patch("finwiz.orchestrators.reporting.enrichment.Path", return_value=discovery_path)
 
         # Act
         result = orchestrator._read_discovery_results()
@@ -407,7 +407,7 @@ class TestReportingOrchestrator:
 
         fake_path = mocker.Mock(spec=Path)
         fake_path.exists.return_value = False
-        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=fake_path)
+        mocker.patch("finwiz.orchestrators.reporting.enrichment.Path", return_value=fake_path)
 
         # Act
         result = orchestrator._read_discovery_results()
@@ -421,7 +421,7 @@ class TestReportingOrchestrator:
         output_path = tmp_path / "output" / "portfolio" / "portfolio_review.json"
 
         # Mock Path to return our temp path
-        mocker.patch("finwiz.orchestrators.reporting_orchestrator.Path", return_value=output_path)
+        mocker.patch("finwiz.orchestrators.reporting.data_loading.Path", return_value=output_path)
 
         # Act
         orchestrator._save_merged_portfolio_review(sample_portfolio_review)
@@ -511,7 +511,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -530,7 +530,7 @@ class TestHTMLAutoGeneration:
         export_file.write_text(json.dumps({"ticker": "TEST"}))
 
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=None,
         )
 
@@ -560,7 +560,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.side_effect = Exception("Template error")
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -587,7 +587,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -614,7 +614,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -637,7 +637,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -661,7 +661,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 
@@ -690,7 +690,7 @@ class TestHTMLAutoGeneration:
         mock_generator = mocker.Mock()
         mock_generator.generate_report.return_value = "<html>test</html>"
         mocker.patch(
-            "finwiz.orchestrators.reporting_orchestrator.get_generator_for_crew",
+            "finwiz.orchestrators.reporting.crew_html.get_generator_for_crew",
             return_value=mock_generator,
         )
 

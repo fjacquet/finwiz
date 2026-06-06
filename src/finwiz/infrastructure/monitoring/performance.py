@@ -413,14 +413,6 @@ class PerformanceMonitor:
         except Exception as e:
             logger.error(f"Failed to save performance report: {e}")
 
-    def get_current_metrics(self) -> TickerMetrics | None:
-        """Get current ticker metrics being tracked."""
-        return self.current_ticker_metrics
-
-    def get_portfolio_metrics(self) -> PortfolioMetrics:
-        """Get portfolio-level metrics."""
-        return self.portfolio_metrics
-
     def validate_performance_targets(self) -> dict[str, bool]:
         """Validate performance against mode-specific targets."""
         perf = self.portfolio_metrics.calculate_portfolio_performance()
@@ -467,12 +459,6 @@ def get_performance_monitor(session_id: str = "default") -> PerformanceMonitor:
     return _performance_monitor
 
 
-def start_ticker_tracking(ticker: str, asset_class: str, session_id: str = "default") -> TickerMetrics:
-    """Start performance tracking for a ticker."""
-    monitor = get_performance_monitor(session_id)
-    return monitor.start_ticker_analysis(ticker, asset_class)
-
-
 def record_llm_call(cost_estimate: float = 0.0, session_id: str = "default") -> None:
     """Record an LLM call."""
     monitor = get_performance_monitor(session_id)
@@ -483,15 +469,3 @@ def record_api_call(session_id: str = "default") -> None:
     """Record an API call."""
     monitor = get_performance_monitor(session_id)
     monitor.record_api_call()
-
-
-def complete_ticker_tracking(success: bool = True, error_message: str | None = None, session_id: str = "default") -> TickerMetrics:
-    """Complete ticker performance tracking."""
-    monitor = get_performance_monitor(session_id)
-    return monitor.complete_ticker_analysis(success, error_message)
-
-
-def complete_portfolio_tracking(session_id: str = "default") -> PortfolioMetrics:
-    """Complete portfolio performance tracking."""
-    monitor = get_performance_monitor(session_id)
-    return monitor.complete_portfolio_analysis()

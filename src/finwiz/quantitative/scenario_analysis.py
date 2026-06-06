@@ -221,59 +221,6 @@ class ScenarioAnalysisEngine:
             impact_on_cost=impact_on_cost,
         )
 
-    def generate_scenario_comparisons(self, scenarios: list[AlternativeScenario]) -> list[ScenarioComparison]:
-        """
-        Generate comparisons between scenarios.
-
-        Args:
-            scenarios: List of scenarios to compare
-
-        Returns:
-            List of scenario comparisons
-
-        """
-        comparisons = []
-
-        # Compare each scenario with every other scenario
-        for i, scenario1 in enumerate(scenarios):
-            for scenario2 in scenarios[i + 1 :]:
-                return_diff = scenario2.expected_return - scenario1.expected_return
-                risk_diff = scenario2.expected_risk - scenario1.expected_risk
-                cost_diff = scenario2.cost_difference - scenario1.cost_difference
-
-                # Simple recommendation logic
-                if return_diff > 0 and risk_diff <= 0:
-                    recommendation = scenario2.name
-                    confidence = 0.8
-                elif return_diff <= 0 and risk_diff > 0:
-                    recommendation = scenario1.name
-                    confidence = 0.8
-                else:
-                    # Trade-off situation
-                    risk_adjusted_return1 = scenario1.expected_return / max(scenario1.expected_risk, 0.01)
-                    risk_adjusted_return2 = scenario2.expected_return / max(scenario2.expected_risk, 0.01)
-
-                    if risk_adjusted_return2 > risk_adjusted_return1:
-                        recommendation = scenario2.name
-                        confidence = 0.6
-                    else:
-                        recommendation = scenario1.name
-                        confidence = 0.6
-
-                comparisons.append(
-                    ScenarioComparison(
-                        scenario_1_name=scenario1.name,
-                        scenario_2_name=scenario2.name,
-                        return_difference=return_diff,
-                        risk_difference=risk_diff,
-                        cost_difference=cost_diff,
-                        recommendation=recommendation,
-                        confidence_level=confidence,
-                    )
-                )
-
-        return comparisons
-
     def determine_optimal_parameters(self, sensitivity_results: list[SensitivityResult], monte_carlo_result: MonteCarloResult) -> dict[str, Any]:
         """
         Determine optimal parameters based on analysis results.
@@ -337,43 +284,6 @@ class ScenarioAnalysisEngine:
                 warnings.append(f"High sensitivity to {result.parameter_name} - small changes have large cost impact")
 
         return warnings
-
-    def generate_implementation_notes(self, optimal_parameters: dict[str, Any], scenario_comparisons: list[ScenarioComparison]) -> list[str]:
-        """
-        Generate implementation notes and recommendations.
-
-        Args:
-            optimal_parameters: Optimal parameters determined from analysis
-            scenario_comparisons: Scenario comparison results
-
-        Returns:
-            List of implementation notes
-
-        """
-        notes = []
-
-        # Notes based on optimal parameters
-        if "tolerance_band" in optimal_parameters:
-            tolerance = optimal_parameters["tolerance_band"]
-            notes.append(f"Recommended tolerance band: {tolerance:.1%}")
-
-            if tolerance < 0.02:
-                notes.append("Low tolerance may result in frequent rebalancing - monitor transaction costs")
-            elif tolerance > 0.08:
-                notes.append("High tolerance may result in significant drift - monitor risk exposure")
-
-        # Notes based on scenario comparisons
-        high_confidence_recommendations = [comp for comp in scenario_comparisons if comp.confidence_level > 0.7]
-
-        if high_confidence_recommendations:
-            notes.append(f"Found {len(high_confidence_recommendations)} high-confidence scenario preferences")
-
-        # General implementation notes
-        notes.append("Monitor actual rebalancing frequency vs. projections")
-        notes.append("Review and adjust parameters quarterly based on market conditions")
-        notes.append("Consider tax implications of rebalancing frequency")
-
-        return notes
 
     def create_executive_summary(
         self,
