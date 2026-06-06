@@ -5,6 +5,8 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from finwiz.reporting.sections.common import grade_css_class
+
 _CONVICTION_GRADES: frozenset[str] = frozenset({"A+", "A"})
 
 
@@ -59,7 +61,7 @@ def generate_gap_fill_shortlist_section(shortlist: Any) -> str:
         ticker = escape(str(opp.get("ticker", "N/A")))
         grade = str(opp.get("grade", "?"))
         grade_safe = escape(grade)
-        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
+        grade_class = grade_css_class(grade)
         score = opp.get("composite_score", 0) or 0
         try:
             score_str = f"{float(score):.3f}"
@@ -118,7 +120,7 @@ def _render_conviction_picks(opportunities: list[dict[str, Any]]) -> str:
         name = escape(str(p.get("name", "N/A")))
         grade = str(p.get("grade", "?"))
         grade_safe = escape(grade)
-        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
+        grade_class = grade_css_class(grade)
         score = p.get("composite_score", 0)
         rationale = escape(str(p.get("rationale", "")))[:120]
         rows.append(f"""
@@ -190,7 +192,7 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
         name = escape(str(opp.get("name", "N/A")))
         grade = str(opp.get("grade", "?"))
         grade_safe = escape(grade)
-        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
+        grade_class = grade_css_class(grade)
         score = opp.get("composite_score", 0)
         recommendation = opp.get("recommendation", "BUY")
         rationale = escape(str(opp.get("rationale", "Promising opportunity identified by Python analysis")))[:100]

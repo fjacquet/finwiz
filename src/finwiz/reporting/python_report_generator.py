@@ -396,30 +396,11 @@ class PythonReportGenerator:
 
         return generate_cost_summary_section(cost_summary)
 
-    @staticmethod
-    def _cost_total_and_calls(cost_summary: dict[str, Any] | None) -> tuple[float, int] | None:
-        """Best-effort (total_cost, call_count) from a token-monitor summary, or None."""
-        if not isinstance(cost_summary, dict):
-            return None
-        try:
-            total = float(cost_summary.get("total_cost", 0.0) or 0.0)
-        except (TypeError, ValueError):
-            return None
-        try:
-            calls = int(cost_summary.get("call_count", 0) or 0)
-        except (TypeError, ValueError):
-            calls = 0
-        if calls <= 0:
-            per_crew = cost_summary.get("per_crew")
-            if isinstance(per_crew, dict):
-                calls = sum(int(d.get("calls", 0) or 0) for d in per_crew.values() if isinstance(d, dict))
-        if total <= 0 and calls <= 0:
-            return None
-        return total, calls
-
     def _format_cost_header(self, cost_summary: dict[str, Any] | None) -> str:
         """Header cost line: real LLM spend when available, neutral text otherwise."""
-        parsed = self._cost_total_and_calls(cost_summary)
+        from finwiz.reporting.sections.insights import cost_total_and_calls
+
+        parsed = cost_total_and_calls(cost_summary)
         if parsed is None:
             return "Scoring quantitatif Python -- $0 -- recherche IA qualitative séparée"
         total, calls = parsed
@@ -427,7 +408,9 @@ class PythonReportGenerator:
 
     def _format_cost_footer(self, cost_summary: dict[str, Any] | None) -> str:
         """Footer cost line: replace the misleading '100% reduction' claim with the truth."""
-        parsed = self._cost_total_and_calls(cost_summary)
+        from finwiz.reporting.sections.insights import cost_total_and_calls
+
+        parsed = cost_total_and_calls(cost_summary)
         if parsed is None:
             return "Performance: Analyse complete en quelques secondes -- scoring et rendu 100% Python"
         total, _calls = parsed

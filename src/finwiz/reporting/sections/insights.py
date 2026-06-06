@@ -13,6 +13,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from finwiz.reporting.sections.common import grade_css_class
 from finwiz.reporting.sections.factpack import _is_safe_url
 
 _REC_BADGE: dict[str, str] = {
@@ -113,7 +114,7 @@ def _render_card(ticker: str, grade: str, data: dict[str, Any], report_link: str
     confidence = str(data.get("recommendation_confidence", "")).strip()
     conf_note = f" · Confiance {escape(confidence)}" if confidence else ""
     grade_safe = escape(str(grade or "?"))
-    grade_class = escape(f"grade-{str(grade or '').lower().replace('+', '-plus')}", quote=True)
+    grade_class = grade_css_class(grade)
 
     summary = f'<summary><strong>{escape(ticker)}</strong> <span class="{grade_class}">{grade_safe}</span> {_rec_badge(rec)}{conf_note}</summary>'
 
@@ -178,6 +179,33 @@ def generate_holdings_insight_cards(insights: dict[str, dict] | None, holdings: 
     """
 
 
+def cost_total_and_calls(cost_summary: dict[str, Any] | None) -> tuple[float, int] | None:
+    """Best-effort ``(total_cost, call_count)`` from a token-monitor summary, or ``None``.
+
+    Single source of truth for parsing ``get_token_monitor().get_cost_summary()`` —
+    shared by :func:`generate_cost_summary_section` and the report header/footer.
+    Derives the call count from per-crew calls when the top-level count is absent.
+    Returns ``None`` when no usable cost data is present.
+    """
+    if not isinstance(cost_summary, dict):
+        return None
+    try:
+        total = float(cost_summary.get("total_cost", 0.0) or 0.0)
+    except (TypeError, ValueError):
+        total = 0.0
+    try:
+        calls = int(cost_summary.get("call_count", 0) or 0)
+    except (TypeError, ValueError):
+        calls = 0
+    if calls <= 0:
+        per_crew = cost_summary.get("per_crew")
+        if isinstance(per_crew, dict):
+            calls = sum(int(d.get("calls", 0) or 0) for d in per_crew.values() if isinstance(d, dict))
+    if total <= 0 and calls <= 0:
+        return None
+    return total, calls
+
+
 def generate_cost_summary_section(cost_summary: dict[str, Any] | None) -> str:
     """Render the real LLM cost summary (total, calls, per-crew breakdown).
 
@@ -188,27 +216,13 @@ def generate_cost_summary_section(cost_summary: dict[str, Any] | None) -> str:
     Returns:
         HTML for the section, or "" when no usable cost data is available.
     """
-    if not isinstance(cost_summary, dict):
+    parsed = cost_total_and_calls(cost_summary)
+    if parsed is None or not isinstance(cost_summary, dict):
         return ""
-
-    per_crew = cost_summary.get("per_crew") or {}
-    try:
-        total_cost = float(cost_summary.get("total_cost", 0.0) or 0.0)
-    except (TypeError, ValueError):
-        total_cost = 0.0
-
-    # call_count can be unreliable; derive from per-crew calls when it reads zero.
-    try:
-        call_count = int(cost_summary.get("call_count", 0) or 0)
-    except (TypeError, ValueError):
-        call_count = 0
-    if call_count <= 0 and isinstance(per_crew, dict):
-        call_count = sum(int(d.get("calls", 0) or 0) for d in per_crew.values() if isinstance(d, dict))
-
-    if total_cost <= 0 and call_count <= 0:
-        return ""
+    total_cost, call_count = parsed
 
     rows: list[str] = []
+    per_crew = cost_summary.get("per_crew")
     if isinstance(per_crew, dict):
         ordered = sorted(per_crew.items(), key=lambda kv: float(kv[1].get("cost", 0.0) or 0.0) if isinstance(kv[1], dict) else 0.0, reverse=True)
         for crew_name, data in ordered:

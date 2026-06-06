@@ -62,17 +62,21 @@ class ReportEnrichmentMixin:
         # Load macro snapshot from state (set by DeepAnalysisOrchestrator in Plan 16-01)
         macro_snapshot: dict | None = getattr(self.state, "macro_snapshot", None) or None
 
+        # Read every enriched JSON file once; the three extractors below all
+        # distill from this single parsed set (avoids re-globbing + re-parsing 3x).
+        enriched_records = list(self._iter_enriched_records())
+
         # Extract holdings sentiment from enriched JSON files
-        holdings_sentiment = self._extract_holdings_sentiment(deep_analysis_results)
+        holdings_sentiment = self._extract_holdings_sentiment(deep_analysis_results, records=enriched_records)
 
         # Collect economic calendar data
         economic_calendar = self._collect_economic_calendar(portfolio_review)
 
         # Synthesize portfolio-level strategic posture from per-holding strategic analyses (best-effort).
-        portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results)
+        portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results, records=enriched_records)
 
         # Distill per-holding "quintessence" cards from the costly enriched JSON (best-effort).
-        holdings_insights = self._extract_holdings_insights(deep_analysis_results)
+        holdings_insights = self._extract_holdings_insights(deep_analysis_results, records=enriched_records)
 
         # Gap-fill opportunity shortlist: prefer state, fall back to the on-disk file.
         opportunity_shortlist = self._load_opportunity_shortlist()
@@ -167,12 +171,19 @@ class ReportEnrichmentMixin:
                 # First existing dir wins (highest priority); stop probing fallbacks.
                 break
 
-    def _extract_holdings_insights(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+    def _extract_holdings_insights(
+        self,
+        deep_analysis_results: dict[str, Any] | None,
+        records: list[tuple[str, dict[str, Any]]] | None = None,
+    ) -> dict[str, dict] | None:
         """Distill per-holding "quintessence" insight cards from enriched JSON files.
 
         For each ticker, distills the most decision-relevant fields from
         ``data["qualitative"]`` into a flat dict consumed by
         :func:`finwiz.reporting.sections.insights.generate_holdings_insight_cards`.
+
+        ``records`` is the shared parsed output of :meth:`_iter_enriched_records`;
+        when omitted (e.g. direct/test calls) it is read on demand.
 
         Returns ``{ticker: distilled_dict}`` or ``None`` when no holding carries
         qualitative data (ETF/crypto-only or unanalyzed portfolios).
@@ -181,7 +192,7 @@ class ReportEnrichmentMixin:
             return None
 
         insights: dict[str, dict] = {}
-        for asset_class, data in self._iter_enriched_records():
+        for asset_class, data in self._iter_enriched_records() if records is None else records:
             ticker = data.get("ticker")
             qual = data.get("qualitative")
             if not ticker or not isinstance(qual, dict):
@@ -226,8 +237,9 @@ class ReportEnrichmentMixin:
             if r
         ]
 
-        action_plan = synth.get("action_plan") if isinstance(synth.get("action_plan"), dict) else {}
-        immediate_actions = action_plan.get("immediate_actions") if isinstance(action_plan, dict) else None
+        action_plan = synth.get("action_plan")
+        action_plan = action_plan if isinstance(action_plan, dict) else {}
+        immediate_actions = action_plan.get("immediate_actions")
 
         distilled: dict[str, Any] = {
             "thesis": synth.get("investment_thesis", ""),
@@ -258,17 +270,22 @@ class ReportEnrichmentMixin:
         has_signal = any(distilled.get(k) for k in ("thesis", "bull_case", "bear_case", "moat", "top_sec_risk", "competitive_positioning")) or "fact_pack" in distilled
         return distilled if has_signal else {}
 
-    def _extract_holdings_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+    def _extract_holdings_strategic(
+        self,
+        deep_analysis_results: dict[str, Any] | None,
+        records: list[tuple[str, dict[str, Any]]] | None = None,
+    ) -> dict[str, dict] | None:
         """Walk enriched JSON files and pull each holding's StrategicAnalysis dict.
 
-        Mirrors :meth:`_extract_holdings_sentiment`. Returns ``{ticker: dict}`` where
-        each value is the raw :class:`StrategicAnalysis` model_dump (or None if no
+        ``records`` is the shared parsed output of :meth:`_iter_enriched_records`;
+        when omitted it is read on demand. Returns ``{ticker: dict}`` where each
+        value is the raw :class:`StrategicAnalysis` model_dump (or None if no
         strategic analyses were generated, e.g. ETF/crypto-only portfolios).
         """
         if not deep_analysis_results:
             return None
         strategic: dict[str, dict] = {}
-        for _asset_class, data in self._iter_enriched_records():
+        for _asset_class, data in self._iter_enriched_records() if records is None else records:
             ticker = data.get("ticker")
             qual = data.get("qualitative") or {}
             sa = qual.get("strategic_analysis") if isinstance(qual, dict) else None
@@ -276,14 +293,18 @@ class ReportEnrichmentMixin:
                 strategic[ticker] = sa
         return strategic if strategic else None
 
-    def _synthesize_portfolio_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict | None:
+    def _synthesize_portfolio_strategic(
+        self,
+        deep_analysis_results: dict[str, Any] | None,
+        records: list[tuple[str, dict[str, Any]]] | None = None,
+    ) -> dict | None:
         """Synthesize a portfolio-level :class:`PortfolioStrategicPosture` via Perplexity.
 
         Best-effort: any failure (no strategic data, API down, parse error) returns
         None so the rest of the report still renders.
         """
         try:
-            holdings_strategic_dicts = self._extract_holdings_strategic(deep_analysis_results)
+            holdings_strategic_dicts = self._extract_holdings_strategic(deep_analysis_results, records=records)
             if not holdings_strategic_dicts:
                 return None
 
@@ -309,10 +330,16 @@ class ReportEnrichmentMixin:
             self.logger.warning(f"Portfolio strategic synthesis failed (non-fatal): {e}")
             return None
 
-    def _extract_holdings_sentiment(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+    def _extract_holdings_sentiment(
+        self,
+        deep_analysis_results: dict[str, Any] | None,
+        records: list[tuple[str, dict[str, Any]]] | None = None,
+    ) -> dict[str, dict] | None:
         """Extract sentiment_summary from enriched JSON files for all holdings.
 
         Scans enriched JSON files for sentiment_summary data added by Plan 16-01.
+        ``records`` is the shared parsed output of :meth:`_iter_enriched_records`;
+        when omitted it is read on demand.
 
         Returns:
             Dict mapping ticker -> sentiment_summary dict, or None if no data found.
@@ -321,7 +348,7 @@ class ReportEnrichmentMixin:
             return None
 
         sentiment_data: dict[str, dict] = {}
-        for _asset_class, data in self._iter_enriched_records():
+        for _asset_class, data in self._iter_enriched_records() if records is None else records:
             ticker = data.get("ticker")
             summary = data.get("sentiment_summary")
             if ticker and summary and isinstance(summary, dict):
