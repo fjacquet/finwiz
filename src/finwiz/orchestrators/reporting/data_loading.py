@@ -57,13 +57,21 @@ class ReportDataLoadingMixin:
                 for base_dir in [f"output/enriched/{asset_class}", f"cache/portfolio_analysis/{asset_class}", f"output/deep_analysis_{asset_class}", f"output/{asset_class}"]:
                     asset_dir = Path(base_dir)
                     if asset_dir.exists():
-                        # Match files with various patterns: session_id, timestamp, enriched, or date patterns
-                        for json_file in (
-                            list(asset_dir.glob(f"*_{session_id}.json"))
-                            + list(asset_dir.glob("*_enriched.json"))
-                            + list(asset_dir.glob("*_output_*.json"))
-                            + list(asset_dir.glob("*_20*.json"))
-                        ):
+                        # Match files with various patterns: session_id, timestamp, enriched, or date patterns.
+                        # Prefer current-session files, then most-recent by mtime, so a stale
+                        # prior-run artifact can't win over this run's data (dedup keeps first-seen).
+                        session_files = set(asset_dir.glob(f"*_{session_id}.json"))
+                        other_files = set(asset_dir.glob("*_enriched.json")) | set(asset_dir.glob("*_output_*.json")) | set(asset_dir.glob("*_20*.json"))
+                        other_files -= session_files
+
+                        def _mtime(p: Path) -> float:
+                            try:
+                                return p.stat().st_mtime
+                            except OSError:
+                                return 0.0
+
+                        ordered_files = sorted(session_files, key=_mtime, reverse=True) + sorted(other_files, key=_mtime, reverse=True)
+                        for json_file in ordered_files:
                             try:
                                 data = self._read_json_file(str(json_file))
 
@@ -240,12 +248,16 @@ class ReportDataLoadingMixin:
         self,
         consolidated_data: dict[str, Any],
     ) -> PortfolioReview:
-        """Extract portfolio review from consolidated data."""
-        # Implementation depends on consolidated data structure
-        # For now, get from state
-        portfolio_review_data = self._get_portfolio_review_from_state()
+        """Extract portfolio review from consolidated data, falling back to state."""
+        # Prefer an explicit portfolio review carried in the consolidated payload;
+        # only fall back to state when it isn't present.
+        portfolio_review_data: dict[str, Any] | PortfolioReview | None = None
+        if isinstance(consolidated_data, dict):
+            portfolio_review_data = consolidated_data.get("portfolio_review")
         if not portfolio_review_data:
-            raise ValueError("No portfolio review in consolidated data")
+            portfolio_review_data = self._get_portfolio_review_from_state()
+        if not portfolio_review_data:
+            raise ValueError("No portfolio review in consolidated data or state")
 
         return self._convert_to_portfolio_review(portfolio_review_data)
 

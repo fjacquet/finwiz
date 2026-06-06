@@ -189,7 +189,7 @@ def generate_recommendations(portfolio_stats: dict[str, Any], discovery_results:
     a_plus_list = ""
     if portfolio_stats.get("a_plus_holdings"):
         a_plus_items = [
-            f"<strong>{getattr(h, 'ticker', 'N/A')}</strong> (Grade: {getattr(h, 'grade', 'N/A')}, Score: {getattr(h, 'composite_score', 0):.3f})"
+            f"<strong>{escape(str(getattr(h, 'ticker', 'N/A')))}</strong> (Grade: {escape(str(getattr(h, 'grade', 'N/A')))}, Score: {getattr(h, 'composite_score', 0):.3f})"
             for h in portfolio_stats["a_plus_holdings"]
         ]
         a_plus_list = f"""
@@ -198,7 +198,11 @@ def generate_recommendations(portfolio_stats: dict[str, Any], discovery_results:
         {"".join(f"<li>{item}</li>" for item in a_plus_items)}
       </ul>"""
 
-    discovery_count = len(discovery_results["opportunities"]) if discovery_results and "opportunities" in discovery_results else 0
+    # Count discovered opportunities from either the legacy "opportunities" key or
+    # the portfolio-aware cascade's "opportunity_shortlist".
+    discovery_count = 0
+    if discovery_results:
+        discovery_count = len(discovery_results.get("opportunities") or discovery_results.get("opportunity_shortlist") or [])
 
     return f"""
   <div class="section">

@@ -112,6 +112,10 @@ class ReportEnrichmentMixin:
                             strategic[ticker] = sa
                     except Exception as e:
                         self.logger.debug(f"Could not extract strategic from {json_file}: {e}")
+                # Prefer the session-scoped dir exclusively; only fall back to the
+                # generic dir when the session dir is absent, so a prior run's
+                # enriched files don't leak into this report.
+                break
         return strategic if strategic else None
 
     def _synthesize_portfolio_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict | None:
@@ -175,6 +179,8 @@ class ReportEnrichmentMixin:
                             sentiment_data[ticker] = summary
                     except Exception as e:
                         self.logger.debug(f"Could not extract sentiment from {json_file}: {e}")
+                # Prefer the session-scoped dir exclusively (see _extract_holdings_strategic).
+                break
 
         return sentiment_data if sentiment_data else None
 

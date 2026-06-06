@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from html import escape
 from typing import Any
 
 
@@ -24,12 +25,16 @@ def generate_deep_analysis_section(deep_analysis_results: dict[str, Any] | None)
     total = deep_analysis_results.get("total_holdings", 0)
     success_rate = (successful / total * 100) if total > 0 else 0
 
-    status_text = (
-        f"Deep analysis completed successfully on {successful} positions."
-        if successful > 0
-        else "All your positions have satisfactory grades (>=B). Deep analysis only runs on positions needing attention."
-    )
-    status_title = "Deep Analysis Completed" if successful > 0 else "No Deep Analysis Needed"
+    if successful > 0:
+        status_title = "Deep Analysis Completed"
+        status_text = f"Deep analysis completed successfully on {successful} positions."
+    elif failed > 0:
+        # Don't dress a pure-failure run up as "no action needed".
+        status_title = "Deep Analysis Failed"
+        status_text = f"Deep analysis failed on all {failed} attempted positions — see logs and re-run."
+    else:
+        status_title = "No Deep Analysis Needed"
+        status_text = "All your positions have satisfactory grades (>=B). Deep analysis only runs on positions needing attention."
 
     return f"""
   <div class="section">
@@ -145,8 +150,8 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
     scenario_cards: list[str] = []
     for result in stress_test_results:
         scenario = result.get("scenario", {})
-        name = scenario.get("name", "Scenario inconnu")
-        description = scenario.get("description", "")
+        name = escape(str(scenario.get("name", "Scenario inconnu")))
+        description = escape(str(scenario.get("description", "")))
         impact_pct = result.get("total_portfolio_impact_pct", 0.0)
         projected_pnl = result.get("total_projected_pnl", 0.0)
         holding_impacts = result.get("holding_impacts", [])
@@ -156,10 +161,10 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
         # Build holding impact rows
         impact_rows: list[str] = []
         for hi in holding_impacts:
-            sens_label = hi.get("sensitivity_label", "LOW")
+            sens_label = escape(str(hi.get("sensitivity_label", "LOW")))
             impact_rows.append(
-                f"<tr><td>{hi.get('ticker', 'N/A')}</td>"
-                f"<td>{hi.get('sector', 'N/A')}</td>"
+                f"<tr><td>{escape(str(hi.get('ticker', 'N/A')))}</td>"
+                f"<td>{escape(str(hi.get('sector', 'N/A')))}</td>"
                 f"<td>{hi.get('beta', 0):.2f}</td>"
                 f'<td style="{_impact_color(hi.get("projected_change_pct", 0))}">'
                 f"{hi.get('projected_change_pct', 0) * 100:+.1f}%</td>"
@@ -168,8 +173,8 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
 
         impacts_html = "\n        ".join(impact_rows) if impact_rows else "<tr><td colspan='5'>Aucun impact calcule</td></tr>"
 
-        most_html = ", ".join(most_affected) if most_affected else "N/A"
-        least_html = ", ".join(least_affected) if least_affected else "N/A"
+        most_html = ", ".join(escape(str(t)) for t in most_affected) if most_affected else "N/A"
+        least_html = ", ".join(escape(str(t)) for t in least_affected) if least_affected else "N/A"
 
         scenario_cards.append(f"""
     <div class="highlight" style="margin-bottom:1.5rem">

@@ -11,6 +11,11 @@ from finwiz.reporting import get_generator_for_crew
 if TYPE_CHECKING:
     from finwiz.flow_state import FinwizState
 
+# Template dir resolved relative to the installed package (not the process CWD),
+# so HTML generation works regardless of where the process was started from.
+# (.../finwiz/orchestrators/reporting/crew_html.py -> parents[2] == .../finwiz)
+_TEMPLATE_DIR = Path(__file__).resolve().parents[2] / "reporting" / "templates"
+
 
 class CrewHtmlMixin:
     """Generates per-crew and per-enriched-file HTML reports and manages export paths."""
@@ -38,9 +43,8 @@ class CrewHtmlMixin:
         try:
             from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-            # Setup Jinja2 environment with autoescape to prevent XSS
-            template_dir = Path("src/finwiz/reporting/templates")
-            env = Environment(loader=FileSystemLoader(str(template_dir)), autoescape=select_autoescape(["html", "htm", "xml"]))
+            # Setup Jinja2 environment with autoescape to prevent XSS.
+            env = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=select_autoescape(["html", "htm", "xml"]))
 
             # Load template
             template = env.get_template(template_name)

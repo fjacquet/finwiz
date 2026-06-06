@@ -24,14 +24,15 @@ def _render_conviction_picks(opportunities: list[dict[str, Any]]) -> str:
     for p in picks:
         ticker = escape(str(p.get("ticker", "N/A")))
         name = escape(str(p.get("name", "N/A")))
-        grade = p.get("grade", "?")
+        grade = str(p.get("grade", "?"))
+        grade_safe = escape(grade)
+        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
         score = p.get("composite_score", 0)
         rationale = escape(str(p.get("rationale", "")))[:120]
-        grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
         rows.append(f"""
         <tr>
           <td><strong>{ticker}</strong><br><small>{name}</small></td>
-          <td class="{grade_class}"><strong>{grade}</strong></td>
+          <td class="{grade_class}"><strong>{grade_safe}</strong></td>
           <td>{score:.3f}</td>
           <td><small>{rationale}</small></td>
         </tr>""")
@@ -74,9 +75,14 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
     total_opps = len(opportunities)
     conviction_html = _render_conviction_picks(opportunities)
 
-    # Group by asset class (simple heuristic)
+    # Group by asset class: prefer the explicit payload field (the portfolio-aware
+    # cascade sets it), fall back to a ticker heuristic only when absent.
     by_class: dict[str, list[dict[str, Any]]] = {"stock": [], "etf": [], "crypto": []}
     for opp in opportunities:
+        ac = str(opp.get("asset_class") or "").lower()
+        if ac in by_class:
+            by_class[ac].append(opp)
+            continue
         ticker = opp.get("ticker", "").lower()
         if "btc" in ticker or "eth" in ticker:
             by_class["crypto"].append(opp)
@@ -90,18 +96,19 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
     for opp in opportunities:
         ticker = escape(str(opp.get("ticker", "N/A")))
         name = escape(str(opp.get("name", "N/A")))
-        grade = opp.get("grade", "?")
+        grade = str(opp.get("grade", "?"))
+        grade_safe = escape(grade)
+        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
         score = opp.get("composite_score", 0)
         recommendation = opp.get("recommendation", "BUY")
         rationale = escape(str(opp.get("rationale", "Promising opportunity identified by Python analysis")))[:100]
 
-        grade_class = f"grade-{grade.lower().replace('+', '-plus')}"
         rec_badge = '<span class="badge badge-buy">BUY</span>' if "BUY" in recommendation else '<span class="badge badge-hold">WATCH</span>'
 
         opps_rows.append(f"""
         <tr>
           <td><strong>{ticker}</strong><br><small>{name}</small></td>
-          <td class="{grade_class}"><strong>{grade}</strong></td>
+          <td class="{grade_class}"><strong>{grade_safe}</strong></td>
           <td>{score:.3f}</td>
           <td>{rec_badge}</td>
           <td><small>{rationale}...</small></td>

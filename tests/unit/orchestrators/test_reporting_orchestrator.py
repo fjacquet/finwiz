@@ -341,8 +341,8 @@ class TestReportingOrchestrator:
         template_file = template_dir / "test_template.html"
         template_file.write_text("<h1>{{ title }}</h1><p>{{ content }}</p>")
 
-        # Mock the template directory path
-        mocker.patch("finwiz.orchestrators.reporting.crew_html.Path", return_value=template_dir)
+        # Point the (package-relative) template dir at our tmp templates
+        mocker.patch("finwiz.orchestrators.reporting.crew_html._TEMPLATE_DIR", template_dir)
 
         export_data = {"title": "Test Report", "content": "This is a test"}
 

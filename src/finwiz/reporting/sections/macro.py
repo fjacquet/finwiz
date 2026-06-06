@@ -5,6 +5,16 @@ from __future__ import annotations
 from html import escape
 
 
+def _fmt_2f(value: float | int | str | None) -> str:
+    """Format a possibly string/None numeric as 2dp, falling back to '-'."""
+    if value is None:
+        return "-"
+    try:
+        return f"{float(value):.2f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
 def _traffic_light_class(indicator: str, value: float | None) -> str:
     """Return traffic-light CSS class for a macro indicator value.
 
@@ -78,9 +88,17 @@ def _fear_greed_label(value: int | float) -> str:
 
 
 def _format_macro_value(indicator: str, value: float | None) -> str:
-    """Format a macro indicator value for display."""
+    """Format a macro indicator value for display.
+
+    Coerces to float first: provider feeds often deliver numbers as strings,
+    and a raw ``f"{value:.1f}"`` on a string raises TypeError mid-render.
+    """
     if value is None:
         return "N/A"
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return escape(str(value))
     if indicator == "vix":
         return f"{value:.1f}"
     if indicator == "yield_curve":
@@ -186,10 +204,8 @@ def generate_economic_calendar_section(calendar_data: dict | None) -> str:
             date = escape(str(evt.get("date", "")))
             event_name = escape(str(evt.get("event", "")))
             impact = escape(str(evt.get("impact", "") or ""))
-            estimate = evt.get("estimate")
-            prev = evt.get("prev")
-            estimate_str = f"{estimate:.2f}" if estimate is not None else "-"
-            prev_str = f"{prev:.2f}" if prev is not None else "-"
+            estimate_str = _fmt_2f(evt.get("estimate"))
+            prev_str = _fmt_2f(evt.get("prev"))
             event_rows.append(f"<tr><td>{date}</td><td>{event_name}</td><td>{impact}</td><td>{estimate_str}</td><td>{prev_str}</td></tr>")
 
         events_html = f"""
@@ -213,8 +229,7 @@ def generate_economic_calendar_section(calendar_data: dict | None) -> str:
         for ear in earnings_events[:20]:
             date = escape(str(ear.get("date", "")))
             symbol = escape(str(ear.get("symbol", "")))
-            eps_est = ear.get("eps_estimate")
-            eps_str = f"{eps_est:.2f}" if eps_est is not None else "-"
+            eps_str = _fmt_2f(ear.get("eps_estimate"))
             earnings_rows.append(f"<tr><td>{date}</td><td>{symbol}</td><td>{eps_str}</td></tr>")
 
         earnings_html = f"""
