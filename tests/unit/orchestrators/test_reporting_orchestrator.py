@@ -487,6 +487,106 @@ class TestReportingOrchestrator:
         assert result["consolidated_data"]["total_reports"] == 0
 
 
+class TestHoldingsInsightsExtraction:
+    """Tests for _extract_holdings_insights (quintessence card distillation)."""
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _write_enriched(base, ticker: str, qualitative: dict, final_grade: str = "A") -> None:
+        base.mkdir(parents=True, exist_ok=True)
+        (base / f"{ticker}_enriched.json").write_text(json.dumps({"ticker": ticker, "final_grade": final_grade, "qualitative": qualitative}))
+
+    def test_distills_from_session_enriched_json(self, orchestrator, tmp_path, monkeypatch):
+        # Arrange — session-scoped dir is preferred over the generic dir.
+        monkeypatch.chdir(tmp_path)
+        qualitative = {
+            "investment_synthesis": {
+                "investment_thesis": "Strong compounder.",
+                "bull_case": "Upside scenario.",
+                "bear_case": "Downside scenario.",
+                "scenario_probabilities": {"bull": 0.3, "base": 0.5, "bear": 0.2},
+                "final_recommendation": "BUY",
+                "recommendation_confidence": "HIGH",
+                "action_plan": {"immediate_actions": ["Buy now", "Watch earnings", "Ignore me"]},
+            },
+            "sec_insights": {"competitive_advantages": ["Network effects"], "risk_factors": ["Key risk A"]},
+            "fundamental_context": {"growth_drivers": ["Driver 1", "Driver 2", "Driver 3"], "competitive_positioning": "Leader"},
+            "contextual_risks": {"regulatory_risks": ["Reg risk"], "competitive_risks": ["Comp risk"], "operational_risks": []},
+            "fact_pack": {
+                "corporate_structure": "Single entity.",
+                "recent_events": ["E1", "E2", "E3", "E4"],
+                "leadership": "CEO X.",
+                "freshness": "fresh",
+                "source_citations": ["https://a.com"],
+            },
+        }
+        self._write_enriched(tmp_path / "output" / "enriched" / "default" / "stock", "AAPL", qualitative)
+
+        # Act
+        result = orchestrator._extract_holdings_insights({"AAPL": {}})
+
+        # Assert
+        assert result is not None
+        card = result["AAPL"]
+        assert card["thesis"] == "Strong compounder."
+        assert card["moat"] == "Network effects"
+        assert card["top_sec_risk"] == "Key risk A"
+        assert card["growth_drivers"] == ["Driver 1", "Driver 2"]  # capped at 2
+        assert card["immediate_actions"] == ["Buy now", "Watch earnings"]  # capped at 2
+        assert card["key_risks"] == ["Reg risk", "Comp risk"]  # operational empty → omitted
+        assert card["fact_pack"]["recent_events"] == ["E1", "E2", "E3"]  # capped at 3
+        assert card["report_link"] == "stock/AAPL_report.html"
+        assert card["grade"] == "A"
+
+    def test_returns_none_when_no_qualitative(self, orchestrator, tmp_path, monkeypatch):
+        # Arrange — enriched file with no qualitative section (ETF/crypto-only).
+        monkeypatch.chdir(tmp_path)
+        base = tmp_path / "output" / "enriched" / "default" / "etf"
+        base.mkdir(parents=True, exist_ok=True)
+        (base / "SPY_enriched.json").write_text(json.dumps({"ticker": "SPY", "qualitative": None}))
+
+        # Act / Assert
+        assert orchestrator._extract_holdings_insights({"SPY": {}}) is None
+
+    def test_distills_from_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        # Regression: a real kickoff writes to output/{asset_class} (not output/enriched/...).
+        # The extractor must find files there or the Quintessence section silently vanishes.
+        monkeypatch.chdir(tmp_path)
+        qualitative = {"investment_synthesis": {"investment_thesis": "Real layout thesis.", "final_recommendation": "BUY"}}
+        self._write_enriched(tmp_path / "output" / "crypto", "BTC-USD", qualitative, final_grade="B")
+
+        result = orchestrator._extract_holdings_insights({"BTC-USD": {}})
+
+        assert result is not None
+        assert result["BTC-USD"]["thesis"] == "Real layout thesis."
+        assert result["BTC-USD"]["report_link"] == "crypto/BTC-USD_report.html"
+
+    def test_session_dir_takes_precedence_over_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        # Both dirs exist; the session-scoped dir wins (no stale leakage from output/{asset}).
+        monkeypatch.chdir(tmp_path)
+        self._write_enriched(
+            tmp_path / "output" / "enriched" / "default" / "stock",
+            "AAPL",
+            {"investment_synthesis": {"investment_thesis": "Session thesis.", "final_recommendation": "BUY"}},
+        )
+        self._write_enriched(
+            tmp_path / "output" / "stock",
+            "AAPL",
+            {"investment_synthesis": {"investment_thesis": "Stale asset-dir thesis.", "final_recommendation": "SELL"}},
+        )
+
+        result = orchestrator._extract_holdings_insights({"AAPL": {}})
+
+        assert result is not None
+        assert result["AAPL"]["thesis"] == "Session thesis."
+
+    def test_returns_none_when_no_deep_analysis(self, orchestrator):
+        assert orchestrator._extract_holdings_insights(None) is None
+
+
 class TestHTMLAutoGeneration:
     """Tests for HTML auto-generation functionality."""
 
