@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +24,10 @@ class CrewHtmlMixin:
     # Provided by ReportingOrchestrator.__init__
     state: FinwizState
     logger: Any
+
+    def _iter_enriched_files(self) -> Iterator[tuple[str, Path]]:  # pragma: no cover - provided by ReportEnrichmentMixin
+        """Declared for type-checking; implemented by ReportEnrichmentMixin."""
+        raise NotImplementedError
 
     def generate_html_from_export(
         self,
@@ -196,8 +201,10 @@ class CrewHtmlMixin:
         """
         Generate HTML reports from all enriched JSON files.
 
-        Scans output/enriched/{asset_class}/ directories for *_enriched.json files
-        and generates corresponding HTML reports using EnrichedAnalysisReportGenerator.
+        Locates ``*_enriched.json`` via the shared
+        :meth:`ReportEnrichmentMixin._iter_enriched_files` resolver (session-scoped →
+        generic enriched → canonical ``output/{asset_class}``, first existing dir wins)
+        and generates corresponding HTML using EnrichedAnalysisReportGenerator.
 
         Returns:
             Dictionary mapping asset classes to lists of generated HTML paths
@@ -212,39 +219,19 @@ class CrewHtmlMixin:
         generator = EnrichedAnalysisReportGenerator()
         self.logger.info("🔄 Generating HTML reports from enriched JSON files...")
 
-        # Scan enriched directories for each asset class
-        for asset_class in ["stock", "etf", "crypto"]:
-            generated_for_asset: list[Path] = []
+        for asset_class, json_file in self._iter_enriched_files():
+            try:
+                data = json.loads(json_file.read_text())
+                html_path = json_file.with_suffix(".html")
+                generator.generate_and_save_report(data, str(html_path))
 
-            # Check both session-specific and direct asset class directories
-            session_id = self.state.session_id or "default"
-            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
-                enriched_dir = Path(base_dir)
-                if not enriched_dir.exists():
-                    continue
+                generated_reports.setdefault(asset_class, []).append(html_path)
+                total_generated += 1
+                self.logger.debug(f"✅ Generated HTML: {html_path}")
 
-                for json_file in enriched_dir.glob("*_enriched.json"):
-                    try:
-                        # Load enriched data
-                        data = json.loads(json_file.read_text())
-                        ticker = data.get("ticker", json_file.stem.replace("_enriched", ""))
-
-                        # Generate HTML path
-                        html_path = json_file.with_suffix(".html")
-
-                        # Generate HTML report
-                        generator.generate_and_save_report(data, str(html_path))
-
-                        generated_for_asset.append(html_path)
-                        total_generated += 1
-                        self.logger.debug(f"✅ Generated HTML: {html_path}")
-
-                    except Exception as e:
-                        total_failed += 1
-                        self.logger.warning(f"Failed to generate HTML for {json_file}: {e}")
-
-            if generated_for_asset:
-                generated_reports[asset_class] = generated_for_asset
+            except Exception as e:
+                total_failed += 1
+                self.logger.warning(f"Failed to generate HTML for {json_file}: {e}")
 
         self.logger.info(f"📊 HTML report generation complete: {total_generated} generated, {total_failed} failed")
 
