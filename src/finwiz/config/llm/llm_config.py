@@ -251,7 +251,12 @@ def _validate_api_key_for_model(model: str) -> None:
         raise OSError(f"{required_key} not found in environment variables. Required for model: {model}. Please set your API key in the .env file.")
 
 
-def get_configured_llm(model_override: str | None = None, model_type: str = "standard", max_tokens: int | None = None) -> LLM:
+def get_configured_llm(
+    model_override: str | None = None,
+    model_type: str = "standard",
+    max_tokens: int | None = None,
+    force_json_object: bool = False,
+) -> LLM:
     """
     Get a properly configured LLM instance for CrewAI.
 
@@ -262,6 +267,13 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         model_override: Optional model name to override environment configuration
         model_type: Type of model to use ("standard", "mini", "manager", "planning", "baseline")
                    Only used if model_override is None
+        force_json_object: When True, request provider-enforced JSON output via
+                   ``extra_body.response_format = {"type": "json_object"}``. Use only for
+                   crews whose every turn is a JSON emission (no tool calls / prose), e.g.
+                   the deep-analysis qualitative crew. Routed through ``extra_body`` rather
+                   than CrewAI's native ``response_format`` param because CrewAI raises for
+                   providers (OpenRouter) that litellm doesn't flag as schema-capable, even
+                   though OpenRouter honors response_format at the request level.
 
     Returns:
         LLM: Configured LLM instance ready for CrewAI use
@@ -298,8 +310,8 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
         fallback = "openai/gpt-4o" if model_type == "baseline" else "openai/gpt-4o-mini"
         model = _get_model_from_env(env_var, fallback)
 
-    # Check cache first (include max_tokens so callers with different limits get distinct instances)
-    cache_key = f"{model}:{model_type}:{max_tokens}"
+    # Check cache first (include max_tokens + json mode so callers with different needs get distinct instances)
+    cache_key = f"{model}:{model_type}:{max_tokens}:json={force_json_object}"
     if cache_key in _llm_cache:
         logger.debug(f"Returning cached LLM instance for {cache_key}")
         return _llm_cache[cache_key]
@@ -347,6 +359,14 @@ def get_configured_llm(model_override: str | None = None, model_type: str = "sta
                 extra_body["parallel_tool_calls"] = False
                 extra_body["tool_choice"] = "auto"
             logger.info("OpenRouter middle-out transform enabled for automatic context compression")
+
+        # Provider-enforced JSON output: eliminates markdown-fenced / malformed JSON at the
+        # source. Injected via extra_body (request-level) so CrewAI's response_format guard
+        # is bypassed; OpenRouter and OpenAI-compatible providers honor it. Validated live
+        # against openrouter/mistralai/mistral-small-2603.
+        if force_json_object:
+            extra_body["response_format"] = {"type": "json_object"}
+            logger.info("Provider JSON mode enabled (response_format=json_object via extra_body)")
 
         # Create LLM with proper configuration.
         # Note: retry on transient errors is handled at the litellm module level

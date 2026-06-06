@@ -57,6 +57,39 @@ class TestDeepAnalysisCrew:
 
         assert hasattr(DeepAnalysisCrew, "get_tools_for_asset_class")
 
+    def test_configured_llm_forces_json_and_honors_model_override(self, mocker, monkeypatch):
+        """_get_configured_llm requests provider JSON mode and respects LLM_MODEL_DEEP_ANALYSIS."""
+        import finwiz.crews.deep_analysis.deep_analysis as da
+
+        # Bypass the heavy @CrewBase __init__; only perf_config is needed by the method.
+        crew = da.DeepAnalysisCrew.__new__(da.DeepAnalysisCrew)
+        crew.perf_config = mocker.Mock()
+        crew.perf_config.should_use_mini_model.return_value = False
+        mock_get = mocker.patch.object(da, "get_configured_llm", return_value="LLM")
+        monkeypatch.setenv("LLM_MODEL_DEEP_ANALYSIS", "openrouter/mistralai/mistral-large-2512")
+
+        crew._get_configured_llm()
+
+        kwargs = mock_get.call_args.kwargs
+        assert kwargs["force_json_object"] is True
+        assert kwargs["model_override"] == "openrouter/mistralai/mistral-large-2512"
+
+    def test_configured_llm_override_unset_falls_back(self, mocker, monkeypatch):
+        """With LLM_MODEL_DEEP_ANALYSIS unset, model_override is None (global slot used)."""
+        import finwiz.crews.deep_analysis.deep_analysis as da
+
+        crew = da.DeepAnalysisCrew.__new__(da.DeepAnalysisCrew)
+        crew.perf_config = mocker.Mock()
+        crew.perf_config.should_use_mini_model.return_value = False
+        mock_get = mocker.patch.object(da, "get_configured_llm", return_value="LLM")
+        monkeypatch.delenv("LLM_MODEL_DEEP_ANALYSIS", raising=False)
+
+        crew._get_configured_llm()
+
+        kwargs = mock_get.call_args.kwargs
+        assert kwargs["model_override"] is None
+        assert kwargs["force_json_object"] is True
+
     def test_should_validate_asset_class_parameter(self):
         """Test that get_tools_for_asset_class validates asset_class parameter."""
         # We test the logic without instantiating the crew

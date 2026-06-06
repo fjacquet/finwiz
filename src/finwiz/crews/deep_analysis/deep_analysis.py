@@ -58,6 +58,7 @@ FRESHNESS THRESHOLDS:
 - SEC filings: 7 days maximum (static data)
 """
 
+import os
 import time
 from typing import Any
 
@@ -225,16 +226,23 @@ class DeepAnalysisCrew:
         """
         Get configured LLM instance for this crew based on optimization mode.
 
-        Uses environment variables:
-            - LLM_MODEL_MINI for performance-optimized operations
-            - LLM_MODEL_STANDARD for standard operations
+        This crew emits the largest strict-schema JSON in the pipeline (the full
+        QualitativeInsights payload). A weak model produces malformed/invalid JSON
+        that the repair layer can't always fix, dropping that holding's qualitative
+        section. ``LLM_MODEL_DEEP_ANALYSIS`` lets this one crew pin a JSON-reliable,
+        structured-output-capable model (e.g. ``openrouter/google/gemini-3-flash-preview``)
+        independently of the global mini/standard slot. Unset → existing behavior.
         """
         # Deep analysis needs high max_tokens regardless of model — full JSON output
         # requires 1500-2000 words across 5 sections. Mini default (1024) is far too low.
+        # force_json_object: this crew is tool-less and single-task, so every turn is a JSON
+        # emission — provider JSON mode kills the markdown-fenced / malformed output that
+        # otherwise drops a holding's qualitative section. Coercion validators on
+        # _QualitativeInsightsRaw + the json-repair patch handle any residual shape variance.
+        deep_model = os.getenv("LLM_MODEL_DEEP_ANALYSIS", "").strip() or None
         if self.perf_config.should_use_mini_model():
-            return get_configured_llm(model_type="mini", max_tokens=40960)
-        else:
-            return get_configured_llm(model_type="standard", max_tokens=61440)
+            return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=40960, force_json_object=True)
+        return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=61440, force_json_object=True)
 
     @agent
     def asset_analyst(self) -> Agent:
