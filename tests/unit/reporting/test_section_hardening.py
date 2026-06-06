@@ -7,8 +7,12 @@ tolerance, asset-class bucketing, and cascade-aware discovery counts.
 from __future__ import annotations
 
 from finwiz.reporting.sections.analysis import generate_deep_analysis_section
-from finwiz.reporting.sections.discovery import generate_discovery_section
+from finwiz.reporting.sections.discovery import (
+    generate_discovery_section,
+    generate_gap_fill_shortlist_section,
+)
 from finwiz.reporting.sections.holdings import generate_recommendations
+from finwiz.reporting.sections.insights import generate_cost_summary_section
 from finwiz.reporting.sections.macro import _format_macro_value, generate_economic_calendar_section
 
 
@@ -56,3 +60,56 @@ def test_recommendations_counts_opportunity_shortlist() -> None:
     }
     html = generate_recommendations(stats, {"opportunity_shortlist": [{"ticker": "X"}, {"ticker": "Y"}]})
     assert "2 actionable candidates" in html
+
+
+def test_discovery_table_has_fit_and_gap_columns() -> None:
+    html = generate_discovery_section(
+        {
+            "opportunities": [
+                {"ticker": "NVDA", "name": "Nvidia", "grade": "A", "composite_score": 0.9, "portfolio_fit_score": 0.72, "gap_filled": "Semiconductors"},
+                {"ticker": "VWO", "name": "Emerging", "grade": "B", "composite_score": 0.7},  # no fit/gap → —
+            ]
+        }
+    )
+    assert "Portfolio Fit" in html
+    assert "Fills Gap" in html
+    assert "72%" in html
+    assert "Semiconductors" in html
+    assert "—" in html  # missing fit/gap rendered as em dash
+
+
+def test_discovery_gap_column_escapes_injection() -> None:
+    html = generate_discovery_section({"opportunities": [{"ticker": "X", "name": "n", "grade": "A", "composite_score": 0.9, "gap_filled": "<script>x</script>"}]})
+    assert "<script>x</script>" not in html
+    assert "&lt;script&gt;" in html
+
+
+def test_gap_fill_shortlist_renders_and_ranks() -> None:
+    shortlist = {
+        "shortlist": [
+            {"ticker": "AAA", "grade": "B", "composite_score": 0.6, "portfolio_fit_score": 0.5, "gap_filled": "Energy"},
+            {"ticker": "BBB", "grade": "A", "composite_score": 0.9, "portfolio_fit_score": 0.8, "gap_filled": "Healthcare"},
+        ],
+        "size": 2,
+    }
+    html = generate_gap_fill_shortlist_section(shortlist)
+    # Highest composite score ranked first.
+    assert html.index("BBB") < html.index("AAA")
+    assert "Healthcare" in html
+    assert "80%" in html
+    assert "🎯" in html
+
+
+def test_gap_fill_shortlist_accepts_bare_list() -> None:
+    html = generate_gap_fill_shortlist_section([{"ticker": "Z", "grade": "A", "composite_score": 0.9}])
+    assert "Z" in html
+
+
+def test_gap_fill_shortlist_empty_returns_empty() -> None:
+    assert generate_gap_fill_shortlist_section(None) == ""
+    assert generate_gap_fill_shortlist_section({"shortlist": []}) == ""
+    assert generate_gap_fill_shortlist_section([]) == ""
+
+
+def test_cost_summary_section_degrades_when_unavailable() -> None:
+    assert generate_cost_summary_section(None) == ""

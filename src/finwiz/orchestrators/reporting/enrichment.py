@@ -70,6 +70,15 @@ class ReportEnrichmentMixin:
         # Synthesize portfolio-level strategic posture from per-holding strategic analyses (best-effort).
         portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results)
 
+        # Distill per-holding "quintessence" cards from the costly enriched JSON (best-effort).
+        holdings_insights = self._extract_holdings_insights(deep_analysis_results)
+
+        # Gap-fill opportunity shortlist: prefer state, fall back to the on-disk file.
+        opportunity_shortlist = self._load_opportunity_shortlist()
+
+        # Real LLM cost read live from the token monitor (state.llm_* is populated after report()).
+        cost_summary = self._read_live_cost_summary()
+
         report_path = generate_python_report(
             portfolio_review=portfolio_review,
             deep_analysis_results=deep_analysis_results,
@@ -82,9 +91,150 @@ class ReportEnrichmentMixin:
             portfolio_strategic_posture=portfolio_strategic_posture,
             run_ledger=getattr(self.state, "run_ledger", None),
             deep_analysis_coverage=getattr(self.state, "deep_analysis_coverage", None),
+            holdings_insights=holdings_insights,
+            opportunity_shortlist=opportunity_shortlist,
+            cost_summary=cost_summary,
         )
 
         return report_path
+
+    def _load_opportunity_shortlist(self) -> Any:
+        """Return the gap-fill opportunity shortlist (state preferred, file fallback).
+
+        Best-effort: returns None on any failure so the report still renders.
+        """
+        shortlist = getattr(self.state, "opportunity_shortlist", None)
+        if shortlist:
+            return shortlist
+        try:
+            shortlist_path = Path("output/discovery/opportunity_shortlist.json")
+            if shortlist_path.exists():
+                return json.loads(shortlist_path.read_text())
+        except Exception as e:
+            self.logger.debug(f"Could not load opportunity shortlist file: {e}")
+        return None
+
+    def _read_live_cost_summary(self) -> dict[str, Any] | None:
+        """Read the live LLM cost summary from the token monitor (best-effort).
+
+        ``state.llm_total_cost`` / ``llm_cost_summary`` are populated only *after*
+        report generation, so we read the monitor directly at report time.
+        """
+        try:
+            from finwiz.infrastructure.monitoring.litellm_callback import get_token_monitor
+
+            monitor = get_token_monitor()
+            if monitor is None:
+                return None
+            return monitor.get_cost_summary()
+        except Exception as e:
+            self.logger.debug(f"Live cost summary unavailable: {e}")
+            return None
+
+    def _extract_holdings_insights(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+        """Distill per-holding "quintessence" insight cards from enriched JSON files.
+
+        Mirrors :meth:`_extract_holdings_strategic` (session-preferred walk). For
+        each ticker, distills the most decision-relevant fields from
+        ``data["qualitative"]`` into a flat dict consumed by
+        :func:`finwiz.reporting.sections.insights.generate_holdings_insight_cards`.
+
+        Returns ``{ticker: distilled_dict}`` or ``None`` when no holding carries
+        qualitative data (ETF/crypto-only or unanalyzed portfolios).
+        """
+        if not deep_analysis_results:
+            return None
+
+        insights: dict[str, dict] = {}
+        session_id = self.state.session_id or "default"
+
+        for asset_class in ["stock", "etf", "crypto"]:
+            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
+                enriched_dir = Path(base_dir)
+                if not enriched_dir.exists():
+                    continue
+                for json_file in enriched_dir.glob("*_enriched.json"):
+                    try:
+                        data = json.loads(json_file.read_text())
+                        ticker = data.get("ticker")
+                        qual = data.get("qualitative")
+                        if not ticker or not isinstance(qual, dict):
+                            continue
+                        distilled = self._distill_qualitative(qual)
+                        if distilled:
+                            distilled["report_link"] = f"{asset_class}/{ticker}_report.html"
+                            distilled["grade"] = data.get("final_grade", "")
+                            insights[ticker] = distilled
+                    except Exception as e:
+                        self.logger.debug(f"Could not extract insights from {json_file}: {e}")
+                # Prefer the session-scoped dir exclusively (see _extract_holdings_strategic).
+                break
+
+        return insights if insights else None
+
+    @staticmethod
+    def _distill_qualitative(qual: dict[str, Any]) -> dict[str, Any]:
+        """Flatten the most decision-relevant qualitative fields into a card dict.
+
+        Pure dict access (fail-soft): any absent sub-object simply omits its keys.
+        """
+
+        def _section(name: str) -> dict[str, Any]:
+            val = qual.get(name)
+            return val if isinstance(val, dict) else {}
+
+        def _first(items: Any) -> str:
+            return str(items[0]) if isinstance(items, list) and items else ""
+
+        synth = _section("investment_synthesis")
+        sec = _section("sec_insights")
+        fund = _section("fundamental_context")
+        risks = _section("contextual_risks")
+        tech = _section("technical_strategy")
+        fact = _section("fact_pack")
+
+        # Key risks: first of regulatory / competitive / operational (best signal, no flood).
+        key_risks = [
+            r
+            for r in (
+                _first(risks.get("regulatory_risks")),
+                _first(risks.get("competitive_risks")),
+                _first(risks.get("operational_risks")),
+            )
+            if r
+        ]
+
+        action_plan = synth.get("action_plan") if isinstance(synth.get("action_plan"), dict) else {}
+        immediate_actions = action_plan.get("immediate_actions") if isinstance(action_plan, dict) else None
+
+        distilled: dict[str, Any] = {
+            "thesis": synth.get("investment_thesis", ""),
+            "bull_case": synth.get("bull_case", ""),
+            "bear_case": synth.get("bear_case", ""),
+            "scenario_probabilities": synth.get("scenario_probabilities"),
+            "final_recommendation": synth.get("final_recommendation", "HOLD"),
+            "recommendation_confidence": synth.get("recommendation_confidence", ""),
+            "immediate_actions": (immediate_actions or [])[:2],
+            "moat": _first(sec.get("competitive_advantages")),
+            "top_sec_risk": _first(sec.get("risk_factors")),
+            "growth_drivers": (fund.get("growth_drivers") or [])[:2],
+            "competitive_positioning": fund.get("competitive_positioning", ""),
+            "key_risks": key_risks,
+            "price_target_rationale": tech.get("entry_exit_strategy", ""),
+        }
+
+        if fact:
+            distilled["fact_pack"] = {
+                "corporate_structure": fact.get("corporate_structure", ""),
+                "recent_events": (fact.get("recent_events") or [])[:3],
+                "leadership": fact.get("leadership", ""),
+                "freshness": fact.get("freshness", ""),
+                "source_citations": (fact.get("source_citations") or [])[:5],
+            }
+
+        # Drop a card that distilled to nothing meaningful (no thesis, no facts, no recommendation signal).
+        has_signal = any(distilled.get(k) for k in ("thesis", "bull_case", "bear_case", "moat", "top_sec_risk", "competitive_positioning")) or "fact_pack" in distilled
+        return distilled if has_signal else {}
 
     def _extract_holdings_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
         """Walk enriched JSON files and pull each holding's StrategicAnalysis dict.

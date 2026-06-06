@@ -8,6 +8,98 @@ from typing import Any
 _CONVICTION_GRADES: frozenset[str] = frozenset({"A+", "A"})
 
 
+def _format_fit(opp: dict[str, Any]) -> str:
+    """Format a 0..1 portfolio_fit_score as a percentage, or '—' when absent."""
+    fit = opp.get("portfolio_fit_score")
+    if fit is None:
+        return "—"
+    try:
+        return f"{float(fit):.0%}"
+    except (TypeError, ValueError):
+        return "—"
+
+
+def _format_gap(opp: dict[str, Any]) -> str:
+    """Format the gap_filled sector label (HTML-escaped), or '—' when absent."""
+    gap = opp.get("gap_filled")
+    if gap is None or not str(gap).strip():
+        return "—"
+    return escape(str(gap))
+
+
+def _shortlist_opps(shortlist: Any) -> list[dict[str, Any]]:
+    """Normalize the opportunity shortlist input to a list of opp dicts.
+
+    Accepts either the raw list or the on-disk ``{"shortlist": [...], "size": N}``
+    wrapper. Returns ``[]`` for anything unparseable.
+    """
+    if isinstance(shortlist, dict):
+        shortlist = shortlist.get("shortlist")
+    if not isinstance(shortlist, list):
+        return []
+    return [o for o in shortlist if isinstance(o, dict)]
+
+
+def generate_gap_fill_shortlist_section(shortlist: Any) -> str:
+    """Render a highlighted "Top Gap-Fill Opportunities" block.
+
+    Surfaces the portfolio-aware cascade's marginal-fit ranking (which gaps each
+    candidate fills) that is otherwise dark in the consolidated report.
+
+    Returns "" when there is nothing to show.
+    """
+    opps = _shortlist_opps(shortlist)
+    if not opps:
+        return ""
+
+    opps = sorted(opps, key=lambda o: o.get("composite_score", 0) or 0, reverse=True)
+
+    rows: list[str] = []
+    for rank, opp in enumerate(opps, start=1):
+        ticker = escape(str(opp.get("ticker", "N/A")))
+        grade = str(opp.get("grade", "?"))
+        grade_safe = escape(grade)
+        grade_class = escape(f"grade-{grade.lower().replace('+', '-plus')}", quote=True)
+        score = opp.get("composite_score", 0) or 0
+        try:
+            score_str = f"{float(score):.3f}"
+        except (TypeError, ValueError):
+            score_str = "—"
+        rows.append(f"""
+        <tr>
+          <td>{rank}</td>
+          <td><strong>{ticker}</strong></td>
+          <td class="{grade_class}"><strong>{grade_safe}</strong></td>
+          <td>{score_str}</td>
+          <td>{_format_fit(opp)}</td>
+          <td>{_format_gap(opp)}</td>
+        </tr>""")
+
+    return f"""
+  <div class="section">
+    <div class="highlight success">
+      <h3>🎯 Top Opportunités Comblant des Lacunes</h3>
+      <p>Classement par adéquation marginale au portefeuille — chaque candidat comble une lacune sectorielle identifiée.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Rang</th>
+            <th>Ticker</th>
+            <th>Grade</th>
+            <th>Score</th>
+            <th>Adéquation</th>
+            <th>Comble la lacune</th>
+          </tr>
+        </thead>
+        <tbody>
+          {"".join(rows)}
+        </tbody>
+      </table>
+    </div>
+  </div>
+    """
+
+
 def _render_conviction_picks(opportunities: list[dict[str, Any]]) -> str:
     """Render a short A/A+ "Conviction Picks" callout, or empty if none qualify.
 
@@ -110,6 +202,8 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
           <td><strong>{ticker}</strong><br><small>{name}</small></td>
           <td class="{grade_class}"><strong>{grade_safe}</strong></td>
           <td>{score:.3f}</td>
+          <td>{_format_fit(opp)}</td>
+          <td>{_format_gap(opp)}</td>
           <td>{rec_badge}</td>
           <td><small>{rationale}...</small></td>
         </tr>""")
@@ -137,6 +231,8 @@ def generate_discovery_section(discovery_results: dict[str, Any] | None) -> str:
           <th>Ticker / Name</th>
           <th>Grade</th>
           <th>Score</th>
+          <th>Portfolio Fit</th>
+          <th>Fills Gap</th>
           <th>Recommendation</th>
           <th>Rationale</th>
         </tr>

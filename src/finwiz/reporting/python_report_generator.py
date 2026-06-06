@@ -65,6 +65,9 @@ class PythonReportGenerator:
         portfolio_strategic_posture: dict | None = None,
         run_ledger: Any = None,
         deep_analysis_coverage: tuple[int, int] | None = None,
+        holdings_insights: dict[str, dict] | None = None,
+        opportunity_shortlist: Any = None,
+        cost_summary: dict[str, Any] | None = None,
     ) -> str:
         """
         Generate comprehensive family financial plan HTML report.
@@ -110,6 +113,9 @@ class PythonReportGenerator:
             portfolio_strategic_posture=portfolio_strategic_posture,
             run_ledger=run_ledger,
             deep_analysis_coverage=deep_analysis_coverage,
+            holdings_insights=holdings_insights,
+            opportunity_shortlist=opportunity_shortlist,
+            cost_summary=cost_summary,
         )
 
         # Write to file
@@ -229,6 +235,9 @@ class PythonReportGenerator:
         portfolio_strategic_posture: dict | None = None,
         run_ledger: Any = None,
         deep_analysis_coverage: tuple[int, int] | None = None,
+        holdings_insights: dict[str, dict] | None = None,
+        opportunity_shortlist: Any = None,
+        cost_summary: dict[str, Any] | None = None,
     ) -> str:
         """Generate complete HTML report."""
         # Generate timestamp
@@ -249,6 +258,11 @@ class PythonReportGenerator:
             )
             trust_banner_html = render_trust_banner(TrustBanner.from_coverage(summary))
 
+        # Header cost line: real LLM spend when available, neutral text otherwise.
+        # The deterministic Python scoring + HTML rendering remain $0 regardless.
+        cost_header = self._format_cost_header(cost_summary)
+        cost_footer = self._format_cost_footer(cost_summary)
+
         # Build HTML content
         html = f"""<!doctype html>
 <html lang="fr">
@@ -264,7 +278,7 @@ class PythonReportGenerator:
   <header>
     <h1>Plan financier familial -- Rapport FinWiz</h1>
     <div class="muted">Genere le {timestamp} -- Session: {session_id}</div>
-    <div class="muted">Analyse Python ultra-rapide -- 0 appels LLM -- Cout: $0</div>
+    <div class="muted">{cost_header}</div>
   </header>
 
   {self._generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)}
@@ -277,9 +291,13 @@ class PythonReportGenerator:
 
   {self._generate_holdings_analysis(portfolio_review.holdings)}
 
+  {self._generate_holdings_insight_cards(holdings_insights, portfolio_review.holdings)}
+
   {self._generate_sentiment_section(holdings_sentiment)}
 
   {self._generate_recommendations(portfolio_stats, discovery_results)}
+
+  {self._generate_gap_fill_shortlist_section(opportunity_shortlist)}
 
   {self._generate_discovery_section(discovery_results)}
 
@@ -287,13 +305,15 @@ class PythonReportGenerator:
 
   {self._generate_performance_metrics(deep_analysis_results)}
 
+  {self._generate_cost_summary_section(cost_summary)}
+
   {self._generate_stress_test_section(stress_test_results)}
 
   {self._generate_economic_calendar_section(economic_calendar)}
 
   <footer>
     <p>Rapport genere par FinWiz -- Analyse Python deterministe</p>
-    <p class="small">Performance: Analyse complete en quelques secondes -- 100% reduction des couts LLM</p>
+    <p class="small">{cost_footer}</p>
   </footer>
 </body>
 </html>"""
@@ -358,6 +378,61 @@ class PythonReportGenerator:
 
         return generate_discovery_section(discovery_results)
 
+    def _generate_holdings_insight_cards(self, holdings_insights: dict[str, dict] | None, holdings: list[HoldingDecision]) -> str:
+        """Generate per-holding quintessence cards (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_holdings_insight_cards
+
+        return generate_holdings_insight_cards(holdings_insights, holdings)
+
+    def _generate_gap_fill_shortlist_section(self, opportunity_shortlist: Any) -> str:
+        """Generate the gap-fill shortlist block (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_gap_fill_shortlist_section
+
+        return generate_gap_fill_shortlist_section(opportunity_shortlist)
+
+    def _generate_cost_summary_section(self, cost_summary: dict[str, Any] | None) -> str:
+        """Generate the real LLM cost summary section (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_cost_summary_section
+
+        return generate_cost_summary_section(cost_summary)
+
+    @staticmethod
+    def _cost_total_and_calls(cost_summary: dict[str, Any] | None) -> tuple[float, int] | None:
+        """Best-effort (total_cost, call_count) from a token-monitor summary, or None."""
+        if not isinstance(cost_summary, dict):
+            return None
+        try:
+            total = float(cost_summary.get("total_cost", 0.0) or 0.0)
+        except (TypeError, ValueError):
+            return None
+        try:
+            calls = int(cost_summary.get("call_count", 0) or 0)
+        except (TypeError, ValueError):
+            calls = 0
+        if calls <= 0:
+            per_crew = cost_summary.get("per_crew")
+            if isinstance(per_crew, dict):
+                calls = sum(int(d.get("calls", 0) or 0) for d in per_crew.values() if isinstance(d, dict))
+        if total <= 0 and calls <= 0:
+            return None
+        return total, calls
+
+    def _format_cost_header(self, cost_summary: dict[str, Any] | None) -> str:
+        """Header cost line: real LLM spend when available, neutral text otherwise."""
+        parsed = self._cost_total_and_calls(cost_summary)
+        if parsed is None:
+            return "Scoring quantitatif Python -- $0 -- recherche IA qualitative séparée"
+        total, calls = parsed
+        return f"Scoring Python: $0 -- Recherche IA qualitative: ${total:.2f} sur {calls} appels LLM"
+
+    def _format_cost_footer(self, cost_summary: dict[str, Any] | None) -> str:
+        """Footer cost line: replace the misleading '100% reduction' claim with the truth."""
+        parsed = self._cost_total_and_calls(cost_summary)
+        if parsed is None:
+            return "Performance: Analyse complete en quelques secondes -- scoring et rendu 100% Python"
+        total, _calls = parsed
+        return f"Performance: scoring et rendu 100% Python ($0) -- recherche IA qualitative: ${total:.2f}"
+
     def _generate_stress_test_section(self, stress_test_results: list[dict[str, Any]] | None) -> str:
         """Generate stress test analysis section (delegates to module)."""
         from finwiz.reporting.section_generators import (
@@ -407,6 +482,9 @@ def generate_python_report(
     portfolio_strategic_posture: dict | None = None,
     run_ledger: Any = None,
     deep_analysis_coverage: tuple[int, int] | None = None,
+    holdings_insights: dict[str, dict] | None = None,
+    opportunity_shortlist: Any = None,
+    cost_summary: dict[str, Any] | None = None,
 ) -> str:
     """
     Convenience function to generate Python-based report.
@@ -426,4 +504,7 @@ def generate_python_report(
         portfolio_strategic_posture=portfolio_strategic_posture,
         run_ledger=run_ledger,
         deep_analysis_coverage=deep_analysis_coverage,
+        holdings_insights=holdings_insights,
+        opportunity_shortlist=opportunity_shortlist,
+        cost_summary=cost_summary,
     )
