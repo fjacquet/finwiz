@@ -156,20 +156,3 @@ class PortfolioAnalysisConfig(BaseModel):
 
 # Global configuration instance
 _config: PortfolioAnalysisConfig | None = None
-
-
-def get_portfolio_analysis_config() -> PortfolioAnalysisConfig:
-    """Get the global portfolio analysis configuration instance."""
-    global _config
-    if _config is None:
-        _config = PortfolioAnalysisConfig.from_env()
-        _config.validate_config()
-    return _config
-
-
-def reload_config() -> PortfolioAnalysisConfig:
-    """Reload configuration from environment variables."""
-    global _config
-    _config = PortfolioAnalysisConfig.from_env()
-    _config.validate_config()
-    return _config

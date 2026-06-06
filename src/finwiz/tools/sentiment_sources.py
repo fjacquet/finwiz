@@ -276,72 +276,6 @@ class SentimentDataSources:
 
         return sources
 
-    def validate_ticker_format(self, ticker: str, asset_type: str) -> str:
-        """Validate and format ticker symbol for different asset types."""
-        ticker = ticker.upper().strip()
-
-        if asset_type == "crypto":
-            # Ensure crypto tickers have proper format
-            if not ticker.endswith("-USD") and ticker not in ["BTC", "ETH", "ADA", "DOT"]:
-                # Common crypto symbols that might need USD suffix
-                crypto_symbols = ["BTC", "ETH", "ADA", "DOT", "LINK", "UNI", "AAVE", "COMP"]
-                if any(ticker.startswith(symbol) for symbol in crypto_symbols):
-                    ticker = f"{ticker}-USD"
-
-        elif asset_type == "stock":
-            # Remove any suffixes that might interfere with Yahoo Finance
-            ticker = ticker.split(".")[0]  # Remove exchange suffixes like .L, .TO
-
-        elif asset_type == "etf":
-            # ETFs typically don't need special formatting
-            pass
-
-        return ticker
-
-    def get_asset_specific_search_terms(self, ticker: str, asset_type: str) -> list[str]:
-        """Get asset-specific search terms for enhanced news discovery."""
-        base_terms = [ticker]
-
-        if asset_type == "crypto":
-            # Add cryptocurrency-specific terms
-            crypto_names = {
-                "BTC": ["Bitcoin", "BTC"],
-                "ETH": ["Ethereum", "ETH"],
-                "ADA": ["Cardano", "ADA"],
-                "DOT": ["Polkadot", "DOT"],
-            }
-
-            base_symbol = ticker.replace("-USD", "")
-            if base_symbol in crypto_names:
-                base_terms.extend(crypto_names[base_symbol])
-
-        elif asset_type == "stock":
-            # For stocks, we might want to add company name
-            # This would require a lookup table or API call
-            pass
-
-        elif asset_type == "etf":
-            # For ETFs, we might want to add fund name
-            # This would require a lookup table or API call
-            pass
-
-        return base_terms
-
-    def estimate_article_reach(self, article: dict[str, Any]) -> str:
-        """Estimate the potential reach/impact of an article based on source."""
-        publisher = article.get("publisher", "").lower()
-
-        # High reach sources
-        high_reach = ["bloomberg", "reuters", "cnbc", "yahoo finance", "marketwatch"]
-        medium_reach = ["seeking alpha", "barron's", "financial times", "wall street journal"]
-
-        if any(source in publisher for source in high_reach):
-            return "High"
-        elif any(source in publisher for source in medium_reach):
-            return "Medium"
-        else:
-            return "Low"
-
     async def get_enhanced_news_data(self, ticker: str, asset_type: str, max_articles: int) -> dict[str, Any]:
         """Get enhanced news data from multiple sources including Sonar."""
         # Get existing Yahoo Finance data
@@ -386,16 +320,4 @@ class SentimentDataSources:
             "sonar_articles": sonar_data,
             "combined_count": len(yahoo_data) + len(sonar_data),
             "sonar_fallback_used": sonar_fallback_used,
-        }
-
-    def format_news_article(self, raw_article: dict[str, Any]) -> dict[str, Any]:
-        """Format raw news article into standardized format."""
-        return {
-            "title": raw_article.get("title", "No title"),
-            "publisher": raw_article.get("publisher", "Unknown"),
-            "link": raw_article.get("link", ""),
-            "published_time": raw_article.get("providerPublishTime", None),
-            "summary": raw_article.get("summary", ""),
-            "raw_item": raw_article,
-            "source": "yahoo_finance",
         }

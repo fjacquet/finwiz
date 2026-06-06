@@ -40,34 +40,6 @@ class DataCache:
         result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours, warn_on_stale=True)
         return result
 
-    def get_etf_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """
-        Get ETF crew data with freshness validation.
-
-        Args:
-            max_age_hours: Maximum acceptable age in hours
-
-        Returns:
-            ETF crew data dictionary, or None if unavailable
-
-        """
-        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("etf", max_age_hours, warn_on_stale=True)
-        return result
-
-    def get_crypto_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """
-        Get crypto crew data with freshness validation.
-
-        Args:
-            max_age_hours: Maximum acceptable age in hours
-
-        Returns:
-            Crypto crew data dictionary, or None if unavailable
-
-        """
-        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("crypto", max_age_hours, warn_on_stale=True)
-        return result
-
     def get_discovery_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """
         Get discovery crew data with freshness validation.

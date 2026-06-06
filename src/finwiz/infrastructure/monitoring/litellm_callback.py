@@ -6,7 +6,6 @@ helping diagnose token overflow issues.
 """
 
 import contextvars
-import os
 from typing import Any
 
 import litellm
@@ -45,51 +44,6 @@ class TokenMonitorCallback(CustomLogger):
         self.crew_tokens: dict[str, dict[str, int]] = {}
         self.crew_calls: dict[str, int] = {}
 
-    def log_pre_api_call(self, model: str, messages: list, kwargs: dict) -> None:
-        """Called before each LLM API call."""
-        self.call_count += 1
-
-        # Calculate message sizes
-        total_chars = 0
-        msg_sizes = []
-
-        for i, msg in enumerate(messages):
-            content = msg.get("content", "")
-            if isinstance(content, str):
-                size = len(content)
-            elif isinstance(content, list):
-                # Handle multi-part messages (vision, etc.)
-                size = sum(len(str(part)) for part in content)
-            else:
-                size = len(str(content))
-
-            total_chars += size
-            msg_sizes.append(f"msg[{i}]:{size}")
-
-        estimated_tokens = total_chars // 4
-
-        # Guard: reject calls that exceed configurable token threshold
-        max_prompt_tokens = int(os.getenv("MAX_PROMPT_TOKENS", "100000"))
-        if estimated_tokens > max_prompt_tokens:
-            crew_name = _current_crew_name.get("unknown")
-            logger.error(f"🛑 PROMPT TOO LARGE: ~{estimated_tokens:,} tokens exceeds limit of {max_prompt_tokens:,} (crew={crew_name}, model={model}). Review task context chain.")
-
-        # Log at different levels based on size
-        if estimated_tokens > 100000:
-            logger.error(
-                f"🚨 TOKEN OVERFLOW ALERT: LLM call #{self.call_count} to {model}\n"
-                f"   Total: {total_chars:,} chars (~{estimated_tokens:,} tokens)\n"
-                f"   Messages: {len(messages)} ({', '.join(msg_sizes[:5])}{'...' if len(msg_sizes) > 5 else ''})"
-            )
-            # Log first message preview for debugging
-            if messages:
-                first_msg = str(messages[0].get("content", ""))[:500]
-                logger.error(f"   First message preview: {first_msg}...")
-        elif estimated_tokens > 50000:
-            logger.warning(f"⚠️ HIGH TOKEN COUNT: LLM call #{self.call_count} to {model}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
-        else:
-            logger.debug(f"LLM call #{self.call_count} to {model}: {total_chars:,} chars (~{estimated_tokens:,} tokens)")
-
     def log_success_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
         """Called after successful LLM call. Tracks cost and crew attribution."""
         usage = getattr(response_obj, "usage", None)
@@ -115,10 +69,6 @@ class TokenMonitorCallback(CustomLogger):
 
         model = kwargs.get("model", "unknown")
         logger.info(f"LLM call #{self.call_count} ({crew_name}): {model} cost=${cost:.4f} ({prompt_tokens}+{completion_tokens} tokens)")
-
-    def log_failure_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
-        """Called after failed LLM call."""
-        logger.error(f"❌ LLM call #{self.call_count} failed: {response_obj}")
 
     def get_cost_summary(self) -> dict[str, Any]:
         """Get aggregated cost summary for all crews."""
@@ -166,25 +116,6 @@ def enable_token_monitoring() -> None:
     _token_monitor = TokenMonitorCallback()
     litellm.callbacks = [_token_monitor]
     logger.info("🔍 Token monitoring enabled - will log all LLM prompt sizes")
-
-
-def disable_token_monitoring() -> None:
-    """Disable token monitoring."""
-    global _token_monitor
-
-    if _token_monitor is None:
-        return
-
-    litellm.callbacks = []
-    _token_monitor = None
-    logger.info("Token monitoring disabled")
-
-
-def get_call_count() -> int:
-    """Get the number of LLM calls made since monitoring was enabled."""
-    if _token_monitor is None:
-        return 0
-    return _token_monitor.call_count
 
 
 def get_token_monitor() -> TokenMonitorCallback | None:

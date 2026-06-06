@@ -407,20 +407,6 @@ def get_manager_llm() -> LLM:
     return get_configured_llm(model_type="manager")
 
 
-def get_planning_llm() -> LLM:
-    """
-    Get LLM configuration for crew planning.
-
-    Uses LLM_MODEL_PLANNING environment variable.
-
-    Returns:
-        LLM: Configured LLM instance for crew planning
-
-    """
-    logger.debug("Getting planning LLM configuration")
-    return get_configured_llm(model_type="planning")
-
-
 def get_mini_llm() -> LLM:
     """
     Get LLM configuration for performance-optimized operations.
@@ -433,61 +419,6 @@ def get_mini_llm() -> LLM:
     """
     logger.debug("Getting mini LLM configuration")
     return get_configured_llm(model_type="mini")
-
-
-def get_baseline_llm() -> LLM:
-    """
-    Get LLM configuration for baseline/comparison operations.
-
-    Uses LLM_MODEL_BASELINE environment variable.
-
-    Returns:
-        LLM: Configured baseline LLM instance
-
-    """
-    logger.debug("Getting baseline LLM configuration")
-    return get_configured_llm(model_type="baseline")
-
-
-def is_model_thinking_capable(model: str | None = None) -> bool:
-    """
-    Check if the given model (or default) has native thinking capabilities.
-
-    Args:
-        model: Model name to check. If None, checks LLM_MODEL_THINKING or LLM_MODEL_PLANNING.
-
-    Returns:
-        bool: True if model supports native thinking mode
-
-    """
-    if model is None:
-        model = os.getenv("LLM_MODEL_THINKING") or os.getenv("LLM_MODEL_PLANNING") or ""
-    return _is_thinking_capable(model)
-
-
-def get_model_capabilities(model: str | None = None) -> dict[str, Any]:
-    """
-    Get capability summary for a model.
-
-    Args:
-        model: Model name to check. If None, uses LLM_MODEL_STANDARD.
-
-    Returns:
-        dict with keys: thinking_capable, json_reliable, thinking_params
-
-    """
-    if model is None:
-        model = _get_model_from_env("LLM_MODEL_STANDARD")
-
-    thinking_level = os.getenv("LLM_THINKING_LEVEL", "medium").lower()
-
-    return {
-        "model": model,
-        "short_name": _get_model_short_name(model),
-        "thinking_capable": _is_thinking_capable(model),
-        "json_reliable": _is_json_reliable(model),
-        "thinking_params": _get_thinking_params(model, thinking_level),
-    }
 
 
 # Convenience function for backward compatibility

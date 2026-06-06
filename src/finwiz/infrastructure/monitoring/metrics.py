@@ -128,27 +128,6 @@ class MetricsCalculator:
             calculation_period_days=period_days,
         )
 
-    def track_performance_event(self, monitored_inv: Any, event_type: str, value: float) -> None:
-        """
-        Track a performance event for metrics calculation.
-
-        Args:
-            monitored_inv: Monitored investment object
-            event_type: Type of event (return, grade_change, etc.)
-            value: Event value
-
-        """
-        event = {
-            "timestamp": datetime.now(),
-            "candidate_id": monitored_inv.symbol,
-            "event_type": event_type,
-            "value": value,
-            "grade": monitored_inv.current_grade if hasattr(monitored_inv, "current_grade") else None,
-        }
-
-        self._performance_history.append(event)
-        self.logger.debug(f"Tracked performance event: {event_type} for {monitored_inv.symbol}")
-
     def _calculate_return(self, monitored_inv: Any) -> float:
         """Calculate return for a monitored investment (simplified)."""
         # This is a simplified calculation - in practice would use actual price data

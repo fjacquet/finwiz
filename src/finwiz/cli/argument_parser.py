@@ -5,7 +5,6 @@ CLI argument parsing and initialization for FinWiz application.
 This module handles command-line interface setup and configuration validation.
 """
 
-import argparse
 from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
@@ -13,7 +12,7 @@ from dotenv import load_dotenv
 from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 
 if TYPE_CHECKING:
-    from finwiz.flows.orchestrator import FinwizFlow
+    pass
 
 from finwiz.config.manager import ConfigurationError, get_configuration_manager
 from finwiz.tools.logger import get_logger
@@ -59,50 +58,3 @@ def initialize_environment() -> None:
     logger.info("Initializing LLM retry mechanism with extended timeout")
     initialize_retry_mechanism(max_retries=5, timeout=300)  # 5 minute timeout
     logger.debug("Environment variables loaded")
-
-
-def parse_arguments() -> argparse.Namespace:
-    """
-    Parse command-line arguments for FinWiz application.
-
-    Returns:
-        Parsed arguments namespace
-
-    """
-    parser = argparse.ArgumentParser(
-        description="FinWiz - AI-powered financial analysis platform",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Examples:
-  # Run full portfolio analysis
-  python -m finwiz.main
-
-  # Run with crewai flow
-  crewai flow kickoff
-        """,
-    )
-
-    parser.add_argument(
-        "--verbose",
-        "-v",
-        action="store_true",
-        help="Enable verbose output",
-    )
-
-    return parser.parse_args()
-
-
-def initialize_flow() -> "FinwizFlow":
-    """
-    Initialize a fresh FinwizFlow instance.
-
-    Returns:
-        FinwizFlow instance with fresh state
-
-    """
-    from finwiz.flow_state import FinwizState
-    from finwiz.flows.orchestrator import FinwizFlow
-
-    logger.info("Initializing fresh flow")
-    flow_state = FinwizState()
-    return FinwizFlow(state=flow_state)

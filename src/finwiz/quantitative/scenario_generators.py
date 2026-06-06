@@ -14,7 +14,6 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.schemas.portfolio_rebalancing import (
-    AlternativeScenario,
     PortfolioConfiguration,
     RebalancingMethod,
 )
@@ -95,99 +94,6 @@ class ScenarioGenerator:
     def __init__(self) -> None:
         """Initialize the scenario generator."""
         self.logger = logging.getLogger(__name__)
-
-    async def generate_what_if_scenarios(
-        self,
-        base_config: PortfolioConfiguration,
-        parameters: ScenarioParameters,
-    ) -> list[AlternativeScenario]:
-        """
-        Generate what-if scenarios based on parameter variations.
-
-        Args:
-            base_config: Base portfolio configuration
-            parameters: Scenario parameters to vary
-
-        Returns:
-            List of alternative scenarios to analyze
-
-        """
-        scenarios = []
-
-        # Capital amount scenarios
-        for capital in parameters.capital_amounts:
-            if capital != 0:  # Skip the base case (0 additional capital)
-                scenario_config = base_config.model_copy(deep=True)
-                scenario_config.additional_capital = capital
-
-                scenarios.append(
-                    AlternativeScenario(
-                        name=f"Additional Capital: ${capital:,.0f}",
-                        description=f"Portfolio with ${capital:,.0f} additional capital",
-                        configuration=scenario_config,
-                        expected_return=0.0,  # Will be calculated during analysis
-                        expected_risk=0.0,  # Will be calculated during analysis
-                        cost_difference=0.0,  # Will be calculated during analysis
-                        risk_difference=0.0,  # Will be calculated during analysis
-                    )
-                )
-
-        # Tolerance level scenarios
-        for tolerance in parameters.tolerance_levels:
-            if abs(tolerance - base_config.tolerance_band) > 0.001:  # Skip if same as base
-                scenario_config = base_config.model_copy(deep=True)
-                scenario_config.tolerance_band = tolerance
-
-                scenarios.append(
-                    AlternativeScenario(
-                        name=f"Tolerance Band: {tolerance:.1%}",
-                        description=f"Portfolio with {tolerance:.1%} tolerance band",
-                        configuration=scenario_config,
-                        expected_return=0.0,
-                        expected_risk=0.0,
-                        cost_difference=0.0,
-                        risk_difference=0.0,
-                    )
-                )
-
-        # Transaction cost scenarios
-        for cost_rate in parameters.transaction_cost_rates:
-            if abs(cost_rate - base_config.transaction_cost_rate) > 0.0001:  # Skip if same as base
-                scenario_config = base_config.model_copy(deep=True)
-                scenario_config.transaction_cost_rate = cost_rate
-
-                scenarios.append(
-                    AlternativeScenario(
-                        name=f"Transaction Cost: {cost_rate:.2%}",
-                        description=f"Portfolio with {cost_rate:.2%} transaction cost rate",
-                        configuration=scenario_config,
-                        expected_return=0.0,
-                        expected_risk=0.0,
-                        cost_difference=0.0,
-                        risk_difference=0.0,
-                    )
-                )
-
-        # Rebalancing method scenarios
-        for method in parameters.rebalancing_methods:
-            if method != base_config.rebalancing_method:  # Skip if same as base
-                scenario_config = base_config.model_copy(deep=True)
-                scenario_config.rebalancing_method = method
-
-                scenarios.append(
-                    AlternativeScenario(
-                        name=f"Method: {method.value}",
-                        description=f"Portfolio using {method.value} rebalancing method",
-                        configuration=scenario_config,
-                        expected_return=0.0,
-                        expected_risk=0.0,
-                        cost_difference=0.0,
-                        risk_difference=0.0,
-                    )
-                )
-
-        self.logger.info(f"Generated {len(scenarios)} what-if scenarios")
-        return scenarios
 
     async def run_monte_carlo_simulation(
         self,

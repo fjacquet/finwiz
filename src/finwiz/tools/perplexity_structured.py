@@ -8,7 +8,6 @@ intermediate reasoning.
 
 from __future__ import annotations
 
-import asyncio
 import json
 from typing import Any
 
@@ -109,27 +108,3 @@ def _extract_content(payload: dict[str, Any]) -> str | None:
         return payload["choices"][0]["message"]["content"]
     except (KeyError, IndexError, TypeError):
         return None
-
-
-async def perplexity_structured_batch(
-    calls: list[tuple[str, type[BaseModel], str | None]],
-    *,
-    timeout: float = DEFAULT_TIMEOUT,
-) -> list[BaseModel | None]:
-    """Run multiple Perplexity structured calls in parallel.
-
-    Args:
-        calls: List of ``(prompt, schema, system_or_None)`` tuples.
-        timeout: HTTP timeout per call.
-
-    Returns:
-        List of results in the same order; entries are None on failure.
-    """
-
-    async def _one(prompt: str, schema: type[BaseModel], system: str | None) -> BaseModel | None:
-        kwargs: dict[str, Any] = {"prompt": prompt, "schema": schema, "timeout": timeout}
-        if system is not None:
-            kwargs["system"] = system
-        return await perplexity_structured(**kwargs)
-
-    return await asyncio.gather(*(_one(p, s, sys) for p, s, sys in calls))

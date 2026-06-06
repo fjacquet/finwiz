@@ -285,43 +285,6 @@ class ScenarioAnalysisEngine:
 
         return warnings
 
-    def generate_implementation_notes(self, optimal_parameters: dict[str, Any], scenario_comparisons: list[ScenarioComparison]) -> list[str]:
-        """
-        Generate implementation notes and recommendations.
-
-        Args:
-            optimal_parameters: Optimal parameters determined from analysis
-            scenario_comparisons: Scenario comparison results
-
-        Returns:
-            List of implementation notes
-
-        """
-        notes = []
-
-        # Notes based on optimal parameters
-        if "tolerance_band" in optimal_parameters:
-            tolerance = optimal_parameters["tolerance_band"]
-            notes.append(f"Recommended tolerance band: {tolerance:.1%}")
-
-            if tolerance < 0.02:
-                notes.append("Low tolerance may result in frequent rebalancing - monitor transaction costs")
-            elif tolerance > 0.08:
-                notes.append("High tolerance may result in significant drift - monitor risk exposure")
-
-        # Notes based on scenario comparisons
-        high_confidence_recommendations = [comp for comp in scenario_comparisons if comp.confidence_level > 0.7]
-
-        if high_confidence_recommendations:
-            notes.append(f"Found {len(high_confidence_recommendations)} high-confidence scenario preferences")
-
-        # General implementation notes
-        notes.append("Monitor actual rebalancing frequency vs. projections")
-        notes.append("Review and adjust parameters quarterly based on market conditions")
-        notes.append("Consider tax implications of rebalancing frequency")
-
-        return notes
-
     def create_executive_summary(
         self,
         optimal_parameters: dict[str, Any],

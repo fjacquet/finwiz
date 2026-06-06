@@ -334,21 +334,6 @@ class PerplexityAnalysisIntegration:
 
         return None
 
-    def _extract_retry_after(self, error: Exception) -> int | None:
-        """Extract retry-after value from rate limit error."""
-        error_str = str(error)
-
-        import re
-
-        retry_match = re.search(r"retry[_\s]*after[:\s]*(\d+)", error_str, re.IGNORECASE)
-        if retry_match:
-            try:
-                return int(retry_match.group(1))
-            except ValueError:
-                pass
-
-        return None
-
     def _classify_error(self, error: Exception) -> str:
         """Classify error type for structured logging."""
         error_str = str(error).lower()

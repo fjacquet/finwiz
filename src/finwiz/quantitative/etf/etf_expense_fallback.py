@@ -73,18 +73,3 @@ def get_fallback_expense_ratio(ticker: str) -> float | None:
             return float(expense_ratio)
 
     return None
-
-
-def has_fallback_data(ticker: str) -> bool:
-    """
-    Check if fallback data exists for a ticker.
-
-    Args:
-        ticker: ETF ticker symbol
-
-    Returns:
-        True if fallback data exists, False otherwise
-
-    """
-    expense_ratios = load_expense_ratios()
-    return ticker in expense_ratios

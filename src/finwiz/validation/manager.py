@@ -111,31 +111,6 @@ class ValidationManager:
 
         return self._validate_with_schema(data, schema_class, result)
 
-    def validate_with_schema(self, data: dict[str, Any], schema_name: str) -> ValidationResult:
-        """
-        Validate data against a named schema.
-
-        Args:
-            data: Data to validate
-            schema_name: Name of registered schema
-
-        Returns:
-            ValidationResult with validation status and any errors/warnings
-
-        """
-        result = ValidationResult(is_valid=True)
-
-        schema_class = self._registry.get_schema(schema_name)
-        if not schema_class:
-            result.add_error(
-                field_path="schema",
-                error_type="schema_not_found",
-                message=f"Schema '{schema_name}' not found in registry",
-            )
-            return result
-
-        return self._validate_with_schema(data, schema_class, result)
-
     def set_strictness_mode(self, mode: ValidationMode) -> None:
         """
         Set validation strictness mode.

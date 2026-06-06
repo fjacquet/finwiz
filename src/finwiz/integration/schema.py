@@ -30,41 +30,6 @@ class SchemaManager:
         """
         self.logger = logger
 
-    def serialize_usage_metrics(self, usage_metrics: Any) -> dict[str, Any]:
-        """
-        Convert UsageMetrics object to JSON-serializable dictionary.
-
-        Args:
-            usage_metrics: UsageMetrics object from CrewAI
-
-        Returns:
-            Dictionary representation of usage metrics
-
-        """
-        if usage_metrics is None:
-            return {}
-
-        try:
-            # If it's already a dict, return as-is
-            if isinstance(usage_metrics, dict):
-                return usage_metrics
-
-            # Try to convert Pydantic model to dict
-            if hasattr(usage_metrics, "model_dump"):
-                result: dict[str, Any] = usage_metrics.model_dump()
-                return result
-
-            # Try to convert using dict() for dataclasses or similar
-            if hasattr(usage_metrics, "__dict__"):
-                return {key: value for key, value in usage_metrics.__dict__.items() if not key.startswith("_") and not callable(value)}
-
-            # Fallback: convert to string representation
-            return {"raw_usage_metrics": str(usage_metrics)}
-
-        except Exception as e:
-            self.logger.warning(f"Failed to serialize usage_metrics: {e!s}")
-            return {"serialization_error": str(e), "raw_usage_metrics": str(usage_metrics)}
-
     def save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
         """Save data to JSON file with custom serialization for datetime and Pydantic models."""
 

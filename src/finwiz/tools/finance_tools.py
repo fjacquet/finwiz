@@ -50,23 +50,6 @@ def _safe_init(tool_class: type[BaseTool]) -> BaseTool | None:
         return None
 
 
-def get_yahoo_finance_tools() -> list[BaseTool]:
-    """
-    Initialize and return all Yahoo Finance tools.
-
-    Returns:
-        list[BaseTool]: A list of initialized Yahoo Finance tools ready for crew usage.
-
-    """
-    return [
-        YahooFinanceTickerInfoTool(),
-        YahooFinanceHistoryTool(),
-        YahooFinanceCompanyInfoTool(),
-        YahooFinanceETFHoldingsTool(),
-        YahooFinanceNewsTool(),
-    ]
-
-
 def get_stock_research_tools() -> list[BaseTool]:
     """
     Get tools optimized for stock research.

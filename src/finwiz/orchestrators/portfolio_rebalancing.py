@@ -19,7 +19,7 @@ from typing import Any
 from finwiz.exceptions.orchestrator import InsufficientPriceDataError, PortfolioRebalancingError
 from finwiz.quantitative.optimization_algorithms import OptimizedTrades
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalysisError, PortfolioAnalyzer
-from finwiz.quantitative.rebalancing_engine import OptimizationConstraint, RebalancingEngine
+from finwiz.quantitative.rebalancing_engine import RebalancingEngine
 from finwiz.quantitative.risk_manager import RiskLevel, RiskManager
 from finwiz.reporting.rebalancing.rebalancing_html_builders import RebalancingHTMLBuilder
 from finwiz.schemas.portfolio_rebalancing import (
@@ -246,39 +246,6 @@ class PortfolioRebalancingOrchestrator:
             method_used="enhanced_trade_recommendation_system",
         )
 
-    def _build_constraints(self, config: PortfolioConfiguration) -> list[OptimizationConstraint]:
-        """Build optimization constraints."""
-        constraints = [
-            OptimizationConstraint(
-                name="min_trade_size",
-                constraint_type="min_trade_size",
-                value=config.min_trade_size,
-                description="Minimum trade size",
-            ),
-            OptimizationConstraint(
-                name="max_position",
-                constraint_type="max_position",
-                value=0.25,
-                description="Max 25% position size",
-            ),
-            OptimizationConstraint(
-                name="turnover",
-                constraint_type="turnover",
-                value=0.5,
-                description="Max 50% turnover",
-            ),
-        ]
-        if config.available_capital != 0:
-            constraints.append(
-                OptimizationConstraint(
-                    name="capital",
-                    constraint_type="capital",
-                    value=abs(config.available_capital),
-                    description="Available capital",
-                )
-            )
-        return constraints
-
     # =========================================================================
     # Calculations
     # =========================================================================
@@ -426,41 +393,6 @@ class PortfolioRebalancingOrchestrator:
             return self.report_generator.generate_html(title=title, language=language)
         except Exception as e:
             raise PortfolioRebalancingError(f"Report generation failed: {e}") from e
-
-    def generate_summary_report(self, result: RebalancingResult) -> dict[str, Any]:
-        """Generate summary report in dictionary format."""
-        try:
-            return {
-                "analysis_timestamp": result.analysis_timestamp.isoformat(),
-                "portfolio_id": result.portfolio_id,
-                "overall_recommendation": result.overall_recommendation.value,
-                "next_review_date": result.next_review_date.isoformat(),
-                "execution_summary": {
-                    "total_trades_required": result.execution_summary.total_trades_required,
-                    "positions_requiring_action": result.execution_summary.positions_requiring_action,
-                    "positions_within_tolerance": result.execution_summary.positions_within_tolerance,
-                    "estimated_execution_time": result.execution_summary.estimated_execution_time,
-                    "capital_required": result.execution_summary.capital_required,
-                },
-                "cost_analysis": {
-                    "total_transaction_costs": result.cost_analysis.total_transaction_costs,
-                    "cost_as_percentage": result.cost_analysis.cost_as_percentage,
-                    "break_even_days": result.cost_analysis.break_even_days,
-                },
-                "risk_analysis": {
-                    "current_risk_score": result.current_risk_score,
-                    "projected_risk_score": result.projected_risk_score,
-                    "risk_improvement": result.risk_improvement,
-                },
-                "portfolio_metrics": {
-                    "total_value": result.current_portfolio.total_value,
-                    "positions_count": len(result.current_portfolio.weightings),
-                    "positions_needing_rebalancing": len(result.current_portfolio.positions_needing_rebalancing),
-                },
-            }
-        except Exception as e:
-            logger.error(f"Summary report failed: {e}")
-            return {"error": str(e)}
 
     # =========================================================================
     # Public API (backward compatibility)

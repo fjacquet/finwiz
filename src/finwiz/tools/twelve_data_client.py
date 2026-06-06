@@ -10,10 +10,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-import aiohttp
-
 from finwiz.config.endpoints import TWELVE_DATA_BASE
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider, with_rate_limit
 from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 
@@ -38,66 +35,6 @@ class TwelveDataClient:
         self._cache: dict[str, dict[str, Any]] = {}
         self.cache_ttl = 300  # 5 minutes cache
         self.timeout = 30
-
-    async def make_api_call(self, endpoint: str, params: dict[str, Any]) -> dict[str, Any]:
-        """
-        Make API call to Twelve Data with rate limiting and error handling.
-
-        Args:
-            endpoint: API endpoint to call
-            params: Query parameters for the API call
-
-        Returns:
-            Dictionary containing the API response data
-
-        Raises:
-            ValueError: If API key is not configured
-            RuntimeError: If API returns an error response
-
-        """
-        # API key already validated at __init__ via validate_api_key
-
-        # Add API key to parameters
-        params["apikey"] = self.api_key
-
-        # Check cache first
-        cache_key = f"{endpoint}_{hash(str(sorted(params.items())))}"
-        if cache_key in self._cache:
-            cache_entry = self._cache[cache_key]
-            if time.time() - cache_entry["timestamp"] < self.cache_ttl:
-                logger.debug(f"Using cached data for {endpoint}")
-                cached_data: dict[str, Any] = cache_entry["data"]
-                return cached_data
-
-        url = f"{self.base_url}/{endpoint}"
-
-        async def make_request() -> dict[str, Any]:
-            """Make the actual HTTP request."""
-            async with aiohttp.ClientSession() as session:
-                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=self.timeout)) as response:
-                    if response.status != 200:
-                        error_text = await response.text()
-                        raise RuntimeError(f"API error {response.status}: {error_text}")
-
-                    data = await response.json()
-
-                    # Check for API error in response
-                    if "status" in data and data["status"] == "error":
-                        raise RuntimeError(f"API error: {data.get('message', 'Unknown error')}")
-
-                    # Cache successful response
-                    self._cache[cache_key] = {"data": data, "timestamp": time.time()}
-
-                    result: dict[str, Any] = data
-                    return result
-
-        # Use centralized rate limiting
-        try:
-            result: dict[str, Any] = await with_rate_limit(APIProvider.TWELVE_DATA, make_request, endpoint=endpoint)
-            return result
-        except Exception as e:
-            logger.error(f"Error fetching {endpoint} data: {e}")
-            raise
 
     def clear_cache(self) -> None:
         """Clear the API response cache."""
@@ -128,26 +65,3 @@ class TwelveDataClient:
             "expired_entries": expired_entries,
             "cache_ttl": self.cache_ttl,
         }
-
-    def cleanup_expired_cache(self) -> int:
-        """
-        Remove expired entries from cache.
-
-        Returns:
-            Number of entries removed
-
-        """
-        current_time = time.time()
-        expired_keys = []
-
-        for key, cache_entry in self._cache.items():
-            if current_time - cache_entry["timestamp"] >= self.cache_ttl:
-                expired_keys.append(key)
-
-        for key in expired_keys:
-            del self._cache[key]
-
-        if expired_keys:
-            logger.debug(f"Removed {len(expired_keys)} expired cache entries")
-
-        return len(expired_keys)

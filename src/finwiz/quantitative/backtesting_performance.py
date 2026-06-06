@@ -374,23 +374,6 @@ class BacktestingPerformanceAnalyzer:
 
         return benchmark_return, alpha, beta
 
-    def calculate_information_ratio(self, portfolio_returns: list[float], benchmark_returns: list[float]) -> float:
-        """Calculate Information Ratio (active return / tracking error)."""
-        if len(portfolio_returns) != len(benchmark_returns) or len(portfolio_returns) < 2:
-            return 0.0
-
-        portfolio_returns_arr = np.array(portfolio_returns)
-        benchmark_returns_arr = np.array(benchmark_returns)
-
-        active_returns = portfolio_returns_arr - benchmark_returns_arr
-        active_return = np.mean(active_returns)
-        tracking_error = np.std(active_returns)
-
-        if tracking_error == 0:
-            return 0.0
-
-        return float((active_return / tracking_error) * np.sqrt(252))  # Annualized
-
     def calculate_sortino_ratio(self, portfolio_values: list[tuple[str, float]], risk_free_rate: float = 0.02) -> float:
         """Calculate Sortino Ratio (return / downside deviation)."""
         if len(portfolio_values) < 2:
@@ -418,26 +401,6 @@ class BacktestingPerformanceAnalyzer:
         # Annualized Sortino ratio
         mean_excess_return = np.mean(excess_returns)
         return float((mean_excess_return / downside_deviation) * np.sqrt(252))
-
-    def calculate_maximum_drawdown_duration(self, portfolio_values: list[tuple[str, float]]) -> int:
-        """Calculate the maximum drawdown duration in days."""
-        if len(portfolio_values) < 2:
-            return 0
-
-        values = [value for _, value in portfolio_values]
-        peak = values[0]
-        max_duration = 0
-        current_duration = 0
-
-        for value in values[1:]:
-            if value > peak:
-                peak = value
-                current_duration = 0
-            else:
-                current_duration += 1
-                max_duration = max(max_duration, current_duration)
-
-        return max_duration
 
     def plot_results(self, cerebro: bt.Cerebro, save_path: str | None = None) -> None:
         """

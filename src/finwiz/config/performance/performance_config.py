@@ -232,11 +232,6 @@ def get_performance_config_manager() -> PerformanceConfigManager:
     return _performance_config_manager
 
 
-def get_optimization_mode() -> OptimizationMode:
-    """Get current optimization mode."""
-    return get_performance_config_manager().get_mode()
-
-
 def is_maximum_speed_mode() -> bool:
     """Check if running in maximum speed mode."""
     return get_performance_config_manager().is_maximum_speed_mode()

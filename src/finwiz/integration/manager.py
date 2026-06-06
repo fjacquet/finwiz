@@ -216,14 +216,6 @@ class CrewDataIntegrationManager:
         return self.registry_manager.check_data_freshness(max_age_hours)
 
     # Backward compatibility methods for tests
-    def _load_json_file(self, file_path: Path, default: dict[str, Any]) -> dict[str, Any]:
-        """Load JSON file with default fallback (backward compatibility)."""
-        return self.schema_manager.load_json_file(file_path, default)
-
-    def _save_json_file(self, file_path: Path, data: dict[str, Any]) -> None:
-        """Save data to JSON file (backward compatibility)."""
-        return self.schema_manager.save_json_file(file_path, data)
-
     def _sort_crews_by_dependencies(self, crews: list[CrewConfig]) -> list[CrewConfig]:
         """Sort crews by their dependencies (backward compatibility)."""
         result: list[CrewConfig] = self.registry_manager._sort_crews_by_dependencies(crews)

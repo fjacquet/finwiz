@@ -88,12 +88,3 @@ class ScenarioAnalyzer:
 
 
 # Factory function for easy instantiation
-def get_scenario_analyzer() -> ScenarioAnalyzer:
-    """
-    Get a scenario analyzer instance.
-
-    Returns:
-        ScenarioAnalyzer instance
-
-    """
-    return ScenarioAnalyzer()

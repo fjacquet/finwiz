@@ -143,41 +143,6 @@ class DataFreshnessChecker:
                 last_updated=datetime.min,
             )
 
-    def get_stale_files(self, max_age_hours: int = 24) -> list[Path]:
-        """
-        Get list of all stale files across crew directories.
-
-        Args:
-            max_age_hours: Maximum acceptable age in hours
-
-        Returns:
-            List of Path objects for stale files
-
-        """
-        stale_files = []
-
-        try:
-            for crew_dir in self.crew_directories:
-                crew_path = self.output_dir / crew_dir
-
-                if not crew_path.exists():
-                    continue
-
-                # Check all files matching patterns
-                for pattern in self.file_patterns:
-                    for file_path in crew_path.glob(pattern):
-                        freshness = self.check_file_freshness(file_path, max_age_hours)
-                        if not freshness.is_fresh:
-                            stale_files.append(file_path)
-
-            self.logger.info(f"Found {len(stale_files)} stale files", extra={"max_age_hours": max_age_hours, "stale_count": len(stale_files)})
-
-            return stale_files
-
-        except Exception as e:
-            self.logger.error(f"Error getting stale files: {e!s}", exc_info=True)
-            return []
-
     def recommend_refresh_order(self, max_age_hours: int = 24) -> list[str]:
         """
         Recommend crew execution order based on data dependencies and staleness.

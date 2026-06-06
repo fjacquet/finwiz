@@ -74,33 +74,6 @@ class ValidationErrorRecovery:
         """
         return self.error_handlers.analyze_validation_error(error, data_context)
 
-    def suggest_data_repairs(self, error_analyses: list[ValidationErrorAnalysis], original_data: dict[str, Any]) -> list[DataRepairSuggestion]:
-        """
-        Generate data repair suggestions based on error analyses.
-
-        Args:
-            error_analyses: List of validation error analyses
-            original_data: The original data that failed validation
-
-        Returns:
-            List of data repair suggestions
-
-        """
-        repair_suggestions = []
-
-        for analysis in error_analyses:
-            if not analysis.is_repairable:
-                continue
-
-            suggestion = self.recovery_strategies.create_repair_suggestion(analysis, original_data)
-            if suggestion:
-                repair_suggestions.append(suggestion)
-
-        # Sort by confidence (highest first)
-        repair_suggestions.sort(key=lambda x: x.confidence, reverse=True)
-
-        return repair_suggestions
-
     def generate_error_report(self, validation_errors: list[ValidationError], original_data: dict[str, Any]) -> ValidationErrorReport:
         """
         Generate a comprehensive validation error report.
@@ -138,14 +111,6 @@ class ValidationErrorRecovery:
         """Backward compatibility method."""
         return self.error_handlers._determine_error_severity(error_type, field_path, error_message)
 
-    def _assess_repairability(self, error_type: str, error_info: dict[str, Any]) -> tuple[bool, float]:
-        """Backward compatibility method."""
-        return self.recovery_strategies.assess_repairability(error_type, error_info)
-
-    def _generate_suggested_fix(self, error_type: str, error_info: dict, data_context: dict | None) -> str | None:
-        """Backward compatibility method."""
-        return self.recovery_strategies.generate_suggested_fix(error_type, error_info, data_context)
-
     def _get_nested_value(self, data: dict, field_path: str) -> Any:
         """Backward compatibility method."""
         return self.recovery_strategies._get_nested_value(data, field_path)
@@ -161,10 +126,6 @@ class ValidationErrorRecovery:
     def _adjust_value_for_constraints(self, current_value: Any, error_message: str) -> Any:
         """Backward compatibility method."""
         return self.recovery_strategies._adjust_value_for_constraints(current_value, error_message)
-
-    def _create_repair_suggestion(self, analysis: ValidationErrorAnalysis, original_data: dict[str, Any]) -> DataRepairSuggestion | None:
-        """Backward compatibility method."""
-        return self.recovery_strategies.create_repair_suggestion(analysis, original_data)
 
     def _generate_recovery_recommendations(self, error_analyses: list[ValidationErrorAnalysis], repair_suggestions: list[DataRepairSuggestion]) -> list[str]:
         """Backward compatibility method."""

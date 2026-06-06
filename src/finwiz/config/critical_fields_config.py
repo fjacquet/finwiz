@@ -120,22 +120,6 @@ def get_optional_fields(asset_class: Literal["stock", "etf", "crypto"]) -> list[
     return OPTIONAL_FIELDS.get(asset_class, [])
 
 
-def is_critical_field(field_name: str, asset_class: Literal["stock", "etf", "crypto"]) -> bool:
-    """
-    Check if field is critical for given asset class.
-
-    Args:
-        field_name: Field name to check
-        asset_class: Asset class
-
-    Returns:
-        True if field is critical, False otherwise
-
-    """
-    critical_fields = get_critical_fields(asset_class)
-    return field_name in critical_fields
-
-
 def get_safe_default(field_name: str) -> float | None:
     """
     Get safe default value for OPTIONAL field.
