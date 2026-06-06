@@ -329,7 +329,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 uv sync
 
 # Install development dependencies
-uv pip install -e ".[dev]"
+uv sync --all-groups
 
 # Set up pre-commit hooks
 uv run pre-commit install

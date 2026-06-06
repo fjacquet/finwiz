@@ -14,7 +14,6 @@ from .fear_greed_adapter import FearGreedAdapter
 from .finnhub_news_adapter import FinnhubNewsAdapter
 from .fred_adapter import FREDAdapter
 from .industry_averages import IndustryAveragesAdapter
-from .intrinio_adapter import IntrinioAdapter
 from .tiingo_adapter import TiingoAdapter
 from .yfinance_adapter import YFinanceAdapter
 
@@ -29,7 +28,6 @@ __all__ = [
     "FinnhubNewsAdapter",
     "FundamentalData",
     "IndustryAveragesAdapter",
-    "IntrinioAdapter",
     "InvalidDataError",
     "TiingoAdapter",
     "TimeoutError",

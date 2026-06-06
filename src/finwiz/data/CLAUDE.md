@@ -12,7 +12,6 @@ data/
 │   ├── alpha_vantage_adapter.py # Alpha Vantage
 │   ├── tiingo_adapter.py        # Tiingo
 │   ├── eod_adapter.py           # EOD Historical Data
-│   ├── intrinio_adapter.py      # Intrinio
 │   ├── industry_averages.py     # Industry benchmark data
 │   └── yfinance_adapter_old.py  # Legacy adapter (deprecated)
 │
@@ -45,9 +44,6 @@ data/
 
 4. EOD Historical Data (API KEY required)
    └── Global exchanges, splits, dividends
-
-5. Intrinio (API KEY required)
-   └── SEC filings, fundamentals
 ```
 
 ## Usage
@@ -156,7 +152,6 @@ def fetch_with_fallback(self, ticker: str, method: str) -> dict:
 ALPHA_VANTAGE_API_KEY=your_key
 TIINGO_API_KEY=your_key
 EOD_API_KEY=your_key
-INTRINIO_API_KEY=your_key
 
 # Performance settings
 ENABLE_ALPHA_VANTAGE=false  # Disable if not needed

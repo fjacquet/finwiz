@@ -16,7 +16,6 @@ from finwiz.data.adapters.base_adapter import (
 )
 from finwiz.data.adapters.eod_adapter import EODAdapter
 from finwiz.data.adapters.industry_averages import IndustryAveragesAdapter
-from finwiz.data.adapters.intrinio_adapter import IntrinioAdapter
 from finwiz.data.adapters.tiingo_adapter import TiingoAdapter
 from finwiz.data.adapters.yfinance_adapter import YFinanceAdapter
 from finwiz.tools.logger import get_logger
@@ -92,9 +91,8 @@ class DataSourceOrchestrator:
     Waterfall Strategy:
     1. YFinance (primary, fast, free)
     2. Alpha Vantage (fallback, good fundamentals)
-    3. Intrinio (fallback, SEC filings)
-    4. Tiingo/EOD (international stocks)
-    5. Industry Averages (last resort)
+    3. Tiingo/EOD (international stocks)
+    4. Industry Averages (last resort)
 
     Features:
     - 10-second total timeout across all sources
@@ -126,7 +124,6 @@ class DataSourceOrchestrator:
         self.adapters: list[BaseDataAdapter] = [
             YFinanceAdapter(timeout_seconds=per_source_timeout),
             AlphaVantageAdapter(timeout_seconds=per_source_timeout),
-            IntrinioAdapter(timeout_seconds=per_source_timeout),
             TiingoAdapter(timeout_seconds=per_source_timeout),
             EODAdapter(timeout_seconds=per_source_timeout),
         ]
@@ -273,7 +270,7 @@ class DataSourceOrchestrator:
         elif "YFinance" in result.sources_succeeded:
             # High confidence if primary source succeeded
             confidence = 0.95 * completeness
-        elif any(s in result.sources_succeeded for s in ["AlphaVantage", "Intrinio"]):
+        elif "AlphaVantage" in result.sources_succeeded:
             # Good confidence if secondary sources succeeded
             confidence = 0.85 * completeness
         elif any(s in result.sources_succeeded for s in ["Tiingo", "EOD"]):

@@ -16,7 +16,6 @@ dependencies = [
     "quantlib>=1.39",
     "pyportfolioopt>=1.5.5",
     "plotly>=6.7.0",
-    "langchain>=0.3.27",
     "langchain-community>=0.3.29",
     "langchain-text-splitters>=0.3.0",
     "numpy>=1.26.4",
@@ -28,10 +27,7 @@ dependencies = [
     "empyrical-reloaded>=0.5.12",
     "crewai[google-genai,tools]>=1.5.0",
     "litellm>=1.80.0",
-    "intrinio>=0.2.1",
-    "langchain-openai>=1.0.3",
     "fastapi>=0.136.1",
-    "cryptography>=46.0.3",
     "aiolimiter>=1.2.1",
     "finnhub-python>=2.4.20",
     "fredapi>=0.5.2",
@@ -40,6 +36,14 @@ dependencies = [
     "gnews>=0.3.7",
     "fear-and-greed>=0.0.9",
     "requests>=2.33.1",
+    "aiohttp>=3.13.5",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "psutil>=7.2.2",
+    "python-dateutil>=2.9.0.post0",
+    "tenacity>=9.1.4",
+    "openai>=2.33.0",
+    "pydantic-settings>=2.14.0",
 ]
 
 [project.scripts]
@@ -47,19 +51,19 @@ kickoff = "finwiz.main:kickoff"
 run_crew = "finwiz.main:kickoff"
 plot = "finwiz.main:plot"
 
-[project.optional-dependencies]
-dev = [
-  "ruff>=0.4.8,<1.0.0",
-  "pytest>=8.4.1",
-  "pytest-mock>=3.15.1",
-]
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.crewai]
 type = "flow"
+
+[tool.deptry.per_rule_ignores]
+# Imported directly but intentionally not declared as top-level dependencies:
+#   crewai_tools  -> provided by the crewai[tools] extra (already declared)
+#   httpcore      -> transitive of httpx; not a direct top-level need
+#   pydantic_core -> ships version-locked with pydantic; pinning separately risks conflict
+DEP003 = ["crewai_tools", "httpcore", "pydantic_core"]
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.
@@ -327,7 +331,6 @@ module = [
     "pypfopt.*",
     "sec_api.*",
     "fastapi.*",
-    "intrinio_sdk.*",
 ]
 ignore_missing_imports = true
 
@@ -390,6 +393,8 @@ dev = [
     "scipy-stubs>=1.17.1.4",
     "hypothesis>=6.148.1",
     "pre-commit>=4.5.1",
+    "ruff>=0.4.8,<1.0.0",
+    "pytest>=8.4.1",
 ]
 
 docs = [
