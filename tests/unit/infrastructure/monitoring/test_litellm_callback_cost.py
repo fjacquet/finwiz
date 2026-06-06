@@ -89,6 +89,19 @@ class TestTokenMonitorCostTracking:
         cb = TokenMonitorCallback()
         cb.log_cost_summary()  # Should not raise with no calls
 
+    def test_call_count_increments_per_event(self, mocker):
+        # Regression: call_count was never incremented, so get_cost_summary()
+        # always reported 0 calls and the per-call log printed "#0".
+        mocker.patch("litellm.completion_cost", return_value=0.005)
+        cb = TokenMonitorCallback()
+        assert cb.call_count == 0
+
+        cb.log_success_event({"model": "gpt-4"}, self._make_response(mocker), 0.0, 1.0)
+        cb.log_success_event({"model": "gpt-4"}, self._make_response(mocker), 0.0, 1.0)
+
+        assert cb.call_count == 2
+        assert cb.get_cost_summary()["call_count"] == 2
+
     def test_token_tracking_per_crew(self, mocker):
         mocker.patch("litellm.completion_cost", return_value=0.0)
         cb = TokenMonitorCallback()

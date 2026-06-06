@@ -46,6 +46,7 @@ class TokenMonitorCallback(CustomLogger):
 
     def log_success_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
         """Called after successful LLM call. Tracks cost and crew attribution."""
+        self.call_count += 1
         usage = getattr(response_obj, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
         completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
