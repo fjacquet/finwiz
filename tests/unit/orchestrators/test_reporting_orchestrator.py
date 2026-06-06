@@ -587,6 +587,77 @@ class TestHoldingsInsightsExtraction:
         assert orchestrator._extract_holdings_insights(None) is None
 
 
+class TestSentimentAndStrategicExtraction:
+    """Regression: sentiment + strategic extractors must read the canonical output/{asset_class}.
+
+    Both previously scanned only output/enriched/... (never created on a real
+    kickoff), so the Sentiment and Strategic Posture sections silently vanished.
+    They now share _iter_enriched_records with the insights extractor.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _write(base, ticker: str, payload: dict) -> None:
+        base.mkdir(parents=True, exist_ok=True)
+        (base / f"{ticker}_enriched.json").write_text(json.dumps({"ticker": ticker, **payload}))
+
+    def test_sentiment_reads_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        self._write(
+            tmp_path / "output" / "stock",
+            "AAPL",
+            {"sentiment_summary": {"score": 0.4, "confidence": 0.8, "article_count": 5}},
+        )
+
+        result = orchestrator._extract_holdings_sentiment({"AAPL": {}})
+
+        assert result is not None
+        assert result["AAPL"]["score"] == 0.4
+
+    def test_strategic_reads_canonical_asset_dir(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        self._write(
+            tmp_path / "output" / "etf",
+            "SPY",
+            {"qualitative": {"strategic_analysis": {"swot": {"strengths": ["Liquidity"]}}}},
+        )
+
+        result = orchestrator._extract_holdings_strategic({"SPY": {}})
+
+        assert result is not None
+        assert result["SPY"]["swot"]["strengths"] == ["Liquidity"]
+
+    def test_session_dir_preferred_for_sentiment(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        self._write(tmp_path / "output" / "enriched" / "default" / "stock", "AAPL", {"sentiment_summary": {"score": 0.9}})
+        self._write(tmp_path / "output" / "stock", "AAPL", {"sentiment_summary": {"score": -0.9}})
+
+        result = orchestrator._extract_holdings_sentiment({"AAPL": {}})
+
+        assert result is not None
+        assert result["AAPL"]["score"] == 0.9  # session dir wins, no stale leakage
+
+    def test_both_return_none_without_deep_analysis(self, orchestrator):
+        assert orchestrator._extract_holdings_sentiment(None) is None
+        assert orchestrator._extract_holdings_strategic(None) is None
+
+    def test_iter_enriched_records_skips_unreadable_files(self, orchestrator, tmp_path, monkeypatch):
+        monkeypatch.chdir(tmp_path)
+        base = tmp_path / "output" / "crypto"
+        base.mkdir(parents=True, exist_ok=True)
+        (base / "BTC-USD_enriched.json").write_text("{not valid json")
+        (base / "ETH-USD_enriched.json").write_text(json.dumps({"ticker": "ETH-USD", "sentiment_summary": {"score": 0.1}}))
+
+        result = orchestrator._extract_holdings_sentiment({"BTC-USD": {}, "ETH-USD": {}})
+
+        # Bad file skipped (fail-soft); good file still surfaced.
+        assert result is not None
+        assert set(result.keys()) == {"ETH-USD"}
+
+
 class TestHTMLAutoGeneration:
     """Tests for HTML auto-generation functionality."""
 

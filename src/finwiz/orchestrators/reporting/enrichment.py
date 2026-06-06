@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -131,26 +132,21 @@ class ReportEnrichmentMixin:
             self.logger.debug(f"Live cost summary unavailable: {e}")
             return None
 
-    def _extract_holdings_insights(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
-        """Distill per-holding "quintessence" insight cards from enriched JSON files.
+    def _iter_enriched_records(self) -> Iterator[tuple[str, dict[str, Any]]]:
+        """Yield ``(asset_class, enriched_json)`` for the current run's enriched files.
 
-        Mirrors :meth:`_extract_holdings_strategic` (session-preferred walk). For
-        each ticker, distills the most decision-relevant fields from
-        ``data["qualitative"]`` into a flat dict consumed by
-        :func:`finwiz.reporting.sections.insights.generate_holdings_insight_cards`.
+        Single source of truth for locating per-holding enriched JSON, shared by
+        every extractor below so the directory list cannot drift between them.
 
-        Returns ``{ticker: distilled_dict}`` or ``None`` when no holding carries
-        qualitative data (ETF/crypto-only or unanalyzed portfolios).
+        ``DeepAnalysisOrchestrator._store_enriched_analysis`` writes the canonical
+        files to ``output/{asset_class}/{ticker}_enriched.json``; the
+        ``output/enriched/...`` dirs are session-scoped overrides used by some
+        pipelines. Per asset class, probe in priority order and read **only** the
+        first directory that exists, so a prior run's files in a lower-priority
+        directory don't leak into this report. Fail-soft: unreadable/invalid
+        files are skipped with a debug log.
         """
-        if not deep_analysis_results:
-            return None
-
-        insights: dict[str, dict] = {}
         session_id = self.state.session_id or "default"
-
-        # `_store_enriched_analysis` writes the canonical files to `output/{asset_class}`;
-        # the `output/enriched/...` dirs are session-scoped overrides when present.
-        # Probe in priority order and use the first that exists (data_loading.py:57).
         for asset_class in ["stock", "etf", "crypto"]:
             for base_dir in [
                 f"output/enriched/{session_id}/{asset_class}",
@@ -163,20 +159,38 @@ class ReportEnrichmentMixin:
                 for json_file in enriched_dir.glob("*_enriched.json"):
                     try:
                         data = json.loads(json_file.read_text())
-                        ticker = data.get("ticker")
-                        qual = data.get("qualitative")
-                        if not ticker or not isinstance(qual, dict):
-                            continue
-                        distilled = self._distill_qualitative(qual)
-                        if distilled:
-                            distilled["report_link"] = f"{asset_class}/{ticker}_report.html"
-                            distilled["grade"] = data.get("final_grade", "")
-                            insights[ticker] = distilled
                     except Exception as e:
-                        self.logger.debug(f"Could not extract insights from {json_file}: {e}")
-                # Use the first existing dir exclusively, so a prior run's enriched
-                # files in a lower-priority dir don't leak into this report.
+                        self.logger.debug(f"Could not read enriched file {json_file}: {e}")
+                        continue
+                    if isinstance(data, dict):
+                        yield asset_class, data
+                # First existing dir wins (highest priority); stop probing fallbacks.
                 break
+
+    def _extract_holdings_insights(self, deep_analysis_results: dict[str, Any] | None) -> dict[str, dict] | None:
+        """Distill per-holding "quintessence" insight cards from enriched JSON files.
+
+        For each ticker, distills the most decision-relevant fields from
+        ``data["qualitative"]`` into a flat dict consumed by
+        :func:`finwiz.reporting.sections.insights.generate_holdings_insight_cards`.
+
+        Returns ``{ticker: distilled_dict}`` or ``None`` when no holding carries
+        qualitative data (ETF/crypto-only or unanalyzed portfolios).
+        """
+        if not deep_analysis_results:
+            return None
+
+        insights: dict[str, dict] = {}
+        for asset_class, data in self._iter_enriched_records():
+            ticker = data.get("ticker")
+            qual = data.get("qualitative")
+            if not ticker or not isinstance(qual, dict):
+                continue
+            distilled = self._distill_qualitative(qual)
+            if distilled:
+                distilled["report_link"] = f"{asset_class}/{ticker}_report.html"
+                distilled["grade"] = data.get("final_grade", "")
+                insights[ticker] = distilled
 
         return insights if insights else None
 
@@ -254,26 +268,12 @@ class ReportEnrichmentMixin:
         if not deep_analysis_results:
             return None
         strategic: dict[str, dict] = {}
-        session_id = self.state.session_id or "default"
-        for asset_class in ["stock", "etf", "crypto"]:
-            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
-                enriched_dir = Path(base_dir)
-                if not enriched_dir.exists():
-                    continue
-                for json_file in enriched_dir.glob("*_enriched.json"):
-                    try:
-                        data = json.loads(json_file.read_text())
-                        ticker = data.get("ticker")
-                        qual = data.get("qualitative") or {}
-                        sa = qual.get("strategic_analysis") if isinstance(qual, dict) else None
-                        if ticker and sa:
-                            strategic[ticker] = sa
-                    except Exception as e:
-                        self.logger.debug(f"Could not extract strategic from {json_file}: {e}")
-                # Prefer the session-scoped dir exclusively; only fall back to the
-                # generic dir when the session dir is absent, so a prior run's
-                # enriched files don't leak into this report.
-                break
+        for _asset_class, data in self._iter_enriched_records():
+            ticker = data.get("ticker")
+            qual = data.get("qualitative") or {}
+            sa = qual.get("strategic_analysis") if isinstance(qual, dict) else None
+            if ticker and sa:
+                strategic[ticker] = sa
         return strategic if strategic else None
 
     def _synthesize_portfolio_strategic(self, deep_analysis_results: dict[str, Any] | None) -> dict | None:
@@ -321,24 +321,11 @@ class ReportEnrichmentMixin:
             return None
 
         sentiment_data: dict[str, dict] = {}
-        session_id = self.state.session_id or "default"
-
-        for asset_class in ["stock", "etf", "crypto"]:
-            for base_dir in [f"output/enriched/{session_id}/{asset_class}", f"output/enriched/{asset_class}"]:
-                enriched_dir = Path(base_dir)
-                if not enriched_dir.exists():
-                    continue
-                for json_file in enriched_dir.glob("*_enriched.json"):
-                    try:
-                        data = json.loads(json_file.read_text())
-                        ticker = data.get("ticker")
-                        summary = data.get("sentiment_summary")
-                        if ticker and summary and isinstance(summary, dict):
-                            sentiment_data[ticker] = summary
-                    except Exception as e:
-                        self.logger.debug(f"Could not extract sentiment from {json_file}: {e}")
-                # Prefer the session-scoped dir exclusively (see _extract_holdings_strategic).
-                break
+        for _asset_class, data in self._iter_enriched_records():
+            ticker = data.get("ticker")
+            summary = data.get("sentiment_summary")
+            if ticker and summary and isinstance(summary, dict):
+                sentiment_data[ticker] = summary
 
         return sentiment_data if sentiment_data else None
 
