@@ -73,20 +73,33 @@ class NewcomerDiscoveryPipeline:
     # Main pipeline
     # ------------------------------------------------------------------
 
+    # Cap per-asset-class candidates surfaced (whole-universe scoring can be wide).
+    MAX_SURFACED_CANDIDATES = 100
+
     def discover(self, session_id: str) -> NewcomerDiscoveryResult:
-        """Run the full discovery pipeline for this asset class."""
+        """Run the full discovery pipeline for this asset class.
+
+        When the ``portfolio_aware_discovery`` flag is enabled, scores the whole
+        universe by ``standalone_factor x portfolio_fit`` (recall un-gated).
+        Otherwise falls back to the legacy signal-gated path.
+        """
+        from finwiz.config.features.flags import is_feature_enabled
         from finwiz.schemas.newcomer_discovery import NewcomerDiscoveryResult
 
         start_time = time.time()
-        candidates = self._gather_candidates()
-        logger.info("Gathered %d raw candidates for %s", len(candidates), self.asset_class)
 
-        candidates = [c for c in candidates if c.ticker.upper() not in self.portfolio_tickers]
-        logger.info("%d candidates remain after portfolio exclusion", len(candidates))
+        if is_feature_enabled("portfolio_aware_discovery"):
+            candidates = self._gather_portfolio_aware_candidates()
+        else:
+            candidates = self._gather_candidates()
+            logger.info("Gathered %d raw candidates for %s", len(candidates), self.asset_class)
+            candidates = [c for c in candidates if c.ticker.upper() not in self.portfolio_tickers]
+            logger.info("%d candidates remain after portfolio exclusion", len(candidates))
+            candidates = self._score_candidates(candidates)
+            candidates = self._filter_actionable(candidates)
 
-        candidates = self._score_candidates(candidates)
-        candidates = self._filter_actionable(candidates)
         candidates.sort(key=lambda c: c.composite_score, reverse=True)
+        candidates = candidates[: self.MAX_SURFACED_CANDIDATES]
         candidates, enrich_tried, enrich_ok = self._enrich_top_candidates(candidates)
 
         result = NewcomerDiscoveryResult(
@@ -169,6 +182,119 @@ class NewcomerDiscoveryPipeline:
                 logger.warning("MomentumScanner unexpected error: %s", e)
 
         return candidates
+
+    # ------------------------------------------------------------------
+    # Portfolio-aware wide scoring (Portfolio-Aware Opportunity Cascade)
+    # ------------------------------------------------------------------
+
+    def _gather_portfolio_aware_candidates(self) -> list[NewcomerCandidate]:
+        """Score the WHOLE universe by ``standalone_factor x portfolio_fit``.
+
+        Recall is no longer gated by breakout/momentum signals: every universe
+        ticker with usable price data is scored. Breakout/Momentum still run,
+        but only to supply a richer standalone score for the names they flag —
+        they are factor producers, not filters.
+        """
+        from finwiz.discovery.market_data import factor_score_from_returns, get_returns, get_sectors
+        from finwiz.orchestrators.gap_profile_orchestrator import load_gap_profile
+        from finwiz.schemas.newcomer_discovery import NewcomerCandidate
+        from finwiz.scoring.discovery.portfolio_fit_scorer import PortfolioFitScorer
+        from finwiz.scoring.grading_system import score_to_grade
+
+        universe = self._build_universe()
+        if not universe:
+            logger.warning("Empty universe for %s; no candidates", self.asset_class)
+            return []
+        logger.info("Portfolio-aware scoring of %d %s universe tickers", len(universe), self.asset_class)
+
+        profile = load_gap_profile()
+        fit_scorer = PortfolioFitScorer()
+        returns = get_returns(universe, self.asset_class)
+        sectors = get_sectors(universe, self.asset_class)
+        signal_scores, signal_meta = self._signal_standalone_scores(universe)
+
+        candidates: list[NewcomerCandidate] = []
+        for ticker in universe:
+            key = ticker.upper()
+            series = returns.get(key)
+            factor = signal_scores.get(key)
+            if factor is None:
+                factor = factor_score_from_returns(series)
+            if factor is None:
+                continue  # no usable data -> cannot score, excluded (logged in bulk)
+
+            fit, gap = fit_scorer.score(
+                profile,
+                sector=sectors.get(key),
+                returns=series,
+                risk_score=None,
+            )
+            final = max(0.0, min(1.0, factor * fit))
+            grade_info = score_to_grade(final)
+            meta = signal_meta.get(key, {})
+            candidates.append(
+                NewcomerCandidate(
+                    ticker=ticker,
+                    name=str(meta.get("name", ticker)),
+                    asset_class=self.asset_class,
+                    source=str(meta.get("source", "universe")),
+                    composite_score=final,
+                    grade=grade_info.grade,
+                    recommendation=grade_info.action,
+                    portfolio_fit_score=fit,
+                    gap_filled=gap,
+                    momentum_score=factor,
+                    sector=sectors.get(key),
+                    rationale=(f"factor {factor:.2f} x portfolio_fit {fit:.2f} = {final:.2f}" + (f"; fills {gap}" if gap else "")),
+                )
+            )
+        logger.info("Portfolio-aware scoring produced %d scored %s candidates", len(candidates), self.asset_class)
+        return candidates
+
+    def _build_universe(self) -> list[str]:
+        """Build the (portfolio-excluded) ticker universe for this asset class."""
+        try:
+            from finwiz.discovery.universe_provider import DynamicUniverseProvider
+
+            return DynamicUniverseProvider().get_universe(
+                self.asset_class,
+                exclude_tickers=list(self.portfolio_tickers),
+            )
+        except Exception as e:
+            logger.warning("Universe build failed for %s: %s", self.asset_class, e)
+            return []
+
+    def _signal_standalone_scores(self, universe: list[str]) -> tuple[dict[str, float], dict[str, dict[str, Any]]]:
+        """Run Breakout/Momentum as factor producers (not gates).
+
+        Returns ``(scores, meta)`` keyed by upper-cased ticker, where ``scores``
+        is the best signal composite for flagged names and ``meta`` carries
+        ``name``/``source`` for richer candidate display. Names not flagged are
+        simply absent (they fall back to the price-derived factor score).
+        """
+        scores: dict[str, float] = {}
+        meta: dict[str, dict[str, Any]] = {}
+
+        def _absorb(found: list[NewcomerCandidate]) -> None:
+            for c in found:
+                key = c.ticker.upper()
+                if c.composite_score > scores.get(key, 0.0):
+                    scores[key] = c.composite_score
+                    meta[key] = {"name": c.name or c.ticker, "source": c.source or "signal"}
+
+        try:
+            from finwiz.discovery.breakout_detector import BreakoutDetector
+
+            _absorb(BreakoutDetector().detect(universe, self.asset_class))
+        except Exception as e:
+            logger.warning("BreakoutDetector failed (non-fatal): %s", e)
+        try:
+            from finwiz.discovery.momentum_scanner import MomentumScanner
+
+            _absorb(MomentumScanner().scan(universe, self.asset_class))
+        except Exception as e:
+            logger.warning("MomentumScanner failed (non-fatal): %s", e)
+        return scores, meta
 
     # ------------------------------------------------------------------
     # Scoring
@@ -320,6 +446,10 @@ class NewcomerDiscoveryPipeline:
                 "composite_score": c.composite_score,
                 "recommendation": getattr(c, "recommendation", "REVIEW"),
                 "rationale": getattr(c, "rationale", ""),
+                "portfolio_fit_score": getattr(c, "portfolio_fit_score", None),
+                "gap_filled": getattr(c, "gap_filled", None),
+                "sector": getattr(c, "sector", None),
+                "asset_class": getattr(c, "asset_class", self.asset_class),
             }
             for c in result.candidates
         ]

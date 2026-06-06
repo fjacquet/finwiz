@@ -164,6 +164,10 @@ class FinwizFlow(Flow[FinwizState]):
         return self._get_orch("discovery")
 
     @property
+    def gap_profile_orch(self) -> Any:
+        return self._get_orch("gap_profile")
+
+    @property
     def validation_orch(self) -> Any:
         return self._get_orch("validation")
 
@@ -245,6 +249,15 @@ class FinwizFlow(Flow[FinwizState]):
                 self.state.stress_test_error = str(e)
                 logger.warning(f"Stress testing skipped: {e}")
 
+        # Phase 3.6: Portfolio Gap Profile (Portfolio-Aware Opportunity Cascade)
+        # Built before discovery so Phase 4 can rank candidates by marginal fit
+        # to the current portfolio. Fail-soft: an empty profile degrades discovery
+        # to standalone-factor ranking rather than breaking the flow.
+        logger.info("=" * 80)
+        logger.info("PHASE 3.6: Portfolio Gap Profile")
+        logger.info("=" * 80)
+        self.gap_profile_orch.build_gap_profile()
+
         # Phase 4: Discovery — ALWAYS runs.
         # The previous INVESTMENT_DISCOVERY_ENABLED kill switch was removed:
         # without discovery, the alternatives-matching phase has no A+ candidates
@@ -320,6 +333,11 @@ class FinwizFlow(Flow[FinwizState]):
     async def check_portfolio(self) -> dict[str, Any]:
         """Run portfolio keep-or-sell review."""
         return await self.validation_orch.check_portfolio()
+
+    @listen("analyze_and_update_portfolio")
+    def build_gap_profile(self) -> dict[str, Any]:
+        """Build the portfolio gap profile for the opportunity cascade (Phase 3.6)."""
+        return self.gap_profile_orch.build_gap_profile()
 
     @listen("check_portfolio")
     def check_crypto(self) -> dict[str, Any]:

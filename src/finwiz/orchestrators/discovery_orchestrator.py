@@ -266,6 +266,11 @@ class DiscoveryOrchestrator:
         self.state.investment_discovery_available = len(all_opportunities) > 0
         self.state.all_discovery_opportunities = all_opportunities
 
+        # Portfolio-Aware Opportunity Cascade: emit a ranked top-N gap-fill
+        # shortlist BEFORE any enrichment. Pure Python, zero LLM — this is the
+        # "fast time-to-shortlist" deliverable.
+        self._emit_shortlist(all_opportunities)
+
         # Save consolidated results to discovery directory
         consolidated_results = {
             "timestamp": datetime.now().isoformat(),
@@ -286,6 +291,39 @@ class DiscoveryOrchestrator:
             "discovery_available": self.state.investment_discovery_available,
             "total_opportunities": len(all_opportunities),
         }
+
+    def _emit_shortlist(self, opportunities: list[dict[str, Any]]) -> None:
+        """Rank opportunities and write the top-N gap-fill shortlist to state.
+
+        Ranks by ``composite_score`` (already ``standalone_factor x portfolio_fit``
+        in the portfolio-aware path). Persisted to ``output/discovery/`` so the
+        fast deliverable survives even if downstream enrichment is slow/disabled.
+        """
+        import os
+
+        try:
+            size = int(os.getenv("OPPORTUNITY_SHORTLIST_SIZE", "15"))
+        except (ValueError, TypeError):
+            size = 15
+
+        ranked = sorted(
+            opportunities,
+            key=lambda o: o.get("composite_score", 0.0) if isinstance(o, dict) else 0.0,
+            reverse=True,
+        )
+        shortlist = ranked[:size]
+
+        self.state.opportunity_shortlist = shortlist
+        self.state.shortlist_ready = True
+        try:
+            discovery_dir = Path("output") / "discovery"
+            discovery_dir.mkdir(parents=True, exist_ok=True)
+            out = discovery_dir / "opportunity_shortlist.json"
+            with open(out, "w") as f:
+                json.dump({"shortlist": shortlist, "size": len(shortlist)}, f, indent=2, default=str)
+        except OSError as e:
+            self.logger.warning(f"Failed to persist opportunity shortlist: {e}")
+        self.logger.info(f"✅ Opportunity shortlist ready: top {len(shortlist)} gap-fill candidates")
 
     def _update_state_from_dict(self, data: dict[str, Any]) -> None:
         """

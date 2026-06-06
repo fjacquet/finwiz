@@ -217,6 +217,14 @@ class FinwizState(BaseModel):
     # and mark unanalyzed holdings as "Analyse en attente".
     deep_analysis_coverage: tuple[int, int] | None = None
 
+    # Portfolio-Aware Opportunity Cascade
+    # Gap profile built after deep analysis (Phase 3.6); consumed by discovery
+    # and alternatives ranking. Stored as a dict (PortfolioGapProfile.model_dump()).
+    portfolio_gap_profile: dict[str, Any] = Field(default_factory=dict)
+    # Ranked top-N gap-fill opportunities, emitted before enrichment (fast shortlist).
+    opportunity_shortlist: list[dict[str, Any]] = Field(default_factory=list)
+    shortlist_ready: bool = Field(default=False)
+
     # Alternative matching results
     portfolio_alternatives: dict[str, list[dict[str, Any]]] = Field(default_factory=dict)
     alternatives_success: bool = Field(default=False)

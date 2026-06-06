@@ -236,6 +236,15 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             fallback_strategy=FallbackStrategy.DEFAULT_VALUES,
             description="Route stock/etf/crypto analyzers through NewcomerDiscoveryPipeline instead of legacy mocked data",
         ),
+        "portfolio_aware_discovery": FeatureFlagConfig(
+            name="portfolio_aware_discovery",
+            enabled=get_env_bool("FF_PORTFOLIO_AWARE_DISCOVERY", True),
+            strategy=FeatureFlagStrategy.BOOLEAN,
+            fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
+            description=(
+                "Portfolio-Aware Opportunity Cascade: rank discovery candidates by marginal fit to the current portfolio (factor x portfolio_fit) instead of signal-gated screening"
+            ),
+        ),
         "stock_analysis": FeatureFlagConfig(
             name="stock_analysis",
             enabled=get_env_bool("FF_STOCK_ANALYSIS", True),

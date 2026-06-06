@@ -54,6 +54,11 @@ ORCHESTRATOR_REGISTRY: dict[str, OrchestratorConfig] = {
         class_name="DiscoveryOrchestrator",
         deps_keys=("availability_tracker",),
     ),
+    "gap_profile": OrchestratorConfig(
+        module="finwiz.orchestrators.gap_profile_orchestrator",
+        class_name="GapProfileOrchestrator",
+        deps_keys=(),
+    ),
     "validation": OrchestratorConfig(
         module="finwiz.orchestrators.validation_orchestrator",
         class_name="ValidationOrchestrator",

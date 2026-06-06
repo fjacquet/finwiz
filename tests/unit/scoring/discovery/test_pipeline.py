@@ -28,8 +28,20 @@ def _make_candidate(ticker: str, score: float = 0.5, asset_class: str = "stock")
     )
 
 
+def _disable_portfolio_aware(mocker) -> None:
+    """Force the legacy signal-gated path by disabling portfolio_aware_discovery."""
+    mocker.patch(
+        "finwiz.config.features.flags.is_feature_enabled",
+        side_effect=lambda name, *a, **k: name != "portfolio_aware_discovery",
+    )
+
+
 class TestNewcomerDiscoveryPipeline:
-    """Tests for the full pipeline orchestration."""
+    """Tests for the full (legacy signal-gated) pipeline orchestration."""
+
+    @pytest.fixture(autouse=True)
+    def _legacy_path(self, mocker):
+        _disable_portfolio_aware(mocker)
 
     @pytest.fixture
     def pipeline(self, mocker):
@@ -324,6 +336,92 @@ class TestScreenerWiring:
 
         p._gather_candidates()
         mock_ipo.assert_not_called()
+
+
+class TestPortfolioAwareDiscovery:
+    """Tests for the Portfolio-Aware Opportunity Cascade wide-scoring path."""
+
+    @pytest.fixture
+    def pipeline(self, mocker):
+        mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        p = NewcomerDiscoveryPipeline("stock")
+        p.portfolio_tickers = set()
+        return p
+
+    def _wire(self, pipeline, mocker, *, universe, signals=None, returns=None, sectors=None, profile=None):
+        from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
+
+        mocker.patch.object(pipeline, "_build_universe", return_value=universe)
+        mocker.patch.object(pipeline, "_signal_standalone_scores", return_value=(signals or {}, {}))
+        mocker.patch("finwiz.discovery.market_data.get_returns", return_value=returns or {})
+        mocker.patch("finwiz.discovery.market_data.get_sectors", return_value=sectors or {})
+        mocker.patch(
+            "finwiz.orchestrators.gap_profile_orchestrator.load_gap_profile",
+            return_value=profile or PortfolioGapProfile(is_empty=True),
+        )
+
+    def test_scores_whole_universe_not_just_signals(self, pipeline, mocker):
+        """Recall is un-gated: names with NO breakout/momentum signal still get scored."""
+        rets = {
+            "TSLA": [0.01, 0.02, -0.01, 0.03, 0.0, 0.01],
+            "AMZN": [0.0, 0.01, 0.01, -0.02, 0.02, 0.0],
+            "NFLX": [0.02, -0.01, 0.0, 0.01, 0.01, 0.0],
+        }
+        self._wire(pipeline, mocker, universe=["TSLA", "AMZN", "NFLX"], signals={}, returns=rets)
+        candidates = pipeline._gather_portfolio_aware_candidates()
+        assert {c.ticker for c in candidates} == {"TSLA", "AMZN", "NFLX"}
+        assert all(c.portfolio_fit_score is not None for c in candidates)
+
+    def test_multiplicative_blend_and_gap_fill(self, pipeline, mocker):
+        """final = factor x portfolio_fit: over-held sector ~0, gap sector ~factor."""
+        from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
+
+        profile = PortfolioGapProfile(
+            sector_weights={"Technology": 1.0},
+            underweight_sectors=[],
+            holding_returns={},  # no correlation term -> only sector term applies
+            is_empty=False,
+        )
+        rets = {
+            "TECHCO": [0.01, 0.02, 0.0, 0.01, 0.02, 0.01],
+            "HEALTHCO": [0.01, 0.02, 0.0, 0.01, 0.02, 0.01],
+        }
+        sectors = {"TECHCO": "Technology", "HEALTHCO": "Healthcare"}
+        self._wire(pipeline, mocker, universe=["TECHCO", "HEALTHCO"], returns=rets, sectors=sectors, profile=profile)
+        candidates = {c.ticker: c for c in pipeline._gather_portfolio_aware_candidates()}
+        # Over-held Technology -> fit ~0 -> final ~0
+        assert candidates["TECHCO"].composite_score < 0.05
+        # Absent Healthcare sector -> fit ~1 -> final ~factor (> tech)
+        assert candidates["HEALTHCO"].composite_score > candidates["TECHCO"].composite_score
+        assert candidates["HEALTHCO"].gap_filled == "Healthcare"
+
+    def test_no_actionable_filter_low_grades_survive(self, pipeline, mocker):
+        """Low-scoring candidates are NOT dropped (filter noise out via top-N, not grade-gate)."""
+        from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
+
+        profile = PortfolioGapProfile(sector_weights={"Technology": 1.0}, holding_returns={}, is_empty=False)
+        rets = {"TECHCO": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]}
+        self._wire(pipeline, mocker, universe=["TECHCO"], returns=rets, sectors={"TECHCO": "Technology"}, profile=profile)
+        candidates = pipeline._gather_portfolio_aware_candidates()
+        # A near-zero (grade F) candidate still appears — no hard grade drop in wide stage.
+        assert any(c.ticker == "TECHCO" for c in candidates)
+
+    def test_signal_score_used_when_present(self, pipeline, mocker):
+        """When a ticker trips a signal, its richer signal composite is the standalone factor."""
+        from finwiz.schemas.newcomer_discovery import PortfolioGapProfile
+
+        profile = PortfolioGapProfile(sector_weights={}, holding_returns={}, is_empty=False)
+        self._wire(
+            pipeline,
+            mocker,
+            universe=["TSLA"],
+            signals={"TSLA": 0.9},
+            returns={"TSLA": [0.001, 0.001, 0.001, 0.001, 0.001]},
+            sectors={"TSLA": "Healthcare"},
+            profile=profile,
+        )
+        candidates = pipeline._gather_portfolio_aware_candidates()
+        assert candidates[0].momentum_score == pytest.approx(0.9)
 
 
 class TestEnrichment:

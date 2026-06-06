@@ -70,7 +70,8 @@ orchestrators/
 | File | Class/Function | Purpose |
 |------|---------------|---------|
 | `deep_analysis_orchestrator.py` | `DeepAnalysisOrchestrator` | Per-holding deep analysis + HTML |
-| `discovery_orchestrator.py` | `DiscoveryOrchestrator` | A+ investment discovery |
+| `discovery_orchestrator.py` | `DiscoveryOrchestrator` | A+ investment discovery + opportunity shortlist |
+| `gap_profile_orchestrator.py` | `GapProfileOrchestrator` | Phase 3.6 portfolio gap profile for the opportunity cascade |
 | `portfolio_review_orchestrator.py` | `run()` | Run portfolio review |
 | `portfolio_review_orchestrator.py` | `run_with_rebalancing()` | Review + rebalancing |
 | `reporting_orchestrator.py` | `ReportingOrchestrator` | Report generation and consolidation |
