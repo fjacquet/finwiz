@@ -42,7 +42,7 @@ cd finwiz
 uv pip install .
 
 # For development (includes testing tools)
-uv pip install -e ".[dev]"
+uv sync --all-groups
 ```
 
 **Using pip:**
@@ -52,7 +52,7 @@ uv pip install -e ".[dev]"
 pip install .
 
 # For development
-pip install -e ".[dev]"
+uv sync --all-groups
 ```
 
 ### 3. Verify Installation
@@ -455,7 +455,7 @@ set -e
 echo "Setting up FinWiz development environment..."
 
 # Install dependencies
-uv pip install -e ".[dev]"
+uv sync --all-groups
 
 # Create directories
 mkdir -p data cache logs output reports

@@ -64,7 +64,7 @@ class TestDataSourceOrchestratorIntegration:
 
         # Assert - Lineage tracking
         lineage_dict = result.lineage.to_dict()
-        assert lineage_dict["return_on_equity"] in ["YFinance", "AlphaVantage", "Intrinio", "IndustryAverages"]
+        assert lineage_dict["return_on_equity"] in ["YFinance", "AlphaVantage", "IndustryAverages"]
 
         # Log results for debugging
         print(f"\n✓ AAPL data acquired in {duration:.2f}s")
@@ -235,7 +235,6 @@ class TestDataSourceOrchestratorIntegration:
         Verifies:
         - YFinance is tried first (fastest, most reliable)
         - Alpha Vantage second
-        - Intrinio third
         - Tiingo/EOD for international
         - Industry averages as last resort
 
