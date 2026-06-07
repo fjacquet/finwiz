@@ -4,6 +4,14 @@ Pytest configuration and shared fixtures.
 Makes test fixtures available to all test modules.
 """
 
+# Redirect application file logging into logs/tests/ before any app module is
+# imported, so test runs never pollute the production logs/finwiz*.log files.
+# setup_logging() (src/finwiz/tools/logger.py) reads this at import time. Must run
+# before the `tests.fixtures` import below, which transitively imports app code.
+import os
+
+os.environ.setdefault("FINWIZ_TEST_LOGS", "1")
+
 from datetime import datetime
 from typing import Any
 
