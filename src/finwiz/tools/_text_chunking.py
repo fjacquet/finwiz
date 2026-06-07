@@ -15,6 +15,8 @@ from dataclasses import dataclass
 class TextChunk:
     """A chunk of text with a langchain-Document-compatible ``page_content``."""
 
+    # ``page_content``-only is intentional (langchain ``Document`` compatibility);
+    # extend only if a consumer needs metadata.
     page_content: str
 
 
@@ -28,6 +30,8 @@ def chunk_text(text: str, chunk_size: int = 2000, overlap: int = 200) -> list[Te
 
     Returns:
         List of ``TextChunk``; empty for empty/whitespace-only input.
+        All-whitespace windows are skipped (they carry no content), and the
+        final window may be shorter than ``chunk_size``.
     """
     if chunk_size <= 0:
         raise ValueError("chunk_size must be positive")
