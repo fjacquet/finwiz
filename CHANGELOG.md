@@ -23,9 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   config singletons (configuration manager, settings, resilience, feature flags,
   token monitor) before every test — making the suite reorder-safe. This also
   fixes a latent order-dependent leak where a config test could read — and print
-  on failure — the developer's real `.env` API keys. `make test` and the CI
-  coverage gate now run with `-n auto --dist=loadscope`; on a dev machine the
-  full unit suite dropped from ≈8 min (serial) to ≈5 min (~1.5×).
+  on failure — the developer's real `.env` API keys. The fixture's own overhead
+  is negligible. `make test` and the CI coverage gate now run with
+  `-n auto --dist=loadscope`, which roughly halves wall-clock on this
+  largely wait-bound suite (≈13 min serial → ≈5 min parallel, 10-core dev
+  machine; exact times vary because some orchestrator unit tests still make real
+  network calls). The remaining wall-clock is dominated by those orchestrator
+  tests whose batch-prefetch path is unmocked; mocking it (as the prior PR did
+  for the yfinance discovery tests) is a separate follow-up to reach <3 min.
 
 ## [5.5.0] - 2026-06-07
 
