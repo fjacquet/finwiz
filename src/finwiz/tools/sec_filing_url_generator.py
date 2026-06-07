@@ -84,8 +84,9 @@ class SECFilingURLGenerator:
                         logger.info(f"Found CIK {cik} for ticker {ticker}")
                         return cik
 
-                # Ticker not found
-                logger.warning(f"No CIK found for ticker {ticker}")
+                # Ticker not found — expected for non-US / crypto / OTC names
+                # that aren't in SEC EDGAR; downstream falls back gracefully.
+                logger.debug(f"No CIK found for ticker {ticker}")
                 self._cik_cache[ticker] = None
                 return None
 
@@ -217,7 +218,7 @@ class SECFilingURLGenerator:
 
         cik = self.get_cik(ticker)
         if not cik:
-            logger.warning(f"Cannot get direct filing URL for {ticker}: CIK not found")
+            logger.debug(f"Cannot get direct filing URL for {ticker}: CIK not found")
             return None
 
         try:
@@ -312,12 +313,12 @@ class SECFilingURLGenerator:
         # Fallback to browse URL only
         cik = self.get_cik(ticker)
         if not cik:
-            logger.warning(f"Cannot retrieve filing metadata for {ticker}: CIK not found")
+            logger.debug(f"Cannot retrieve filing metadata for {ticker}: CIK not found")
             return None
 
         browse_url = self.get_company_browse_url(cik, filing_type)
 
-        logger.warning(f"Could not get direct filing URL for {ticker} ({filing_type}), returning browse URL only")
+        logger.debug(f"Could not get direct filing URL for {ticker} ({filing_type}), returning browse URL only")
 
         return {
             "ticker": ticker,

@@ -118,7 +118,9 @@ class SentimentDataSources:
             news = stock.news
 
             if not news:
-                self.logger.warning(f"No news data found for ticker {ticker}")
+                # Many valid tickers simply have no yfinance news (low coverage,
+                # non-US, crypto); not an error condition.
+                self.logger.debug(f"No news data found for ticker {ticker}")
                 return []
 
             # Limit to max_articles

@@ -89,7 +89,8 @@ class TestFactPackRawTruncatingValidators:
         import logging
 
         long_event = "A" * 250
-        caplog.set_level(logging.WARNING, logger="finwiz.analysis.fact_pack_research")
+        # Truncation is logged at DEBUG (by-design normalization, not a warning).
+        caplog.set_level(logging.DEBUG, logger="finwiz.analysis.fact_pack_research")
         raw = _FactPackRaw.model_validate(
             {
                 "corporate_structure": "Independent",

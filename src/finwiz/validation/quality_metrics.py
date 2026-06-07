@@ -390,7 +390,9 @@ class DataQualityMetrics(BaseModel):
         """
         if field_name not in self.fields_defaulted:
             self.fields_defaulted.append(field_name)
-            logger.warning(f"⚠️ Field defaulted: {field_name} = {default_value}")
+            # Per-field defaulting is expected data-quality instrumentation; the
+            # aggregate is surfaced in the run summary. DEBUG to cut log noise.
+            logger.debug(f"⚠️ Field defaulted: {field_name} = {default_value}")
 
     def record_missing_field(self, field_name: str) -> None:
         """
