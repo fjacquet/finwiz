@@ -216,6 +216,9 @@ nav:
       - API Reference: portfolio_rebalancing/api_reference.md
       - Developer Guide: portfolio_rebalancing/developer_guide.md
 
+  - Development:
+      - Dependency Policy: development/dependencies.md
+
 # Extra CSS/JS
 extra_css:
   - stylesheets/extra.css
