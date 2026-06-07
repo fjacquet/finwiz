@@ -88,6 +88,30 @@ def _promote_to_qualitative(
     )
 
 
+def _run_deep_analysis_crew(asset_class: str, crew: Any, crew_inputs: dict[str, Any]) -> Any:
+    """Execute the deep-analysis crew, loop-aware, re-raising hard failures.
+
+    Shared by the initial qualitative attempt and the retry callback so both use
+    the same event-loop handling and timeout wrapper.
+    """
+    import asyncio
+    import concurrent.futures
+
+    from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
+
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    name = f"deep_analysis_{asset_class}"
+    if loop and loop.is_running():
+        with concurrent.futures.ThreadPoolExecutor() as pool:
+            future = pool.submit(asyncio.run, execute_crew_with_timeout(name, crew, crew_inputs))
+            return future.result()
+    return asyncio.run(execute_crew_with_timeout(name, crew, crew_inputs))
+
+
 def _try_ai_qualify(
     ctx: AnalysisContext,
     quant: QuantitativeAnalysis,
@@ -110,24 +134,10 @@ def _try_ai_qualify(
     crew = _get_analysis_crew(ctx.asset_class)
     crew_inputs = _build_crew_inputs(ctx, quant, raw_data, fact_pack=fact_pack)
 
-    import asyncio
-    import concurrent.futures
     import traceback
 
-    from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
-
     try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    try:
-        if loop and loop.is_running():
-            with concurrent.futures.ThreadPoolExecutor() as pool:
-                future = pool.submit(asyncio.run, execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
-                crew_result = future.result()
-        else:
-            crew_result = asyncio.run(execute_crew_with_timeout(f"deep_analysis_{ctx.asset_class}", crew, crew_inputs))
+        crew_result = _run_deep_analysis_crew(ctx.asset_class, crew, crew_inputs)
     except (OSError, TimeoutError):
         # Transient I/O or timeout — let @stage decorator retry then record FAILED.
         raise
@@ -136,9 +146,33 @@ def _try_ai_qualify(
         # re-raise so the @stage decorator captures it as FAILED, not DEGRADED.
         raise
 
+    def _retry_crew(format_instructions: str, retry_context: str) -> Any:
+        """Re-run the crew with explicit JSON format instructions.
+
+        Wired into ``validate_ai_output_with_retry`` so a first output that fails
+        structured parsing gets one real corrected attempt before the Python-only
+        fallback — instead of the old dead no-callback path that always degraded.
+        Returns a canonical dict on success, or the raw output on failure so the
+        validator cleanly exhausts its retries and falls back to Python-only.
+        """
+        retry_inputs = dict(crew_inputs)
+        retry_inputs["retry_guidance"] = (
+            "⚠️ RETRY — la sortie précédente n'a pas pu être parsée en JSON "
+            f"structuré. {retry_context}\n"
+            "Réémets UNIQUEMENT un objet JSON valide conforme au schéma, sans "
+            "aucun texte ni balise markdown autour.\n"
+            f"{format_instructions}"
+        )
+        logger.info(f"Retrying qualitative crew for {ctx.ticker} with explicit format instructions")
+        retry_result = _run_deep_analysis_crew(ctx.asset_class, crew, retry_inputs)
+        retry_qual = _extract_qualitative(retry_result, quant, fact_pack=fact_pack)
+        if retry_qual is not None and _has_qualitative_content(retry_qual):
+            return retry_qual.model_dump()
+        return retry_result.raw if hasattr(retry_result, "raw") else str(retry_result)
+
     # Only return None when the AI call succeeded but returned empty/null content.
     # This is the one legitimate trigger for the DEGRADED branch.
-    qual = _extract_qualitative(crew_result, quant, fact_pack=fact_pack)
+    qual = _extract_qualitative(crew_result, quant, fact_pack=fact_pack, retry_callback=_retry_crew)
     if qual is not None and _has_qualitative_content(qual):
         logger.info(f"Qualitative insights generated for {ctx.ticker}")
         return qual
@@ -284,6 +318,7 @@ def _extract_qualitative(
     crew_result: CrewOutput,
     quant: QuantitativeAnalysis,
     fact_pack: FactPack | None = None,
+    retry_callback: Any = None,
 ) -> QualitativeInsights:
     """Extract QualitativeInsights from a crew result.
 
@@ -294,6 +329,11 @@ def _extract_qualitative(
 
     Older code paths that still produce :class:`QualitativeInsights` directly
     continue to work — we just hand them through.
+
+    ``retry_callback`` (optional) is forwarded to
+    :func:`validate_ai_output_with_retry` as the last-resort path: when all
+    direct extraction fails it re-runs the crew once with explicit format
+    instructions before falling back to Python-only analysis.
     """
 
     def _coerce(candidate: Any) -> QualitativeInsights | None:
@@ -368,4 +408,6 @@ def _extract_qualitative(
 
     logger.warning("All extraction methods failed, falling back to validation with retry")
     raw_output = crew_result.raw if hasattr(crew_result, "raw") else str(crew_result)
-    return validate_ai_output_with_retry(raw_output, quant, max_retries=2)
+    # One crew re-run with explicit format instructions (when a callback is
+    # wired) before Python-only fallback.
+    return validate_ai_output_with_retry(raw_output, quant, retry_callback=retry_callback, max_retries=1)

@@ -96,6 +96,8 @@ deep_qualitative_analysis_task:
 
     NO trailing commas. NO text outside JSON.
 
+    {retry_guidance}
+
   expected_output: >
     QualitativeInsights JSON with sec_insights, fundamental_context,
     technical_strategy, contextual_risks, investment_synthesis.

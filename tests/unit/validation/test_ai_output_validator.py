@@ -412,6 +412,27 @@ def test_should_limit_retries_to_two(sample_quantitative):
     assert retry_count == 2
 
 
+def test_no_callback_falls_back_quietly(sample_quantitative, caplog):
+    """No retry_callback => Python-only fallback with a single WARNING, no ERRORs.
+
+    Regression: the old no-callback path logged two ERRORs per holding
+    ("No retry callback provided" + "Unexpected validation flow"). Python-only
+    is the designed behaviour here, not an error.
+    """
+    import logging
+
+    caplog.set_level(logging.WARNING)
+
+    result = validate_ai_output_with_retry("Invalid string output", sample_quantitative)
+
+    assert isinstance(result, QualitativeInsights)
+    assert result.ai_confidence == approx(0.0)  # Python-only fallback
+    # No ERROR-level records from the validation flow.
+    assert not [r for r in caplog.records if r.levelno >= logging.ERROR]
+    assert not any("Unexpected validation flow" in r.message for r in caplog.records)
+    assert any("no retry callback provided" in r.message.lower() for r in caplog.records)
+
+
 # ============================================================================
 # Test Complete Validation Flow
 # ============================================================================

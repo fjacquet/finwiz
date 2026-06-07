@@ -213,6 +213,11 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
         inputs["fact_pack_freshness"] = "unknown"
         inputs["fact_pack_confidence"] = "unknown"
 
+    # Retry guidance is empty on the first attempt. The qualify-stage retry
+    # callback overrides this with explicit JSON format instructions when the
+    # first crew output fails structured parsing (see qualify._try_ai_qualify).
+    inputs["retry_guidance"] = ""
+
     # DIAGNOSTIC: Log sizes of each input field for debugging
     total_chars = sum(len(str(v)) for v in inputs.values() if v is not None)
     estimated_tokens = total_chars // 4
