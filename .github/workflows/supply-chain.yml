@@ -38,12 +38,9 @@ jobs:
           name: finwiz-sbom-cyclonedx
           path: dist/finwiz.sbom.cdx.json
 
-      - name: Vulnerability scan (osv-scanner)
-        uses: google/osv-scanner-action/osv-scanner-action@v2
-        with:
-          scan-args: |-
-            --lockfile=uv.lock
-            --config=osv-scanner.toml
+      # Vulnerability scanning is handled by the dedicated OSV-Scanner workflow
+      # (.github/workflows/osv-scanner.yml), which reads osv-scanner.toml for
+      # accepted advisories. Local parity: `make audit` (pip-audit).
 
       - name: Attach SBOM to release
         if: github.event_name == 'release'

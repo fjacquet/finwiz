@@ -18,12 +18,14 @@ that pull large transitive trees.
 ## Upgrades
 
 Routine minor/patch drift is **not** chased. Upgrades are driven by the CVE
-gate: `osv-scanner` runs in CI (`.github/workflows/supply-chain.yml`) against
-`uv.lock` and fails on any non-allowlisted advisory. When it fails, raise the
-affected floor and re-lock.
+gate: `osv-scanner` runs in CI (`.github/workflows/osv-scanner.yml`) on every
+PR and fails on newly-introduced advisories. When it fails, raise the affected
+floor and re-lock. Locally, `make audit` (pip-audit) gives a quick equivalent
+check.
 
-Accepted/unfixable advisories live in `osv-scanner.toml` with a written
-justification and are reviewed on each dependency change.
+Accepted/unfixable advisories are recorded in `osv-scanner.toml` (read
+automatically by osv-scanner) with a written justification, and mirrored to
+`make audit` via `--ignore-vuln`; they are reviewed on each dependency change.
 
 ## SBOM
 

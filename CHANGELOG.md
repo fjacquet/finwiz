@@ -20,10 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - **Official SBOM + CVE gate.** New `supply-chain` CI workflow emits a
-  CycloneDX SBOM (attached to releases) and gates merges on `osv-scanner`
-  against `uv.lock`; accepted advisories are allowlisted in `osv-scanner.toml`
-  (currently chromadb `GHSA-f4j7-r4q5-qw2c`, server-only, no fix). Local
-  parity via `make sbom` / `make audit`.
+  CycloneDX SBOM (attached to releases); a dedicated `osv-scanner` PR workflow
+  gates merges on newly-introduced advisories. Accepted advisories are recorded
+  in `osv-scanner.toml` (currently chromadb `GHSA-f4j7-r4q5-qw2c`, server-only,
+  no fix). Local parity via `make sbom` / `make audit`.
 - **Cleared transitive CVEs in `pyjwt`** — bumped to `>=2.13.0`
   (PYSEC-2026-175/177/178/179), surfaced by the new CVE gate.
 - **Restored shadowed dev security tooling** — `bandit`, `safety`, and
