@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (pytest-xdist parallelization is a deferred follow-up — the suite has latent
   test-isolation issues, e.g. a `ConfigurationManager` singleton reading the
   real environment, that must be fixed first.)
+- **Parallel test runs (pytest-xdist).** Added an autouse isolation fixture
+  (`tests/conftest.py`) that clears config-driving env vars and resets cached
+  config singletons (configuration manager, settings, resilience, feature flags,
+  token monitor) before every test — making the suite reorder-safe. This also
+  fixes a latent order-dependent leak where a config test could read — and print
+  on failure — the developer's real `.env` API keys. `make test` and the CI
+  coverage gate now run with `-n auto --dist=loadscope`; on a dev machine the
+  full unit suite dropped from ≈8 min (serial) to ≈5 min (~1.5×).
 
 ## [5.5.0] - 2026-06-07
 
