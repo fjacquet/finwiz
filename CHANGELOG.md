@@ -25,12 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fixes a latent order-dependent leak where a config test could read — and print
   on failure — the developer's real `.env` API keys. The fixture's own overhead
   is negligible. `make test` and the CI coverage gate now run with
-  `-n auto --dist=loadscope`, which roughly halves wall-clock on this
-  largely wait-bound suite (≈13 min serial → ≈5 min parallel, 10-core dev
-  machine; exact times vary because some orchestrator unit tests still make real
-  network calls). The remaining wall-clock is dominated by those orchestrator
-  tests whose batch-prefetch path is unmocked; mocking it (as the prior PR did
-  for the yfinance discovery tests) is a separate follow-up to reach <3 min.
+  `-n auto --dist=loadscope`.
+- **Default unit run is now network-free and deterministic (~3 min → ~1m53s).**
+  Profiling showed the default suite was dominated — and made wildly
+  time-variable — by ~18 deep-analysis orchestrator "unit" tests that made real
+  network calls (Alpha Vantage / yfinance via the macro-snapshot and
+  batch-prefetch paths) wrapped in retry/backoff. These are now marked
+  `@pytest.mark.integration`, so `make test` (`-m "not integration"`) excludes
+  them and runs CPU-bound at ~1m53s on a 10-core machine (was ~3 min and
+  network-variable); they still run in the integration job. Pure-logic tests in
+  those files stay in the fast unit run. Fully mocking the orchestrator data
+  layer to return them to the unit suite is a possible future refinement.
 
 ## [5.5.0] - 2026-06-07
 
