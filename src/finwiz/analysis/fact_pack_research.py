@@ -78,7 +78,7 @@ class _FactPackRaw(BaseModel):
                 if not stripped:
                     continue
                 if len(stripped) > _EVENT_MAX_CHARS:
-                    logger.warning(
+                    logger.debug(
                         f"recent_events[{i}] truncated from {len(stripped)} to {_EVENT_MAX_CHARS} chars",
                     )
                     stripped = stripped[:_EVENT_MAX_CHARS].rstrip()

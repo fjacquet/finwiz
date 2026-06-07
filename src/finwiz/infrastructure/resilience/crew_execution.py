@@ -57,6 +57,28 @@ class CircuitBreakerOpenError(RuntimeError):
     """Raised when a crew's circuit breaker is open due to repeated failures."""
 
 
+def _record_crew_usage(crew_name: str, result: Any) -> None:
+    """Record this kickoff's CrewAI token usage into the cost monitor.
+
+    Source of truth for the (honest) end-of-run cost summary: CrewAI's
+    ``CrewOutput.token_usage`` is populated directly and survives the thread
+    boundaries that prevent the litellm callback from firing. Best-effort —
+    never let cost accounting break crew execution.
+    """
+    try:
+        token_usage = getattr(result, "token_usage", None)
+        if token_usage is None:
+            return
+        from finwiz.crews.helpers.llm_config import get_crew_model_string
+        from finwiz.infrastructure.monitoring.litellm_callback import get_token_monitor
+
+        monitor = get_token_monitor()
+        if monitor is not None:
+            monitor.record_usage(crew_name, token_usage, model=get_crew_model_string())
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.debug(f"Cost tracking skipped for {crew_name}: {exc}")
+
+
 async def execute_crew_with_timeout(
     crew_name: str,
     crew_instance: Any,
@@ -111,6 +133,7 @@ async def execute_crew_with_timeout(
         # Success: reset failure counter
         _crew_failures[crew_name] = 0
         logger.info(f"Crew {crew_name} completed successfully")
+        _record_crew_usage(crew_name, result)
         return result
 
     except ValidationError:

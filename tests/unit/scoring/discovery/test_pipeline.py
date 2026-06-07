@@ -423,6 +423,37 @@ class TestPortfolioAwareDiscovery:
         # A near-zero (grade F) candidate still appears — no hard grade drop in wide stage.
         assert any(c.ticker == "TECHCO" for c in candidates)
 
+    def test_discover_excludes_weak_grades_from_surface(self, pipeline, mocker):
+        """discover() on the portfolio-aware path drops D/F candidates (feedback: filter, don't low-grade).
+
+        Wide recall happens inside _gather_portfolio_aware_candidates (scores
+        everything), but the surfaced opportunity list must exclude noise — the
+        a_plus_*/consolidated outputs should never contain F/D grades.
+        """
+        mocker.patch(
+            "finwiz.config.features.flags.is_feature_enabled",
+            side_effect=lambda name, *a, **k: name == "portfolio_aware_discovery",
+        )
+        graded = [
+            _make_candidate("STRONG", 0.90),
+            _make_candidate("MIDC", 0.66),
+            _make_candidate("WEAKD", 0.55),
+            _make_candidate("WEAKF", 0.20),
+        ]
+        graded[0].grade = "A"
+        graded[1].grade = "C"
+        graded[2].grade = "D"
+        graded[3].grade = "F"
+        mocker.patch.object(pipeline, "_gather_portfolio_aware_candidates", return_value=graded)
+        mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
+        mocker.patch.object(pipeline, "_persist_result")
+
+        result = pipeline.discover("sess-filter")
+        grades = {c.grade for c in result.candidates}
+        tickers = {c.ticker for c in result.candidates}
+        assert "D" not in grades and "F" not in grades
+        assert tickers == {"STRONG", "MIDC"}
+
     def test_signal_score_used_when_present(self, pipeline, mocker):
         """When a ticker trips a signal, its richer signal composite is the standalone factor."""
         from finwiz.schemas.newcomer_discovery import PortfolioGapProfile

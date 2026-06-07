@@ -433,9 +433,11 @@ def validate_ai_output_with_retry(
                     retry_context = f"Previous attempt failed: {e!s}"
                     result = retry_callback(format_instructions=format_instructions, retry_context=retry_context)
                 else:
-                    # No retry callback - cannot retry
-                    logger.error("No retry callback provided, cannot retry validation")
-                    break
+                    # No retry callback wired: Python-only is the designed fallback
+                    # here, not an error. Single WARNING (was a misleading double
+                    # ERROR that fired once per holding).
+                    logger.warning("AI output validation failed and no retry callback provided; using Python-only analysis")
+                    return create_python_only_qualitative(quantitative)
             else:
                 # Max retries exceeded - fallback to Python-only
                 logger.error(f"AI output validation failed after {max_retries} retry attempts. Falling back to Python-only analysis (Requirement 12.4)")

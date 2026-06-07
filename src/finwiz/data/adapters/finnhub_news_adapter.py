@@ -62,25 +62,27 @@ class FinnhubNewsAdapter:
         articles: list[NewsArticle] = []
 
         # Level 1: Finnhub (has pre-computed sentiment)
+        # Per-source failures are expected steps in the waterfall (the next level
+        # picks up the slack), so they log at DEBUG, not WARNING.
         if self.finnhub_key:
             try:
                 articles.extend(self._fetch_finnhub(ticker, days))
             except Exception as e:
-                logger.warning(f"Finnhub failed for {ticker}: {e}")
+                logger.debug(f"Finnhub failed for {ticker}: {e}")
 
         # Level 2: gnews (needs VADER sentiment)
         if len(articles) < _MIN_FINNHUB_ARTICLES and self.gnews_key:
             try:
                 articles.extend(self._fetch_gnews(ticker, days))
             except Exception as e:
-                logger.warning(f"gnews failed for {ticker}: {e}")
+                logger.debug(f"gnews failed for {ticker}: {e}")
 
         # Level 3: RSS (needs VADER sentiment)
         if len(articles) < _MIN_TOTAL_ARTICLES:
             try:
                 articles.extend(self._fetch_rss(ticker))
             except Exception as e:
-                logger.warning(f"RSS failed for {ticker}: {e}")
+                logger.debug(f"RSS failed for {ticker}: {e}")
 
         # Apply VADER to articles without sentiment
         articles = self._apply_vader_fallback(articles)

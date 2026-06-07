@@ -191,3 +191,53 @@ def test_emit_pending_distinguishes_breaker_open_reason() -> None:
     # Generic pending stays distinct.
     other = _emit_pending(ctx, reason="qualify timed out")
     assert "circuit breaker" not in other.rationale.lower()
+
+
+@pytest.mark.asyncio
+async def test_records_crew_usage_when_result_has_token_usage(mocker):
+    """Honest cost tracking: usage is recorded from CrewOutput.token_usage at the chokepoint."""
+    from types import SimpleNamespace
+
+    token_usage = SimpleNamespace(prompt_tokens=10, completion_tokens=5, successful_requests=1)
+    result = SimpleNamespace(token_usage=token_usage)
+    crew = mocker.MagicMock()
+    crew.kickoff.return_value = result
+
+    monitor = mocker.MagicMock()
+    mocker.patch(
+        "finwiz.infrastructure.monitoring.litellm_callback.get_token_monitor",
+        return_value=monitor,
+    )
+    mocker.patch(
+        "finwiz.crews.helpers.llm_config.get_crew_model_string",
+        return_value="openai/gpt-4o-mini",
+    )
+
+    out = await execute_crew_with_timeout("deep_analysis_stock", crew, {"ticker": "AAPL"}, timeout=10)
+
+    assert out is result
+    monitor.record_usage.assert_called_once()
+    args, kwargs = monitor.record_usage.call_args
+    assert args[0] == "deep_analysis_stock"
+    assert args[1] is token_usage
+    assert kwargs.get("model") == "openai/gpt-4o-mini"
+
+
+@pytest.mark.asyncio
+async def test_usage_recording_failure_does_not_break_execution(mocker):
+    """Cost tracking is best-effort: a monitor error must not fail the crew run."""
+    from types import SimpleNamespace
+
+    result = SimpleNamespace(token_usage=SimpleNamespace(prompt_tokens=1, completion_tokens=1, successful_requests=1))
+    crew = mocker.MagicMock()
+    crew.kickoff.return_value = result
+
+    monitor = mocker.MagicMock()
+    monitor.record_usage.side_effect = RuntimeError("boom")
+    mocker.patch(
+        "finwiz.infrastructure.monitoring.litellm_callback.get_token_monitor",
+        return_value=monitor,
+    )
+
+    out = await execute_crew_with_timeout("deep_analysis_etf", crew, {}, timeout=10)
+    assert out is result  # execution still succeeds despite tracking error

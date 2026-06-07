@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.4.0] - 2026-06-07
+
+### Fixed
+
+- **Discovery no longer emits weak (D/F) opportunities** -- the
+  portfolio-aware discovery path skipped the actionable-grade filter, so the
+  `a_plus_*`/`consolidated_discovery` outputs filled with F/D candidates (and
+  zero A+). `NewcomerDiscoveryPipeline.discover()` now applies
+  `_filter_actionable()` on both the portfolio-aware and legacy paths; wide
+  recall still happens inside scoring, but the surfaced list excludes noise.
+  See `src/finwiz/scoring/discovery/pipeline.py`.
+- **AI qualitative analysis no longer silently falls back to Python-only** --
+  `validate_ai_output_with_retry` was called with no `retry_callback`, so any
+  crew output that failed structured parsing logged a misleading double-ERROR
+  and dropped to Python-only (32 holdings last run). A real `retry_callback`
+  now re-runs the deep-analysis crew once with explicit JSON format
+  instructions (`{retry_guidance}`) before falling back. The no-callback path
+  logs a single WARNING instead of two ERRORs.
+- **Stale/renamed crypto tickers no longer spam yfinance errors** -- new
+  `discovery/ticker_hygiene.py` centralizes renames (`MATIC`->`POL`,
+  `FTM`->`S`) and non-tradable exclusions (`XTSLA`), applied at
+  `to_yfinance_symbol` and the `get_returns`/`get_sectors` fetch boundaries.
+
+### Changed
+
+- **Honest LLM cost summary** -- the end-of-run summary reported "No LLM calls
+  made" even when the deep-analysis crew ran (CrewAI clobbers
+  `litellm.callbacks`, so our callback never fired). Cost/tokens are now
+  recorded from CrewAI's authoritative `CrewOutput.token_usage` at the
+  `execute_crew_with_timeout` chokepoint via `record_usage()`. An unmeasured
+  run says so plainly; dollar amounts are labelled estimates; unpriced models
+  show "cost n/a" instead of a false $0.
+- **Reduced log noise** -- downgraded ~500 by-design fallback WARNINGs to
+  DEBUG (fact-pack truncation, defaulted-field metrics, news-source waterfall,
+  SEC CIK misses for non-US tickers).
+
 ## [5.3.0] - 2026-05-03
 
 ### Added
