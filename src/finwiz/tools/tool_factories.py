@@ -7,9 +7,9 @@ ensuring uniform tool configuration.
 """
 
 from crewai.tools import BaseTool
-from crewai_tools import DirectoryReadTool, FileReadTool
 
 from finwiz.tools.etf_analysis_tool import get_etf_analysis_tool
+from finwiz.tools.file_tools import DirectoryReadTool, FileReadTool
 from finwiz.tools.finance_tools import (
     get_crypto_research_tools,
     get_etf_research_tools,

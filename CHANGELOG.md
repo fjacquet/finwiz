@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.4.1] - 2026-06-07
+
+### Security
+
+- **Patched 15 Dependabot advisories** by raising dependency floors: litellm
+  `>=1.83.10`, langchain-core `>=1.3.3`, aiohttp `>=3.14.0`, plus transitive
+  security floors via `[tool.uv] constraint-dependencies` (urllib3 `>=2.7.0`,
+  idna `>=3.15`, GitPython `>=3.1.50`, langchain-classic `>=1.0.7`, starlette
+  `>=1.0.1`, uv `>=0.11.15`) and pymdown-extensions `>=10.21.3` (docs).
+- **chromadb (GHSA-f4j7-r4q5-qw2c)** has no patched release and is a transitive
+  dependency of crewai core; the vulnerability is in ChromaDB's server, which
+  FinWiz never runs (in-process memory only). Tracked as not-affected.
+
+### Changed
+
+- **Leaner dependency tree (-18 packages).** Dropped the `crewai[google-genai]`
+  extra (Gemini is used via OpenRouter/litellm, which doesn't need Google's
+  native SDK) and the `crewai[tools]` extra. The only tools FinWiz used from
+  `crewai-tools` were `FileReadTool`/`DirectoryReadTool`; these are now
+  self-contained in `finwiz.tools.file_tools` (behaviour-faithful, incl. runtime
+  path override). Removed pyarrow, lancedb, pymupdf, docker, python-docx, pytube,
+  youtube-transcript-api, google-genai, and more. `chromadb` remains (crewai core).
+
 ## [5.4.0] - 2026-06-07
 
 ### Fixed

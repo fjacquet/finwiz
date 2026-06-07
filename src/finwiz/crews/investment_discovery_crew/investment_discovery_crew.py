@@ -10,7 +10,6 @@ of exceptional investment opportunities.
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
-from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 from finwiz.infrastructure.decorators.agent_validators import final_reporter
@@ -21,6 +20,7 @@ from finwiz.schemas.investment_discovery import (
     OptimizationResult,
     ValidationResult,
 )
+from finwiz.tools.file_tools import DirectoryReadTool, FileReadTool
 from finwiz.tools.finance_tools import (
     get_crypto_research_tools,
     get_etf_research_tools,
