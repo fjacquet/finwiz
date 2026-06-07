@@ -272,16 +272,6 @@ class QuantitativeAnalysisInput(BaseModel):
     strategy: str = Field(default="sma_crossover", description="Strategy for backtesting")
 
 
-# SEC Tool Inputs
-class SECFilingSearchInput(BaseModel):
-    """Input schema for SECFilingSearchTool."""
-
-    ticker: str = Field(..., description="The stock ticker symbol, e.g., AAPL")
-    form_type: Literal["10-K", "10-Q"] = Field(..., description="SEC form type to search (10-K or 10-Q)")
-    question: str = Field(..., description="Question to answer from the SEC filing")
-    top_k: int = Field(4, description="Number of relevant excerpts to return (default: 4)")
-
-
 # Perplexity Tool Inputs
 class PerplexitySearchInput(BaseModel):
     """Input schema for Perplexity Sonar search."""

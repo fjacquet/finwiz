@@ -1,0 +1,9 @@
+# osv-scanner config — allowlisted advisories with documented justification.
+# Reviewed on each dependency change.
+
+[[IgnoredVulns]]
+id = "GHSA-f4j7-r4q5-qw2c"
+# chromadb pre-auth code injection is in ChromaDB's SERVER, which FinWiz never
+# runs (crewai uses in-process memory only). No patched release exists and
+# chromadb is a hard transitive of crewai core, so it cannot be removed.
+reason = "Vulnerable code path (Chroma server) is not used; no fix available; crewai-core transitive."

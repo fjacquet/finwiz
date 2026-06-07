@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci
+.PHONY: help install test test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit
 
 # Default target
 help:
@@ -273,3 +273,13 @@ html-integration:
 	@echo "🔄 Running HTML integration examples..."
 	python examples/integration_example.py
 	@echo "✅ Integration examples completed - check output/integration/ directory"
+
+.PHONY: sbom audit
+
+sbom:  ## Generate a CycloneDX SBOM to dist/finwiz.sbom.cdx.json
+	@mkdir -p dist
+	uv run cyclonedx-py environment --output-format JSON --output-file dist/finwiz.sbom.cdx.json
+	@echo "SBOM written to dist/finwiz.sbom.cdx.json"
+
+audit:  ## Scan installed dependencies for known vulnerabilities (chromadb allowlisted)
+	uv run pip-audit --ignore-vuln GHSA-f4j7-r4q5-qw2c

@@ -10,7 +10,6 @@ Modules:
 - quantitative: quantitative analysis and backtesting models
 - integration: system integration and validation models
 - tools: tool input validation schemas
-- api: FastAPI request/response models
 - investment_discovery: A+ investment discovery schemas
 - newcomer_discovery: newcomer discovery pipeline schemas
 - portfolio_rebalancing: portfolio rebalancing and optimization schemas
@@ -21,7 +20,6 @@ Modules:
 # Core domain schemas
 # Organized schema modules
 from . import (
-    api,  # noqa: F401
     integration,  # noqa: F401
     quantitative,  # noqa: F401
     tools,  # noqa: F401

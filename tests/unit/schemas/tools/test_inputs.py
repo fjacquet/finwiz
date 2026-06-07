@@ -78,8 +78,6 @@ from finwiz.schemas.tools.inputs import (
     RiskAssessmentInput,
     # Scoring
     ScoringCriteria,
-    # SEC Tools
-    SECFilingSearchInput,
     StandardizedRiskScoringInput,
     StandardizedSentimentInput,
     # Kraken API
@@ -1310,72 +1308,6 @@ class TestQuantitativeAnalysisInput:
         with pytest.raises(ValidationError) as exc_info:
             QuantitativeAnalysisInput(symbol="AAPL")
         assert "asset_class" in str(exc_info.value)
-
-
-# ============================================================================
-# SEC Tool Tests
-# ============================================================================
-
-
-class TestSECFilingSearchInput:
-    """Tests for SECFilingSearchInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        ticker = "AAPL"
-        form_type = "10-K"
-        question = "What are the main risk factors?"
-        model = SECFilingSearchInput(ticker=ticker, form_type=form_type, question=question)
-
-        assert model.ticker == ticker
-        assert model.form_type == form_type
-        assert model.question == question
-
-    def test_default_top_k(self):
-        """Test default top_k value."""
-        model = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What are the risks?")
-
-        assert model.top_k == 4
-
-    def test_custom_top_k(self, fake):
-        """Test custom top_k value."""
-        top_k = fake.random_int(min=1, max=20)
-        model = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What are the risks?", top_k=top_k)
-
-        assert model.top_k == top_k
-
-    def test_form_type_literal(self):
-        """Test form_type literal constraint."""
-        # Valid: 10-K
-        model_10k = SECFilingSearchInput(ticker="AAPL", form_type="10-K", question="What?")
-        assert model_10k.form_type == "10-K"
-
-        # Valid: 10-Q
-        model_10q = SECFilingSearchInput(ticker="AAPL", form_type="10-Q", question="What?")
-        assert model_10q.form_type == "10-Q"
-
-        # Invalid
-        with pytest.raises(ValidationError) as exc_info:
-            SECFilingSearchInput(ticker="AAPL", form_type="8-K", question="What?")
-        assert "form_type" in str(exc_info.value)
-
-    def test_missing_required_ticker(self):
-        """Test ValidationError when ticker is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SECFilingSearchInput(form_type="10-K", question="What?")
-        assert "ticker" in str(exc_info.value)
-
-    def test_missing_required_form_type(self):
-        """Test ValidationError when form_type is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SECFilingSearchInput(ticker="AAPL", question="What?")
-        assert "form_type" in str(exc_info.value)
-
-    def test_missing_required_question(self):
-        """Test ValidationError when question is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            SECFilingSearchInput(ticker="AAPL", form_type="10-K")
-        assert "question" in str(exc_info.value)
 
 
 # ============================================================================

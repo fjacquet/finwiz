@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "5.4.1"
+version = "5.5.0"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 requires-python = ">=3.12,<3.13"
@@ -10,24 +10,19 @@ dependencies = [
     "python-dotenv>=1.2.2",
     "yfinance>=0.2.62",
     "pydantic>=2.13.3",
-    "unstructured>=0.18.11",
     "ta-lib>=0.6.8",
     "backtrader>=1.9.78.123",
     "quantlib>=1.39",
     "pyportfolioopt>=1.5.5",
     "plotly>=6.7.0",
-    "langchain-community>=0.3.29",
-    "langchain-text-splitters>=0.3.0",
     "numpy>=1.26.4",
     "scipy>=1.15.3",
     "pandas>=2.3.2",
     "beautifulsoup4>=4.14.3",
-    "sec-api>=1.0.32",
     "nest-asyncio>=1.6.0",
     "empyrical-reloaded>=0.5.12",
     "crewai>=1.5.0",
     "litellm>=1.83.10",
-    "fastapi>=0.136.1",
     "aiolimiter>=1.2.1",
     "finnhub-python>=2.4.20",
     "fredapi>=0.5.2",
@@ -328,8 +323,6 @@ module = [
     "dateutil.*",
     "plotly.*",
     "pypfopt.*",
-    "sec_api.*",
-    "fastapi.*",
 ]
 ignore_missing_imports = true
 
@@ -368,18 +361,15 @@ exclude_dirs = ["tests", "venv", ".venv"]
 skips = ["B101", "B601"]
 
 
-dependency-groups.dev = [
-    "bandit>=1.8.6",
-    "pip-audit>=2.9.0",
-    "pytest-asyncio>=1.1.0",
-    "pytest-cov>=6.2.1",
-    "safety>=3.2.4",
-]
 package=true
 
 [dependency-groups]
 dev = [
     "mypy>=1.17.1",
+    "bandit>=1.8.6",
+    "safety>=3.2.4",
+    "cyclonedx-bom>=4.0.0",
+    "pip-audit>=2.9.0",
     "pytest-asyncio>=1.1.0",
     "pytest-mock>=3.15.1",
     "pytest-timeout>=2.4.0",
@@ -415,9 +405,8 @@ docs = [
 # runs a Chroma server, so it is intentionally not pinned here.
 constraint-dependencies = [
     "gitpython>=3.1.50",
-    "langchain-classic>=1.0.7",
     "urllib3>=2.7.0",
     "idna>=3.15",
-    "starlette>=1.0.1",
     "uv>=0.11.15",
+    "pyjwt>=2.13.0",
 ]

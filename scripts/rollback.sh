@@ -176,20 +176,6 @@ stop_services() {
         fi
     fi
 
-    # Stop API server if running
-    local api_pids=$(pgrep -f "uvicorn.*finwiz" || true)
-    if [[ -n "$api_pids" ]]; then
-        log_info "Stopping API server processes: $api_pids"
-        echo "$api_pids" | xargs -r kill -TERM
-        sleep 3
-
-        local remaining_api_pids=$(pgrep -f "uvicorn.*finwiz" || true)
-        if [[ -n "$remaining_api_pids" ]]; then
-            log_warn "Force killing API server processes: $remaining_api_pids"
-            echo "$remaining_api_pids" | xargs -r kill -KILL
-        fi
-    fi
-
     log_success "Services stopped"
 }
 

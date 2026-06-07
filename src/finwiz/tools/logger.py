@@ -44,9 +44,16 @@ def setup_logging(
         app_name: Name of the application for log files (default: "finwiz")
 
     """
+    # Under pytest, redirect file logs to a tests/ subfolder so test runs do not
+    # pollute the production logs/finwiz*.log files. Console logging is unaffected,
+    # so caplog-based tests keep working. Production runs (pytest not imported,
+    # env var unset) write to log_dir directly, exactly as before.
+    if log_to_file and ("pytest" in sys.modules or os.getenv("FINWIZ_TEST_LOGS") == "1"):
+        log_dir = os.path.join(log_dir, "tests")
+
     # Create logs directory if it doesn't exist
     if log_to_file:
-        Path(log_dir).mkdir(exist_ok=True)
+        Path(log_dir).mkdir(parents=True, exist_ok=True)
 
     # Configure root logger
     root_logger = logging.getLogger()

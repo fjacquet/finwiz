@@ -25,7 +25,6 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 from finwiz.tools.regulatory_compliance_tool import RegulatoryComplianceTool
-from finwiz.tools.sec_tool import SECFilingSearchTool
 from finwiz.tools.standardized_sentiment_tool import (
     CrossAssetSentimentComparatorTool,
     StandardizedSentimentAnalysisTool,
@@ -71,7 +70,7 @@ def get_stock_research_tools() -> list[BaseTool]:
         CrossAssetSentimentComparatorTool(),
     ]
     # API-key-gated tools (skip if key missing)
-    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool, SECFilingSearchTool):
+    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
         t = _safe_init(cls)
         if t:
             tools.append(t)

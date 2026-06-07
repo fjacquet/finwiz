@@ -1,0 +1,49 @@
+name: Supply Chain
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+permissions:
+  contents: write  # attach SBOM to releases
+
+jobs:
+  sbom-and-scan:
+    name: SBOM + Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Sync dependencies
+        run: uv sync --all-extras --all-groups
+
+      - name: Generate CycloneDX SBOM
+        run: |
+          mkdir -p dist
+          uv run cyclonedx-py environment --output-format JSON --output-file dist/finwiz.sbom.cdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: finwiz-sbom-cyclonedx
+          path: dist/finwiz.sbom.cdx.json
+
+      # Vulnerability scanning is handled by the dedicated OSV-Scanner workflow
+      # (.github/workflows/osv-scanner.yml), which reads osv-scanner.toml for
+      # accepted advisories. Local parity: `make audit` (pip-audit).
+
+      - name: Attach SBOM to release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/finwiz.sbom.cdx.json --clobber
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
