@@ -173,11 +173,10 @@ line-ending = "auto"
 [tool.pytest.ini_options]
 
 testpaths = ["tests"]
+# NOTE: coverage is intentionally NOT in addopts — it adds a ~7-11x slowdown to
+# every run. The fast default (`make test`) runs without it; coverage + the 65%
+# gate run via `make coverage` / `make coverage-check` (used in CI).
 addopts = [
-    "--cov=src/finwiz",
-    "--cov-report=term-missing",
-    "--cov-report=html:htmlcov",
-    "--cov-fail-under=65",
     "--strict-markers",
     "--strict-config",
     "-ra",

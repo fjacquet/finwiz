@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Faster default test runs (~7min → ~3min, 2.4x).** Coverage instrumentation
+  was moved out of pytest `addopts` (it added a ~7-11x tax to every run); the
+  fast default `make test` runs without it (`-q`), while coverage + the 65% gate
+  run via `make coverage` / `make coverage-check` (CI now uses the latter).
+  Four discovery "import-error" unit tests that hit the live yfinance network
+  (~135s) now mock the universe provider. Added a `make test-verbose` target.
+  (pytest-xdist parallelization is a deferred follow-up — the suite has latent
+  test-isolation issues, e.g. a `ConfigurationManager` singleton reading the
+  real environment, that must be fixed first.)
+
 ## [5.5.0] - 2026-06-07
 
 ### Changed

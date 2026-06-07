@@ -73,6 +73,8 @@ class TestIPOScreener:
         from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
 
         mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+        # Avoid a live yfinance universe fetch; empty universe keeps screeners offline.
+        mocker.patch("finwiz.discovery.universe_provider.DynamicUniverseProvider.get_universe", return_value=[])
         pipeline = NewcomerDiscoveryPipeline("stock")
         pipeline.portfolio_tickers = set()
         # _gather_candidates handles ImportError internally

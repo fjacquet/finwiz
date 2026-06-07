@@ -53,5 +53,5 @@ jobs:
             echo "No new Python files to check"
           fi
 
-      - name: Run tests
-        run: uv run pytest -m "not integration" -v
+      - name: Run tests (with coverage gate, parallel)
+        run: make coverage-check
