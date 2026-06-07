@@ -7,13 +7,11 @@ Enhanced with optional Perplexity Sonar integration for recent earnings and SEC 
 """
 
 import asyncio
-import os
 from datetime import datetime
 from typing import Any, Literal
 
 import requests
 from crewai.tools import BaseTool
-from langchain_text_splitters import CharacterTextSplitter
 from pydantic import BaseModel
 
 from finwiz.config.features.flags import get_feature_flags
@@ -23,6 +21,7 @@ from finwiz.schemas.tools import (
     EnhancedSECAnalysisInput,
     StandardizedRiskScoringInput,
 )
+from finwiz.tools._text_chunking import chunk_text
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 from finwiz.tools.sec_filing_url_generator import SECFilingURLGenerator
@@ -198,44 +197,13 @@ class EnhancedSECAnalysisTool(BaseTool):
         }
 
     def _get_filing_date_from_api(self, ticker: str, form_type: str) -> str | None:
+        """Filing-date lookup hook.
+
+        The optional ``sec_api`` integration was removed (dependency trim); this
+        now always returns ``None`` so the caller falls back to the current
+        timestamp. Kept as a method so it stays a patch point for tests and any
+        future provider.
         """
-        Attempt to get filing date from SEC API if available.
-
-        This is optional and will gracefully fail if SEC_API_API_KEY is not set.
-        """
-        api_key = os.environ.get("SEC_API_API_KEY")
-        if not api_key:
-            logger.debug("SEC_API_API_KEY not set, skipping filing date lookup")
-            return None
-
-        try:
-            # Lazy import to allow tests to patch QueryApi
-            global QueryApi
-            if QueryApi is None:
-                try:
-                    from sec_api import QueryApi as _QueryApi
-                except ImportError as e:
-                    logger.debug(f"sec_api package not available, skipping filing date lookup: {e}")
-                    return None
-                QueryApi = _QueryApi
-
-            query_api = QueryApi(api_key=api_key)
-            query = {
-                "query": {"query_string": {"query": f'ticker:{ticker} AND formType:"{form_type}"'}},
-                "from": "0",
-                "size": "1",
-                "sort": [{"filedAt": {"order": "desc"}}],
-            }
-
-            filings = query_api.get_filings(query).get("filings", [])
-            if filings:
-                filed_at: str | None = filings[0].get("filedAt", "")
-                logger.debug(f"Retrieved filing date from SEC API: {filed_at}")
-                return filed_at
-
-        except Exception as e:
-            logger.debug(f"Could not retrieve filing date from SEC API: {e!s}")
-
         return None
 
     def _download_html(self, url: str) -> str:
@@ -256,11 +224,9 @@ class EnhancedSECAnalysisTool(BaseTool):
         return resp.text
 
     def _split_into_documents(self, html_text: str) -> list[Any]:
-        """Split HTML content into manageable document chunks."""
-        elements = partition_html(text=html_text)
-        content = "\n".join([str(el) for el in elements])
-        splitter = CharacterTextSplitter(separator="\n", chunk_size=2000, chunk_overlap=200, length_function=len)
-        return splitter.create_documents([content])
+        """Extract readable text from filing HTML and split into chunks."""
+        content = _html_to_text(html_text)
+        return chunk_text(content, chunk_size=2000, overlap=200)
 
     def _extract_section_insights(self, docs: list[Any], ticker: str, section: str, filing: dict[str, str]) -> list[dict[str, Any]]:
         """Extract insights from a specific SEC filing section."""
@@ -568,17 +534,10 @@ class StandardizedRiskScoringTool(BaseTool):
 
 logger = get_logger(__name__)
 
-try:
-    from unstructured.partition.html import partition_html
-except ImportError as e:
-    logger.debug(f"unstructured package not available, using fallback HTML partitioner: {e}")
 
-    def _partition_html_fallback(text: str) -> list[Any]:
-        """Fallback partitioner: return the raw HTML as a single chunk."""
-        return [text]
+def _html_to_text(html: str) -> str:
+    """Extract visible text from filing HTML using BeautifulSoup."""
+    from bs4 import BeautifulSoup
 
-    partition_html = _partition_html_fallback  # type: ignore[assignment]
-
-
-# Defer importing QueryApi to runtime
-QueryApi = None
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.get_text(separator="\n", strip=True)

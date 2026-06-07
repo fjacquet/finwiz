@@ -355,3 +355,15 @@ class TestIntegrationScenarios:
         assert "AAPL" in result
         # When risk_assessment=False, the Risk Assessment section should not be present
         assert "Risk Assessment" not in result
+
+
+def test_split_into_documents_extracts_text_via_bs4():
+    from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
+
+    tool = EnhancedSECAnalysisTool()
+    html = "<html><body><p>" + ("Risk factors. " * 300) + "</p></body></html>"
+    docs = tool._split_into_documents(html)
+    assert docs, "expected at least one chunk"
+    assert all(hasattr(d, "page_content") for d in docs)
+    assert "Risk factors." in docs[0].page_content
+    assert "<p>" not in docs[0].page_content  # tags stripped
