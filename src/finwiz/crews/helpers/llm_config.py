@@ -6,6 +6,8 @@ based on optimization mode. These functions are externalized from crew classes
 to make them testable and reusable.
 """
 
+import os
+
 from crewai import LLM
 
 from finwiz.config.llm.llm_config import get_configured_llm, get_mini_llm
@@ -34,3 +36,16 @@ def get_crew_llm() -> LLM:
         return get_mini_llm()
     else:
         return get_configured_llm(model_type="standard")
+
+
+def get_crew_model_string() -> str:
+    """Return the model id ``get_crew_llm()`` would use, without building an LLM.
+
+    Used by the cost tracker for litellm price lookup. Resolving the string
+    directly (rather than constructing an ``LLM``) keeps the cost path free of
+    API-key validation side effects. Mirrors ``get_crew_llm``'s mini-vs-standard
+    decision and the env fallback chain in ``config.llm.llm_config``.
+    """
+    perf_config = get_performance_config_manager()
+    env_var = "LLM_MODEL_MINI" if perf_config.should_use_mini_model() else "LLM_MODEL_STANDARD"
+    return os.getenv(env_var) or os.getenv("MODEL") or "openai/gpt-4o-mini"
