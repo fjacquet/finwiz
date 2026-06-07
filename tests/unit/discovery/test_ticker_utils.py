@@ -40,11 +40,21 @@ class TestCryptoNormalization:
             ("AAVE", "AAVE-USD"),
             ("DOGE", "DOGE-USD"),
             ("SOL", "SOL-USD"),
-            ("MATIC", "MATIC-USD"),
         ],
     )
     def test_bare_crypto_gets_usd_suffix(self, bare: str, expected: str) -> None:
         assert to_yfinance_symbol(bare, "crypto") == expected
+
+    @pytest.mark.parametrize(
+        ("old", "expected"),
+        [
+            ("MATIC", "POL-USD"),  # Polygon migration
+            ("FTM", "S-USD"),  # Sonic rebrand
+            ("MATIC-USD", "POL-USD"),  # rename applies even when pre-suffixed
+        ],
+    )
+    def test_renamed_crypto_uses_current_symbol(self, old: str, expected: str) -> None:
+        assert to_yfinance_symbol(old, "crypto") == expected
 
     def test_case_normalization(self) -> None:
         assert to_yfinance_symbol("btc", "crypto") == "BTC-USD"

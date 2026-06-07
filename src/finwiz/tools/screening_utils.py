@@ -263,7 +263,7 @@ class ScreeningUtils:
                 "DOGE",
                 "DOT",
                 "AVAX",
-                "MATIC",
+                "POL",  # formerly MATIC (Polygon migrated to POL in 2024)
                 # DeFi and Layer 1s
                 "LINK",
                 "UNI",
@@ -280,7 +280,7 @@ class ScreeningUtils:
                 "ALGO",
                 "ATOM",
                 "NEAR",
-                "FTM",
+                "S",  # formerly FTM (Fantom rebranded to Sonic in 2024)
                 "ONE",
                 # Store of Value / Digital Gold
                 "LTC",

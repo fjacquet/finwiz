@@ -22,6 +22,7 @@ import json
 from datetime import date
 from pathlib import Path
 
+from finwiz.discovery.ticker_hygiene import is_tradable
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.tools.logger import get_logger
 
@@ -81,7 +82,7 @@ def get_returns(
     if not tickers:
         return {}
 
-    wanted = sorted({t.upper() for t in tickers})
+    wanted = sorted({t.upper() for t in tickers if is_tradable(t)})
     out: dict[str, list[float]] = {}
     missing: list[str] = []
     for t in wanted:
@@ -171,7 +172,7 @@ def get_sectors(tickers: list[str], asset_class: str = "stock") -> dict[str, str
     if not tickers:
         return {}
 
-    wanted = sorted({t.upper() for t in tickers})
+    wanted = sorted({t.upper() for t in tickers if is_tradable(t)})
     out: dict[str, str | None] = {}
     missing: list[str] = []
     for t in wanted:
