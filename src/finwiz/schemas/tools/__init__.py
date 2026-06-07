@@ -56,7 +56,6 @@ from .inputs import (
     RegulatoryComplianceInput,
     RiskAssessmentInput,
     ScoringCriteria,
-    SECFilingSearchInput,
     StandardizedRiskScoringInput,
     StandardizedSentimentInput,
     TickerInfoInput,
@@ -123,7 +122,6 @@ __all__ = [
     "PortfolioAnalysisInput",
     "RiskAssessmentInput",
     "QuantitativeAnalysisInput",
-    "SECFilingSearchInput",
     "PerplexitySearchInput",
     "PerplexitySearchWrapperInput",
 ]
