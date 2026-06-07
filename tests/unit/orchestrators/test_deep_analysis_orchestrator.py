@@ -163,11 +163,13 @@ class TestDeepAnalysisOrchestrator:
             processing_time_seconds=5.0,
         )
 
+    @pytest.mark.integration
     def test_should_return_empty_dict_when_no_holdings(self, orchestrator):
         """Test deep analysis with no holdings."""
         result = orchestrator.run_deep_analysis_on_holdings([])
         assert result == {}
 
+    @pytest.mark.integration
     def test_should_analyze_single_holding(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test analysis of a single holding using functional pipeline."""
         # Mock the functional pipeline at the import location
@@ -186,6 +188,7 @@ class TestDeepAnalysisOrchestrator:
         assert result["AAPL"].grade == "A"
         assert result["AAPL"].composite_score == 0.82
 
+    @pytest.mark.integration
     def test_should_analyze_multiple_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test analysis of multiple holdings."""
 
@@ -228,6 +231,7 @@ class TestDeepAnalysisOrchestrator:
         assert "AAPL" in result
         assert "GOOGL" in result
 
+    @pytest.mark.integration
     def test_should_handle_analysis_failure_gracefully(self, mocker, orchestrator):
         """Test that analysis failures surface a synthetic pending result.
 
@@ -274,6 +278,7 @@ class TestDeepAnalysisOrchestrator:
         assert pending.recommendation == "WAIT"
         assert "crew dépassé 900s" in pending.rationale
 
+    @pytest.mark.integration
     def test_should_skip_invalid_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test that holdings without ticker or asset_class are skipped."""
         mocker.patch(
@@ -294,6 +299,7 @@ class TestDeepAnalysisOrchestrator:
         assert len(result) == 1
         assert "AAPL" in result
 
+    @pytest.mark.integration
     def test_should_store_enriched_analysis(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis, tmp_path):
         """Test that enriched analysis is stored for HTML generation."""
         mocker.patch(
@@ -315,6 +321,7 @@ class TestDeepAnalysisOrchestrator:
         assert enriched is not None
         assert enriched.ticker == "AAPL"
 
+    @pytest.mark.integration
     @pytest.mark.parametrize(
         "holdings",
         [
@@ -403,6 +410,7 @@ class TestDeepAnalysisOrchestrator:
         composite_score=st.floats(min_value=0.0, max_value=1.0),
     )
     @settings(max_examples=50, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.integration
     def test_property_result_structure_validation(self, mocker, ticker, asset_class, grade, composite_score):
         """
         **Feature: flow-orchestrator-refactoring, Property 9: Deep Analysis Result Structure**
@@ -487,6 +495,7 @@ class TestDeepAnalysisOrchestrator:
         asset_class=st.sampled_from(["stock", "etf", "crypto"]),
     )
     @settings(max_examples=30, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    @pytest.mark.integration
     def test_property_pipeline_integration(self, mocker, ticker, asset_class):
         """
         **Feature: deep-analysis-pipeline, Property: Pipeline Integration**
