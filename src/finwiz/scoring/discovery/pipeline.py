@@ -96,7 +96,13 @@ class NewcomerDiscoveryPipeline:
             candidates = [c for c in candidates if c.ticker.upper() not in self.portfolio_tickers]
             logger.info("%d candidates remain after portfolio exclusion", len(candidates))
             candidates = self._score_candidates(candidates)
-            candidates = self._filter_actionable(candidates)
+
+        # Drop weak grades (D/D±/F) on BOTH paths. The portfolio-aware cascade
+        # un-gates *recall* (breakout/momentum become factor inputs, not filters)
+        # but must still EXCLUDE noise from the surfaced opportunity list rather
+        # than emit it low-graded — otherwise the a_plus_*/consolidated outputs
+        # fill with F/D candidates. See feedback rule: filter, don't low-grade.
+        candidates = self._filter_actionable(candidates)
 
         candidates.sort(key=lambda c: c.composite_score, reverse=True)
         candidates = candidates[: self.MAX_SURFACED_CANDIDATES]
