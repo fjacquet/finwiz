@@ -17,7 +17,6 @@ from typing import Any
 import yaml
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task
-from crewai_tools import DirectoryReadTool, FileReadTool
 from dotenv import load_dotenv
 
 from finwiz.crews.helpers.context_preparation import ContextPreparationManager
@@ -28,6 +27,7 @@ from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.orchestrators.discovery.aplus_discovery_accessor import APlusDiscoveryAccessor
 from finwiz.orchestrators.extraction.backtesting import BacktestingDataExtractor
+from finwiz.tools.file_tools import DirectoryReadTool, FileReadTool
 
 load_dotenv()
 
