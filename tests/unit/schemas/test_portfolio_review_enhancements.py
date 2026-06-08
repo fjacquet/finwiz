@@ -356,3 +356,87 @@ class TestPortfolioReviewEnhancements:
         assert portfolio.holdings[0].position_sizing is not None
         assert portfolio.holdings[0].data_freshness == "fresh"
         assert portfolio.schema_version == "2.1"
+
+
+class TestAllocationFields:
+    """Allocation/valuation fields on HoldingDecision and PortfolioReview."""
+
+    def _risk(self):
+        from finwiz.schemas.common import RiskAssessmentStandardized
+
+        return RiskAssessmentStandardized(score=2.5, level="Medium", risk_factors=[])
+
+    def test_holding_decision_allocation_fields_default_none(self):
+        from finwiz.schemas.portfolio_review import HoldingDecision
+
+        d = HoldingDecision(
+            asset_class="stock",
+            name="Apple",
+            ticker="AAPL",
+            currency="USD",
+            decision="KEEP",
+            composite_score=0.8,
+            grade="A",
+            grade_description="Strong",
+            recommended_action="hold",
+            risk=self._risk(),
+        )
+
+        assert d.quantity is None
+        assert d.native_currency is None
+        assert d.native_value is None
+        assert d.eur_value is None
+        assert d.weight is None
+
+    def test_holding_decision_allocation_fields_assignable(self):
+        from finwiz.schemas.portfolio_review import HoldingDecision
+
+        d = HoldingDecision(
+            asset_class="stock",
+            name="Apple",
+            ticker="AAPL",
+            currency="USD",
+            decision="KEEP",
+            composite_score=0.8,
+            grade="A",
+            grade_description="Strong",
+            recommended_action="hold",
+            risk=self._risk(),
+        )
+        d.quantity = 10.0
+        d.native_currency = "USD"
+        d.native_value = 1500.0
+        d.eur_value = 1380.0
+        d.weight = 0.25
+
+        assert d.weight == 0.25
+
+    def test_weight_must_be_between_0_and_1(self):
+        import pytest
+        from pydantic import ValidationError
+
+        from finwiz.schemas.portfolio_review import HoldingDecision
+
+        with pytest.raises(ValidationError):
+            HoldingDecision(
+                asset_class="stock",
+                name="Apple",
+                ticker="AAPL",
+                currency="USD",
+                decision="KEEP",
+                composite_score=0.8,
+                grade="A",
+                grade_description="Strong",
+                recommended_action="hold",
+                risk=self._risk(),
+                weight=1.5,
+            )
+
+    def test_portfolio_review_total_value_eur_default_none(self):
+        from datetime import UTC, datetime
+
+        from finwiz.schemas.portfolio_review import PortfolioReview
+
+        review = PortfolioReview(as_of=datetime.now(UTC))
+
+        assert review.total_value_eur is None

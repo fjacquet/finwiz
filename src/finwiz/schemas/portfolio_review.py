@@ -180,6 +180,14 @@ class HoldingDecision(BaseModel):
     # 'low' when the upstream qualify stage degraded to a Python fallback (DEGRADED).
     confidence: Literal["high", "low"] = Field(default="high", description="Pipeline confidence: 'low' when qualify stage degraded to Python fallback")
 
+    # Allocation/valuation (deterministic Python; see scoring/portfolio_valuation.py).
+    # All optional — populated only when a CSV Quantity and live price/FX resolve.
+    quantity: float | None = Field(default=None, description="Position size (units/shares) from the CSV")
+    native_currency: str | None = Field(default=None, description="Authoritative quote currency from the price API")
+    native_value: float | None = Field(default=None, description="quantity * native price, in native currency")
+    eur_value: float | None = Field(default=None, description="native_value converted to EUR via live FX")
+    weight: float | None = Field(default=None, ge=0.0, le=1.0, description="Share of total EUR portfolio value (0..1)")
+
 
 class APlusOpportunitySection(BaseModel):
     """A+ opportunities section for portfolio review reports."""
@@ -213,6 +221,7 @@ class PortfolioReview(BaseModel):
     as_of: datetime
     base_currency: str = "CHF"
     holdings: list[HoldingDecision] = Field(default_factory=list)
+    total_value_eur: float | None = Field(default=None, description="Sum of holdings' eur_value (priced holdings only); None when nothing could be priced")
 
     # A+ opportunities integration
     a_plus_opportunities: APlusOpportunitySection = Field(
