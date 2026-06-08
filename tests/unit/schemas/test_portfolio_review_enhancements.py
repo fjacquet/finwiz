@@ -409,10 +409,13 @@ class TestAllocationFields:
         d.eur_value = 1380.0
         d.weight = 0.25
 
+        assert d.quantity == 10.0
+        assert d.native_currency == "USD"
+        assert d.native_value == 1500.0
+        assert d.eur_value == 1380.0
         assert d.weight == 0.25
 
     def test_weight_must_be_between_0_and_1(self):
-        import pytest
         from pydantic import ValidationError
 
         from finwiz.schemas.portfolio_review import HoldingDecision
