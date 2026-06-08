@@ -30,6 +30,57 @@ from tests.fixtures import (
     create_stock_data,
 )
 
+# ---------------------------------------------------------------------------
+# Global reorder-safe isolation (enables pytest-xdist parallelism).
+#
+# Import-time load_dotenv() calls in ~9 modules load the real .env into
+# os.environ once per process. Combined with cached config singletons, that
+# state would otherwise leak across tests, making results order-dependent (and
+# leaking real API keys into assertion output on failure). This autouse fixture
+# resets that state before every test, via monkeypatch (auto-restored).
+# ---------------------------------------------------------------------------
+
+# Non-FINWIZ_-prefixed env vars resilience_config still honours (back-compat).
+_EXTRA_CONFIG_ENV_VARS = ("PORTFOLIO_PARALLEL_LIMIT", "DEEP_ANALYSIS_PARALLEL_LIMIT")
+
+
+@pytest.fixture(autouse=True)
+def _isolate_global_state(monkeypatch):
+    """Clear config-driving env vars and reset cached config singletons per test.
+
+    Makes the suite safe under pytest-xdist and prevents unit tests from seeing
+    the developer's real ``.env`` (which also stops real secrets reaching
+    assertion output). ``monkeypatch`` auto-restores on teardown, so there is no
+    destructive global mutation.
+
+    A test that needs a specific value sets it AFTER this fixture runs (e.g.
+    ``monkeypatch.setenv("SERPER_API_KEY", "test-serper-key-32-characters-long")``),
+    which wins.
+    """
+    import finwiz.config.features.flags as _flags
+    import finwiz.config.manager as _cfg
+    import finwiz.config.resilience_config as _res
+    import finwiz.config.settings as _settings
+    import finwiz.infrastructure.monitoring.litellm_callback as _llm
+
+    # Clear config-driving env vars. API-key names are sourced from the code (not
+    # duplicated); FINWIZ_-prefixed vars are cleared by scanning so new ones are
+    # covered automatically (FINWIZ_TEST_LOGS is preserved).
+    for kc in _cfg.ConfigurationManager.REQUIRED_API_KEYS:
+        monkeypatch.delenv(kc.env_var, raising=False)
+    for var in list(os.environ):
+        if var.startswith("FINWIZ_") and var != "FINWIZ_TEST_LOGS":
+            monkeypatch.delenv(var, raising=False)
+    for var in _EXTRA_CONFIG_ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
+
+    # Reset env-derived / mutable-state singletons.
+    monkeypatch.setattr(_settings, "_settings", None, raising=False)
+    monkeypatch.setattr(_cfg, "_config_manager", None, raising=False)
+    monkeypatch.setattr(_res, "_resilience_config", None, raising=False)
+    monkeypatch.setattr(_flags, "_feature_flags", None, raising=False)
+    monkeypatch.setattr(_llm, "_token_monitor", None, raising=False)
+
 
 # Make fixtures available as pytest fixtures
 @pytest.fixture

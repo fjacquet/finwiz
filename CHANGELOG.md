@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.5.1] - 2026-06-08
+
 ### Changed
 
 - **Faster default test runs (~7min → ~3min, 2.4x).** Coverage instrumentation
@@ -18,6 +20,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (pytest-xdist parallelization is a deferred follow-up — the suite has latent
   test-isolation issues, e.g. a `ConfigurationManager` singleton reading the
   real environment, that must be fixed first.)
+- **Parallel test runs (pytest-xdist).** Added an autouse isolation fixture
+  (`tests/conftest.py`) that clears config-driving env vars and resets cached
+  config singletons (configuration manager, settings, resilience, feature flags,
+  token monitor) before every test — making the suite reorder-safe. This also
+  fixes a latent order-dependent leak where a config test could read — and print
+  on failure — the developer's real `.env` API keys. The fixture's own overhead
+  is negligible. `make test` and the CI coverage gate now run with
+  `-n auto --dist=loadscope`.
+- **Default unit run is now network-free and deterministic (~3 min → ~1m53s).**
+  Profiling showed the default suite was dominated — and made wildly
+  time-variable — by ~18 deep-analysis orchestrator "unit" tests that made real
+  network calls (Alpha Vantage / yfinance via the macro-snapshot and
+  batch-prefetch paths) wrapped in retry/backoff. These are now marked
+  `@pytest.mark.integration`, so `make test` (`-m "not integration"`) excludes
+  them and runs CPU-bound at ~1m53s on a 10-core machine (was ~3 min and
+  network-variable); they still run in the integration job. Pure-logic tests in
+  those files stay in the fast unit run. Fully mocking the orchestrator data
+  layer to return them to the unit suite is a possible future refinement.
 
 ## [5.5.0] - 2026-06-07
 

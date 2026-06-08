@@ -169,8 +169,9 @@ class TestAlphaVantageToolWithPrefetch:
     """Test AlphaVantageCompanyOverviewTool with pre-fetched data."""
 
     @pytest.fixture
-    def tool(self):
+    def tool(self, monkeypatch):
         """Create tool instance."""
+        monkeypatch.setenv("ALPHA_VANTAGE_API_KEY", "test-alpha-vantage-key")
         return AlphaVantageCompanyOverviewTool()
 
     @pytest.fixture

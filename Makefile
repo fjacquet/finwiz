@@ -72,7 +72,7 @@ dev:
 
 # Testing
 test:
-	uv run pytest -m "not integration" -q
+	uv run pytest -m "not integration" -q -n auto --dist=loadscope
 
 test-verbose:
 	uv run pytest -m "not integration" -v
@@ -108,7 +108,7 @@ test-failures:
 
 coverage-check:
 	@echo "🔍 Checking test coverage..."
-	uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet
+	uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet -n auto --dist=loadscope
 	@echo "✅ Coverage meets minimum threshold (65%)"
 
 # Code Quality

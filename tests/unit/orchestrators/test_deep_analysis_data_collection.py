@@ -100,6 +100,7 @@ class TestPythonDataCollection:
             }
         )
 
+    @pytest.mark.integration
     def test_collect_data_with_python_success(
         self, mocker, orchestrator, mock_yahoo_ticker_data, mock_yahoo_company_data, mock_quantitative_data, mock_sentiment_data, mock_sec_data
     ):
@@ -183,6 +184,7 @@ class TestPythonDataCollection:
         assert "overall_sentiment" in result
         assert result["overall_sentiment"] == "POSITIVE"
 
+    @pytest.mark.integration
     def test_collect_data_handles_tool_failures(self, mocker, orchestrator):
         """Test graceful handling when individual tools fail."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
@@ -219,6 +221,7 @@ class TestPythonDataCollection:
         assert "overall_sentiment" in result
         assert result["overall_sentiment"] == "neutral"
 
+    @pytest.mark.integration
     def test_collect_data_etf_skips_sec_analysis(self, mocker, orchestrator):
         """Test that ETF assets skip SEC analysis (stock-only feature)."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
@@ -280,6 +283,7 @@ class TestPythonDataCollection:
         assert "return_on_equity" in flattened  # From company_info.financial_metrics.return_on_equity
         assert "debt_to_equity" in flattened  # From company_info.financial_metrics.debt_to_equity
 
+    @pytest.mark.integration
     def test_numerical_stability_edge_cases(self, mocker, orchestrator):
         """Test handling of edge cases in numerical data."""
         edge_case_data = {
@@ -305,6 +309,7 @@ class TestPythonDataCollection:
         assert result["current_price"] == approx(0.0001)
         # NaN and None values should be handled gracefully in flattening
 
+    @pytest.mark.integration
     def test_json_parsing_robustness(self, mocker, orchestrator):
         """Test robust JSON parsing from tool outputs."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
@@ -390,6 +395,7 @@ class TestPythonDataCollection:
         assert EnhancedSECAnalysisTool is not None
         assert DeepAnalysisScorer is not None
 
+    @pytest.mark.integration
     def test_batch_mode_parameter_propagation(self, mocker, orchestrator):
         """Test that batch_enabled parameter is properly used."""
         # ✅ CORRECT pytest-mock pattern: NO context managers

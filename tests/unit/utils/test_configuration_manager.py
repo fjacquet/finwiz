@@ -25,22 +25,6 @@ from finwiz.config.manager import (
 class TestConfigurationManager:
     """Test suite for ConfigurationManager class."""
 
-    def setup_method(self):
-        """Set up test environment."""
-        # Clear environment variables
-        env_vars_to_clear = [
-            "OPENAI_API_KEY",
-            "SERPER_API_KEY",
-            "ALPHA_VANTAGE_API_KEY",
-            "CHART_IMG_API_KEY",
-            "TWELVE_DATA_API_KEY",
-            "X-CMC_PRO_API_KEY",
-            "KRAKEN_API_KEY",
-        ]
-        for var in env_vars_to_clear:
-            if var in os.environ:
-                del os.environ[var]
-
     def test_should_initialize_with_required_api_keys(self):
         """Test that ConfigurationManager initializes with expected API key configs."""
         # Arrange & Act
