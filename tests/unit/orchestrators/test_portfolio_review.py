@@ -5,6 +5,8 @@ Unit tests for portfolio review orchestrator.
 import json
 from pathlib import Path
 
+import pytest
+
 from finwiz.orchestrators.portfolio_review_orchestrator import (
     build_portfolio_review,
     get_csv_paths,
@@ -216,3 +218,92 @@ class TestPortfolioReview:
         assert "etf.csv" in str(etf_csv)
         assert "stock.csv" in str(stock_csv)
         assert "crypto.csv" in str(crypto_csv)
+
+
+class TestAllocationWiring:
+    """build_portfolio_review stamps weights and total_value_eur when quantities exist."""
+
+    async def test_weights_stamped_from_quantities(self, tmp_path, mocker):
+        stock_csv = tmp_path / "stock.csv"
+        stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\nMicrosoft,MSFT,USD,true,10\n")
+
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
+        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+
+        from finwiz.schemas.rebalancing.core import PriceData
+
+        async def fake_get_current_prices(symbols):
+            return {s: PriceData(symbol=s, price=100.0, currency="EUR") for s in symbols}
+
+        price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
+        price_service.return_value.get_current_prices = fake_get_current_prices
+
+        mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.get_fx_rate", return_value=1.0)
+
+        review, _summary = await build_portfolio_review(stock_csv=stock_csv)
+
+        weights = {h.ticker: h.weight for h in review.holdings}
+        assert weights["AAPL"] == pytest.approx(0.5)
+        assert weights["MSFT"] == pytest.approx(0.5)
+        assert review.total_value_eur == pytest.approx(2000.0)
+        aapl = next(h for h in review.holdings if h.ticker == "AAPL")
+        assert aapl.quantity == 10.0
+        assert aapl.eur_value == pytest.approx(1000.0)
+
+    async def test_no_quantities_means_no_price_fetch_and_none_weights(self, tmp_path, mocker):
+        stock_csv = tmp_path / "stock.csv"
+        stock_csv.write_text("Name,Ticker,Currency,Active\nApple,AAPL,USD,true\n")
+
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
+        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+
+        price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
+
+        review, _summary = await build_portfolio_review(stock_csv=stock_csv)
+
+        price_service.assert_not_called()
+        assert review.holdings[0].weight is None
+        assert review.total_value_eur is None
+
+    async def test_valuation_failure_is_graceful(self, tmp_path, mocker):
+        stock_csv = tmp_path / "stock.csv"
+        stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\n")
+
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
+        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+
+        price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
+        price_service.return_value.get_current_prices = mocker.AsyncMock(side_effect=RuntimeError("boom"))
+
+        review, _summary = await build_portfolio_review(stock_csv=stock_csv)
+
+        assert len(review.holdings) == 1
+        assert review.holdings[0].weight is None
+        assert review.total_value_eur is None
+
+    async def test_partial_pricing_unpriced_holding_has_none_weight(self, tmp_path, mocker):
+        stock_csv = tmp_path / "stock.csv"
+        stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\nMicrosoft,MSFT,USD,true,10\n")
+
+        mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
+        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+
+        from finwiz.schemas.rebalancing.core import PriceData
+
+        async def fake_get_current_prices(symbols):
+            return {"AAPL": PriceData(symbol="AAPL", price=100.0, currency="EUR")}
+
+        price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
+        price_service.return_value.get_current_prices = fake_get_current_prices
+
+        mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.get_fx_rate", return_value=1.0)
+
+        review, _summary = await build_portfolio_review(stock_csv=stock_csv)
+
+        aapl = next(h for h in review.holdings if h.ticker == "AAPL")
+        msft = next(h for h in review.holdings if h.ticker == "MSFT")
+
+        assert msft.weight is None
+        assert msft.eur_value is None
+        assert aapl.weight == pytest.approx(1.0)
+        assert review.total_value_eur == pytest.approx(aapl.eur_value)
