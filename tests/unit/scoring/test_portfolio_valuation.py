@@ -128,3 +128,40 @@ def test_coverage_note_reports_counts():
     )
 
     assert "1 of 2" in result.coverage_note
+
+
+def test_duplicate_ticker_collapses_last_wins():
+    holdings = [_H("AAPL", 10.0), _H("AAPL", 5.0)]
+    prices = {"AAPL": (100.0, "EUR")}
+
+    result = value_holdings(
+        holdings,
+        base="EUR",
+        price_fn=lambda t: prices.get(t),
+        fx_fn=lambda c: 1.0,
+    )
+
+    # Last entry wins; total is NOT double-counted.
+    assert result.total_count == 1
+    assert result.per_ticker["AAPL"].quantity == 5.0
+    assert result.per_ticker["AAPL"].eur_value == pytest.approx(500.0)
+    assert result.total_value_eur == pytest.approx(500.0)
+    assert result.per_ticker["AAPL"].weight == pytest.approx(1.0)
+
+
+def test_zero_price_no_crash_weight_none():
+    holdings = [_H("AAPL", 10.0)]
+    prices = {"AAPL": (0.0, "EUR")}
+
+    result = value_holdings(
+        holdings,
+        base="EUR",
+        price_fn=lambda t: prices.get(t),
+        fx_fn=lambda c: 1.0,
+    )
+
+    hv = result.per_ticker["AAPL"]
+    assert hv.eur_value == pytest.approx(0.0)
+    assert hv.weight is None  # cannot weight against a zero total
+    assert result.total_value_eur == pytest.approx(0.0)
+    assert result.priced_count == 1

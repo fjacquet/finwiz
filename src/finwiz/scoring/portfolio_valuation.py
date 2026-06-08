@@ -35,18 +35,17 @@ def value_holdings(
     compute native_value = quantity * price, convert to base via fx_fn(native_ccy).
     Holdings missing quantity/price/FX get weight=None and are excluded from the
     base total. Weights are eur_value / total over the holdings that fully resolved.
+
+    `fx_fn` is expected to already convert a native amount into `base`; `base` is
+    not threaded into `fx_fn`. Duplicate tickers collapse last-write-wins.
     """
     per_ticker: dict[str, HoldingValuation] = {}
-    total = 0.0
-    priced = 0
-    total_count = 0
 
     for holding in holdings:
-        total_count += 1
         ticker = holding.ticker
         quantity = holding.quantity
         hv = HoldingValuation(ticker=ticker, quantity=quantity)
-        per_ticker[ticker] = hv
+        per_ticker[ticker] = hv  # duplicate tickers collapse last-write-wins
 
         if quantity is None:
             continue
@@ -64,17 +63,21 @@ def value_holdings(
             continue
 
         hv.eur_value = hv.native_value * rate
-        total += hv.eur_value
-        priced += 1
 
-    total_eur = total if priced > 0 else None
-    if total_eur and total_eur > 0:
-        for hv in per_ticker.values():
-            if hv.eur_value is not None:
-                hv.weight = hv.eur_value / total_eur
+    # Derive aggregates from the final per_ticker map (not from a running sum in the
+    # loop), so duplicate tickers — which collapse last-write-wins above — stay
+    # internally consistent: the total never double-counts a repeated ticker.
+    resolved = [hv for hv in per_ticker.values() if hv.eur_value is not None]
+    total_eur = sum(hv.eur_value or 0.0 for hv in resolved) if resolved else None
+    priced = len(resolved)
+    total_count = len(per_ticker)
+
+    if total_eur is not None and total_eur > 0.0:
+        for hv in resolved:
+            hv.weight = (hv.eur_value or 0.0) / total_eur
 
     pct = (priced / total_count * 100.0) if total_count else 0.0
-    note = f"{priced} of {total_count} holdings priced; {pct:.0f}% of holdings by count weighted"
+    note = f"{priced} of {total_count} holdings priced ({pct:.0f}% by count)"
 
     return ValuationResult(
         per_ticker=per_ticker,
