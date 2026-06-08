@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit
+.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit
 
 # Default target
 help:
@@ -175,6 +175,9 @@ cleanup-temp:
 
 cleanup:
 	python scripts/cleanup_master.py
+
+fix-currencies:  ## Rewrite data/*.csv Currency columns from the authoritative price API (network; explicit)
+	uv run python scripts/fix_csv_currencies.py
 
 # Type checking
 mypy:
