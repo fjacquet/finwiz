@@ -22,6 +22,9 @@ _MINOR_UNITS: dict[str, tuple[str, float]] = {
 }
 
 # Per-run cache keyed by (from_ccy, base) -> rate or None. Reset via clear_fx_cache().
+# Not thread-safe by design — the flow runs in a single asyncio thread. Cache keys use
+# the raw (stripped) from_ccy so the case-sensitive minor-unit codes (e.g. "GBp") survive;
+# yfinance returns ISO-cased currencies, so case-variant keys don't occur in practice.
 _FX_CACHE: dict[tuple[str, str], float | None] = {}
 
 

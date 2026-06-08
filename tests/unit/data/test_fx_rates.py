@@ -35,6 +35,13 @@ def test_gbp_pence_divided_by_100(mocker):
     assert rate == pytest.approx(0.0117)
 
 
+def test_gbp_pence_to_gbp_is_0_01(mocker):
+    spy = mocker.patch("finwiz.data.fx_rates._fetch_pair_rate")
+
+    assert fx_rates.get_fx_rate("GBp", "GBP") == pytest.approx(0.01)
+    spy.assert_not_called()  # identity path: 1 pence = 0.01 GBP, no fetch
+
+
 def test_failure_returns_none(mocker):
     mocker.patch("finwiz.data.fx_rates._fetch_pair_rate", return_value=None)
 
