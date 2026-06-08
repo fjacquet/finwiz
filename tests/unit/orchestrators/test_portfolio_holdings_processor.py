@@ -589,3 +589,15 @@ class TestQuantityIngestion:
 
         assert holdings[0].quantity == 0.25
         assert holdings[0].ticker == "BTC-USD"  # crypto normalization still applies
+
+    def test_non_finite_quantity_is_none(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        for bad in ("inf", "-inf", "nan"):
+            csv = tmp_path / "stock.csv"
+            csv.write_text(f"Name,Ticker,Currency,Active,Quantity\nApple,Yahoo:AAPL,USD,true,{bad}\n")
+            processor = PortfolioHoldingsProcessor()
+
+            holdings = processor._read_csv_holdings(csv, "stock")
+
+            assert holdings[0].quantity is None, f"{bad!r} should parse to None"

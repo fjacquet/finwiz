@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import csv
 import logging
+import math
 import os
 import time
 from collections import Counter
@@ -42,15 +43,19 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_quantity(raw: str | None) -> float | None:
-    """Parse a CSV Quantity cell into a float; blank/invalid -> None (debug-logged)."""
+    """Parse a CSV Quantity cell into a float; blank/invalid/non-finite -> None (debug-logged)."""
     s = (raw or "").strip()
     if not s:
         return None
     try:
-        return float(s)
+        value = float(s)
     except ValueError:
         logger.debug("Ignoring unparseable Quantity value %r", s)
         return None
+    if not math.isfinite(value):
+        logger.debug("Ignoring non-finite Quantity value %r", s)
+        return None
+    return value
 
 
 class PortfolioHoldingsProcessor:
