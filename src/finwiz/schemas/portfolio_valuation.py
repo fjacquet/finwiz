@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class HoldingValuation(BaseModel):
     """Per-holding valuation output. All money fields optional (graceful degradation)."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     ticker: str
     quantity: float | None = None
@@ -25,7 +25,7 @@ class HoldingValuation(BaseModel):
 class ValuationResult(BaseModel):
     """Portfolio-level valuation: per-ticker breakdown, total EUR, coverage."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     per_ticker: dict[str, HoldingValuation] = Field(default_factory=dict)
     total_value_eur: float | None = None
