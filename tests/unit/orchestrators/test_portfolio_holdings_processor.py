@@ -528,3 +528,64 @@ class TestPortfolioHoldingsProcessor:
 
         # Assert
         assert len(holdings) == 0
+
+
+class TestQuantityIngestion:
+    """CSV `Quantity` column parsing into RawHolding.quantity."""
+
+    def test_parses_valid_quantity(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        csv = tmp_path / "stock.csv"
+        csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,Yahoo:AAPL,USD,true,10.5\n")
+        processor = PortfolioHoldingsProcessor()
+
+        holdings = processor._read_csv_holdings(csv, "stock")
+
+        assert len(holdings) == 1
+        assert holdings[0].quantity == 10.5
+
+    def test_blank_quantity_is_none(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        csv = tmp_path / "stock.csv"
+        csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,Yahoo:AAPL,USD,true,\n")
+        processor = PortfolioHoldingsProcessor()
+
+        holdings = processor._read_csv_holdings(csv, "stock")
+
+        assert holdings[0].quantity is None
+
+    def test_garbage_quantity_is_none(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        csv = tmp_path / "stock.csv"
+        csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,Yahoo:AAPL,USD,true,abc\n")
+        processor = PortfolioHoldingsProcessor()
+
+        holdings = processor._read_csv_holdings(csv, "stock")
+
+        assert holdings[0].quantity is None
+
+    def test_missing_quantity_column_is_none(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        csv = tmp_path / "stock.csv"
+        csv.write_text("Name,Ticker,Currency,Active\nApple,Yahoo:AAPL,USD,true\n")
+        processor = PortfolioHoldingsProcessor()
+
+        holdings = processor._read_csv_holdings(csv, "stock")
+
+        assert holdings[0].quantity is None
+
+    def test_crypto_quantity_parsed(self, tmp_path):
+        from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
+
+        csv = tmp_path / "crypto.csv"
+        csv.write_text("Name,Ticker,Active,Quantity\nBitcoin,BTC,true,0.25\n")
+        processor = PortfolioHoldingsProcessor()
+
+        holdings = processor._read_csv_holdings(csv, "crypto")
+
+        assert holdings[0].quantity == 0.25
+        assert holdings[0].ticker == "BTC-USD"  # crypto normalization still applies

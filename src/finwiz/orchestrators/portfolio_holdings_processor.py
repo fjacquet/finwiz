@@ -41,6 +41,18 @@ from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 logger = logging.getLogger(__name__)
 
 
+def _parse_quantity(raw: str | None) -> float | None:
+    """Parse a CSV Quantity cell into a float; blank/invalid -> None (debug-logged)."""
+    s = (raw or "").strip()
+    if not s:
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        logger.debug("Ignoring unparseable Quantity value %r", s)
+        return None
+
+
 class PortfolioHoldingsProcessor:
     """Process ALL portfolio holdings from CSV files with complete transparency."""
 
@@ -148,6 +160,7 @@ class PortfolioHoldingsProcessor:
                     ticker = self.normalize_ticker(row.get("Ticker") or "", asset_class=asset_class)
                     currency = (row.get("Currency") or "").strip()
                     active_raw = (row.get("Active") or "true").strip().lower()
+                    quantity = _parse_quantity(row.get("Quantity"))
 
                     # Log every row we encounter
                     logger.debug(f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', active='{active_raw}', asset_class='{asset_class}'")
@@ -171,6 +184,7 @@ class PortfolioHoldingsProcessor:
                             currency=currency or "USD",
                             source_file=str(path),
                             line_number=line_num,
+                            quantity=quantity,
                         )
                     )
 

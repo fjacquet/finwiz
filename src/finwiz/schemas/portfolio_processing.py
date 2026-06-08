@@ -24,6 +24,7 @@ class RawHolding:
     currency: str
     source_file: str
     line_number: int
+    quantity: float | None = None
 
 
 @dataclass
