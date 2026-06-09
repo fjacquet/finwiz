@@ -31,8 +31,6 @@ help:
 	@echo "  make html-convert - Convert all JSON output files to HTML"
 	@echo "  make html-report FILE=path/to/file.json TYPE=template_type - Generate specific HTML report"
 	@echo "  make html-demo   - Generate HTML template demo file"
-	@echo "  make html-example - Run inline HTML generation examples"
-	@echo "  make html-integration - Run HTML integration examples"
 	@echo ""
 	@echo "Quality Assurance:"
 	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict)"
@@ -269,16 +267,6 @@ html-demo:
 	@echo "🎨 Generating HTML template demo..."
 	python scripts/generate_demo.py
 	@echo "✅ Demo generated - open demo.html in your browser"
-
-html-example:
-	@echo "🚀 Running inline HTML generation examples..."
-	python examples/inline_html_example.py
-	@echo "✅ Examples completed - check output/examples/ directory"
-
-html-integration:
-	@echo "🔄 Running HTML integration examples..."
-	python examples/integration_example.py
-	@echo "✅ Integration examples completed - check output/integration/ directory"
 
 .PHONY: sbom audit
 

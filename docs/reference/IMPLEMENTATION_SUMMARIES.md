@@ -1435,25 +1435,19 @@ Created comprehensive documentation:
 
 ### 5. Example Implementation
 
-Created `examples/batch_prefetch_demo.py`:
+Batch pre-fetching with memory management is demonstrated in:
 
 #### Features
 
-- Demonstrates batch pre-fetching with memory management
-- Shows Yahoo Finance priority
-- Displays memory metrics
-- Shows cache cleanup
-- Provides clear recommendations
+- Batch pre-fetching with memory management
+- Yahoo Finance priority
+- Memory metrics and monitoring
+- Cache cleanup strategy
+- Performance recommendations
 
-#### Usage
+#### Integration Points
 
-```bash
-# Recommended: Yahoo Finance only (fast)
-python examples/batch_prefetch_demo.py
-
-# Optional: Enable Alpha Vantage (slow)
-ENABLE_ALPHA_VANTAGE=true python examples/batch_prefetch_demo.py
-```
+See `src/finwiz/data/` and `src/finwiz/cache/` for implementation details.
 
 ### 6. Unit Tests
 
@@ -1586,8 +1580,7 @@ print(f"Freed {cleanup_result['disk_freed_mb']} MB")
 
 1. `src/finwiz/utils/memory_manager.py` - Core memory management
 2. `docs/MEMORY_MANAGEMENT.md` - Comprehensive documentation
-3. `examples/batch_prefetch_demo.py` - Usage demonstration
-4. `tests/unit/utils/test_memory_manager.py` - Unit tests
+3. `tests/unit/utils/test_memory_manager.py` - Unit tests
 
 ### Modified
 
