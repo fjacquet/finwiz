@@ -71,5 +71,5 @@ Common errors and how to handle them.
 ## See Also
 
 - [API Index](index.md)
-- [How-to Guides](../how-to/index.md)
-- [Tutorials](../tutorials/index.md)
+- [How-to Guides](../../how-to/index.md)
+- [Tutorials](../../tutorials/index.md)
