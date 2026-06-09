@@ -1584,14 +1584,12 @@ Control feature flags using environment variables:
 ```bash
 # Enable/disable features
 FF_ENHANCED_SENTIMENT=true
-FF_ADVANCED_TECHNICAL=false
 FF_CHART_ANALYSIS=true
 FF_TWELVE_DATA=true
 FF_PERPLEXITY_RESEARCH=false
 
 # Percentage rollouts (0-100)
 FF_ENHANCED_SENTIMENT_ROLLOUT=75.0
-FF_ADVANCED_TECHNICAL_ROLLOUT=50.0
 
 # Circuit breaker thresholds
 FF_CHART_BREAKER_THRESHOLD=3
