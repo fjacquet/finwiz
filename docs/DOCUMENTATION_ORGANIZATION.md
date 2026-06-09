@@ -31,7 +31,7 @@ docs/
 │   ├── setup_environment.md             # Environment setup
 │   ├── BATCH_PROCESSING.md              # Batch processing guide
 │   ├── PYTHON_SCORING_ENGINE.md         # Scoring engine guide
-│   ├── deployment-guide.md              # Deployment instructions
+│   ├── github-pages-mkdocs.md           # GitHub Pages deployment
 │   └── troubleshooting.md               # Common issues
 │
 ├── reference/                            # Technical reference
@@ -344,10 +344,10 @@ See also:
 
 ```bash
 # WRONG
-docs/deployment-guide.md
+docs/github-pages-mkdocs.md
 
 # CORRECT
-docs/how-to/deployment-guide.md
+docs/how-to/github-pages-mkdocs.md
 ```
 
 ### ❌ Don't Mix Documentation Types

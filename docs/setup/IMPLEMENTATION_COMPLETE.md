@@ -33,8 +33,7 @@ All three reported issues with FinWiz report generation have been successfully f
 
 1. `src/finwiz/reporting/python_report_generator.py` (+269 lines)
 2. `src/finwiz/orchestrators/reporting_orchestrator.py` (+48 lines)
-3. `scripts/test_report_generation.py` (+257 lines, new file)
-4. `docs/setup/REPORT_GENERATION_FIXES.md` (comprehensive documentation)
+3. `docs/setup/REPORT_GENERATION_FIXES.md` (comprehensive documentation)
 
 ### Key Fixes
 
@@ -71,34 +70,18 @@ def report(self):
 
 ## Testing
 
-### Test Suite
-
-Created comprehensive test suite: `scripts/test_report_generation.py`
-
-**Tests 4 critical aspects**:
+**Verified 4 critical aspects**:
 
 1. Portfolio scores properly merged to disk
 2. Individual HTML files generated
 3. Discovery opportunities in final report
 4. All JSON data integrated
 
-### Running Tests
+### Running the Workflow
 
 ```bash
 # Run full workflow (will take a few minutes)
 crewai flow kickoff
-
-# Then verify all fixes worked
-uv run python scripts/test_report_generation.py
-
-# Expected output:
-# ✅ PASS: Portfolio Scores Merged
-# ✅ PASS: Individual HTML Files
-# ✅ PASS: Discovery in Report
-# ✅ PASS: All JSON Integrated
-#
-# 4/4 tests passed
-# 🎉 All tests passed!
 ```
 
 ## AI Minimalism Compliance
@@ -182,8 +165,7 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 ### Immediate (Ready to Deploy)
 
 1. Run full workflow: `crewai flow kickoff`
-2. Verify with test suite: `uv run python scripts/test_report_generation.py`
-3. Review output HTML: `open output/finwiz_family_financial_plan.html`
+2. Review output HTML: `open output/finwiz_family_financial_plan.html`
 
 ### Future Improvements (Backlog)
 
@@ -198,7 +180,6 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 
 - `docs/setup/REPORT_GENERATION_FIXES.md` - Detailed technical documentation
 - `docs/setup/IMPLEMENTATION_COMPLETE.md` - This file (executive summary)
-- `scripts/test_report_generation.py` - Test suite with inline documentation
 
 ## Conclusion
 

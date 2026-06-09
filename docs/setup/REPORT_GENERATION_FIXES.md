@@ -246,29 +246,6 @@ open output/finwiz_family_financial_plan.html
 3. **`docs/setup/REPORT_GENERATION_FIXES.md`** (this file)
    - Comprehensive documentation of all changes and issues
 
-4. **`scripts/test_report_generation.py`** (NEW - 257 lines)
-   - Test suite to verify all fixes work correctly
-   - Tests portfolio score merging
-   - Tests individual HTML generation
-   - Tests discovery integration
-   - Tests overall data integration
-
-## Test Script Usage
-
-```bash
-# Run the test suite to verify fixes
-uv run python scripts/test_report_generation.py
-
-# Expected output after running full flow:
-# ✅ PASS: Portfolio Scores Merged
-# ✅ PASS: Individual HTML Files
-# ✅ PASS: Discovery in Report
-# ✅ PASS: All JSON Integrated
-#
-# 4/4 tests passed
-# 🎉 All tests passed!
-```
-
 ---
 
 ## References

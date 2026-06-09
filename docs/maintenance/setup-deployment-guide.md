@@ -101,15 +101,6 @@ docs/
 
 4. **Follow content standards** (see Content Creation Guide)
 
-### Content Migration
-
-For migrating existing documentation:
-
-```bash
-# Run migration script
-make docs-migrate
-```
-
 ### Schema Documentation
 
 To add interactive schema documentation:
@@ -274,16 +265,6 @@ export DOCS_DOMAIN="docs.finwiz.com"
 1. **Image optimization**: Compress images before adding
 2. **CSS/JS minification**: Enabled in production builds
 3. **Search index optimization**: Automatic in MkDocs Material
-
-### Monitoring
-
-```bash
-# Check site performance
-make docs-status-json
-
-# Monitor deployment
-python scripts/monitor_deployment.py production
-```
 
 ### Performance Targets
 
