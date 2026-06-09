@@ -60,7 +60,7 @@ After completing the beginner track:
 For power users and developers:
 
 1. [Python Scoring Engine](../how-to/PYTHON_SCORING_ENGINE.md) - Deterministic scoring
-2. [Developer Guide](../DEVELOPER_GUIDE.md) - Contribute to FinWiz
+2. [Developer Guide](../development/DEVELOPER_GUIDE.md) - Contribute to FinWiz
 
 ## Tutorial Format
 
@@ -77,8 +77,8 @@ Each tutorial includes:
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [User Guide](USER_GUIDE.md) - Complete user documentation
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### How-To Guides
 

@@ -38,7 +38,7 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 
 ### Development
 
-- **[Testing](../DEVELOPER_GUIDE.md#testing)** - Test FinWiz components
+- **[Testing](../development/DEVELOPER_GUIDE.md#testing)** - Test FinWiz components
 
 ### Troubleshooting
 
@@ -68,7 +68,7 @@ Advanced usage guides:
 
 Development-focused guides:
 
-1. [Testing](../DEVELOPER_GUIDE.md#testing)
+1. [Testing](../development/DEVELOPER_GUIDE.md#testing)
 
 ### By Task
 
@@ -102,8 +102,8 @@ Each guide follows this structure:
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
 
@@ -126,11 +126,11 @@ Each guide follows this structure:
 
 Can't find what you're looking for?
 
-- **Check**: [User Guide](../USER_GUIDE.md) for comprehensive documentation
+- **Check**: [User Guide](../tutorials/USER_GUIDE.md) for comprehensive documentation
 - **Search**: Use GitHub search across all documentation
 - **Ask**: [GitHub Discussions](https://github.com/fjacquet/finwiz/discussions)
 - **Report**: [GitHub Issues](https://github.com/fjacquet/finwiz/issues) for bugs
 
 ---
 
-*Browse the guides above or check the [User Guide](../USER_GUIDE.md) for comprehensive documentation.*
+*Browse the guides above or check the [User Guide](../tutorials/USER_GUIDE.md) for comprehensive documentation.*

@@ -245,8 +245,8 @@ Portfolio CSV → Data Accessor → Validation → Cache
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
 
@@ -272,7 +272,7 @@ Good explanations should:
 - **Link to Code**: Reference actual implementation
 - **Stay Current**: Update with architectural changes
 
-See [Developer Guide](../DEVELOPER_GUIDE.md#contributing) for contribution guidelines.
+See [Developer Guide](../development/DEVELOPER_GUIDE.md#contributing) for contribution guidelines.
 
 ## Need Help?
 

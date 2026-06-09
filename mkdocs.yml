@@ -158,8 +158,8 @@ nav:
   - Home: index.md
 
   - Getting Started:
-      - User Guide: USER_GUIDE.md
-      - Developer Guide: DEVELOPER_GUIDE.md
+      - User Guide: tutorials/USER_GUIDE.md
+      - Developer Guide: development/DEVELOPER_GUIDE.md
       - Quick Reference: QUICK_REFERENCE.md
       - Requirements: REQUIREMENTS.md
 

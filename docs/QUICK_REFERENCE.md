@@ -107,7 +107,7 @@ def hello():
 
 ### Internal Links (Relative)
 ```markdown
-[Developer Guide](DEVELOPER_GUIDE.md)
+[Developer Guide](development/DEVELOPER_GUIDE.md)
 [Tutorial](tutorials/getting_started.md)
 [Reference](reference/API_REFERENCE.md)
 ```
@@ -177,6 +177,6 @@ make docs-serve
 ## Resources
 
 - [Setup Guide](GITHUB_PAGES_SETUP.md) - Detailed setup instructions
-- [Developer Guide](DEVELOPER_GUIDE.md) - Development guidelines
+- [Developer Guide](development/DEVELOPER_GUIDE.md) - Development guidelines
 - [GitHub Pages Docs](https://docs.github.com/en/pages)
 - [Diátaxis Framework](https://diataxis.fr/)

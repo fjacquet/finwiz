@@ -25,13 +25,13 @@ FinWiz emphasizes **AI Minimalism** - using Python for deterministic tasks and A
 
 New to FinWiz? Start here:
 
-1. **[User Guide](USER_GUIDE.md)** - Complete guide for using FinWiz
+1. **[User Guide](tutorials/USER_GUIDE.md)** - Complete guide for using FinWiz
    - Installation and setup
    - Core features and capabilities
    - Portfolio analysis workflows
    - Configuration and troubleshooting
 
-2. **[Developer Guide](DEVELOPER_GUIDE.md)** - Architecture and development
+2. **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
    - System architecture overview
    - Code organization and patterns
    - Creating custom crews
@@ -205,15 +205,15 @@ Professional-grade quantitative analysis framework:
 
 ### Core Documentation
 
-- **[User Guide](USER_GUIDE.md)** - Complete user documentation
-- **[Developer Guide](DEVELOPER_GUIDE.md)** - Architecture and development
+- **[User Guide](tutorials/USER_GUIDE.md)** - Complete user documentation
+- **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
 - **[API Reference](reference/api/index.md)** - API documentation
 - **[Tutorials](tutorials/index.md)** - Learning-oriented guides
 
 ### Troubleshooting
 
 - **[Troubleshooting Guide](how-to/troubleshooting.md)** - Common issues and solutions
-- **[Developer Guide](DEVELOPER_GUIDE.md#testing)** - Testing strategies
+- **[Developer Guide](development/DEVELOPER_GUIDE.md#testing)** - Testing strategies
 
 ### Community
 
@@ -225,18 +225,18 @@ Professional-grade quantitative analysis framework:
 
 ### For Users
 
-- [Installation Guide](USER_GUIDE.md#installation)
+- [Installation Guide](tutorials/USER_GUIDE.md#installation)
 - [First Analysis](tutorials/first_analysis.md)
-- [Portfolio Analysis](USER_GUIDE.md#portfolio-analysis)
+- [Portfolio Analysis](tutorials/USER_GUIDE.md)
 - [Troubleshooting](how-to/troubleshooting.md)
 
 ### For Developers
 
-- [Architecture Overview](DEVELOPER_GUIDE.md#architecture-overview)
-- [Development Setup](DEVELOPER_GUIDE.md#development-setup)
-- [Creating Custom Crews](DEVELOPER_GUIDE.md#creating-custom-crews)
-- [Testing Guide](DEVELOPER_GUIDE.md#testing)
-- [Contributing](DEVELOPER_GUIDE.md#contributing)
+- [Architecture Overview](development/DEVELOPER_GUIDE.md#architecture-overview)
+- [Development Setup](development/DEVELOPER_GUIDE.md#development-setup)
+- [Creating Custom Crews](development/DEVELOPER_GUIDE.md#creating-custom-crews)
+- [Testing Guide](development/DEVELOPER_GUIDE.md#testing)
+- [Contributing](development/DEVELOPER_GUIDE.md#contributing)
 
 ### Key Features
 
@@ -329,7 +329,7 @@ FinWiz is released under the MIT License. See the [LICENSE](https://github.com/f
 
 ---
 
-**Ready to get started?** Check out the [User Guide](USER_GUIDE.md) or jump into a [tutorial](tutorials/getting_started.md)!
+**Ready to get started?** Check out the [User Guide](tutorials/USER_GUIDE.md) or jump into a [tutorial](tutorials/getting_started.md)!
 
 ---
 

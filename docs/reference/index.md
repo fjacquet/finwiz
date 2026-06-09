@@ -112,8 +112,8 @@ All reference material follows these standards:
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
 
@@ -164,11 +164,11 @@ Reference documentation should be:
 - **Concise**: Clear and to the point
 - **Current**: Updated with each release
 
-See [Contributing Guidelines](../DEVELOPER_GUIDE.md#contributing) for details.
+See [Contributing Guidelines](../development/DEVELOPER_GUIDE.md#contributing) for details.
 
 ## Need Help?
 
-- **Can't find something?** Check [User Guide](../USER_GUIDE.md)
+- **Can't find something?** Check [User Guide](../tutorials/USER_GUIDE.md)
 - **Need examples?** See [Tutorials](../tutorials/index.md)
 - **Have questions?** Visit [GitHub Discussions](https://github.com/fjacquet/finwiz/discussions)
 - **Found an error?** Report via [GitHub Issues](https://github.com/fjacquet/finwiz/issues)

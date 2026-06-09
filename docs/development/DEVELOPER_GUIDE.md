@@ -1,9 +1,3 @@
----
-layout: default
-title: Developer Guide
-nav_order: 3
----
-
 # FinWiz Developer Guide
 
 Comprehensive guide for developers contributing to or extending FinWiz.
@@ -1860,10 +1854,10 @@ jobs:
 
 ## Additional Resources
 
-- [User Guide](USER_GUIDE.md) - Complete user documentation
-- [API Reference](reference/API_REFERENCE.md) - API documentation
-- [Architecture Overview](explanations/ARCHITECTURE.md) - System design
-- [Testing Guide](DEVELOPER_GUIDE.md#testing) - Testing best practices
+- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [API Reference](../reference/API_REFERENCE.md) - API documentation
+- [Architecture Overview](../explanations/ARCHITECTURE.md) - System design
+- [Testing Guide](#testing) - Testing best practices
 
 ## Support
 
