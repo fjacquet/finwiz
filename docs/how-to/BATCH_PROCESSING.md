@@ -694,4 +694,3 @@ This system enables FinWiz to scale from small portfolios to large institutional
 
 - [Performance Configuration Guide](PERFORMANCE_CONFIGURATION.md)
 - [Python Scoring Engine Documentation](PYTHON_SCORING_ENGINE.md)
-- [Flow Architecture Documentation](FLOW_ARCHITECTURE.md)

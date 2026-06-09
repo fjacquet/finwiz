@@ -738,8 +738,6 @@ if quality['quality_score'] < 0.8:
 
 - **[Crews Reference](crews.md)** - How crews use tools
 - **[Schemas Reference](schemas.md)** - Tool output schemas
-- **[Configuration Reference](configuration.md)** - Tool configuration options
-- **[Performance Guide](../../how-to/performance_optimization.md)** - Tool optimization
 
 ---
 

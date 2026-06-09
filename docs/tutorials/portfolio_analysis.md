@@ -496,9 +496,7 @@ Use the analysis to inform your decisions, not dictate them.
 After completing your first portfolio analysis:
 
 1. **Learn Deep Analysis**: Understand the [Deep Analysis Crew](../explanations/deep_analysis.md)
-2. **Explore Configuration**: Check [Performance Configuration](../how-to/performance_optimization.md)
-3. **Review API Reference**: Browse the [API Documentation](../reference/api/index.md)
-4. **Set Up Monitoring**: Learn about [Portfolio Monitoring](../how-to/portfolio_monitoring.md)
+2. **Review API Reference**: Browse the [API Documentation](../reference/api/index.md)
 
 ## Support and Resources
 

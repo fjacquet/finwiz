@@ -425,7 +425,6 @@ CACHE_TTL=2700  # 45 minutes (covers typical portfolio analysis)
 - [Deep Analysis Scoring System](deep_analysis.md) - Detailed scoring methodology
 - [Recommendation Engine](recommendation_engine.md) - BUY/HOLD/SELL logic
 - [Risk Framework](deep_analysis.md) - Risk assessment details
-- [Data Quality](../reference/data_quality.md) - Validation standards
 
 ## References
 

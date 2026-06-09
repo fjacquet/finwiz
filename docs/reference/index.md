@@ -26,7 +26,6 @@ Reference documentation is **information-oriented** material that provides detai
 ### Command-Line Interface
 
 - **[CLI Commands](cli_commands.md)** - Complete command reference
-- **[CLI Options](cli_options.md)** - Command-line flags and options
 
 ### Schema Documentation
 
@@ -36,38 +35,8 @@ Reference documentation is **information-oriented** material that provides detai
 <!-- - **Quantitative Schemas** - Quantitative analysis models (TBD) -->
 <!-- - **Validation Schemas** - Validation models (TBD) -->
 
-### Configuration
-
-- **[Environment Variables](environment_variables.md)** - Complete configuration reference
-
-<!-- - **[Agent Configuration](agent_configuration.md)** (TBD) --> - Agent YAML configuration
-<!-- - **[Task Configuration](task_configuration.md)** (TBD) --> - Task YAML configuration
-<!-- - **[Tool Configuration](tool_configuration.md)** (TBD) --> - Tool configuration options
-
-### Data Sources
-
-<!-- - **[Data Sources](data_sources.md)** (TBD) --> - Supported data providers
-
-- **[Data Quality](data_quality.md)** - Data quality standards
-- **[API Requirements](api_requirements.md)** - API key requirements
-
-### Error Reference
-
-<!-- - **[Error Codes](errors.md)** (TBD) --> - Error code reference
-
-- **[API Errors](api_errors.md)** - API error handling
-- **[Validation Errors](validation_errors.md)** - Validation error types
-
-### Performance
-
-- **[Performance Metrics](performance.md)** - Performance benchmarks
-- **[Resource Usage](resource_usage.md)** - Memory and CPU usage
-- **[Rate Limits](rate_limits.md)** - API rate limits
-
 ### Migration and Compatibility
 
-- **[Migration Guide](migration.md)** - Version migration guide
-- **[Compatibility](compatibility.md)** - Version compatibility matrix
 - **[Changelog](changelog.md)** - Version history
 
 ## Reference by Category
@@ -77,7 +46,6 @@ Reference documentation is **information-oriented** material that provides detai
 Essential reference material for end users:
 
 1. **[CLI Commands](cli_commands.md)** - Command-line reference
-2. **[Environment Variables](environment_variables.md)** - Configuration options
 
 ### For Developers
 
@@ -87,15 +55,6 @@ Technical reference for developers:
 2. **[Schema Documentation](schemas/index.md)** - Pydantic models
 3. **[CLI Commands](cli_commands.md)** - Command-line reference
 
-### For System Administrators
-
-Operations reference:
-
-1. **[Environment Variables](environment_variables.md)** - Configuration
-2. **[Performance Metrics](performance.md)** - Benchmarks
-3. **[Resource Usage](resource_usage.md)** - Resource requirements
-4. **[Rate Limits](rate_limits.md)** - API limits
-
 ## Quick Reference Lookup
 
 ### Common Tasks
@@ -103,9 +62,7 @@ Operations reference:
 | Task | Reference |
 |------|-----------|
 | Run analysis | [CLI Commands](cli_commands.md#analysis-commands) |
-| Configure API keys | [Environment Variables](environment_variables.md) |
 | Validate data | [Schema Documentation](schemas/index.md) |
-| Optimize performance | [Performance Metrics](performance.md) |
 
 ### API Quick Reference
 <!--  -->
@@ -166,7 +123,6 @@ All reference material follows these standards:
 ### How-To Guides
 
 - [Setup Environment](../how-to/setup_environment.md) - Environment setup
-- [Performance Optimization](../how-to/performance_optimization.md) - Optimization
 
 ### Explanations
 

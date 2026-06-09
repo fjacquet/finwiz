@@ -337,7 +337,6 @@ After your first successful analysis:
 1. **Try Different Assets**: Analyze various stocks, ETFs, or crypto
 2. **Learn Portfolio Analysis**: See [Portfolio Analysis Tutorial](portfolio_analysis.md)
 3. **Understand Deep Analysis**: Read about [Deep Analysis Features](../explanations/deep_analysis.md)
-4. **Explore Configuration**: Check [Performance Configuration](../how-to/performance_optimization.md)
 
 ## Practice Exercises
 

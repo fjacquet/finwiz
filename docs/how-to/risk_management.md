@@ -382,4 +382,3 @@ class RiskAlertSystem:
 - [Portfolio Optimization](../portfolio_rebalancing/index.md)
 - [Risk Framework](../explanations/deep_analysis.md)
 - [Investment Methodology](../explanations/investment_methodology.md)
-- [Performance Monitoring](portfolio_monitoring.md)

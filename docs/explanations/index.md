@@ -36,7 +36,6 @@ Explanations are **understanding-oriented** discussions that provide context and
 
 ### Integration Patterns
 
-- **[Deep Analysis Integration](DEEP_ANALYSIS_INTEGRATION.md)** - Deep analysis integration
 - **[Python Pipeline](python_pipeline/overview.md)** - Pure Python analysis pipeline
 
 ### Reporting
@@ -256,7 +255,6 @@ Portfolio CSV → Data Accessor → Validation → Cache
 
 ### How-To Guides
 
-- [Performance Optimization](../how-to/performance_optimization.md) - Optimization
 - [Batch Processing](../how-to/BATCH_PROCESSING.md) - High-performance analysis
 
 ### Reference

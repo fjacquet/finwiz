@@ -18,12 +18,9 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 ### Setup and Configuration
 
 - **[Setup Environment](setup_environment.md)** - Configure development and production environments
-- **[Install Dependencies](install_dependencies.md)** - Manage Python dependencies
-- **[Configure API Keys](configure_api_keys.md)** - Set up required API access
 
 ### Performance Optimization
 
-- **[Performance Optimization](performance_optimization.md)** - General optimization strategies
 - **[Batch Processing](BATCH_PROCESSING.md)** - High-performance portfolio analysis
 - **[Python Scoring Engine](PYTHON_SCORING_ENGINE.md)** - Deterministic scoring for speed
 - **[Performance Configuration](PERFORMANCE_CONFIGURATION.md)** - Advanced configuration
@@ -34,33 +31,18 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 
 - **[Deep Analysis Troubleshooting](deep_analysis_troubleshooting.md)** - Fix deep analysis issues
 - **[Template Configuration](template_configuration.md)** - Customize report templates
-- **[Report Customization](report_customization.md)** - Customize report outputs
-- **[Data Export](data_export.md)** - Export analysis results
 
 ### Portfolio Management
 
 - **[Risk Management](risk_management.md)** - Configure risk assessment
-- **[Portfolio Monitoring](portfolio_monitoring.md)** - Monitor portfolio performance
-- **[Custom Optimization](custom_optimization.md)** - Custom portfolio optimization
-
-### Data and Integration
-
-- **[Data Validation](data_validation.md)** - Validate input data
-- **[External Integration](external_integration.md)** - Integrate with external systems
-- **[API Troubleshooting](api_troubleshooting.md)** - Debug API issues
 
 ### Development
 
-- **[Custom Crews](custom_crews.md)** - Create custom analysis crews
-- **[Custom Workflows](custom_workflows.md)** - Build custom analysis workflows
-- **[Plugin Development](plugin_development.md)** - Develop FinWiz plugins
 - **[Testing](../DEVELOPER_GUIDE.md#testing)** - Test FinWiz components
-- **[Schema Customization](schema_customization.md)** - Customize Pydantic schemas
 
 ### Troubleshooting
 
 - **[Troubleshooting](troubleshooting.md)** - General troubleshooting guide
-- **[Performance Troubleshooting](performance_troubleshooting.md)** - Fix performance issues
 
 ## Guide Categories
 
@@ -71,9 +53,7 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 Start with these guides:
 
 1. [Setup Environment](setup_environment.md)
-2. [Performance Optimization](performance_optimization.md)
-3. [Troubleshooting](troubleshooting.md)
-4. [Report Customization](report_customization.md)
+2. [Troubleshooting](troubleshooting.md)
 
 #### Power Users
 
@@ -88,33 +68,24 @@ Advanced usage guides:
 
 Development-focused guides:
 
-1. [Custom Crews](custom_crews.md)
-2. [Custom Workflows](custom_workflows.md)
-3. [Testing](../DEVELOPER_GUIDE.md#testing)
-4. [Plugin Development](plugin_development.md)
+1. [Testing](../DEVELOPER_GUIDE.md#testing)
 
 ### By Task
 
 #### Getting Better Performance
 
-1. [Performance Optimization](performance_optimization.md) - General strategies
-2. [Batch Processing](BATCH_PROCESSING.md) - 10-20x speedup
-3. [Python Scoring Engine](PYTHON_SCORING_ENGINE.md) - Deterministic scoring
-4. [Memory Management](MEMORY_MANAGEMENT.md) - Reduce memory usage
+1. [Batch Processing](BATCH_PROCESSING.md) - 10-20x speedup
+2. [Python Scoring Engine](PYTHON_SCORING_ENGINE.md) - Deterministic scoring
+3. [Memory Management](MEMORY_MANAGEMENT.md) - Reduce memory usage
 
 #### Customizing FinWiz
 
 1. [Template Configuration](template_configuration.md) - Report templates
-2. [Custom Workflows](custom_workflows.md) - Analysis workflows
-3. [Custom Crews](custom_crews.md) - Analysis crews
-4. [Schema Customization](schema_customization.md) - Data schemas
 
 #### Fixing Problems
 
 1. [Troubleshooting](troubleshooting.md) - General issues
-2. [API Troubleshooting](api_troubleshooting.md) - API problems
-3. [Performance Troubleshooting](performance_troubleshooting.md) - Performance issues
-4. [Deep Analysis Troubleshooting](deep_analysis_troubleshooting.md) - Deep analysis problems
+2. [Deep Analysis Troubleshooting](deep_analysis_troubleshooting.md) - Deep analysis problems
 
 ## How-To Guide Format
 
@@ -143,7 +114,6 @@ Each guide follows this structure:
 ### Reference
 
 - [CLI Commands](../reference/cli_commands.md) - Command reference
-- [Environment Variables](../reference/environment_variables.md) - Configuration
 - [API Reference](../reference/api/index.md) - API documentation
 
 ### Explanations

@@ -76,8 +76,6 @@ The integration followed these principles:
 ### Troubleshooting Guides
 
 - [General Troubleshooting](../how-to/troubleshooting.md)
-- [Performance Troubleshooting](../how-to/performance_troubleshooting.md)
-- [API Troubleshooting](../how-to/api_troubleshooting.md)
 - [Deep Analysis Troubleshooting](../how-to/deep_analysis_troubleshooting.md)
 
 ### Architecture Explanations

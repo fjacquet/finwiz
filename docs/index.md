@@ -59,7 +59,6 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 **Problem-solving** - Practical guides for specific tasks and configurations.
 
 - [Setup Environment](how-to/setup_environment.md) - Environment configuration
-- [Performance Optimization](how-to/performance_optimization.md) - Speed up analysis
 - [Batch Processing](how-to/BATCH_PROCESSING.md) - High-performance portfolio analysis
 - [Python Scoring Engine](how-to/PYTHON_SCORING_ENGINE.md) - Deterministic scoring
 - [Template Configuration](how-to/template_configuration.md) - Customize reports
@@ -71,7 +70,6 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - [API Reference](reference/api/index.md) - Complete API documentation
 - [CLI Commands](reference/cli_commands.md) - Command-line interface
 - [Schema Documentation](reference/schemas/index.md) - Data models and validation
-- [Environment Variables](reference/environment_variables.md) - Configuration reference
 
 ### 💡 [Explanations](explanations/index.md)
 
@@ -215,7 +213,6 @@ Professional-grade quantitative analysis framework:
 ### Troubleshooting
 
 - **[Troubleshooting Guide](how-to/troubleshooting.md)** - Common issues and solutions
-- **[Performance Guide](how-to/performance_optimization.md)** - Optimization tips
 - **[Developer Guide](DEVELOPER_GUIDE.md#testing)** - Testing strategies
 
 ### Community
@@ -231,7 +228,6 @@ Professional-grade quantitative analysis framework:
 - [Installation Guide](USER_GUIDE.md#installation)
 - [First Analysis](tutorials/first_analysis.md)
 - [Portfolio Analysis](USER_GUIDE.md#portfolio-analysis)
-- [Configuration Reference](reference/environment_variables.md)
 - [Troubleshooting](how-to/troubleshooting.md)
 
 ### For Developers

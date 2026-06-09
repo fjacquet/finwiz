@@ -364,7 +364,6 @@ def load_analysis_result(data: dict) -> TenKInsight:
 
 - **[Crews Reference](crews.md)** - How crews use schemas
 - **[Tools Reference](tools.md)** - Tool input/output schemas
-- **[Validation Guide](../../how-to/data_validation.md)** - Data validation best practices
 - **[API Reference](index.md)** - Complete API documentation
 
 ---

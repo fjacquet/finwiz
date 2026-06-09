@@ -514,7 +514,6 @@ After setting up your environment:
 ## Related Documentation
 
 - [Getting Started Tutorial](../tutorials/getting_started.md)
-- [Performance Configuration](performance_optimization.md)
 - [Template Configuration](template_configuration.md)
 - [API Reference](../reference/api/index.md)
 
