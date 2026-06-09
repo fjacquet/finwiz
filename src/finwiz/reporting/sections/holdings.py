@@ -6,7 +6,17 @@ from html import escape
 from typing import Any
 
 from finwiz.reporting.sections.factpack import _fact_pack_provenance_footer
+from finwiz.reporting.sections.portfolio_summary import _fmt_eur
 from finwiz.schemas.portfolio_review import HoldingDecision
+
+
+def _weight_cell(holding: HoldingDecision) -> str:
+    """Render the 'Poids' cell: a compact weight-bar + percent, or '—' when unknown."""
+    weight = holding.weight
+    if weight is None:
+        return '<td class="muted">—</td>'
+    pct = weight * 100
+    return f'<td class="num"><div class="weight-bar weight-bar-sm"><div class="weight-bar-fill" style="width: {pct:.1f}%"></div></div><small>{pct:.1f}%</small></td>'
 
 
 def _get_recommendation_badge(grade: str, recommended_action: str | None) -> str:
@@ -112,6 +122,8 @@ def _render_holding_row(holding: HoldingDecision) -> str:
           <td>{ticker_plain_html}<br><small>{name_safe}</small></td>
           <td>{asset_class}</td>
           <td class="grade-na" title="Deep analysis did not run for this holding"><strong>⏳ Analyse en attente</strong></td>
+          {_weight_cell(holding)}
+          <td class="num muted">{_fmt_eur(holding.eur_value)}</td>
           <td class="muted">—</td>
           <td class="muted">—</td>
           <td><small class="muted">{pending_msg_safe}</small></td>
@@ -139,6 +151,8 @@ def _render_holding_row(holding: HoldingDecision) -> str:
           <td><strong>{ticker_html}</strong><br><small>{name_safe}</small></td>
           <td>{asset_class}</td>
           <td class="{grade_class}"><strong>{grade}</strong>{badge}</td>
+          {_weight_cell(holding)}
+          <td class="num">{_fmt_eur(holding.eur_value)}</td>
           <td>{composite_score:.3f}</td>
           <td>{rec_badge}</td>
           <td><small>{rationale_safe}</small>{fact_pack_footer}</td>
@@ -167,6 +181,8 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
           <th>Ticker / Name</th>
           <th>Class</th>
           <th>Grade</th>
+          <th>Poids</th>
+          <th>Valeur (€)</th>
           <th>Score</th>
           <th>Recommendation</th>
           <th>Rationale</th>

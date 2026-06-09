@@ -8,6 +8,84 @@ from typing import Any
 from finwiz.schemas.portfolio_review import PortfolioReview
 
 
+def _fmt_eur(value: float | None) -> str:
+    """Format a EUR amount French-style: space-grouped thousands + euro sign.
+
+    ``None`` → ``"—"`` (never "None"/"0 €") so the UI degrades gracefully when
+    no CSV Quantity resolved. Example: ``53772.0`` → ``"53 772 €"``.
+    """
+    if value is None:
+        return "—"
+    # Round to whole euros, group thousands with a plain space (French convention).
+    grouped = f"{round(value):,}".replace(",", " ")
+    return f"{grouped} €"
+
+
+def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
+    """Render the EUR allocation hero + per-holding weight breakdown.
+
+    Surfaces the already-serialized ``total_value_eur`` and per-holding
+    ``weight`` / ``eur_value`` data. Degrades gracefully: when nothing could be
+    priced (no CSV Quantity), renders the hero shell with a French info note
+    instead of numbers — never "0 €" / "None".
+    """
+    total = portfolio_review.total_value_eur
+    weighted = [h for h in portfolio_review.holdings if h.weight is not None]
+
+    # Graceful path: no priced total or no weighted holding → tasteful info note.
+    if total is None or not weighted:
+        return (
+            """
+  <div class="section">
+    <h2>💰 Allocation du portefeuille</h2>
+    <div class="value-hero">
+      <div class="hero-meta">Valeur totale du portefeuille</div>
+      <div class="hero-value muted">—</div>
+      <p class="alloc-note">💡 Renseignez la colonne <code>Quantity</code> de vos fichiers """
+            + """<code>data/*.csv</code> puis relancez l'analyse pour visualiser l'allocation en euros.</p>
+    </div>
+  </div>
+"""
+        )
+
+    n_positions = len(portfolio_review.holdings)
+    n_classes = len({h.asset_class for h in weighted})
+
+    # Sort by weight desc so the largest exposure leads.
+    rows = sorted(weighted, key=lambda h: h.weight or 0.0, reverse=True)
+    alloc_rows = []
+    for h in rows:
+        pct = (h.weight or 0.0) * 100
+        name_safe = escape(h.name or "Unknown")
+        ticker_safe = escape(h.ticker or "—")
+        alloc_rows.append(
+            f"""
+      <div class="alloc-row">
+        <div class="alloc-label"><strong>{ticker_safe}</strong> <span class="muted small">{name_safe}</span></div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width: {pct:.1f}%"></div></div>
+        <div class="alloc-pct num">{pct:.1f}%</div>
+        <div class="alloc-value num">{_fmt_eur(h.eur_value)}</div>
+      </div>"""
+        )
+    alloc_html = "".join(alloc_rows)
+
+    return f"""
+  <div class="section">
+    <h2>💰 Allocation du portefeuille</h2>
+    <div class="value-hero">
+      <div class="hero-meta">Valeur totale du portefeuille</div>
+      <div class="hero-value num">{_fmt_eur(total)}</div>
+      <div class="hero-meta">{n_positions} positions · {n_classes} classes d'actifs</div>
+    </div>
+
+    <h3>📊 Répartition par position</h3>
+    <div class="alloc-list">
+      {alloc_html}
+    </div>
+  </div>
+"""
+
+
 def generate_strategic_posture_section(posture: dict | None) -> str:
     """Render the portfolio-wide strategic posture (PESTEL/SWOT/Porter synthesis).
 
