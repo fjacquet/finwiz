@@ -1303,14 +1303,7 @@ Real-time portfolio monitoring with drift detection, alert generation, and multi
 - Alert generation with configurable rules
 - Alert lifecycle management
 
-**2. Notification Service**:
-
-- Email notifications (HTML and plain text)
-- SMS notifications for critical issues
-- User preference management
-- Rate limiting and quiet hours
-
-**3. Alert System**:
+**2. Alert System**:
 
 - Multiple urgency levels (LOW, MEDIUM, HIGH, CRITICAL)
 - Configurable thresholds
@@ -1330,21 +1323,6 @@ rule = MonitoringRule(
     max_deviation_threshold=0.08,  # 8% threshold
     check_frequency_minutes=60,
     alert_urgency="MEDIUM"
-)
-```
-
-**Notification Preferences**:
-
-```python
-from finwiz.tools.notification_service import NotificationPreferences
-
-preferences = NotificationPreferences(
-    user_id="user_123",
-    email_enabled=True,
-    sms_enabled=True,
-    min_alert_level="MEDIUM",
-    quiet_hours_start="22:00",
-    quiet_hours_end="08:00"
 )
 ```
 
@@ -1373,21 +1351,6 @@ dashboard = await monitor.get_health_dashboard(portfolio_config)
 print(f"Health Score: {dashboard.health_score}/10")
 print(f"Status: {dashboard.status}")
 print(f"Active Alerts: {len(dashboard.active_alerts)}")
-```
-
-**Send Notifications**:
-
-```python
-from finwiz.tools.notification_service import NotificationService
-
-service = NotificationService()
-
-# Send alert notification
-await service.send_notification(
-    user_id="user_123",
-    alert=alert,
-    notification_type="email"
-)
 ```
 
 ### Alert Levels

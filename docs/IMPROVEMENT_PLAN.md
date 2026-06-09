@@ -116,7 +116,6 @@ class Analyzer:
 | `tools/portfolio_holdings_html_generator.py` | 617 | Sections + Templates |
 | `tools/standardized_sentiment_tool.py` | 612 | Analyzers + Formatters |
 | `tools/perplexity_analysis_integration.py` | 611 | Client + Processors |
-| `tools/notification_service.py` | 610 | Channels + Formatters |
 | `quantitative/rebalancing_history_tracker.py` | 599 | Storage + Analysis |
 | `tools/enhanced_sec_tool.py` | 581 | Extractors + Parsers |
 | `tools/backtesting_tool.py` | 578 | Engine + Reporters |

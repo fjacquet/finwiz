@@ -38,7 +38,6 @@ Explanations are **understanding-oriented** discussions that provide context and
 
 - **[Deep Analysis Integration](DEEP_ANALYSIS_INTEGRATION.md)** - Deep analysis integration
 - **[Python Pipeline](python_pipeline/overview.md)** - Pure Python analysis pipeline
-- **[Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)** - Notification system
 
 ### Reporting
 
@@ -106,7 +105,6 @@ Understand design decisions and trade-offs:
 
 1. [Design Principles](design_principles.md)
 2. [Optimization Theory](optimization_theory.md)
-3. [Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)
 
 ## Key Concepts
 
