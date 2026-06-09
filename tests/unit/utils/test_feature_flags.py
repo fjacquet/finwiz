@@ -29,8 +29,6 @@ class TestFeatureFlags:
         env_vars_to_clear = [
             "FF_ENHANCED_SENTIMENT",
             "FF_ENHANCED_SENTIMENT_ROLLOUT",
-            "FF_ADVANCED_TECHNICAL",
-            "FF_ADVANCED_TECHNICAL_ROLLOUT",
             "FF_CHART_ANALYSIS",
             "FF_CHART_BREAKER_THRESHOLD",
             "FF_TWELVE_DATA",
@@ -51,7 +49,6 @@ class TestFeatureFlags:
         # Assert
         assert len(flags.flags) > 0
         assert "enhanced_sentiment_analysis" in flags.flags
-        assert "advanced_technical_analysis" in flags.flags
         assert "chart_analysis" in flags.flags
         assert "twelve_data_integration" in flags.flags
         assert "strict_validation" in flags.flags
@@ -337,7 +334,6 @@ class TestFeatureFlags:
         assert isinstance(all_flags, dict)
         assert len(all_flags) > 0
         assert "enhanced_sentiment_analysis" in all_flags
-        assert "advanced_technical_analysis" in all_flags
 
     def test_should_update_flag_configuration_at_runtime(self):
         """Test updating feature flag configuration at runtime."""
@@ -460,13 +456,12 @@ class TestFeatureFlagIntegration:
     def test_should_integrate_with_environment_variables(self, mocker):
         """Test integration with environment variable configuration."""
         # Arrange & Act
-        mocker.patch.dict(os.environ, {"FF_ENHANCED_SENTIMENT": "false", "FF_ADVANCED_TECHNICAL": "true", "FF_CHART_ANALYSIS": "false"})
+        mocker.patch.dict(os.environ, {"FF_ENHANCED_SENTIMENT": "false", "FF_CHART_ANALYSIS": "false"})
 
         flags = FeatureFlags()
 
         # Assert
         assert flags.is_enabled("enhanced_sentiment_analysis") is False
-        assert flags.is_enabled("advanced_technical_analysis") is True
         assert flags.is_enabled("chart_analysis") is False
 
     def test_should_handle_circuit_breaker_recovery_scenario(self):
