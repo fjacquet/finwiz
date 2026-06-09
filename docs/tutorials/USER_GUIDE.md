@@ -802,7 +802,6 @@ The system integrates with FinWiz's existing monitoring infrastructure:
 - Critical alerts for high failure rates (>50%)
 - Includes failed holdings list in metadata
 - Configurable alert thresholds
-- Multi-channel notifications (email, SMS)
 
 **Example Alert:**
 
@@ -1292,7 +1291,7 @@ print(f"Criteria adjustments: {len(insights['criteria_adjustments'])}")
 
 ### Overview
 
-Real-time portfolio monitoring with drift detection, alert generation, and multi-channel notifications.
+Real-time portfolio monitoring with drift detection and alert generation.
 
 ### Components
 
@@ -1355,12 +1354,12 @@ print(f"Active Alerts: {len(dashboard.active_alerts)}")
 
 ### Alert Levels
 
-| Level        | Threshold       | Response Time | Notification   |
-| ------------ | --------------- | ------------- | -------------- |
-| **CRITICAL** | >10% deviation  | Immediate     | Email + SMS    |
-| **HIGH**     | 8-10% deviation | 1 hour        | Email + SMS    |
-| **MEDIUM**   | 5-8% deviation  | 4 hours       | Email          |
-| **LOW**      | 3-5% deviation  | 24 hours      | Email (digest) |
+| Level        | Threshold       | Response Time |
+| ------------ | --------------- | ------------- |
+| **CRITICAL** | >10% deviation  | Immediate     |
+| **HIGH**     | 8-10% deviation | 1 hour        |
+| **MEDIUM**   | 5-8% deviation  | 4 hours       |
+| **LOW**      | 3-5% deviation  | 24 hours      |
 
 ## Knowledge Base Strategy
 
@@ -1716,7 +1715,6 @@ FINWIZ_GRACEFUL_DEGRADATION=true
 
 1. **Set Appropriate Thresholds**: Balance sensitivity vs noise
 2. **Configure Quiet Hours**: Respect user preferences
-3. **Test Notifications**: Verify email/SMS delivery
 
 ### Knowledge Base & Caching
 
