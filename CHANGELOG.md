@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.6.0] - 2026-06-09
+
+### Added
+
+- **EUR-weighted portfolio allocation from a CSV `Quantity` column.** Each holding
+  can now carry a position `Quantity`; FinWiz values it in its native currency via
+  the price API, converts to a EUR base via a live yfinance FX provider (per-run
+  cache; `GBp`/`GBX` pence handled with a single ÷100), and stamps
+  `quantity / native_currency / native_value / eur_value / weight` plus a
+  portfolio-level `total_value_eur` onto the review. 100% deterministic Python
+  (`scoring/portfolio_valuation.py`, injected `price_fn`/`fx_fn`); graceful
+  degradation — missing quantity/price/FX leaves a `None` weight and never crashes,
+  and the EUR total is computed over priced holdings only. New `make fix-currencies`
+  rewrites the CSV `Currency` column from the authoritative price API (explicit,
+  atomic, idempotent; never on a normal run).
+- **Allocation surfaced in the portfolio review report** — a total-value hero,
+  weight-sorted breakdown with weight bars, and `Poids` / `Valeur (€)` columns in
+  the holdings table. Degrades to a guidance note when no quantities are set.
+
+### Changed
+
+- **Modern-fintech redesign of the portfolio review report.** Replaced the
+  purple-gradient / blue-table look with a restrained white-card system on a cool
+  off-white background, a single emerald accent, light small-caps table headers,
+  tabular numerics, and refined badges. Light + dark mode; existing section classes
+  restyled coherently.
+
 ## [5.5.1] - 2026-06-08
 
 ### Changed
