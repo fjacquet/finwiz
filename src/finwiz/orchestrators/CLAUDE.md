@@ -20,7 +20,7 @@ orchestrators/
 ├── alternatives_matching_orchestrator.py # A+ alternatives matching
 │
 ├── # Portfolio orchestrators
-├── portfolio_review_orchestrator.py     # EnhancedPortfolioReviewOrchestrator, run(), run_with_rebalancing()
+├── portfolio_review_orchestrator.py     # run(), run_with_rebalancing()
 ├── portfolio_rebalancing.py             # run_rebalancing(), calculate_trades()
 ├── portfolio_holdings_processor.py      # PortfolioHoldingsProcessor
 │
