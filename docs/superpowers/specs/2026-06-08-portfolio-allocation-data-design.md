@@ -1,7 +1,7 @@
 # Portfolio Allocation Data — Design
 
 **Date:** 2026-06-08
-**Status:** Approved-pending-review (brainstorm)
+**Status:** Approved
 **Prerequisite for:** `docs/superpowers/plans/2026-06-08-report-freshness-and-portfolio-posture.md`
 (enables true allocation-weighted strategic posture, replacing the interim count-based weighting)
 
@@ -85,8 +85,9 @@ to the strategic-posture combine.
 5. **Wiring** (`portfolio_holdings_processor.py` / `portfolio_review_orchestrator.py`)
    - After holdings are built, run `value_holdings` (using the existing price service as `price_fn`
      and `fx_rates.get_fx_rate` as `fx_fn`) and stamp the weight fields onto the decisions.
-   - `PortfolioReview` gains an optional `base_currency: str = "EUR"` + `total_value_eur: float | None`
-     for the report header.
+   - `PortfolioReview` gains an optional `total_value_eur: float | None` for the report header.
+     (`base_currency` keeps its existing default of `"CHF"` for backward compatibility; the EUR
+     valuation is surfaced explicitly via `total_value_eur` rather than by changing that default.)
 
 6. **`make fix-currencies`** (`scripts/fix_csv_currencies.py`, new + Makefile target)
    - Reads each CSV, resolves the authoritative currency per ticker from the price API, rewrites the

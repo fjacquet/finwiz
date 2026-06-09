@@ -30,6 +30,11 @@ _CSV_FILES = [
 ]
 
 
+def _asset_class_for(path: Path) -> AssetClass:
+    """Map a CSV filename stem to its asset class (defaults to stock)."""
+    return "crypto" if path.stem == "crypto" else ("etf" if path.stem == "etf" else "stock")
+
+
 def _normalize_ticker(raw: str, asset_class: AssetClass) -> str:
     """Strip the source prefix (and add -USD for crypto) for price-API lookup."""
     from finwiz.orchestrators.portfolio_holdings_processor import PortfolioHoldingsProcessor
@@ -51,7 +56,7 @@ def rewrite_csv_currencies(
         fieldnames = list(reader.fieldnames or [])
         rows = list(reader)
 
-    asset_class: AssetClass = "crypto" if path.stem == "crypto" else ("etf" if path.stem == "etf" else "stock")
+    asset_class: AssetClass = _asset_class_for(path)
     has_currency = "Currency" in fieldnames
     if not has_currency:
         # Insert Currency right after Ticker if present, else append.
@@ -93,26 +98,49 @@ def rewrite_csv_currencies(
     return changes
 
 
-def _build_live_resolver() -> CurrencyResolver:
-    """Resolver backed by the live price API (network)."""
+def _collect_normalized_tickers(csv_files: list[Path]) -> list[str]:
+    """Read each CSV once and return the unique normalized tickers across all files."""
+    tickers: set[str] = set()
+    for path in csv_files:
+        if not path.exists():
+            continue
+        asset_class = _asset_class_for(path)
+        with path.open(newline="", encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                raw = (row.get("Ticker") or "").strip()
+                if raw:
+                    tickers.add(_normalize_ticker(raw, asset_class))
+    return sorted(tickers)
+
+
+def _build_live_resolver(csv_files: list[Path]) -> CurrencyResolver:
+    """Resolver backed by ONE batched price-API call (network).
+
+    Pre-fetches every ticker's currency concurrently in a single event loop, then
+    serves lookups from the resulting map — avoiding one event loop per CSV row.
+    """
     from finwiz.tools.portfolio_price_service import PortfolioPriceService
 
-    service = PortfolioPriceService()
+    tickers = _collect_normalized_tickers(csv_files)
+    currency_by_ticker: dict[str, str] = {}
+    if tickers:
+        service = PortfolioPriceService()
+        try:
+            prices = asyncio.run(service.get_current_prices(tickers))
+        except Exception as exc:
+            logger.warning("Batch price lookup failed; currencies left unresolved: %s", exc)
+            prices = {}
+        currency_by_ticker = {ticker: pd.currency for ticker, pd in prices.items() if pd is not None}
 
     def resolve(norm_ticker: str) -> str | None:
-        try:
-            price_data = asyncio.run(service.get_current_price(norm_ticker))
-        except Exception as exc:
-            logger.warning("Price lookup failed for %s: %s", norm_ticker, exc)
-            return None
-        return price_data.currency if price_data is not None else None
+        return currency_by_ticker.get(norm_ticker)
 
     return resolve
 
 
 def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    resolver = _build_live_resolver()
+    resolver = _build_live_resolver(_CSV_FILES)
     for csv_path in _CSV_FILES:
         if not csv_path.exists():
             logger.info("skip (missing): %s", csv_path)

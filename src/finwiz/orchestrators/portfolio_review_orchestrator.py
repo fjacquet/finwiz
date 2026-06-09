@@ -173,6 +173,12 @@ async def build_portfolio_review(
     valuation = await _value_portfolio(raw_holdings)
     if valuation is not None:
         total_value_eur = valuation.total_value_eur
+        # per_ticker is keyed by ticker (value_holdings collapses same-ticker
+        # holdings last-wins, see test_duplicate_ticker_collapses_last_wins), and
+        # total_value_eur is derived from that single-count map — so the portfolio
+        # total is never double-counted. The data CSVs hold unique tickers; if two
+        # rows ever shared a ticker, both decisions would be stamped with the same
+        # (collapsed) weight here. Acceptable given the deliberate collapse semantics.
         for decision in decisions:
             hv = valuation.per_ticker.get(decision.ticker)
             if hv is None:
@@ -224,7 +230,7 @@ def save_review_json(
             "excluded_holdings": [{"ticker": ticker, "reason": reason} for ticker, reason in summary.excluded_holdings],
         }
         with open(summary_path, "w") as f:
-            json.dump(summary_data, f, indent=2)
+            json.dump(summary_data, f, indent=2, default=str)
         logger.info(f"Saved processing summary to {summary_path}")
 
     out_path.write_text(json.dumps(output_data, indent=2, default=str), encoding="utf-8")
