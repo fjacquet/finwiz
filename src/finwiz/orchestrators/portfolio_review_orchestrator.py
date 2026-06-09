@@ -7,7 +7,7 @@ This module contains business logic orchestration for portfolio review:
 - Portfolio review building and execution
 - Integration with rebalancing
 
-HTML generation is delegated to reporting layer (finwiz.reporting.portfolio_review_html).
+HTML generation is delegated to the reporting layer (finwiz.reporting.python_report_generator).
 """
 
 from __future__ import annotations
