@@ -28,6 +28,7 @@
 | Delete candidates | Notifications, `examples/` demos, orphaned scripts, dead report path |
 | Approach | A: three ordered passes — Delete, Merge, Decompose — each independently shippable |
 | Guardrails | Yes: ruff complexity rules + vulture in `make check` |
+| Documentation | In scope: co-deleted with code, meta/historical docs purged, hierarchies merged into Diátaxis |
 
 ## Pass 1 — Delete
 
@@ -102,6 +103,30 @@ cluster for trivial bisection.
 
 **Validation.** Behavior-preserving only: existing tests are not rewritten and must
 keep passing; coverage stays ≥ 65%.
+
+## Pass 4 — Documentation (runs inside Pass 1)
+
+Docs are part of the problem: 196 markdown files, ~65k lines — more than half the
+size of the source itself. Docs and code are deleted together, not in a separate wave.
+
+1. **Co-deletion rule.** Every code deletion PR removes its doc pages and
+   `mkdocs.yml` nav entries in the same PR. The MkDocs build check in pre-commit
+   is the enforcement.
+2. **Doc-only dead weight.** Delete meta-docs about the documentation process
+   (`DOCUMENTATION_ENHANCEMENT_SUMMARY.md`, `DOCUMENTATION_ORGANIZATION.md`,
+   `IMPROVEMENT_PLAN.md`, `MKDOCS_SETUP.md`, `QUICK_START_MKDOCS.md`), historical
+   logs (`docs/fixes/`, `reference/IMPLEMENTATION_SUMMARIES.md`), and
+   auto-generated stubs (templated structure, no inbound links).
+   `scripts/create_missing_docs.py` is deleted too — generating filler docs is the
+   opposite of this effort.
+3. **Deduplicate hierarchies.** Merge loose top-level guides (`DEVELOPER_GUIDE.md`,
+   `USER_GUIDE.md`, …) into the Diátaxis structure
+   (tutorials/how-to/reference/explanations), keeping the better version of each.
+   One redirect-or-delete decision per file, recorded in the PR description.
+4. **Accuracy on survivors.** Pages describing merged tools (sentiment,
+   `enhanced_*` family) are updated in their Pass 2 PRs, same co-change rule.
+
+**Validation.** `mkdocs build` green throughout (already in pre-commit).
 
 ## Delivery
 
