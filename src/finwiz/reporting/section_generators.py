@@ -36,6 +36,7 @@ from finwiz.reporting.sections.macro import (
     generate_macro_dashboard_section,
 )
 from finwiz.reporting.sections.portfolio_summary import (
+    generate_allocation_section,
     generate_executive_summary,
     generate_portfolio_overview,
     generate_strategic_posture_section,
@@ -47,6 +48,7 @@ __all__ = [
     "_fact_pack_provenance_footer",
     "_get_recommendation_badge",
     "_render_holding_row",
+    "generate_allocation_section",
     "generate_cost_summary_section",
     "generate_deep_analysis_section",
     "generate_discovery_section",

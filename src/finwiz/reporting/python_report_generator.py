@@ -283,6 +283,8 @@ class PythonReportGenerator:
 
   {self._generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)}
 
+  {self._generate_allocation_section(portfolio_review)}
+
   {self._generate_strategic_posture_section(portfolio_strategic_posture)}
 
   {self._generate_macro_dashboard_section(macro_snapshot)}
@@ -331,6 +333,12 @@ class PythonReportGenerator:
         from finwiz.reporting.section_generators import generate_executive_summary
 
         return generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)
+
+    def _generate_allocation_section(self, portfolio_review: PortfolioReview) -> str:
+        """Generate the EUR allocation hero + weight breakdown (delegates to module)."""
+        from finwiz.reporting.section_generators import generate_allocation_section
+
+        return generate_allocation_section(portfolio_review)
 
     def _generate_portfolio_overview(self, portfolio_review: PortfolioReview, portfolio_stats: dict[str, Any]) -> str:
         """Generate portfolio overview section (delegates to module)."""

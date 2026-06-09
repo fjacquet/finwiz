@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import csv
 import logging
+import math
 import os
 import time
 from collections import Counter
@@ -39,6 +40,22 @@ from finwiz.scoring.grading_system import score_to_grade
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_quantity(raw: str | None) -> float | None:
+    """Parse a CSV Quantity cell into a float; blank/invalid/non-finite -> None (debug-logged)."""
+    s = (raw or "").strip()
+    if not s:
+        return None
+    try:
+        value = float(s)
+    except ValueError:
+        logger.debug("Ignoring unparseable Quantity value %r", s)
+        return None
+    if not math.isfinite(value):
+        logger.debug("Ignoring non-finite Quantity value %r", s)
+        return None
+    return value
 
 
 class PortfolioHoldingsProcessor:
@@ -148,6 +165,7 @@ class PortfolioHoldingsProcessor:
                     ticker = self.normalize_ticker(row.get("Ticker") or "", asset_class=asset_class)
                     currency = (row.get("Currency") or "").strip()
                     active_raw = (row.get("Active") or "true").strip().lower()
+                    quantity = _parse_quantity(row.get("Quantity"))
 
                     # Log every row we encounter
                     logger.debug(f"CSV line {line_num}: name='{name}', ticker='{ticker}', currency='{currency}', active='{active_raw}', asset_class='{asset_class}'")
@@ -171,6 +189,7 @@ class PortfolioHoldingsProcessor:
                             currency=currency or "USD",
                             source_file=str(path),
                             line_number=line_num,
+                            quantity=quantity,
                         )
                     )
 

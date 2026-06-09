@@ -19,12 +19,17 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from finwiz.data.fx_rates import get_fx_rate
 from finwiz.orchestrators.portfolio_holdings_processor import (
     PortfolioHoldingsProcessor,
     ProcessingSummary,
 )
 from finwiz.orchestrators.portfolio_review.merge import merge_deep_analysis_from_flow_state
+from finwiz.schemas.portfolio_processing import RawHolding
 from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.schemas.portfolio_valuation import ValuationResult
+from finwiz.scoring.portfolio_valuation import value_holdings
+from finwiz.tools.portfolio_price_service import PortfolioPriceService
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +80,36 @@ def get_thresholds() -> tuple[float, float, int]:
 # =============================================================================
 # Core Review Building
 # =============================================================================
+
+
+async def _value_portfolio(raw_holdings: list[RawHolding]) -> ValuationResult | None:
+    """Pre-fetch prices and compute EUR weights. Best-effort: None on any failure.
+
+    Short-circuits (no price service, no network) when no holding has a quantity.
+    """
+    tickers = list({h.ticker for h in raw_holdings if h.quantity is not None})
+    if not tickers:
+        return None
+
+    try:
+        service = PortfolioPriceService()
+        prices = await service.get_current_prices(tickers)
+
+        def price_fn(ticker: str) -> tuple[float, str] | None:
+            pd = prices.get(ticker)
+            if pd is None:
+                return None
+            return (pd.price, pd.currency)
+
+        return value_holdings(
+            raw_holdings,
+            base="EUR",
+            price_fn=price_fn,
+            fx_fn=get_fx_rate,
+        )
+    except Exception as exc:  # never break the review over valuation
+        logger.warning("Portfolio valuation failed; weights unavailable this run: %s", exc)
+        return None
 
 
 async def build_portfolio_review(
@@ -134,10 +169,32 @@ async def build_portfolio_review(
         logger.info("Merging deep analysis data from Flow state")
         decisions = merge_deep_analysis_from_flow_state(decisions, flow_state)
 
+    total_value_eur: float | None = None
+    valuation = await _value_portfolio(raw_holdings)
+    if valuation is not None:
+        total_value_eur = valuation.total_value_eur
+        # per_ticker is keyed by ticker (value_holdings collapses same-ticker
+        # holdings last-wins, see test_duplicate_ticker_collapses_last_wins), and
+        # total_value_eur is derived from that single-count map — so the portfolio
+        # total is never double-counted. The data CSVs hold unique tickers; if two
+        # rows ever shared a ticker, both decisions would be stamped with the same
+        # (collapsed) weight here. Acceptable given the deliberate collapse semantics.
+        for decision in decisions:
+            hv = valuation.per_ticker.get(decision.ticker)
+            if hv is None:
+                continue
+            decision.quantity = hv.quantity
+            decision.native_currency = hv.native_currency
+            decision.native_value = hv.native_value
+            decision.eur_value = hv.eur_value
+            decision.weight = hv.weight
+        logger.info("Valuation coverage: %s", valuation.coverage_note)
+
     review = PortfolioReview(
         as_of=datetime.now(UTC),
         base_currency=base_currency,
         holdings=decisions,
+        total_value_eur=total_value_eur,
     )
 
     return review, summary
@@ -173,7 +230,7 @@ def save_review_json(
             "excluded_holdings": [{"ticker": ticker, "reason": reason} for ticker, reason in summary.excluded_holdings],
         }
         with open(summary_path, "w") as f:
-            json.dump(summary_data, f, indent=2)
+            json.dump(summary_data, f, indent=2, default=str)
         logger.info(f"Saved processing summary to {summary_path}")
 
     out_path.write_text(json.dumps(output_data, indent=2, default=str), encoding="utf-8")
