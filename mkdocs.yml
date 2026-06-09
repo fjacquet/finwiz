@@ -176,7 +176,6 @@ nav:
       - Configure API Keys: how-to/configure_api_keys.md
       - Performance Optimization: how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md
       - Memory Management: how-to/MEMORY_MANAGEMENT.md
-      - Deployment Guide: how-to/DEPLOYMENT_QUICK_REFERENCE.md
       - Deep Analysis Troubleshooting: how-to/deep_analysis_troubleshooting.md
       - Batch Processing: how-to/BATCH_PROCESSING.md
 

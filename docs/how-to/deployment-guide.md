@@ -40,40 +40,7 @@ make docs-status
 
 ### Production Build Pipeline
 
-The production build pipeline (`scripts/build_docs.py`) provides:
-
-- **Optimized Static Site Generation**: Uses MkDocs with strict validation
-- **Asset Optimization**: Minifies CSS and JavaScript files
-- **Compression**: Creates gzip versions of assets for faster loading
-- **Build Validation**: Validates HTML structure, links, and content
-- **Performance Optimization**: Optimizes images and reduces file sizes
-
-#### Build Options
-
-```bash
-# Full production build with optimization
-python scripts/build_docs.py
-
-# Fast build without optimization (development)
-python scripts/build_docs.py --no-optimize
-
-# Build without strict mode
-python scripts/build_docs.py --no-strict
-
-# Custom source and build directories
-python scripts/build_docs.py --source docs --build site
-```
-
-#### Build Validation
-
-The build system includes comprehensive validation:
-
-- **HTML Structure**: Validates DOCTYPE, head, body, and meta tags
-- **Link Checking**: Validates all internal links
-- **Asset Validation**: Checks for large files and compression
-- **Search Functionality**: Validates search index
-- **Performance Metrics**: Monitors build size and file count
-- **Accessibility**: Basic accessibility checks
+The production build pipeline uses MkDocs with strict validation via Makefile targets.
 
 ### Makefile Targets
 
@@ -93,20 +60,6 @@ The deployment system supports multiple environments:
 
 - **Production**: Main documentation site (`gh-pages` branch)
 - **Staging**: Preview environment (`gh-pages-staging` branch)
-
-#### Deployment Scripts
-
-1. **Standard Deployment** (`scripts/deploy_docs.py`):
-   - Pre-deployment validation
-   - Automated build and deploy
-   - Post-deployment verification
-   - Rollback capabilities
-
-2. **Zero-Downtime Deployment** (`scripts/zero_downtime_deploy.py`):
-   - Blue-green deployment strategy
-   - Backup creation before deployment
-   - Comprehensive validation
-   - Automatic rollback on failure
 
 #### Deployment Commands
 

@@ -108,9 +108,6 @@ For migrating existing documentation:
 ```bash
 # Run migration script
 make docs-migrate
-
-# Manual migration
-uv run python scripts/migrate_docs.py --source docs --target docs_new
 ```
 
 ### Schema Documentation
