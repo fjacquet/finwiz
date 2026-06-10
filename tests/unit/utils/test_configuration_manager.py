@@ -123,21 +123,18 @@ class TestConfigurationManager:
         assert config_manager._validate_key_format(alpha_config, "a" * 16) is True
         assert config_manager._validate_key_format(alpha_config, "short") is False
 
-    def test_should_check_key_requirements_based_on_feature_flags(self, mocker):
-        """Test that API key requirements are checked based on feature flags."""
+    def test_should_check_key_requirements_from_required_field(self):
+        """Test that API key requirement comes solely from the config's required field."""
         # Arrange
-        mock_feature_flags = mocker.MagicMock()
-        mock_feature_flags.is_enabled.return_value = False  # Disable optional features
-        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
-
         config_manager = ConfigurationManager()
         chart_config = next(k for k in config_manager.REQUIRED_API_KEYS if k.env_var == "CHART_IMG_API_KEY")
+        required_configs = [k for k in config_manager.REQUIRED_API_KEYS if k.required]
 
-        # Act
-        is_required = config_manager._is_key_required(chart_config)
-
-        # Assert
-        assert is_required is False  # Should not be required when feature is disabled
+        # Act & Assert — optional key is not required; required keys pass through
+        assert config_manager._is_key_required(chart_config) is False
+        assert required_configs, "expected at least one required key in REQUIRED_API_KEYS"
+        for key_config in required_configs:
+            assert config_manager._is_key_required(key_config) is True
 
     def test_should_generate_comprehensive_remediation_guidance(self):
         """Test generation of detailed remediation guidance."""
@@ -227,18 +224,6 @@ class TestConfigurationManager:
         assert "missing_keys" in summary
         assert "feature_flags" in summary
         assert isinstance(summary["available_services"], list)
-
-    def test_should_validate_feature_flag_consistency(self, mocker):
-        """Test validation of feature flag consistency with API keys."""
-        # Arrange
-        mock_feature_flags = mocker.MagicMock()
-        mock_feature_flags.is_enabled.return_value = True  # Enable features
-        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
-
-        config_manager = ConfigurationManager()
-
-        # Act & Assert - Should not raise exception even with missing keys
-        config_manager._validate_feature_flag_consistency()
 
     def test_should_create_required_directories(self):
         """Test creation of required directories."""
@@ -413,14 +398,9 @@ class TestConfigurationError:
 class TestConfigurationManagerIntegration:
     """Integration tests for configuration manager."""
 
-    def test_should_integrate_with_feature_flags_for_optional_keys(self, mocker):
-        """Test integration with feature flags for optional API keys."""
+    def test_should_load_optional_key_when_present_in_environment(self, mocker):
+        """Test that optional API keys are loaded when present in environment."""
         # Arrange
-        mock_feature_flags = mocker.MagicMock()
-        # Enable chart analysis feature
-        mock_feature_flags.is_enabled.side_effect = lambda flag: flag == "chart_analysis"
-        mocker.patch("finwiz.config.manager.get_feature_flags", return_value=mock_feature_flags)
-
         mocker.patch.dict(
             os.environ,
             {

@@ -6,7 +6,7 @@ used throughout the FinWiz system.
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 from finwiz.tools.logger import get_logger
@@ -19,8 +19,6 @@ class FeatureFlagStrategy(StrEnum):
 
     BOOLEAN = "boolean"  # Simple on/off
     PERCENTAGE = "percentage"  # Percentage-based rollout
-    USER_LIST = "user_list"  # Specific user allowlist
-    TIME_WINDOW = "time_window"  # Time-based activation
     CIRCUIT_BREAKER = "circuit_breaker"  # Circuit breaker pattern
 
 
@@ -42,14 +40,10 @@ class FeatureFlagConfig:
     enabled: bool = False
     strategy: FeatureFlagStrategy = FeatureFlagStrategy.BOOLEAN
     rollout_percentage: float = 0.0  # 0-100
-    allowed_users: set[str] = field(default_factory=set)
-    start_time: float | None = None
-    end_time: float | None = None
     fallback_strategy: FallbackStrategy = FallbackStrategy.DISABLE
     circuit_breaker_threshold: int = 5  # Failures before circuit opens
     circuit_breaker_timeout: int = 300  # Seconds before retry
     description: str = ""
-    tags: set[str] = field(default_factory=set)
 
 
 @dataclass
@@ -89,32 +83,6 @@ def get_env_int(key: str, default: int = 0) -> int:
 def create_default_flags() -> dict[str, FeatureFlagConfig]:
     """Create default feature flag configurations from environment variables."""
     return {
-        "enhanced_sentiment_analysis": FeatureFlagConfig(
-            name="enhanced_sentiment_analysis",
-            enabled=get_env_bool("FF_ENHANCED_SENTIMENT", True),
-            strategy=FeatureFlagStrategy.PERCENTAGE,
-            rollout_percentage=get_env_float("FF_ENHANCED_SENTIMENT_ROLLOUT", 100.0),
-            fallback_strategy=FallbackStrategy.CACHED_ONLY,
-            description="Multi-source sentiment analysis with trending topics",
-        ),
-        "chart_analysis": FeatureFlagConfig(
-            name="chart_analysis",
-            enabled=get_env_bool("FF_CHART_ANALYSIS", True),
-            strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-            circuit_breaker_threshold=get_env_int("FF_CHART_BREAKER_THRESHOLD", 3),
-            circuit_breaker_timeout=get_env_int("FF_CHART_BREAKER_TIMEOUT", 300),
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="Chart-img API integration for visual analysis",
-        ),
-        "twelve_data_integration": FeatureFlagConfig(
-            name="twelve_data_integration",
-            enabled=get_env_bool("FF_TWELVE_DATA", True),
-            strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-            circuit_breaker_threshold=get_env_int("FF_TWELVE_DATA_BREAKER_THRESHOLD", 5),
-            circuit_breaker_timeout=get_env_int("FF_TWELVE_DATA_BREAKER_TIMEOUT", 600),
-            fallback_strategy=FallbackStrategy.CACHED_ONLY,
-            description="Twelve Data API for technical indicators",
-        ),
         "strict_validation": FeatureFlagConfig(
             name="strict_validation",
             enabled=get_env_bool("FF_STRICT_VALIDATION", True),

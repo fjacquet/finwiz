@@ -11,7 +11,7 @@ import pytest
 from bs4 import BeautifulSoup
 from pytest import approx
 
-from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
+from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool
 from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
 from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
 
@@ -83,9 +83,20 @@ class TestEnhancedETFAnalysisTool:
         </html>
         """
 
-    def test_should_normalize_ticker_input(self, tool):
+    def test_should_normalize_ticker_input(self, tool, mocker):
         """Test ticker normalization."""
-        # Arrange & Act
+        # Arrange — mock the network boundaries so no real HTTP calls are made
+        mock_factsheet = mocker.patch.object(tool, "_extract_factsheet_data")
+        mock_factsheet.return_value = {
+            "issuer": "SPDR",
+            "expense_ratio": 0.09,
+            "factsheet_url": "https://test.com",
+            "as_of": "2024-01-01",
+            "factsheet_highlights": [],
+        }
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
+
+        # Act
         result = tool._run(ticker="  spy  ", include_holdings=False, include_risk_assessment=False)
 
         # Assert
@@ -311,26 +322,6 @@ class TestEnhancedETFAnalysisTool:
         assert "Extraction failed" in result["error"]
 
 
-class TestETFTrackingAnalysisTool:
-    """Test the ETF Tracking Analysis Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the ETF Tracking Analysis Tool."""
-        return ETFTrackingAnalysisTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(ticker="SPY")
-
-        # Assert
-        assert result["tool"] == "ETFTrackingAnalysisTool"
-        assert result["ticker"] == "SPY"
-        assert "methodology" in result
-        assert "tracking error" in result["methodology"].lower()
-
-
 class TestIntegrationScenarios:
     """Test integration scenarios for enhanced ETF analysis."""
 
@@ -360,6 +351,7 @@ class TestIntegrationScenarios:
             {"ticker": "AAPL", "weight_pct": 7.2, "source_url": "https://test.com", "as_of": date.today()},
             {"ticker": "MSFT", "weight_pct": 6.8, "source_url": "https://test.com", "as_of": date.today()},
         ]
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(ticker="SPY", include_holdings=True, include_risk_assessment=True, max_holdings=10)
@@ -383,6 +375,7 @@ class TestIntegrationScenarios:
             "as_of": date.today(),
             "factsheet_highlights": [],
         }
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(ticker="SPY", include_holdings=False)
 
@@ -392,7 +385,7 @@ class TestIntegrationScenarios:
 
     def test_should_handle_risk_assessment_disabled(self, tool, mocker):
         """Test behavior when risk assessment is disabled."""
-        # Arrange & Act
+        # Arrange — mock both network boundaries
         mock_factsheet = mocker.patch.object(tool, "_extract_factsheet_data")
         mock_factsheet.return_value = {
             "issuer": "Test",
@@ -401,6 +394,8 @@ class TestIntegrationScenarios:
             "as_of": date.today(),
             "factsheet_highlights": [],
         }
+        mocker.patch.object(tool, "_extract_top_holdings", return_value=[])
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(ticker="SPY", include_risk_assessment=False)
 

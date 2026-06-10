@@ -18,7 +18,36 @@ import pytest
 from pytest import approx
 
 from finwiz.flow_state import FinwizState
+from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
 from finwiz.orchestrators.deep_analysis_orchestrator import DeepAnalysisOrchestrator
+
+
+def test_collect_sentiment_uses_standardized_tool(mocker):
+    """Sentiment collection delegates to StandardizedSentimentAnalysisTool and maps its dict output."""
+    fake_result = {
+        "symbol": "AAPL",
+        "asset_class": "stock",
+        "weighted_score": 0.42,
+        "mean_score": 0.40,
+        "confidence_interval": [0.30, 0.54],
+        "counts": {"pos": 6, "neu": 3, "neg": 1},
+        "articles_analyzed": 10,
+        "trending_topics": [],
+        "top_pos": [],
+        "top_neg": [],
+    }
+    mock_tool = mocker.patch("finwiz.orchestrators.deep_analysis_data_collector.get_standardized_sentiment_tool")
+    mock_tool.return_value._run.return_value = fake_result
+
+    state = FinwizState()
+    collector = DeepAnalysisDataCollector(state)
+    collected_data: dict = {}
+    result = collector._collect_sentiment_data("AAPL", "stock", collected_data)
+
+    mock_tool.return_value._run.assert_called_once_with(symbol="AAPL", asset_class="stock", max_articles=20, days_back=30)
+    assert result["sentiment_score"] == 0.42
+    assert result["overall_sentiment"] in {"positive", "bullish", "neutral", "negative", "bearish"}
+    assert 0.0 <= result["sentiment_confidence"] <= 1.0
 
 
 class TestPythonDataCollection:
@@ -72,21 +101,18 @@ class TestPythonDataCollection:
 
     @pytest.fixture
     def mock_sentiment_data(self):
-        """Mock sentiment analysis tool response (matches actual EnhancedSentimentAnalysisTool output)."""
+        """Mock sentiment analysis tool response (matches actual StandardizedSentimentAnalysisTool output)."""
         return {
-            "formatted_analysis": "Sentiment analysis for AAPL...",
-            "sentiment_score": 0.72,
-            "overall_sentiment": "POSITIVE",
-            "confidence": 0.85,
-            "positive_ratio": 0.65,
-            "negative_ratio": 0.15,
-            "neutral_ratio": 0.20,
-            "total_articles": 20,
-            "sentiment_distribution": {"positive": 13, "negative": 3, "neutral": 4},
+            "symbol": "AAPL",
+            "asset_class": "stock",
+            "weighted_score": 0.72,
+            "mean_score": 0.68,
+            "confidence_interval": [0.50, 0.85],
+            "counts": {"pos": 13, "neu": 4, "neg": 3},
+            "articles_analyzed": 20,
             "trending_topics": ["AI expansion", "Services growth", "China market"],
-            "article_count": 20,
-            "news_sources": ["Yahoo Finance", "Sonar"],
-            "sentiment_breakdown": {"positive": 13, "negative": 3, "neutral": 4},
+            "top_pos": [],
+            "top_neg": [],
         }
 
     @pytest.fixture
@@ -129,7 +155,7 @@ class TestPythonDataCollection:
         )
 
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-        mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
+        mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         # Configure mocks
@@ -182,7 +208,7 @@ class TestPythonDataCollection:
         assert "sentiment_score" in result  # From sentiment tool output
         assert result["sentiment_score"] == approx(0.72)
         assert "overall_sentiment" in result
-        assert result["overall_sentiment"] == "POSITIVE"
+        assert result["overall_sentiment"] == "positive"
 
     @pytest.mark.integration
     def test_collect_data_handles_tool_failures(self, mocker, orchestrator):
@@ -191,16 +217,19 @@ class TestPythonDataCollection:
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
         mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-        mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
+        mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
 
         # Configure one tool to succeed, others to fail
         mock_ticker.return_value = {"current_price": 150.0}
         mock_company.side_effect = Exception("API rate limit")
         mock_quant.side_effect = Exception("Connection timeout")
         mock_sentiment.return_value = {
-            "sentiment_score": 0.6,
-            "overall_sentiment": "neutral",
-            "confidence": 0.5,
+            "symbol": "TSLA",
+            "asset_class": "stock",
+            "weighted_score": 0.06,
+            "mean_score": 0.05,
+            "counts": {"pos": 5, "neu": 4, "neg": 1},
+            "articles_analyzed": 10,
         }
 
         # Execute - should not raise exception
@@ -217,7 +246,7 @@ class TestPythonDataCollection:
         # Successful tool data should be present
         # Sentiment data should be at top level
         assert "sentiment_score" in result
-        assert result["sentiment_score"] == approx(0.6)
+        assert result["sentiment_score"] == approx(0.06)
         assert "overall_sentiment" in result
         assert result["overall_sentiment"] == "neutral"
 
@@ -228,15 +257,18 @@ class TestPythonDataCollection:
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
         mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-        mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
+        mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         mock_ticker.return_value = {"current_price": 420.0}
         mock_quant.return_value = json.dumps({"technical_indicators": {"rsi": 55}})
         mock_sentiment.return_value = {
-            "sentiment_score": 0.65,
-            "overall_sentiment": "neutral",
-            "confidence": 0.7,
+            "symbol": "SPY",
+            "asset_class": "etf",
+            "weighted_score": 0.05,
+            "mean_score": 0.04,
+            "counts": {"pos": 5, "neu": 5, "neg": 0},
+            "articles_analyzed": 10,
         }
 
         # Execute for ETF
@@ -316,16 +348,19 @@ class TestPythonDataCollection:
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
         mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-        mock_sentiment = mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
+        mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         # Mock minimal responses for other tools
         mock_ticker.return_value = {"current_price": 100.0}
         mock_company.return_value = {}
         mock_sentiment.return_value = {
-            "sentiment_score": 0.0,
-            "overall_sentiment": "neutral",
-            "confidence": 0.0,
+            "symbol": "TEST",
+            "asset_class": "stock",
+            "weighted_score": 0.0,
+            "mean_score": 0.0,
+            "counts": {"pos": 0, "neu": 0, "neg": 0},
+            "articles_analyzed": 0,
         }
         mock_sec.return_value = json.dumps({})
 
@@ -354,7 +389,7 @@ class TestPythonDataCollection:
         mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
         mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-        mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run")
+        mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
 
         mock_ticker.return_value = mock_yahoo_ticker_data
         mock_company.return_value = mock_yahoo_company_data
@@ -382,14 +417,14 @@ class TestPythonDataCollection:
         # These imports should not raise any exceptions
         from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
         from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
-        from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
+        from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
         from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
         from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
         # Verify classes can be instantiated
         assert QuantitativeAnalysisTool is not None
-        assert EnhancedSentimentAnalysisTool is not None
+        assert StandardizedSentimentAnalysisTool is not None
         assert YahooFinanceTickerInfoTool is not None
         assert YahooFinanceCompanyInfoTool is not None
         assert EnhancedSECAnalysisTool is not None

@@ -166,8 +166,6 @@ class TestCreateDefaultFlags:
 
         flags = create_default_flags()
 
-        assert "enhanced_sentiment_analysis" in flags
-        assert "chart_analysis" in flags
         assert "perplexity_research" in flags
 
     def test_should_configure_flags_from_environment(self, mocker):
@@ -175,16 +173,16 @@ class TestCreateDefaultFlags:
         mocker.patch.dict(
             "os.environ",
             {
-                "FF_ENHANCED_SENTIMENT": "false",
-                "FF_ENHANCED_SENTIMENT_ROLLOUT": "50.0",
+                "FF_STRICT_VALIDATION": "false",
+                "FF_STRICT_VALIDATION_ROLLOUT": "50.0",
             },
         )
 
         flags = create_default_flags()
 
-        sentiment_flag = flags["enhanced_sentiment_analysis"]
-        assert sentiment_flag.enabled is False
-        assert sentiment_flag.rollout_percentage == 50.0
+        strict_flag = flags["strict_validation"]
+        assert strict_flag.enabled is False
+        assert strict_flag.rollout_percentage == 50.0
 
     def test_should_set_correct_strategies(self, mocker):
         """Test flags have correct strategies."""
@@ -193,8 +191,8 @@ class TestCreateDefaultFlags:
         flags = create_default_flags()
 
         # Check some flags have expected strategies
-        assert flags["enhanced_sentiment_analysis"].strategy == FeatureFlagStrategy.PERCENTAGE
-        assert flags["chart_analysis"].strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
+        assert flags["strict_validation"].strategy == FeatureFlagStrategy.PERCENTAGE
+        assert flags["perplexity_research"].strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
 
     def test_should_set_fallback_strategies(self, mocker):
         """Test flags have fallback strategies."""
@@ -227,14 +225,10 @@ class TestFeatureFlagConfigDataclass:
         assert hasattr(config, "enabled")
         assert hasattr(config, "strategy")
         assert hasattr(config, "rollout_percentage")
-        assert hasattr(config, "allowed_users")
-        assert hasattr(config, "start_time")
-        assert hasattr(config, "end_time")
         assert hasattr(config, "fallback_strategy")
         assert hasattr(config, "circuit_breaker_threshold")
         assert hasattr(config, "circuit_breaker_timeout")
         assert hasattr(config, "description")
-        assert hasattr(config, "tags")
 
     def test_should_have_correct_defaults(self):
         """Test FeatureFlagConfig has correct default values."""
@@ -243,11 +237,7 @@ class TestFeatureFlagConfigDataclass:
         assert config.enabled is False
         assert config.strategy == FeatureFlagStrategy.BOOLEAN
         assert config.rollout_percentage == 0.0
-        assert config.allowed_users == set()
-        assert config.start_time is None
-        assert config.end_time is None
         assert config.fallback_strategy == FallbackStrategy.DISABLE
         assert config.circuit_breaker_threshold == 5
         assert config.circuit_breaker_timeout == 300
         assert config.description == ""
-        assert config.tags == set()

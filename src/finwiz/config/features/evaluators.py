@@ -49,17 +49,6 @@ def evaluate_flag(
             hash_value = random.randint(0, 99)
         return hash_value < config.rollout_percentage
 
-    elif config.strategy == FeatureFlagStrategy.USER_LIST:
-        return user_id is not None and user_id in config.allowed_users
-
-    elif config.strategy == FeatureFlagStrategy.TIME_WINDOW:
-        current_time = time.time()
-        if config.start_time and current_time < config.start_time:
-            return False
-        if config.end_time and current_time > config.end_time:
-            return False
-        return True
-
     elif config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER:
         return evaluate_circuit_breaker(config, circuit_breakers)
 
@@ -154,8 +143,6 @@ def get_default_values(flag_name: str) -> Any:
 
     """
     defaults = {
-        "enhanced_sentiment_analysis": {"sentiment_score": 0.0, "article_count": 0, "trending_topics": [], "source": "default"},
-        "chart_analysis": {"chart_url": None, "pattern_insights": [], "visual_analysis": "Chart analysis unavailable"},
         "perplexity_research": {
             "sonar_articles": [],
             "search_results": [],

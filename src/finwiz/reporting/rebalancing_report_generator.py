@@ -49,14 +49,8 @@ class RebalancingReportGenerator(BaseReportGenerator):
         """
         template_vars = data.copy()
 
-        # Ensure analysis_date is formatted
-        if "analysis_date" not in template_vars or not template_vars["analysis_date"]:
-            template_vars["analysis_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        elif isinstance(template_vars["analysis_date"], datetime):
-            template_vars["analysis_date"] = template_vars["analysis_date"].strftime("%Y-%m-%d %H:%M:%S")
-
-        # Ensure session_id exists
-        template_vars.setdefault("session_id", "default")
+        # Apply shared defaults (analysis_date, session_id, data_sources, report paths).
+        self._apply_common_defaults(template_vars)
 
         # Ensure portfolio metrics have defaults
         template_vars.setdefault("holdings_analyzed", 0)
@@ -80,14 +74,6 @@ class RebalancingReportGenerator(BaseReportGenerator):
         template_vars.setdefault("improvement_summary", None)
         template_vars.setdefault("risk_reduction", None)
         template_vars.setdefault("return_improvement", None)
-
-        # Ensure data sources list exists
-        if "data_sources" not in template_vars or not template_vars["data_sources"]:
-            template_vars["data_sources"] = self._get_default_data_sources()
-
-        # Ensure report paths exist
-        template_vars.setdefault("report_json_path", "N/A")
-        template_vars.setdefault("report_html_path", "N/A")
 
         return template_vars
 

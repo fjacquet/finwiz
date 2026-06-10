@@ -16,6 +16,7 @@ from datetime import datetime
 from typing import Any
 
 import pytest
+import pytest_socket
 from faker import Faker
 
 # Import all fixtures to make them available
@@ -39,6 +40,37 @@ from tests.fixtures import (
 # leaking real API keys into assertion output on failure). This autouse fixture
 # resets that state before every test, via monkeypatch (auto-restored).
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Network guard — enforces zero remote network access in the unit suite.
+#
+# Unit tests must mock all external API calls (yfinance, OpenAI, Perplexity,
+# CoinGecko, etc.). Integration-marked tests keep real network access.
+# localhost and Unix sockets are always allowed (xdist workers use them).
+# ---------------------------------------------------------------------------
+_LOCAL_HOSTS = ["127.0.0.1", "::1", "localhost"]
+
+
+@pytest.fixture(autouse=True)
+def _block_remote_network(request):
+    """Block remote network access in unit tests; allow in integration tests.
+
+    Uses pytest-socket to restrict socket.connect() to localhost and Unix
+    sockets only. Integration-marked tests re-enable unrestricted network.
+    xdist workers are unaffected because they communicate over localhost/unix.
+    """
+    if request.node.get_closest_marker("integration"):
+        # Integration tests may reach real remote hosts.
+        pytest_socket.enable_socket()
+        yield
+        return
+
+    # Unit tests: allow localhost + unix sockets, block everything else.
+    pytest_socket.socket_allow_hosts(_LOCAL_HOSTS, allow_unix_socket=True)
+    yield
+    pytest_socket.enable_socket()
+
 
 # Non-FINWIZ_-prefixed env vars resilience_config still honours (back-compat).
 _EXTRA_CONFIG_ENV_VARS = ("PORTFOLIO_PARALLEL_LIMIT", "DEEP_ANALYSIS_PARALLEL_LIMIT")

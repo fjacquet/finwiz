@@ -198,6 +198,21 @@ class TestAnalysisContext:
 class TestCollectRawData:
     """Tests for collect_raw_data function."""
 
+    @pytest.fixture(autouse=True)
+    def _mock_sentiment_macro(self, mocker):
+        """Mock the v4 sentiment/macro collector — its FRED/news fetches are remote.
+
+        Without this, collect_raw_data reaches the FRED API (blocked by the
+        network guard) and tenacity retries with sleeps add ~22s per test.
+        """
+        mock_v4 = mocker.MagicMock()
+        mock_v4.collect_sentiment.return_value = None
+        mock_v4.collect_macro.return_value = None
+        mocker.patch(
+            "finwiz.data.sentiment_collector.SentimentMacroCollector",
+            return_value=mock_v4,
+        )
+
     def test_collect_raw_data_calls_collector(self, mocker, analysis_context, mock_raw_data):
         """Test that collect_raw_data uses DeepAnalysisDataCollector."""
         mock_collector = mocker.MagicMock()
@@ -503,6 +518,18 @@ class TestAnalyzeHolding:
 
     def test_analyze_holding_returns_both_outputs(self, mocker, mock_qualitative_insights):
         """Test that analyze_holding returns both DeepAnalysisResult and EnrichedAnalysis."""
+        from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+
+        _now = datetime.now(UTC)
+        _fake_fp = FactPack(
+            corporate_structure="Microsoft Corporation — independent public company",
+            recent_events=[],
+            leadership="Satya Nadella (CEO)",
+            fetched_at=_now,
+            freshness=FactPack.derive_freshness(_now),
+            confidence=0.9,
+            source_citations=[],
+        )
         mock_result = DeepAnalysisResult(
             ticker="MSFT",
             asset_class="stock",
@@ -543,11 +570,11 @@ class TestAnalyzeHolding:
         )
 
         mocker.patch(
-            "finwiz.analysis.stages.collect_raw_data",
+            "finwiz.analysis.stages.collect._collect_raw_data_inner",
             return_value={},
         )
         mocker.patch(
-            "finwiz.analysis.stages.calculate_quantitative",
+            "finwiz.analysis.stages.quantify._calculate_quantitative_inner",
             return_value=(mock_result, mock_quant),
         )
         mocker.patch(
@@ -555,7 +582,11 @@ class TestAnalyzeHolding:
             return_value=None,
         )
         mocker.patch(
-            "finwiz.analysis.stages.qualify.generate_qualitative",
+            "finwiz.analysis.stages.fact_pack._fact_pack_inner",
+            return_value=_fake_fp,
+        )
+        mocker.patch(
+            "finwiz.analysis.stages.qualify._try_ai_qualify",
             return_value=mock_qualitative_insights,
         )
         mocker.patch(

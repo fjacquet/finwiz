@@ -24,11 +24,25 @@ _V4_ENV_VARS = [
     "FF_FEAR_GREED_BREAKER_TIMEOUT",
 ]
 
+# Env vars that override the perplexity_research flag defaults
+_PERPLEXITY_ENV_VARS = [
+    "FF_PERPLEXITY_RESEARCH",
+    "FF_PERPLEXITY_BREAKER_THRESHOLD",
+    "FF_PERPLEXITY_BREAKER_TIMEOUT",
+]
+
 
 @pytest.fixture()
 def _clean_v4_env(monkeypatch):
     """Remove v4 feature flag env vars so tests see true defaults."""
     for var in _V4_ENV_VARS:
+        monkeypatch.delenv(var, raising=False)
+
+
+@pytest.fixture()
+def _clean_perplexity_env(monkeypatch):
+    """Remove perplexity feature flag env vars so tests see true defaults."""
+    for var in _PERPLEXITY_ENV_VARS:
         monkeypatch.delenv(var, raising=False)
 
 
@@ -94,6 +108,23 @@ class TestV4FeatureFlags:
 
     def test_macro_scoring_boolean_strategy(self):
         assert self.flags["macro_scoring"].strategy == FeatureFlagStrategy.BOOLEAN
+
+
+class TestPerplexityResearchFlag:
+    """Pin the circuit-breaker configuration of the perplexity_research flag."""
+
+    def test_perplexity_research_exists(self):
+        flags = create_default_flags()
+        assert "perplexity_research" in flags
+
+    @pytest.mark.usefixtures("_clean_perplexity_env")
+    def test_perplexity_research_circuit_breaker_strategy(self):
+        flags = create_default_flags()
+        config = flags["perplexity_research"]
+        assert config.strategy == FeatureFlagStrategy.CIRCUIT_BREAKER
+        assert config.circuit_breaker_threshold == 5
+        assert config.circuit_breaker_timeout == 300
+        assert config.fallback_strategy == FallbackStrategy.DISABLE
 
 
 class TestV4DefaultValues:

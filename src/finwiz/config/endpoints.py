@@ -11,7 +11,6 @@ ALPHA_VANTAGE_BASE: str = os.getenv("AV_BASE_URL", "https://www.alphavantage.co/
 TWELVE_DATA_BASE: str = os.getenv("TD_BASE_URL", "https://api.twelvedata.com")
 
 # --- Crypto ---
-CMC_BASE: str = os.getenv("CMC_BASE_URL", "https://pro-api.coinmarketcap.com/v1")
 COINGECKO_BASE: str = os.getenv("CG_BASE_URL", "https://api.coingecko.com/api/v3")
 COINBASE_BASE: str = os.getenv("CB_BASE_URL", "https://api.exchange.coinbase.com")
 KRAKEN_BASE: str = os.getenv("KRAKEN_BASE_URL", "https://api.kraken.com/0/public")

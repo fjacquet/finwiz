@@ -32,8 +32,6 @@ from finwiz.schemas.tools.inputs import (
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    CryptoRiskScoringInput,
-    CryptoThesisInput,
     # DeFi Metrics
     DeFiMetricsInput,
     # Crypto Analysis
@@ -42,11 +40,6 @@ from finwiz.schemas.tools.inputs import (
     EnhancedETFAnalysisInput,
     # SEC Analysis
     EnhancedSECAnalysisInput,
-    # Sentiment Analysis
-    EnhancedSentimentInput,
-    # Technical Analysis
-    EnhancedTechnicalAnalysisInput,
-    ETFTrackingAnalysisInput,
     # Feedback
     FeedbackCollectionInput,
     GetCompanyInfoInput,
@@ -393,51 +386,6 @@ class TestCompanyOverviewInput:
 # ============================================================================
 
 
-class TestEnhancedTechnicalAnalysisInput:
-    """Tests for EnhancedTechnicalAnalysisInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "AAPL"
-        model = EnhancedTechnicalAnalysisInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_default_values(self):
-        """Test default values."""
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL")
-
-        assert model.asset_type == "stock"
-        assert model.lookback_days == 100
-        assert model.include_perplexity is True
-
-    def test_asset_type_options(self):
-        """Test various asset type options."""
-        types = ["stock", "etf", "crypto"]
-        for asset_type in types:
-            model = EnhancedTechnicalAnalysisInput(ticker="AAPL", asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-    def test_lookback_days_custom(self, fake):
-        """Test custom lookback_days."""
-        lookback = fake.random_int(min=50, max=365)
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL", lookback_days=lookback)
-
-        assert model.lookback_days == lookback
-
-    def test_include_perplexity_false(self):
-        """Test include_perplexity set to False."""
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL", include_perplexity=False)
-
-        assert model.include_perplexity is False
-
-    def test_missing_required_ticker(self):
-        """Test ValidationError when ticker is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            EnhancedTechnicalAnalysisInput()
-        assert "ticker" in str(exc_info.value)
-
-
 class TestTwelveDataIndicatorInput:
     """Tests for TwelveDataIndicatorInput model."""
 
@@ -571,35 +519,6 @@ class TestTwelveDataMultiIndicatorInput:
 # ============================================================================
 # Sentiment Analysis Tool Tests
 # ============================================================================
-
-
-class TestEnhancedSentimentInput:
-    """Tests for EnhancedSentimentInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "AAPL"
-        model = EnhancedSentimentInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_default_values(self):
-        """Test default values."""
-        model = EnhancedSentimentInput(ticker="AAPL")
-
-        assert model.asset_type == "stock"
-        assert model.days_back == 7
-        assert model.max_articles == 20
-
-    def test_custom_values(self, fake):
-        """Test custom values."""
-        days_back = fake.random_int(min=1, max=30)
-        max_articles = fake.random_int(min=5, max=50)
-
-        model = EnhancedSentimentInput(ticker="AAPL", days_back=days_back, max_articles=max_articles)
-
-        assert model.days_back == days_back
-        assert model.max_articles == max_articles
 
 
 class TestStandardizedSentimentInput:
@@ -799,47 +718,6 @@ class TestEnhancedCryptoAnalysisInput:
         assert "symbol" in str(exc_info.value)
 
 
-class TestCryptoThesisInput:
-    """Tests for CryptoThesisInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "ETH"
-        model = CryptoThesisInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_various_symbols(self):
-        """Test various crypto symbols."""
-        symbols = ["BTC", "ETH", "SOL", "DOGE"]
-        for symbol in symbols:
-            model = CryptoThesisInput(symbol=symbol)
-            assert model.symbol == symbol
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CryptoThesisInput()
-        assert "symbol" in str(exc_info.value)
-
-
-class TestCryptoRiskScoringInput:
-    """Tests for CryptoRiskScoringInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "BTC"
-        model = CryptoRiskScoringInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CryptoRiskScoringInput()
-        assert "symbol" in str(exc_info.value)
-
-
 # ============================================================================
 # ETF Analysis Tool Tests
 # ============================================================================
@@ -901,23 +779,6 @@ class TestEnhancedETFAnalysisInput:
         """Test ValidationError when ticker is missing."""
         with pytest.raises(ValidationError) as exc_info:
             EnhancedETFAnalysisInput()
-        assert "ticker" in str(exc_info.value)
-
-
-class TestETFTrackingAnalysisInput:
-    """Tests for ETFTrackingAnalysisInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "VTI"
-        model = ETFTrackingAnalysisInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_missing_required_ticker(self):
-        """Test ValidationError when ticker is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            ETFTrackingAnalysisInput()
         assert "ticker" in str(exc_info.value)
 
 

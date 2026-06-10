@@ -121,7 +121,7 @@ risk_assessment_task:
 
     Enhanced Risk Assessment:
     - Use the "Enhanced Crypto Analysis Tool" for comprehensive risk analysis of each cryptocurrency
-    - Apply the "Crypto Risk Scoring Tool" methodology for consistent 0-5 risk scores
+    - Apply the "Enhanced Crypto Analysis Tool" for consistent 0-5 risk scores
     - Focus on crypto-specific risks: volatility, regulatory uncertainty, technology risks, market manipulation
     - Assess tokenomics, supply dynamics, and adoption risks
     - Use the "Quantitative Analysis Tool" with analysis_type="performance" and asset_class="crypto" to calculate:
@@ -172,8 +172,7 @@ investment_strategy_task:
       * Structured investment thesis bullets with market analysis
       * Standardized risk assessment on 0-5 scale (mapped from crypto 1-10 scale)
       * Market dynamics and tokenomics evaluation
-    - Use the "Crypto Thesis Generator Tool" for additional thesis refinement
-    - Apply the "Crypto Risk Scoring Tool" for consistent risk methodology
+    - Use the "Enhanced Crypto Analysis Tool" for structured thesis generation and risk methodology
     - Use the "Quantitative Analysis Tool" with analysis_type="comprehensive" and asset_class="crypto" to generate:
       * Complete backtesting analysis with crypto-specific strategies
       * Performance attribution and risk-adjusted return calculations

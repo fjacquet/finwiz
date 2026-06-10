@@ -13,10 +13,35 @@ from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalys
 class TestSentimentHallucinationFix:
     """Test that sentiment tools don't generate fake URLs."""
 
-    def test_should_not_generate_fake_urls(self):
+    def test_should_not_generate_fake_urls(self, mocker):
         """Test that sentiment analysis doesn't generate hallucinated URLs."""
-        # Arrange
+        # Arrange — mock the news-collection boundary (no real HTTP) with realistic
+        # articles so top_pos/top_neg are populated and the URL assertions bite
         tool = StandardizedSentimentAnalysisTool()
+        mocker.patch.object(
+            tool,
+            "_collect_news_articles",
+            return_value=[
+                {
+                    "title": "Microsoft beats earnings expectations with strong growth",
+                    "url": "https://finance.yahoo.com/news/msft-earnings",
+                    "source": "Yahoo Finance",
+                    "published": "2026-06-01",
+                },
+                {
+                    "title": "Microsoft cloud revenue surges, profit outlook upgraded",
+                    "url": "https://www.reuters.com/technology/msft-cloud",
+                    "source": "Reuters",
+                    "published": "2026-06-02",
+                },
+                {
+                    "title": "Microsoft faces regulatory probe, shares decline on risk",
+                    "url": "https://www.bloomberg.com/news/msft-probe",
+                    "source": "Bloomberg",
+                    "published": "2026-06-03",
+                },
+            ],
+        )
 
         # Act
         result = tool._run(symbol="MSFT", asset_class="stock")

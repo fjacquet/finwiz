@@ -74,7 +74,7 @@ tests/unit/orchestrators/test_deep_analysis_data_collection.py::
 ```
 
 **Root Cause**: Test fixtures provided nested sentiment data structure but orchestrator expected flat structure
-**Fix**: Updated mock sentiment data to match actual `EnhancedSentimentAnalysisTool` output format (flat dict with `sentiment_score`, `overall_sentiment`, etc.)
+**Fix**: Updated mock sentiment data to match actual `StandardizedSentimentAnalysisTool` output format (dict with `weighted_score`, `counts`, etc.)
 
 ---
 

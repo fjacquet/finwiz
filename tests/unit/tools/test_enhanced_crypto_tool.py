@@ -8,8 +8,6 @@ generation, standardized risk assessment, and market dynamics analysis.
 import pytest
 
 from finwiz.tools.enhanced_crypto_tool import (
-    CryptoRiskScoringTool,
-    CryptoThesisGeneratorTool,
     EnhancedCryptoAnalysisInput,
     EnhancedCryptoAnalysisTool,
 )
@@ -86,9 +84,13 @@ class TestEnhancedCryptoAnalysisTool:
             "links": {"homepage": ["https://bitcoin.org"]},
         }
 
-    def test_should_normalize_symbol_input(self, tool):
+    def test_should_normalize_symbol_input(self, tool, mocker):
         """Test symbol normalization."""
-        # Arrange & Act
+        # Arrange — mock the network boundaries (CoinGecko + Perplexity paths)
+        mocker.patch.object(tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]})
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
+
+        # Act
         result = tool._run(symbol="  btc  ", include_thesis=False, include_risk_assessment=False)
 
         # Assert
@@ -285,6 +287,7 @@ class TestEnhancedCryptoAnalysisTool:
                 "sources": ["CoinGecko API"],
             },
         )
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(symbol="BTC", include_thesis=True, include_risk_assessment=True, max_thesis_bullets=5)
@@ -303,6 +306,7 @@ class TestEnhancedCryptoAnalysisTool:
         """Test behavior when thesis generation is disabled."""
         # Arrange & Act
         mocker.patch.object(tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]})
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(symbol="BTC", include_thesis=False)
 
@@ -314,6 +318,7 @@ class TestEnhancedCryptoAnalysisTool:
         """Test behavior when risk assessment is disabled."""
         # Arrange & Act
         mocker.patch.object(tool, "_get_crypto_data", return_value={"symbol": "BTC", "name": "Bitcoin", "sources": ["Test"]})
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(symbol="BTC", include_risk_assessment=False)
 
@@ -332,46 +337,6 @@ class TestEnhancedCryptoAnalysisTool:
         # Assert
         assert "error" in result
         assert "API unavailable" in result["error"]
-
-
-class TestCryptoThesisGeneratorTool:
-    """Test the Crypto Thesis Generator Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Crypto Thesis Generator Tool."""
-        return CryptoThesisGeneratorTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(symbol="BTC")
-
-        # Assert
-        assert result["tool"] == "CryptoThesisGeneratorTool"
-        assert result["symbol"] == "BTC"
-        assert "methodology" in result
-        assert "thesis bullets" in result["methodology"].lower()
-
-
-class TestCryptoRiskScoringTool:
-    """Test the Crypto Risk Scoring Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Crypto Risk Scoring Tool."""
-        return CryptoRiskScoringTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(symbol="ETH")
-
-        # Assert
-        assert result["tool"] == "CryptoRiskScoringTool"
-        assert result["symbol"] == "ETH"
-        assert "methodology" in result
-        assert "1-10 risk scale" in result["methodology"]
 
 
 class TestIntegrationScenarios:

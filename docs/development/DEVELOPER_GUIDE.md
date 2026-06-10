@@ -264,8 +264,7 @@ src/finwiz/
 ├── tools/                          # Custom Financial Tools
 │   ├── tool_factories.py          # Centralized tool initialization
 │   ├── quantitative_analysis_tool.py
-│   ├── enhanced_sentiment_tool.py
-│   ├── technical_analyzer.py
+│   ├── standardized_sentiment_tool.py
 │   └── scoring/                   # Python scoring engines
 │
 ├── schemas/                        # Pydantic Data Models
@@ -638,35 +637,26 @@ Centralized tool initialization eliminates code duplication.
 
 ```python
 from typing import List
-from crewai_tools import Tool
+from crewai.tools import BaseTool
 
 def get_stock_crew_tools(
-    include_rag: bool = True,
     include_quantitative: bool = True,
-    collection_suffix: str = "stock"
-) -> List[Tool]:
+    include_valuation: bool = True,
+) -> list[BaseTool]:
     """Get standardized tool set for stock analysis."""
 
-    tools = []
+    tools: list[BaseTool] = []
 
-    # Core tools (always included)
-    from finwiz.tools.data_fetcher import DataFetcherTool
-    from finwiz.tools.technical_analyzer import TechnicalAnalyzerTool
-
-    tools.extend([
-        DataFetcherTool(),
-        TechnicalAnalyzerTool()
-    ])
-
-    # Optional RAG integration
-    if include_rag:
-        from finwiz.tools.rag_search import RAGSearchTool
-        tools.append(RAGSearchTool(collection_name=f"finwiz_{collection_suffix}"))
+    # Core research tools (always included)
+    tools.extend(get_stock_research_tools())
 
     # Optional quantitative analysis
     if include_quantitative:
-        from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-        tools.append(QuantitativeAnalysisTool())
+        tools.append(get_quantitative_analysis_tool())
+
+    # Optional valuation tool (DCF, P/E, technical targets)
+    if include_valuation:
+        tools.append(get_valuation_tool())
 
     return tools
 
@@ -1806,7 +1796,7 @@ grep "duration" logs/finwiz.log | tail -n 20
 
 ### Continuous Integration
 
-**GitHub Actions** (`.github/workflows/ci.yml`):
+**GitHub Actions** (`.github/workflows/quality.yml`):
 
 ```yaml
 name: CI

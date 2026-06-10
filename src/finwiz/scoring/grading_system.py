@@ -21,7 +21,6 @@ class GradeInfo:
     description: str
     action: str
     emoji: str
-    css_class: str
 
 
 def score_to_grade(composite_score: float) -> GradeInfo:
@@ -44,7 +43,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Excellent - Champion du portefeuille",
             action="Augmentez l'allocation si possible",
             emoji="🏆",
-            css_class="grade-a-plus",
         )
     elif percentage >= 85:
         return GradeInfo(
@@ -53,7 +51,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Très bon - Investissement de qualité",
             action="Maintenez et continuez le DCA",
             emoji="⭐",
-            css_class="grade-a",
         )
     elif percentage >= 80:
         return GradeInfo(
@@ -62,7 +59,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Bon+ - Solide avec potentiel",
             action="Conservez et surveillez les opportunités",
             emoji="📈",
-            css_class="grade-b-plus",
         )
     elif percentage >= 75:
         return GradeInfo(
@@ -71,7 +67,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Bon - Satisfaisant à conserver",
             action="Maintenez, continuez le DCA",
             emoji="✅",
-            css_class="grade-b",
         )
     elif percentage >= 70:
         return GradeInfo(
@@ -80,7 +75,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Passable+ - Acceptable avec surveillance",
             action="Conservez mais surveillez de près",
             emoji="⚠️",
-            css_class="grade-c-plus",
         )
     elif percentage >= 65:
         return GradeInfo(
@@ -89,7 +83,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Passable - Minimum acceptable",
             action="Maintenez mais ne renforcez pas",
             emoji="🔍",
-            css_class="grade-c",
         )
     elif percentage >= 50:
         return GradeInfo(
@@ -98,7 +91,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Insuffisant - À améliorer rapidement",
             action="Réduisez progressivement la position",
             emoji="⚡",
-            css_class="grade-d",
         )
     else:
         return GradeInfo(
@@ -107,7 +99,6 @@ def score_to_grade(composite_score: float) -> GradeInfo:
             description="Échec - Élimination immédiate",
             action="Vendez immédiatement",
             emoji="❌",
-            css_class="grade-f",
         )
 
 

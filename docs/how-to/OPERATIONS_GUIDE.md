@@ -132,18 +132,18 @@ grep -i "warning\|error" logs/finwiz.log | tail -n 20
 1. **Performance Metrics**:
 
 ```python
-from finwiz.cache import get_cache_manager
+from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-stats = cache.get_statistics()
-print(f"Cache hit rate: {stats.hit_rate:.2%}")
-print(f"Total requests: {stats.total_requests}")
+stats = cache.get_stats()
+print(f"Cache hit rate: {stats['hit_rate']:.2%}")
+print(f"Hits: {stats['hits']}, misses: {stats['misses']}")
 ```
 
 1. **Feature Flags**:
 
 ```python
-from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.config.features.flags import get_feature_flags
 
 flags = get_feature_flags()
 print(f"Perplexity: {flags.is_enabled('perplexity_research')}")
@@ -969,7 +969,7 @@ class CustomFlow(Flow[MyState]):
 **Custom Error Handling:**
 
 ```python
-from finwiz.utils.retry_handler import classify_error, get_remediation_suggestion
+from finwiz.infrastructure.resilience.retry import classify_error, get_remediation_suggestion
 
 try:
     result = analyze_holding(ticker)
@@ -1089,17 +1089,17 @@ if not result.is_valid:
 **Caching System**:
 
 ```python
-from finwiz.cache import get_cache_manager
+from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-cache.set("key", value, ttl=3600)
-value = cache.get("key")
+await cache.set("key", value, ttl=3600)  # get/set are async
+value = await cache.get("key")
 ```
 
 **Feature Flags**:
 
 ```python
-from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.config.features.flags import get_feature_flags
 
 flags = get_feature_flags()
 if flags.is_enabled("perplexity_research"):
@@ -1131,7 +1131,7 @@ export VALIDATION_STRICTNESS=warn
 
 ```bash
 # Solution: Check cache configuration
-python -c "from finwiz.cache import get_cache_manager; print(get_cache_manager().get_statistics())"
+python -c "from finwiz.infrastructure.caching.manager import get_cache_manager; print(get_cache_manager().get_stats())"
 
 # Clear cache if needed
 rm -rf cache/*
@@ -1418,7 +1418,7 @@ The caching system consists of:
 The `CacheManager` class provides the main interface for caching operations:
 
 ```python
-from finwiz.utils.cache_manager import get_cache_manager, CacheConfig
+from finwiz.infrastructure.caching.manager import get_cache_manager, CacheConfig
 
 # Get the global cache manager instance
 cache = get_cache_manager()
@@ -1438,7 +1438,7 @@ await cache.cleanup_expired()  # Remove expired entries
 Configure caching behavior through `CacheConfig`:
 
 ```python
-from finwiz.utils.cache_manager import CacheConfig, CacheBackend, CacheStrategy
+from finwiz.infrastructure.caching.manager import CacheBackend, CacheConfig, CacheManager, CacheStrategy
 
 config = CacheConfig(
     backend=CacheBackend.HYBRID,        # memory, file, or hybrid
@@ -1532,41 +1532,40 @@ The FinWiz feature flag system provides:
 - **Circuit breaker patterns** for service reliability
 - **Graceful degradation** when services fail
 - **Centralized API key management** with validation
-- **Multiple evaluation strategies** (boolean, percentage, user lists, time windows)
+- **Multiple evaluation strategies** (boolean, percentage, circuit_breaker)
 
 ### Quick Start
 
 #### Basic Feature Flag Usage
 
 ```python
-from finwiz.utils.feature_flags import is_feature_enabled, execute_with_feature_flag
+from finwiz.config.features.flags import is_feature_enabled, execute_with_feature_flag
 
-# Check if a feature is enabled
-if is_feature_enabled("enhanced_sentiment_analysis"):
-    result = perform_enhanced_analysis()
+# Check if a feature is enabled (perplexity_research uses circuit_breaker strategy)
+if is_feature_enabled("perplexity_research"):
+    result = perform_perplexity_research()
 else:
-    result = perform_basic_analysis()
+    result = perform_basic_research()
 
-# Execute with automatic fallback
+# Execute with automatic fallback — circuit breaker opens after FF_PERPLEXITY_BREAKER_THRESHOLD failures
 result = execute_with_feature_flag(
-    "enhanced_sentiment_analysis",
-    primary_function=perform_enhanced_analysis,
-    fallback_function=perform_basic_analysis,
-    ticker="AAPL"
+    "perplexity_research",
+    primary_func=perform_perplexity_research,
+    fallback_func=perform_basic_research,
 )
 ```
 
 #### Configuration Management
 
 ```python
-from finwiz.utils.configuration_manager import validate_startup_configuration, get_api_key
+from finwiz.config.manager import validate_startup_configuration, get_api_key
 
 # Validate all required API keys at startup
 try:
     validate_startup_configuration()
-    print("✅ All required API keys configured")
+    print("All required API keys configured")
 except ConfigurationError as e:
-    print(f"❌ Configuration error: {e.remediation_guidance}")
+    print(f"Configuration error: {e.remediation_guidance}")
 
 # Get API key for a service
 openai_key = get_api_key("OpenAI")
@@ -1582,21 +1581,46 @@ if openai_key:
 Control feature flags using environment variables:
 
 ```bash
-# Enable/disable features
-FF_ENHANCED_SENTIMENT=true
-FF_CHART_ANALYSIS=true
-FF_TWELVE_DATA=true
-FF_PERPLEXITY_RESEARCH=false
+# Enable/disable features (boolean strategy)
+FF_STOCK_ANALYSIS=true
+FF_ETF_ANALYSIS=true
+FF_CRYPTO_ANALYSIS=true
+FF_STOCK_SCREENING=true
+FF_STRICT_VALIDATION=true
+FF_NEWCOMER_DISCOVERY=true
+FF_PORTFOLIO_AWARE_DISCOVERY=true
+FF_MONITORING=false
+FF_SENTIMENT_SCORING=false
+FF_MACRO_SCORING=false
+FF_ECONOMIC_CALENDAR=false
 
-# Percentage rollouts (0-100)
-FF_ENHANCED_SENTIMENT_ROLLOUT=75.0
+# Circuit-breaker-guarded integrations (fail-safe: flag stays enabled but circuit opens on errors)
+FF_PERPLEXITY_RESEARCH=true
+FF_FINNHUB_NEWS=false
+FF_FRED_MACRO=false
+FF_FEAR_GREED=false
+FF_QUANTITATIVE_BACKTESTING=true
 
-# Circuit breaker thresholds
-FF_CHART_BREAKER_THRESHOLD=3
-FF_CHART_BREAKER_TIMEOUT=300
-FF_TWELVE_DATA_BREAKER_THRESHOLD=5
-FF_PERPLEXITY_BREAKER_THRESHOLD=5
-FF_PERPLEXITY_BREAKER_TIMEOUT=300
+# Circuit breaker tuning
+FF_PERPLEXITY_BREAKER_THRESHOLD=5     # failures before open
+FF_PERPLEXITY_BREAKER_TIMEOUT=300     # seconds before retry
+FF_BACKTEST_BREAKER_THRESHOLD=3
+FF_BACKTEST_BREAKER_TIMEOUT=600
+FF_FINNHUB_BREAKER_THRESHOLD=5
+FF_FINNHUB_BREAKER_TIMEOUT=300
+FF_FRED_BREAKER_THRESHOLD=5
+FF_FRED_BREAKER_TIMEOUT=600
+FF_FEAR_GREED_BREAKER_THRESHOLD=3
+FF_FEAR_GREED_BREAKER_TIMEOUT=600
+
+# Percentage-rollout features
+FF_QUANTITATIVE_ANALYSIS=true
+FF_QUANTITATIVE_ANALYSIS_ROLLOUT=1.0  # 0.0-1.0
+FF_INVESTMENT_DISCOVERY=true
+FF_INVESTMENT_DISCOVERY_ROLLOUT=1.0
+FF_PORTFOLIO_REBALANCING=false
+FF_PORTFOLIO_REBALANCING_ROLLOUT=0.0
+FF_STRICT_VALIDATION_ROLLOUT=1.0
 ```
 
 #### API Key Configuration

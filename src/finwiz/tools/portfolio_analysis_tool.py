@@ -5,7 +5,6 @@ This module provides comprehensive portfolio analysis capabilities including
 composition analysis, performance metrics, and diversification assessment.
 """
 
-import json
 from datetime import datetime
 from typing import Any
 
@@ -16,6 +15,7 @@ from finwiz.quantitative.performance import get_performance_analyzer
 from finwiz.quantitative.portfolio_analyzer import PortfolioAnalyzer
 from finwiz.schemas.tools import PortfolioAnalysisInput
 from finwiz.tools.logger import get_logger
+from finwiz.tools.run_helpers import json_error, json_ok
 
 
 class PortfolioAnalysisTool(BaseTool):
@@ -99,12 +99,11 @@ class PortfolioAnalysisTool(BaseTool):
             }
 
             logger.info("Portfolio analysis completed successfully")
-            return json.dumps(analysis_result, indent=2, default=str)
+            return json_ok(analysis_result)
 
         except Exception as e:
             logger.error(f"Portfolio analysis failed: {e}")
-            error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2, default=str)
+            return json_error(e)
 
     def _analyze_composition(self, holdings: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze portfolio composition."""

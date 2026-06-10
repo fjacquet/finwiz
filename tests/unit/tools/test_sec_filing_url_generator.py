@@ -277,6 +277,10 @@ class TestSECFilingURLGenerator:
             "get_filing_url",
             return_value="https://www.sec.gov/cgi-bin/browse-edgar?CIK=0000320193&type=10-K",
         )
+        # get_filing_metadata tries get_direct_filing_url first, which fetches
+        # submissions/CIK{cik}.json from SEC EDGAR — mock it to None so the
+        # fallback path (mocked get_cik + pure browse-URL construction) runs.
+        mocker.patch.object(generator, "get_direct_filing_url", return_value=None)
 
         # Act
         metadata = generator.get_filing_metadata("AAPL", "10-K")

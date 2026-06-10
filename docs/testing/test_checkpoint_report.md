@@ -152,7 +152,7 @@ The test suite ran in **182.84 seconds (3:02)** with an average of **0.056 secon
 
 ### Category 4: Tool Tests (12 failures)
 
-- 6 failures in `test_enhanced_sentiment_tool.py`
+- 6 failures in `test_enhanced_sentiment_tool.py` (file since deleted — sentiment unified on the standardized tool)
 - 5 failures in `test_knowledge_base_tool.py`
 - 3 failures in `test_rag_tools.py`
 

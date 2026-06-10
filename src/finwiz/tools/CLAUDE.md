@@ -31,16 +31,12 @@ tools/
 ├── risk_assessment_tool.py          # RiskAssessmentTool
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
 ├── market_screening_tool.py         # MarketScreeningTool
-├── technical_analyzer.py            # TechnicalAnalyzer
-├── sentiment_analyzer.py            # SentimentAnalyzer
 ├── chart_analyzer.py                # Chart analysis
 │
 ├── # Enhanced tools (per-asset specialization)
-├── enhanced_crypto_tool.py          # CryptoAnalysisTool, CryptoThesisGenerator, CryptoRiskScoring
+├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
-├── enhanced_sentiment_tool.py       # Enhanced sentiment
-├── enhanced_technical_analyzer_tool.py # Enhanced technical
 ├── a_plus_scoring_tool.py           # A+ scoring
 ├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking
@@ -56,6 +52,7 @@ tools/
 │
 ├── # Infrastructure
 ├── tool_result.py                   # ToolResult class
+├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # Error wrapping
 ├── base_tools.py                    # AsyncFeedbackTool base
 ├── crewai_retry_patch.py            # Retry patch
@@ -81,8 +78,6 @@ tools/
 ├── scoring/                         # Scoring helpers
 │   ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
 │   └── scoring_algorithms.py
-├── sentiment/                       # Sentiment calculators
-│   └── sentiment_calculators.py     # SentimentCalculators
 └── twelve_data/                     # TwelveData helpers
     ├── transformers.py
     └── validators.py
@@ -109,6 +104,8 @@ from finwiz.tools.tool_factories import get_stock_crew_tools
 
 tools = get_stock_crew_tools(include_quantitative=True)
 ```
+
+Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`; adopt opportunistically when touching older tools.
 
 ## Related Modules
 

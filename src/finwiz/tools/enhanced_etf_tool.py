@@ -17,7 +17,6 @@ from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
     EnhancedETFAnalysisInput,
-    ETFTrackingAnalysisInput,
 )
 from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
 from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
@@ -174,25 +173,3 @@ class EnhancedETFAnalysisTool(BaseTool):
         except Exception as e:
             logger.warning(f"Perplexity ETF search failed for {ticker}: {e!s}")
             return []
-
-
-class ETFTrackingAnalysisTool(BaseTool):
-    """
-    Specialized tool for ETF tracking performance analysis.
-
-    Analyzes tracking error, tracking difference, and performance
-    attribution for ETFs against their benchmarks.
-    """
-
-    name: str = "ETF Tracking Analysis Tool"
-    description: str = "Analyze ETF tracking performance including tracking error, tracking difference, and performance attribution analysis."
-    args_schema: type[BaseModel] = ETFTrackingAnalysisInput
-
-    def _run(self, ticker: str, **kwargs: Any) -> dict[str, Any]:
-        """Analyze ETF tracking performance."""
-        return {
-            "tool": "ETFTrackingAnalysisTool",
-            "ticker": ticker,
-            "message": "Use EnhancedETFAnalysisTool for comprehensive tracking analysis",
-            "methodology": "Tracking error and difference calculation with benchmark comparison",
-        }

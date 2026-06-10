@@ -101,6 +101,10 @@ class TestChartAnalyzer:
     def test_should_raise_error_without_api_key(self, analyzer, mocker):
         """Test that analyzer raises error when API key is missing."""
         mocker.patch.dict("os.environ", {}, clear=True)
+        # generate_chart fires requests.get unconditionally — without a key the
+        # Chart-img API rejects the call. Mock the HTTP boundary so no real
+        # request leaves; the analyzer must still surface the failure.
+        mocker.patch("requests.get", side_effect=Exception("401 Unauthorized: missing API key"))
         analyzer_no_key = ChartAnalyzer()
 
         with pytest.raises(RuntimeError, match="Failed to generate chart"):

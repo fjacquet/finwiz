@@ -177,27 +177,8 @@ class ConfigurationManager:
         return len(self.missing_keys) == 0
 
     def _is_key_required(self, key_config: APIKeyConfig) -> bool:
-        """Check if an API key is required based on feature flags."""
-        if key_config.required:
-            return True
-
-        # For optional keys, only require them if explicitly enabled via feature flags
-        # and the feature flag is explicitly set to true (not just default enabled)
-        feature_dependencies = {
-            "CHART_IMG_API_KEY": "chart_analysis",
-            "TWELVE_DATA_API_KEY": "twelve_data_integration",
-            "X-CMC_PRO_API_KEY": "enhanced_sentiment_analysis",
-            "KRAKEN_API_KEY": "enhanced_sentiment_analysis",
-        }
-
-        feature_flag = feature_dependencies.get(key_config.env_var)
-        if feature_flag:
-            # Only require if feature is explicitly enabled and API key is needed
-            # For testing purposes, we'll be more lenient and not require optional keys
-            # unless explicitly configured
-            return False  # Optional keys are never required by default
-
-        return False
+        """Check if an API key is required (optional keys are never required)."""
+        return key_config.required
 
     def _validate_key_format(self, key_config: APIKeyConfig, api_key: str) -> bool:
         """Validate API key format based on known patterns."""
@@ -233,7 +214,7 @@ class ConfigurationManager:
                     [
                         f"• {key_config.env_var}",
                         f"  Description: {key_config.description}",
-                        f"  Required: {'Yes' if self._is_key_required(key_config) else 'No (feature disabled)'}",
+                        f"  Required: {'Yes' if self._is_key_required(key_config) else 'No (optional)'}",
                         "",
                     ]
                 )
@@ -252,8 +233,7 @@ class ConfigurationManager:
                 "ALPHA_VANTAGE_API_KEY=your-alpha-vantage-key-here",
                 "",
                 "For optional APIs, you can disable features using feature flags:",
-                "FF_CHART_ANALYSIS=false",
-                "FF_TWELVE_DATA=false",
+                "FF_PERPLEXITY_RESEARCH=false",
             ]
         )
 
@@ -313,9 +293,6 @@ class ConfigurationManager:
             # Validate API keys
             api_keys_valid = self.validate_api_keys()
 
-            # Check feature flag consistency
-            self._validate_feature_flag_consistency()
-
             # Validate required directories exist
             self._validate_required_directories()
 
@@ -328,25 +305,6 @@ class ConfigurationManager:
         except Exception as e:
             logger.error(f"Startup configuration validation failed: {e}")
             raise
-
-    def _validate_feature_flag_consistency(self) -> None:
-        """Validate that feature flags are consistent with available API keys."""
-        # Check if features requiring API keys are enabled but keys are missing
-        feature_api_dependencies = {
-            "chart_analysis": "Chart-img",
-            "twelve_data_integration": "Twelve Data",
-            "enhanced_sentiment_analysis": ["CoinMarketCap", "Alpha Vantage"],
-        }
-
-        for feature, required_apis in feature_api_dependencies.items():
-            if self.feature_flags.is_enabled(feature):
-                if isinstance(required_apis, str):
-                    required_apis = [required_apis]
-
-                missing_apis = [api for api in required_apis if not self.is_service_available(api)]
-
-                if missing_apis:
-                    logger.warning(f"Feature '{feature}' is enabled but missing API keys for: {missing_apis}. Consider disabling the feature or configuring the required API keys.")
 
     def _validate_required_directories(self) -> None:
         """Validate that required directories exist."""
