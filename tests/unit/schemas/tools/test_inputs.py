@@ -42,8 +42,6 @@ from finwiz.schemas.tools.inputs import (
     EnhancedSECAnalysisInput,
     # Sentiment Analysis
     EnhancedSentimentInput,
-    # Technical Analysis
-    EnhancedTechnicalAnalysisInput,
     # Feedback
     FeedbackCollectionInput,
     GetCompanyInfoInput,
@@ -388,51 +386,6 @@ class TestCompanyOverviewInput:
 # ============================================================================
 # Technical Analysis Tool Tests
 # ============================================================================
-
-
-class TestEnhancedTechnicalAnalysisInput:
-    """Tests for EnhancedTechnicalAnalysisInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "AAPL"
-        model = EnhancedTechnicalAnalysisInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_default_values(self):
-        """Test default values."""
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL")
-
-        assert model.asset_type == "stock"
-        assert model.lookback_days == 100
-        assert model.include_perplexity is True
-
-    def test_asset_type_options(self):
-        """Test various asset type options."""
-        types = ["stock", "etf", "crypto"]
-        for asset_type in types:
-            model = EnhancedTechnicalAnalysisInput(ticker="AAPL", asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-    def test_lookback_days_custom(self, fake):
-        """Test custom lookback_days."""
-        lookback = fake.random_int(min=50, max=365)
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL", lookback_days=lookback)
-
-        assert model.lookback_days == lookback
-
-    def test_include_perplexity_false(self):
-        """Test include_perplexity set to False."""
-        model = EnhancedTechnicalAnalysisInput(ticker="AAPL", include_perplexity=False)
-
-        assert model.include_perplexity is False
-
-    def test_missing_required_ticker(self):
-        """Test ValidationError when ticker is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            EnhancedTechnicalAnalysisInput()
-        assert "ticker" in str(exc_info.value)
 
 
 class TestTwelveDataIndicatorInput:

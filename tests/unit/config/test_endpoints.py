@@ -12,9 +12,6 @@ class TestEndpointDefaults:
     def test_twelve_data_base(self):
         assert endpoints.TWELVE_DATA_BASE == "https://api.twelvedata.com"
 
-    def test_cmc_base(self):
-        assert endpoints.CMC_BASE == "https://pro-api.coinmarketcap.com/v1"
-
     def test_coingecko_base(self):
         assert endpoints.COINGECKO_BASE == "https://api.coingecko.com/api/v3"
 

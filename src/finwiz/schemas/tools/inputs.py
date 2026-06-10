@@ -75,16 +75,6 @@ class CompanyOverviewInput(BaseModel):
     include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
-# Technical Analysis Tool Inputs
-class EnhancedTechnicalAnalysisInput(BaseModel):
-    """Input schema for enhanced technical analysis."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'SPY', 'BTC-USD')")
-    asset_type: str = Field("stock", description="Asset type: 'stock', 'etf', or 'crypto'")
-    lookback_days: int = Field(100, description="Number of days of price data to analyze (50-365)")
-    include_perplexity: bool = Field(True, description="Whether to include Perplexity Sonar insights")
-
-
 class TwelveDataIndicatorInput(BaseModel):
     """Input schema for Twelve Data indicator tool."""
 

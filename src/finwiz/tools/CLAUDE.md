@@ -78,8 +78,6 @@ tools/
 ├── scoring/                         # Scoring helpers
 │   ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
 │   └── scoring_algorithms.py
-├── sentiment/                       # Sentiment calculators
-│   └── sentiment_calculators.py     # SentimentCalculators
 └── twelve_data/                     # TwelveData helpers
     ├── transformers.py
     └── validators.py

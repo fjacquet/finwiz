@@ -29,8 +29,6 @@ from .inputs import (
     EnhancedSECAnalysisInput,
     # Sentiment analysis inputs
     EnhancedSentimentInput,
-    # Technical analysis inputs
-    EnhancedTechnicalAnalysisInput,
     FeedbackCollectionInput,
     GetCompanyInfoInput,
     GetETFHoldingsInput,
@@ -74,7 +72,6 @@ __all__ = [
     "AlphaVantageNewsInput",
     "CompanyOverviewInput",
     # Technical analysis inputs
-    "EnhancedTechnicalAnalysisInput",
     "TwelveDataIndicatorInput",
     "TwelveDataMultiIndicatorInput",
     # Sentiment analysis inputs
