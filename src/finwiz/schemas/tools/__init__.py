@@ -20,8 +20,6 @@ from .inputs import (
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    CryptoRiskScoringInput,
-    CryptoThesisInput,
     DeFiMetricsInput,
     # Crypto analysis inputs
     EnhancedCryptoAnalysisInput,
@@ -33,7 +31,6 @@ from .inputs import (
     EnhancedSentimentInput,
     # Technical analysis inputs
     EnhancedTechnicalAnalysisInput,
-    ETFTrackingAnalysisInput,
     FeedbackCollectionInput,
     GetCompanyInfoInput,
     GetETFHoldingsInput,
@@ -86,11 +83,8 @@ __all__ = [
     "CrossAssetSentimentComparatorInput",
     # Crypto analysis inputs
     "EnhancedCryptoAnalysisInput",
-    "CryptoThesisInput",
-    "CryptoRiskScoringInput",
     # ETF analysis inputs
     "EnhancedETFAnalysisInput",
-    "ETFTrackingAnalysisInput",
     # SEC analysis inputs
     "EnhancedSECAnalysisInput",
     "StandardizedRiskScoringInput",

@@ -36,7 +36,7 @@ tools/
 ├── chart_analyzer.py                # Chart analysis
 │
 ├── # Enhanced tools (per-asset specialization)
-├── enhanced_crypto_tool.py          # CryptoAnalysisTool, CryptoThesisGenerator, CryptoRiskScoring
+├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
 ├── enhanced_sentiment_tool.py       # Enhanced sentiment

@@ -13,12 +13,8 @@ from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.backtesting_tool import BacktestingTool
 from finwiz.tools.chart_img_tool import ChartImgTool
 from finwiz.tools.defi_metrics_tool import DeFiMetricsTool
-from finwiz.tools.enhanced_crypto_tool import (
-    CryptoRiskScoringTool,
-    CryptoThesisGeneratorTool,
-    EnhancedCryptoAnalysisTool,
-)
-from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
+from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
+from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
 from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
 from finwiz.tools.logger import get_logger
@@ -92,8 +88,6 @@ def get_crypto_research_tools() -> list[BaseTool]:
         KrakenTickerInfoTool(),
         TickerExistenceValidationTool(),
         EnhancedCryptoAnalysisTool(),
-        CryptoThesisGeneratorTool(),
-        CryptoRiskScoringTool(),
         DeFiMetricsTool(),
         RegulatoryComplianceTool(),
         StandardizedRiskScoringTool(),
@@ -122,7 +116,6 @@ def get_etf_research_tools() -> list[BaseTool]:
         YahooFinanceNewsTool(),
         TickerExistenceValidationTool(),
         EnhancedETFAnalysisTool(),
-        ETFTrackingAnalysisTool(),
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),

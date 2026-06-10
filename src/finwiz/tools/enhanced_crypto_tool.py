@@ -18,8 +18,6 @@ from finwiz.config.endpoints import COINGECKO_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
-    CryptoRiskScoringInput,
-    CryptoThesisInput,
     EnhancedCryptoAnalysisInput,
 )
 from finwiz.tools.logger import get_logger
@@ -499,47 +497,3 @@ class EnhancedCryptoAnalysisTool(BaseTool):
 
             PerplexityFeatureFlagTracker.record_operation_failure(symbol, "crypto", "integration_error")
             return []
-
-
-class CryptoThesisGeneratorTool(BaseTool):
-    """
-    Specialized tool for crypto investment thesis generation.
-
-    Generates structured investment thesis bullets with proper
-    citations and references for cryptocurrency analysis.
-    """
-
-    name: str = "Crypto Thesis Generator Tool"
-    description: str = "Generate structured investment thesis bullets for cryptocurrencies with proper citations and market analysis."
-    args_schema: type[BaseModel] = CryptoThesisInput
-
-    def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:
-        """Generate crypto investment thesis."""
-        return {
-            "tool": "CryptoThesisGeneratorTool",
-            "symbol": symbol,
-            "message": "Use EnhancedCryptoAnalysisTool for comprehensive thesis generation",
-            "methodology": "Structured thesis bullets with market analysis and citations",
-        }
-
-
-class CryptoRiskScoringTool(BaseTool):
-    """
-    Specialized tool for crypto risk assessment on standardized 1-10 scale.
-
-    Provides consistent risk scoring methodology specifically
-    calibrated for cryptocurrency investments.
-    """
-
-    name: str = "Crypto Risk Scoring Tool"
-    description: str = "Calculate standardized risk scores for cryptocurrencies on 1-10 scale with crypto-specific risk factors and methodology."
-    args_schema: type[BaseModel] = CryptoRiskScoringInput
-
-    def _run(self, symbol: str, **kwargs: Any) -> dict[str, Any]:
-        """Calculate crypto-specific risk score."""
-        return {
-            "tool": "CryptoRiskScoringTool",
-            "symbol": symbol,
-            "message": "Use EnhancedCryptoAnalysisTool for comprehensive risk assessment",
-            "methodology": "Crypto-specific 1-10 risk scale with volatility and regulatory factors",
-        }

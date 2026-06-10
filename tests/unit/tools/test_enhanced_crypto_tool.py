@@ -8,8 +8,6 @@ generation, standardized risk assessment, and market dynamics analysis.
 import pytest
 
 from finwiz.tools.enhanced_crypto_tool import (
-    CryptoRiskScoringTool,
-    CryptoThesisGeneratorTool,
     EnhancedCryptoAnalysisInput,
     EnhancedCryptoAnalysisTool,
 )
@@ -332,46 +330,6 @@ class TestEnhancedCryptoAnalysisTool:
         # Assert
         assert "error" in result
         assert "API unavailable" in result["error"]
-
-
-class TestCryptoThesisGeneratorTool:
-    """Test the Crypto Thesis Generator Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Crypto Thesis Generator Tool."""
-        return CryptoThesisGeneratorTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(symbol="BTC")
-
-        # Assert
-        assert result["tool"] == "CryptoThesisGeneratorTool"
-        assert result["symbol"] == "BTC"
-        assert "methodology" in result
-        assert "thesis bullets" in result["methodology"].lower()
-
-
-class TestCryptoRiskScoringTool:
-    """Test the Crypto Risk Scoring Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Crypto Risk Scoring Tool."""
-        return CryptoRiskScoringTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(symbol="ETH")
-
-        # Assert
-        assert result["tool"] == "CryptoRiskScoringTool"
-        assert result["symbol"] == "ETH"
-        assert "methodology" in result
-        assert "1-10 risk scale" in result["methodology"]
 
 
 class TestIntegrationScenarios:

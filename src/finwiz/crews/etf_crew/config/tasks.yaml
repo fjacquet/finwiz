@@ -113,7 +113,7 @@ etf_technical_detail_task:
        - Top holdings with weights and provenance (ticker, weight_pct, as_of, source_url)
        - Issuer information and replication methods
        - Factsheet highlights and key metrics
-    6. Use the "ETF Tracking Analysis Tool" to analyze tracking performance against benchmarks.
+    6. Use the "Enhanced ETF Analysis Tool" to analyze tracking performance against benchmarks.
     7. Technical indicators: Use the "Twelve Data Indicator" tool to fetch RSI/MACD/Bollinger Bands
        for relevant intervals per ETF, and cite parameters used.
     8. Quantitative analysis: Use the "Quantitative Analysis Tool" to perform comprehensive quantitative analysis

@@ -32,8 +32,6 @@ from finwiz.schemas.tools.inputs import (
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    CryptoRiskScoringInput,
-    CryptoThesisInput,
     # DeFi Metrics
     DeFiMetricsInput,
     # Crypto Analysis
@@ -46,7 +44,6 @@ from finwiz.schemas.tools.inputs import (
     EnhancedSentimentInput,
     # Technical Analysis
     EnhancedTechnicalAnalysisInput,
-    ETFTrackingAnalysisInput,
     # Feedback
     FeedbackCollectionInput,
     GetCompanyInfoInput,
@@ -799,47 +796,6 @@ class TestEnhancedCryptoAnalysisInput:
         assert "symbol" in str(exc_info.value)
 
 
-class TestCryptoThesisInput:
-    """Tests for CryptoThesisInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "ETH"
-        model = CryptoThesisInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_various_symbols(self):
-        """Test various crypto symbols."""
-        symbols = ["BTC", "ETH", "SOL", "DOGE"]
-        for symbol in symbols:
-            model = CryptoThesisInput(symbol=symbol)
-            assert model.symbol == symbol
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CryptoThesisInput()
-        assert "symbol" in str(exc_info.value)
-
-
-class TestCryptoRiskScoringInput:
-    """Tests for CryptoRiskScoringInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "BTC"
-        model = CryptoRiskScoringInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CryptoRiskScoringInput()
-        assert "symbol" in str(exc_info.value)
-
-
 # ============================================================================
 # ETF Analysis Tool Tests
 # ============================================================================
@@ -901,23 +857,6 @@ class TestEnhancedETFAnalysisInput:
         """Test ValidationError when ticker is missing."""
         with pytest.raises(ValidationError) as exc_info:
             EnhancedETFAnalysisInput()
-        assert "ticker" in str(exc_info.value)
-
-
-class TestETFTrackingAnalysisInput:
-    """Tests for ETFTrackingAnalysisInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "VTI"
-        model = ETFTrackingAnalysisInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_missing_required_ticker(self):
-        """Test ValidationError when ticker is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            ETFTrackingAnalysisInput()
         assert "ticker" in str(exc_info.value)
 
 

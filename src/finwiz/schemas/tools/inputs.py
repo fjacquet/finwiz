@@ -151,18 +151,6 @@ class EnhancedCryptoAnalysisInput(BaseModel):
     include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
 
 
-class CryptoThesisInput(BaseModel):
-    """Input schema for Crypto Thesis Generator Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-
-
-class CryptoRiskScoringInput(BaseModel):
-    """Input schema for Crypto Risk Scoring Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-
-
 # ETF Analysis Tool Inputs
 class EnhancedETFAnalysisInput(BaseModel):
     """Input schema for Enhanced ETF Analysis Tool."""
@@ -172,12 +160,6 @@ class EnhancedETFAnalysisInput(BaseModel):
     include_risk_assessment: bool = Field(default=True, description="Whether to perform risk assessment")
     max_holdings: int = Field(default=10, ge=1, le=50, description="Maximum number of holdings to extract")
     include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
-
-
-class ETFTrackingAnalysisInput(BaseModel):
-    """Input schema for ETF Tracking Analysis Tool."""
-
-    ticker: str = Field(..., description="The ETF ticker symbol, e.g., SPY, VTI")
 
 
 # SEC Analysis Tool Inputs

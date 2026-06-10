@@ -11,7 +11,7 @@ import pytest
 from bs4 import BeautifulSoup
 from pytest import approx
 
-from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool, ETFTrackingAnalysisTool
+from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool
 from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
 from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
 
@@ -309,26 +309,6 @@ class TestEnhancedETFAnalysisTool:
         # Assert
         assert "error" in result
         assert "Extraction failed" in result["error"]
-
-
-class TestETFTrackingAnalysisTool:
-    """Test the ETF Tracking Analysis Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the ETF Tracking Analysis Tool."""
-        return ETFTrackingAnalysisTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(ticker="SPY")
-
-        # Assert
-        assert result["tool"] == "ETFTrackingAnalysisTool"
-        assert result["ticker"] == "SPY"
-        assert "methodology" in result
-        assert "tracking error" in result["methodology"].lower()
 
 
 class TestIntegrationScenarios:
