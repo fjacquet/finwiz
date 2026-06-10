@@ -1,4 +1,4 @@
-# FinWiz User Guide
+# FinWiz Operations Guide
 
 Complete guide for deploying, operating, and migrating FinWiz.
 
@@ -450,8 +450,6 @@ Solution: Check data freshness timestamps in result. Adjust cache TTL if needed.
 
 Solution: Check API keys are valid. Enable graceful degradation for fallback behavior.
 
-For detailed documentation, see [docs/DEEP_ANALYSIS_CREW.md](DEEP_ANALYSIS_CREW.md).
-
 ## Flow Resilience and Recovery
 
 ### Overview
@@ -802,7 +800,6 @@ The system integrates with FinWiz's existing monitoring infrastructure:
 - Critical alerts for high failure rates (>50%)
 - Includes failed holdings list in metadata
 - Configurable alert thresholds
-- Multi-channel notifications (email, SMS)
 
 **Example Alert:**
 
@@ -1162,8 +1159,6 @@ export CACHE_BACKEND=file
 ### Getting Help
 
 - **Documentation**: [docs/README.md](index.md)
-- **Developer Guide**: [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
-- **API Reference**: [API_REFERENCE.md](API_REFERENCE.md)
 - **GitHub Issues**: Report bugs or request features
 
 ### Performance Optimization
@@ -1292,7 +1287,7 @@ print(f"Criteria adjustments: {len(insights['criteria_adjustments'])}")
 
 ### Overview
 
-Real-time portfolio monitoring with drift detection, alert generation, and multi-channel notifications.
+Real-time portfolio monitoring with drift detection and alert generation.
 
 ### Components
 
@@ -1303,14 +1298,7 @@ Real-time portfolio monitoring with drift detection, alert generation, and multi
 - Alert generation with configurable rules
 - Alert lifecycle management
 
-**2. Notification Service**:
-
-- Email notifications (HTML and plain text)
-- SMS notifications for critical issues
-- User preference management
-- Rate limiting and quiet hours
-
-**3. Alert System**:
+**2. Alert System**:
 
 - Multiple urgency levels (LOW, MEDIUM, HIGH, CRITICAL)
 - Configurable thresholds
@@ -1330,21 +1318,6 @@ rule = MonitoringRule(
     max_deviation_threshold=0.08,  # 8% threshold
     check_frequency_minutes=60,
     alert_urgency="MEDIUM"
-)
-```
-
-**Notification Preferences**:
-
-```python
-from finwiz.tools.notification_service import NotificationPreferences
-
-preferences = NotificationPreferences(
-    user_id="user_123",
-    email_enabled=True,
-    sms_enabled=True,
-    min_alert_level="MEDIUM",
-    quiet_hours_start="22:00",
-    quiet_hours_end="08:00"
 )
 ```
 
@@ -1375,29 +1348,14 @@ print(f"Status: {dashboard.status}")
 print(f"Active Alerts: {len(dashboard.active_alerts)}")
 ```
 
-**Send Notifications**:
-
-```python
-from finwiz.tools.notification_service import NotificationService
-
-service = NotificationService()
-
-# Send alert notification
-await service.send_notification(
-    user_id="user_123",
-    alert=alert,
-    notification_type="email"
-)
-```
-
 ### Alert Levels
 
-| Level        | Threshold       | Response Time | Notification   |
-| ------------ | --------------- | ------------- | -------------- |
-| **CRITICAL** | >10% deviation  | Immediate     | Email + SMS    |
-| **HIGH**     | 8-10% deviation | 1 hour        | Email + SMS    |
-| **MEDIUM**   | 5-8% deviation  | 4 hours       | Email          |
-| **LOW**      | 3-5% deviation  | 24 hours      | Email (digest) |
+| Level        | Threshold       | Response Time |
+| ------------ | --------------- | ------------- |
+| **CRITICAL** | >10% deviation  | Immediate     |
+| **HIGH**     | 8-10% deviation | 1 hour        |
+| **MEDIUM**   | 5-8% deviation  | 4 hours       |
+| **LOW**      | 3-5% deviation  | 24 hours      |
 
 ## Knowledge Base Strategy
 
@@ -1626,14 +1584,12 @@ Control feature flags using environment variables:
 ```bash
 # Enable/disable features
 FF_ENHANCED_SENTIMENT=true
-FF_ADVANCED_TECHNICAL=false
 FF_CHART_ANALYSIS=true
 FF_TWELVE_DATA=true
 FF_PERPLEXITY_RESEARCH=false
 
 # Percentage rollouts (0-100)
 FF_ENHANCED_SENTIMENT_ROLLOUT=75.0
-FF_ADVANCED_TECHNICAL_ROLLOUT=50.0
 
 # Circuit breaker thresholds
 FF_CHART_BREAKER_THRESHOLD=3
@@ -1753,7 +1709,6 @@ FINWIZ_GRACEFUL_DEGRADATION=true
 
 1. **Set Appropriate Thresholds**: Balance sensitivity vs noise
 2. **Configure Quiet Hours**: Respect user preferences
-3. **Test Notifications**: Verify email/SMS delivery
 
 ### Knowledge Base & Caching
 

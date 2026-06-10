@@ -1,15 +1,13 @@
 """
 Unit tests for the grading system utilities.
 
-Tests the conversion of composite scores to letter grades and
-the generation of portfolio-wide grade summaries.
+Tests the conversion of composite scores to letter grades.
 """
 
 from pytest import approx
 
 from finwiz.scoring.grading_system import (
     format_grade_display,
-    get_portfolio_grade_summary,
     score_to_grade,
 )
 
@@ -138,68 +136,6 @@ class TestFormatGradeDisplay:
         assert "⭐ A" == result
 
 
-class TestPortfolioGradeSummary:
-    """Test portfolio-wide grade analysis."""
-
-    def test_should_calculate_portfolio_average_correctly(self):
-        """Test portfolio average calculation."""
-        # Arrange
-        scores = [0.80, 0.70, 0.60]  # B+, C+, D
-
-        # Act
-        summary = get_portfolio_grade_summary(scores)
-
-        # Assert
-        assert abs(summary["average_score"] - 0.70) < 0.01  # Allow for floating point precision
-        assert abs(summary["average_percentage"] - 70.0) < 0.1
-        assert summary["average_grade"] == "C+"
-        assert summary["total_positions"] == 3
-
-    def test_should_calculate_grade_distribution(self):
-        """Test grade distribution calculation."""
-        # Arrange
-        scores = [0.88, 0.85, 0.77, 0.77, 0.00]  # A, A, B, B, F
-
-        # Act
-        summary = get_portfolio_grade_summary(scores)
-
-        # Assert
-        distribution = summary["distribution"]
-        assert distribution["A"]["count"] == 2
-        assert distribution["A"]["percentage"] == approx(40.0)
-        assert distribution["B"]["count"] == 2
-        assert distribution["B"]["percentage"] == approx(40.0)
-        assert distribution["F"]["count"] == 1
-        assert distribution["F"]["percentage"] == approx(20.0)
-
-    def test_should_handle_empty_portfolio(self):
-        """Test handling of empty portfolio."""
-        # Arrange
-        scores = []
-
-        # Act
-        summary = get_portfolio_grade_summary(scores)
-
-        # Assert
-        assert summary["average_grade"] == "N/A"
-        assert summary["total_positions"] == 0
-        assert summary["distribution"] == {}
-
-    def test_should_handle_single_position(self):
-        """Test handling of single position portfolio."""
-        # Arrange
-        scores = [0.85]
-
-        # Act
-        summary = get_portfolio_grade_summary(scores)
-
-        # Assert
-        assert summary["average_grade"] == "A"
-        assert summary["total_positions"] == 1
-        assert summary["distribution"]["A"]["count"] == 1
-        assert summary["distribution"]["A"]["percentage"] == approx(100.0)
-
-
 class TestGradeSystemIntegration:
     """Test integration scenarios."""
 
@@ -216,29 +152,3 @@ class TestGradeSystemIntegration:
             # Check that emoji and grade are consistent
             assert grade_info.emoji in formatted
             assert grade_info.grade in formatted
-
-    def test_should_handle_realistic_portfolio_scenario(self):
-        """Test with realistic portfolio scores."""
-        # Arrange - Typical portfolio with mostly good investments and few problems
-        realistic_scores = [
-            0.85,
-            0.82,
-            0.80,
-            0.78,
-            0.75,  # ETFs (good grades)
-            0.77,
-            0.75,
-            0.72,
-            0.68,  # Individual stocks (mixed)
-            0.00,
-            0.00,  # Two invalid positions
-        ]
-
-        # Act
-        summary = get_portfolio_grade_summary(realistic_scores)
-
-        # Assert
-        assert summary["total_positions"] == 11
-        assert 60 <= summary["average_percentage"] <= 75  # Adjusted range due to F grades
-        assert "F" in summary["distribution"]  # Should have failing grades
-        assert summary["distribution"]["F"]["count"] == 2  # Two failing positions

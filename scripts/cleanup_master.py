@@ -196,8 +196,8 @@ def main():
     """Execute master cleanup process."""
     print("🚀 FinWiz Master Cleanup Process")
     print("=" * 50)
-    print("This will clean up temporary files, organize documentation,")
-    print("and improve codebase structure while preserving all functionality.")
+    print("This will clean up temporary files and improve codebase structure")
+    print("while preserving all functionality.")
     print()
 
     # Confirm execution
@@ -212,7 +212,6 @@ def main():
     # Execute cleanup scripts
     scripts = [
         ("scripts/cleanup_temp_files.py", "Cleaning temporary files"),
-        ("scripts/organize_documentation.py", "Organizing documentation"),
     ]
 
     success_count = 0
@@ -231,7 +230,6 @@ def main():
     print(f"   • {success_count}/{len(scripts)} cleanup scripts executed successfully")
     print("   • Repository is now clean and well-organized")
     print("   • All functionality preserved")
-    print("   • Documentation follows Diátaxis framework")
     print("   • Future clutter prevention measures in place")
     print()
     print("📄 See CLEANUP_REPORT.md for detailed summary")

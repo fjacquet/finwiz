@@ -242,4 +242,3 @@ Investment Discovery integrates seamlessly with FinWiz's portfolio analysis:
 
 - **[Portfolio Rebalancing](../portfolio_rebalancing/index.md)** - Optimize your portfolio allocation
 - **[Risk Assessment](../reference/schemas/analysis_schemas.md)** - Understand investment risks
-- **[Performance Monitoring](../how-to/portfolio_monitoring.md)** - Track your investments

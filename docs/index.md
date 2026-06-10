@@ -25,22 +25,21 @@ FinWiz emphasizes **AI Minimalism** - using Python for deterministic tasks and A
 
 New to FinWiz? Start here:
 
-1. **[User Guide](USER_GUIDE.md)** - Complete guide for using FinWiz
-   - Installation and setup
-   - Core features and capabilities
-   - Portfolio analysis workflows
-   - Configuration and troubleshooting
+1. **[Getting Started Tutorial](tutorials/getting_started.md)** - Step-by-step walkthrough
+   - First-time setup
+   - Running your first analysis
+   - Understanding outputs
 
-2. **[Developer Guide](DEVELOPER_GUIDE.md)** - Architecture and development
+2. **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
    - System architecture overview
    - Code organization and patterns
    - Creating custom crews
    - Testing and deployment
 
-3. **[Getting Started Tutorial](tutorials/getting_started.md)** - Step-by-step walkthrough
-   - First-time setup
-   - Running your first analysis
-   - Understanding outputs
+3. **[Operations Guide](how-to/OPERATIONS_GUIDE.md)** - Running FinWiz in production
+   - Deployment and environment configuration
+   - Operations, monitoring, and maintenance
+   - Migration and troubleshooting
 
 ## Documentation Structure
 
@@ -59,7 +58,6 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 **Problem-solving** - Practical guides for specific tasks and configurations.
 
 - [Setup Environment](how-to/setup_environment.md) - Environment configuration
-- [Performance Optimization](how-to/performance_optimization.md) - Speed up analysis
 - [Batch Processing](how-to/BATCH_PROCESSING.md) - High-performance portfolio analysis
 - [Python Scoring Engine](how-to/PYTHON_SCORING_ENGINE.md) - Deterministic scoring
 - [Template Configuration](how-to/template_configuration.md) - Customize reports
@@ -71,7 +69,6 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 - [API Reference](reference/api/index.md) - Complete API documentation
 - [CLI Commands](reference/cli_commands.md) - Command-line interface
 - [Schema Documentation](reference/schemas/index.md) - Data models and validation
-- [Environment Variables](reference/environment_variables.md) - Configuration reference
 
 ### 💡 [Explanations](explanations/index.md)
 
@@ -207,16 +204,16 @@ Professional-grade quantitative analysis framework:
 
 ### Core Documentation
 
-- **[User Guide](USER_GUIDE.md)** - Complete user documentation
-- **[Developer Guide](DEVELOPER_GUIDE.md)** - Architecture and development
+- **[Getting Started](tutorials/getting_started.md)** - Setup and first analysis
+- **[Operations Guide](how-to/OPERATIONS_GUIDE.md)** - Deployment, operations, and migration
+- **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
 - **[API Reference](reference/api/index.md)** - API documentation
 - **[Tutorials](tutorials/index.md)** - Learning-oriented guides
 
 ### Troubleshooting
 
 - **[Troubleshooting Guide](how-to/troubleshooting.md)** - Common issues and solutions
-- **[Performance Guide](how-to/performance_optimization.md)** - Optimization tips
-- **[Developer Guide](DEVELOPER_GUIDE.md#testing)** - Testing strategies
+- **[Developer Guide](development/DEVELOPER_GUIDE.md#testing)** - Testing strategies
 
 ### Community
 
@@ -228,19 +225,18 @@ Professional-grade quantitative analysis framework:
 
 ### For Users
 
-- [Installation Guide](USER_GUIDE.md#installation)
+- [Installation Guide](tutorials/getting_started.md)
 - [First Analysis](tutorials/first_analysis.md)
-- [Portfolio Analysis](USER_GUIDE.md#portfolio-analysis)
-- [Configuration Reference](reference/environment_variables.md)
+- [Portfolio Analysis](tutorials/portfolio_analysis.md)
 - [Troubleshooting](how-to/troubleshooting.md)
 
 ### For Developers
 
-- [Architecture Overview](DEVELOPER_GUIDE.md#architecture-overview)
-- [Development Setup](DEVELOPER_GUIDE.md#development-setup)
-- [Creating Custom Crews](DEVELOPER_GUIDE.md#creating-custom-crews)
-- [Testing Guide](DEVELOPER_GUIDE.md#testing)
-- [Contributing](DEVELOPER_GUIDE.md#contributing)
+- [Architecture Overview](development/DEVELOPER_GUIDE.md#architecture-overview)
+- [Development Setup](development/DEVELOPER_GUIDE.md#development-setup)
+- [Creating Custom Crews](development/DEVELOPER_GUIDE.md#creating-custom-crews)
+- [Testing Guide](development/DEVELOPER_GUIDE.md#testing)
+- [Contributing](development/DEVELOPER_GUIDE.md#contributing)
 
 ### Key Features
 
@@ -333,7 +329,7 @@ FinWiz is released under the MIT License. See the [LICENSE](https://github.com/f
 
 ---
 
-**Ready to get started?** Check out the [User Guide](USER_GUIDE.md) or jump into a [tutorial](tutorials/getting_started.md)!
+**Ready to get started?** Jump into the [Getting Started tutorial](tutorials/getting_started.md) or see the [Operations Guide](how-to/OPERATIONS_GUIDE.md) for deployment!
 
 ---
 

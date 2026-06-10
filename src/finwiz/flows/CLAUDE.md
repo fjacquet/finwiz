@@ -28,7 +28,7 @@ flows/
 `FinwizFlow` coordinates 6 phases via orchestrator delegation:
 
 1. **Data Validation** → `ValidationOrchestrator`
-2. **Portfolio Review** → `EnhancedPortfolioReviewOrchestrator`
+2. **Portfolio Review** → `portfolio_review_orchestrator.run()` (via `ValidationOrchestrator`)
 3. **Deep Analysis** → `DeepAnalysisOrchestrator`
 4. **Discovery** (optional) → `DiscoveryOrchestrator`
 5. **Alternative Matching** → `AlternativesMatchingOrchestrator`

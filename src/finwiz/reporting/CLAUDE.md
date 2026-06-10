@@ -23,7 +23,6 @@ reporting/
 │
 ├── # HTML infrastructure
 ├── section_generators.py                # generate_executive_summary(), generate_holdings_analysis()
-├── portfolio_review_html.py             # generate_holdings_table(), generate_trades_table()
 ├── consolidator.py                      # ReportConsolidator
 ├── html_collector.py                    # collect_html_report_paths()
 ├── html_auto_generator.py               # auto_generate_html()
@@ -52,7 +51,6 @@ reporting/
 | `__init__.py` | `get_generator_for_crew()` | Get generator by crew name |
 | `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
-| `portfolio_review_html.py` | `generate_holdings_table()` | Holdings table with grades |
 | `consolidator.py` | `ReportConsolidator` | Consolidate multiple reports |
 | `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
 

@@ -393,14 +393,6 @@ class TestGetDefaultValues:
         assert result["article_count"] == 0
         assert result["source"] == "default"
 
-    def test_should_return_technical_defaults(self):
-        """Test default values for technical analysis."""
-        result = get_default_values("advanced_technical_analysis")
-
-        assert "indicators" in result
-        assert "confluence_zones" in result
-        assert "support_resistance" in result
-
     def test_should_return_chart_defaults(self):
         """Test default values for chart analysis."""
         result = get_default_values("chart_analysis")

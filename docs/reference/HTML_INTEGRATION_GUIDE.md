@@ -286,7 +286,7 @@ When migrating existing code:
 
 ## Examples
 
-See `examples/inline_html_example.py` for complete working examples of all integration methods.
+For integration examples, see the source code in `src/finwiz/reporting/` and `src/finwiz/templates/`.
 
 ## Troubleshooting
 

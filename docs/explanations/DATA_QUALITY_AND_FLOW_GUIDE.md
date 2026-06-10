@@ -341,22 +341,6 @@ Data quality may be reduced. Re-run with --deep-analysis for full accuracy.
 
 ## Data Quality Verification
 
-### Automated Verification Script
-
-Use the provided script to verify data quality:
-
-```bash
-# Run data quality verification
-./scripts/verify_data_quality.sh
-
-# Expected output:
-# ✅ Crew outputs exist
-# ✅ Portfolio review has actual grades (not all Grade D)
-# ✅ Report has no example.com URLs
-# ✅ Report has no "NOT PROVIDED" messages
-# ✅ Data quality score: 95%
-```
-
 ### Manual Verification Steps
 
 #### 1. Verify Crew Outputs Exist
@@ -915,9 +899,7 @@ uv run python src/finwiz/main.py
 
 ### 2. Verify Data Quality After Each Run
 
-```bash
-./scripts/verify_data_quality.sh
-```
+Follow the [Manual Verification Steps](#manual-verification-steps) above after each run.
 
 ### 3. Monitor Quality Metrics Over Time
 
@@ -968,7 +950,7 @@ def test_data_quality():
 
 - **[Data Quality and Flow Guide](DATA_QUALITY_AND_FLOW_GUIDE.md)**: Comprehensive data quality standards
 - **[API Reference](../reference/API_REFERENCE.md)**: Data quality component API documentation
-- **[Developer Guide](../DEVELOPER_GUIDE.md)**: Development standards and patterns
+- **[Developer Guide](../development/DEVELOPER_GUIDE.md)**: Development standards and patterns
 - **[Architecture Guide](ARCHITECTURE.md)**: System architecture overview
 
 ---

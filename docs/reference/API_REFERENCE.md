@@ -7,9 +7,7 @@ Complete API documentation for FinWiz financial analysis platform.
 - [Crew APIs](api/crews.md) - AI agent crews for analysis
 - [Tool APIs](api/tools.md) - Financial analysis tools
 - [Schema APIs](api/schemas.md) - Data models and validation
-- [Flow APIs](api/flows.md) - Workflow orchestration
-- [CLI Commands](api/cli_commands.md) - Command-line interface
-- [Configuration](api/configuration.md) - System configuration
+- [CLI Commands](cli_commands.md) - Command-line interface
 
 ## Analysis Crews
 
@@ -72,25 +70,12 @@ CrewAI Flow orchestration:
 - **State Management** - Pydantic-based flow state
 - **Flow Listeners** - Event-driven workflow steps
 
-See [Flow APIs](api/flows.md) for complete documentation.
-
-## Configuration Reference
-
-System and crew configuration:
-
-- **Environment Variables** - API keys and settings
-- **Agent Configuration** - Agent behavior and parameters
-- **Task Configuration** - Task definitions and dependencies
-- **Tool Configuration** - Tool initialization and settings
-
-See [Configuration Reference](configuration.md) for complete documentation.
-
 ## Getting Started
 
 New to the FinWiz API? Check out these resources:
 
-- [User Guide](../USER_GUIDE.md) - End-user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Development guide
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment and operations
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Development guide
 - [Tutorials](../tutorials/index.md) - Step-by-step tutorials
 
 ## API Examples
@@ -116,7 +101,4 @@ result = flow.kickoff()
 
 ## See Also
 
-- [CLI Options](../reference/cli_options.md) - Command-line options
-- [Environment Variables](../reference/environment_variables.md) - Configuration
-- [Rate Limits](../reference/rate_limits.md) - API rate limiting
-- [Error Reference](../reference/api_errors.md) - Error codes and handling
+- [CLI Commands](cli_commands.md) - Command-line reference

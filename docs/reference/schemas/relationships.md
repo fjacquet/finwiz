@@ -391,4 +391,3 @@ def validate_analysis_pipeline(raw_data: dict) -> TenKInsight:
 - [Discovery Schemas](discovery_schemas.md) - Investment discovery schemas
 - [Validation Schemas](validation_schemas.md) - Input validation and error handling
 - [API Reference](../api/schemas.md) - Programmatic schema usage
-- [Validation Guide](../../how-to/data_validation.md) - Implementing validation workflows

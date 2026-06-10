@@ -163,12 +163,6 @@ To verify the exact cause, check:
 3. **Configuration** - is deep analysis enabled?
 4. **Environment variables** - are all required API keys set?
 
-## Related Documentation
-
-- [Performance Troubleshooting](performance_troubleshooting.md)
-- [API Troubleshooting](api_troubleshooting.md)
-- [Deep Analysis Integration](DEEP_ANALYSIS_INTEGRATION.md)
-
 ---
 
 **Version**: 1.0

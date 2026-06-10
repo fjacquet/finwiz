@@ -5,9 +5,8 @@ This module contains business logic orchestration for portfolio review:
 - Configuration and thresholds
 - Holdings decision building (pure functions)
 - Portfolio review building and execution
-- Integration with rebalancing
 
-HTML generation is delegated to reporting layer (finwiz.reporting.portfolio_review_html).
+HTML generation is delegated to the reporting layer (finwiz.reporting.python_report_generator).
 """
 
 from __future__ import annotations
@@ -241,83 +240,6 @@ def save_review_json(
 # =============================================================================
 
 
-async def run_with_rebalancing(
-    target_weights: dict[str, float] | None = None,
-    available_capital: float = 0.0,
-    include_rebalancing: bool = True,
-    flow_state: Any | None = None,
-) -> tuple[Path, dict[str, Any] | None]:
-    """
-    Run portfolio review process with optional rebalancing analysis.
-
-    Args:
-        target_weights: Target allocation weights for rebalancing
-        available_capital: Available capital for rebalancing
-        include_rebalancing: Whether to include rebalancing analysis
-        flow_state: Optional Flow state containing deep analysis results
-
-    Returns:
-        Tuple of (review_path, rebalancing_result)
-
-    """
-    etf_csv, stock_csv, crypto_csv = get_csv_paths()
-
-    logger.info("Running portfolio review with holdings processor")
-    review, summary = await build_portfolio_review(
-        stock_csv=stock_csv,
-        etf_csv=etf_csv,
-        crypto_csv=crypto_csv,
-        flow_state=flow_state,
-    )
-
-    logger.info(f"Holdings processed: {len(review.holdings)} decisions from {summary.total_holdings} CSV entries")
-    logger.info(f"By asset class: {summary.by_asset_class}")
-
-    project_root = Path(__file__).resolve().parents[3]
-    out = project_root / "output" / "portfolio" / "portfolio_review.json"
-    save_review_json(review, out, summary)
-
-    rebalancing_result = None
-
-    if include_rebalancing and target_weights:
-        try:
-            from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrchestrator
-            from finwiz.schemas.portfolio_rebalancing import Holding, PortfolioConfiguration
-
-            holdings = []
-            for decision in review.holdings:
-                if decision.decision == "KEEP":
-                    holdings.append(
-                        Holding(
-                            symbol=decision.ticker,
-                            shares=100.0,  # Placeholder
-                            cost_basis=None,
-                            acquisition_date=None,
-                        )
-                    )
-
-            if holdings:
-                config = PortfolioConfiguration(
-                    holdings=holdings,
-                    target_weights=target_weights,
-                    available_capital=available_capital,
-                    global_tolerance=0.05,
-                )
-
-                orchestrator = PortfolioRebalancingOrchestrator()
-                rebalancing_result = await orchestrator.rebalance_portfolio(config)
-
-                rebalancing_out = project_root / "output" / "portfolio" / "rebalancing_analysis.json"
-                rebalancing_out.parent.mkdir(parents=True, exist_ok=True)
-                rebalancing_out.write_text(rebalancing_result.model_dump_json(indent=2), encoding="utf-8")
-
-        except Exception as e:
-            logger.warning(f"Rebalancing analysis failed: {e}")
-            rebalancing_result = None
-
-    return out, rebalancing_result.model_dump() if rebalancing_result else None
-
-
 async def run(flow_state: Any | None = None) -> Path:
     """Run standard portfolio review process with parallel holdings processing."""
     etf_csv, stock_csv, crypto_csv = get_csv_paths()
@@ -345,6 +267,5 @@ __all__ = [
     "get_csv_paths",
     "get_thresholds",
     "run",
-    "run_with_rebalancing",
     "save_review_json",
 ]

@@ -158,8 +158,7 @@ nav:
   - Home: index.md
 
   - Getting Started:
-      - User Guide: USER_GUIDE.md
-      - Developer Guide: DEVELOPER_GUIDE.md
+      - Developer Guide: development/DEVELOPER_GUIDE.md
       - Quick Reference: QUICK_REFERENCE.md
       - Requirements: REQUIREMENTS.md
 
@@ -168,32 +167,21 @@ nav:
       - Getting Started: tutorials/getting_started.md
       - First Analysis: tutorials/first_analysis.md
       - Portfolio Analysis: tutorials/portfolio_analysis.md
-      - Deep Analysis: tutorials/DEEP_ANALYSIS_CREW.md
 
   - How-To Guides:
       - how-to/index.md
+      - Operations Guide: how-to/OPERATIONS_GUIDE.md
       - Setup Environment: how-to/setup_environment.md
-      - Configure API Keys: how-to/configure_api_keys.md
       - Performance Optimization: how-to/PERFORMANCE_OPTIMIZATION_GUIDE.md
       - Memory Management: how-to/MEMORY_MANAGEMENT.md
-      - Deployment Guide: how-to/DEPLOYMENT_QUICK_REFERENCE.md
       - Deep Analysis Troubleshooting: how-to/deep_analysis_troubleshooting.md
       - Batch Processing: how-to/BATCH_PROCESSING.md
 
   - Reference:
       - reference/index.md
       - API Reference: reference/API_REFERENCE.md
-      - Agent Handbook: reference/agent_handbook.md
-      - CLI Options: reference/cli_options.md
-      - Environment Variables: reference/environment_variables.md
-      - Configuration: reference/configuration.md
-      - Performance: reference/performance.md
-      - Rate Limits: reference/rate_limits.md
       - API:
           - API Overview: reference/api/index.md
-          - Flows: reference/api/flows.md
-          - Configuration: reference/api/configuration.md
-          - CLI Commands: reference/api/cli_commands.md
       - Schemas:
           - Schema Overview: reference/schemas/index.md
 

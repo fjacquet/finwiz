@@ -379,7 +379,6 @@ class ScoringThresholds:
 
 - [Recommendation Engine](recommendation_engine.md) - BUY/HOLD/SELL logic
 - [Investment Methodology](investment_methodology.md) - Overall philosophy
-- [Data Quality](../reference/data_quality.md) - Validation rules
 - [Risk Framework](deep_analysis.md) - Risk assessment details
 - [Quantitative Analysis](../reference/quantitative_analysis.md) - Technical indicators
 

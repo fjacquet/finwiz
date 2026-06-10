@@ -36,9 +36,7 @@ Explanations are **understanding-oriented** discussions that provide context and
 
 ### Integration Patterns
 
-- **[Deep Analysis Integration](DEEP_ANALYSIS_INTEGRATION.md)** - Deep analysis integration
 - **[Python Pipeline](python_pipeline/overview.md)** - Pure Python analysis pipeline
-- **[Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)** - Notification system
 
 ### Reporting
 
@@ -106,7 +104,6 @@ Understand design decisions and trade-offs:
 
 1. [Design Principles](design_principles.md)
 2. [Optimization Theory](optimization_theory.md)
-3. [Notification Service](NOTIFICATION_SERVICE_ARCHITECTURE.md)
 
 ## Key Concepts
 
@@ -248,8 +245,8 @@ Portfolio CSV → Data Accessor → Validation → Cache
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
 
@@ -258,7 +255,6 @@ Portfolio CSV → Data Accessor → Validation → Cache
 
 ### How-To Guides
 
-- [Performance Optimization](../how-to/performance_optimization.md) - Optimization
 - [Batch Processing](../how-to/BATCH_PROCESSING.md) - High-performance analysis
 
 ### Reference
@@ -276,7 +272,7 @@ Good explanations should:
 - **Link to Code**: Reference actual implementation
 - **Stay Current**: Update with architectural changes
 
-See [Developer Guide](../DEVELOPER_GUIDE.md#contributing) for contribution guidelines.
+See [Developer Guide](../development/DEVELOPER_GUIDE.md#contributing) for contribution guidelines.
 
 ## Need Help?
 

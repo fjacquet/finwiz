@@ -52,17 +52,15 @@ Tutorials are **learning-oriented** lessons that guide you through completing sp
 
 After completing the beginner track:
 
-1. [Performance Optimization](../how-to/performance_optimization.md) - Speed up analysis
-2. [Batch Processing](../how-to/BATCH_PROCESSING.md) - High-performance portfolio analysis
-3. [Template Configuration](../how-to/template_configuration.md) - Customize reports
+1. [Batch Processing](../how-to/BATCH_PROCESSING.md) - High-performance portfolio analysis
+2. [Template Configuration](../how-to/template_configuration.md) - Customize reports
 
 ### Advanced Track
 
 For power users and developers:
 
 1. [Python Scoring Engine](../how-to/PYTHON_SCORING_ENGINE.md) - Deterministic scoring
-2. [Custom Workflows](../how-to/custom_workflows.md) - Build custom analysis flows
-3. [Developer Guide](../DEVELOPER_GUIDE.md) - Contribute to FinWiz
+2. [Developer Guide](../development/DEVELOPER_GUIDE.md) - Contribute to FinWiz
 
 ## Tutorial Format
 
@@ -79,8 +77,8 @@ Each tutorial includes:
 
 ### Core Documentation
 
-- [User Guide](../USER_GUIDE.md) - Complete user documentation
-- [Developer Guide](../DEVELOPER_GUIDE.md) - Architecture and development
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
+- [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### How-To Guides
 
@@ -90,7 +88,6 @@ Each tutorial includes:
 ### Reference
 
 - [CLI Commands](../reference/cli_commands.md) - Command reference
-- [Environment Variables](../reference/environment_variables.md) - Configuration reference
 
 ### Explanations
 

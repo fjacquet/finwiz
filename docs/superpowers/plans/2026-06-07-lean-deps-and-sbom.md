@@ -40,6 +40,7 @@
 ## Task 1: Local text chunker (replaces CharacterTextSplitter)
 
 **Files:**
+
 - Create: `src/finwiz/tools/_text_chunking.py`
 - Test: `tests/unit/tools/test_text_chunking.py`
 
@@ -164,6 +165,7 @@ git commit -m "feat(tools): add local text chunker to replace CharacterTextSplit
 ## Task 2: Refactor `enhanced_sec_tool.py` (bs4 + chunker, drop sec_api)
 
 **Files:**
+
 - Modify: `src/finwiz/tools/enhanced_sec_tool.py`
 - Test: `tests/unit/tools/test_enhanced_sec_tool.py` (existing — must stay green; it patches `_get_filing_date_from_api` and `_download_html`, not the removed symbols)
 
@@ -298,6 +300,7 @@ git commit -m "refactor(sec): replace unstructured/text-splitter/sec_api with bs
 ## Task 3: Delete dead `sec_tool.py` → unblock langchain-community removal
 
 **Files:**
+
 - Delete: `src/finwiz/tools/sec_tool.py`, `tests/unit/tools/test_sec_tool.py`
 - Modify: `src/finwiz/tools/finance_tools.py`, `src/finwiz/schemas/tools/inputs.py`, `src/finwiz/schemas/tools/__init__.py`
 
@@ -358,6 +361,7 @@ git commit -m "chore(deps): remove dead sec_tool.py and unwire SECFilingSearchTo
 ## Task 4: Remove the unused FastAPI module
 
 **Files:**
+
 - Delete: `src/finwiz/api/`, `src/finwiz/schemas/api/`, `tests/unit/api/`, `tests/unit/schemas/api/`
 
 - [ ] **Step 1: Confirm nothing in the flow imports the API**
@@ -393,6 +397,7 @@ git commit -m "chore(api): remove unused FastAPI module (drops fastapi/starlette
 ## Task 5: Drop the 5 dependencies, re-lock, and verify the whole suite
 
 **Files:**
+
 - Modify: `pyproject.toml`, `uv.lock`
 
 - [ ] **Step 1: Remove the 5 deps from `pyproject.toml` dependencies**
@@ -461,6 +466,7 @@ git commit -m "chore(deps): drop fastapi, langchain-community, unstructured, lan
 ## Task 6: SBOM + CVE gate (CycloneDX + osv-scanner)
 
 **Files:**
+
 - Create: `osv-scanner.toml`, `.github/workflows/supply-chain.yml`
 - Modify: `Makefile`
 
@@ -488,12 +494,12 @@ Add to the `.PHONY` line (line 3) the names `sbom audit`, then append at the end
 .PHONY: sbom audit
 
 sbom:  ## Generate a CycloneDX SBOM to dist/finwiz.sbom.cdx.json
-	@mkdir -p dist
-	uv run cyclonedx-py environment --output-format JSON --output-file dist/finwiz.sbom.cdx.json
-	@echo "SBOM written to dist/finwiz.sbom.cdx.json"
+ @mkdir -p dist
+ uv run cyclonedx-py environment --output-format JSON --output-file dist/finwiz.sbom.cdx.json
+ @echo "SBOM written to dist/finwiz.sbom.cdx.json"
 
 audit:  ## Scan installed dependencies for known vulnerabilities (chromadb allowlisted)
-	uv run pip-audit --ignore-vuln GHSA-f4j7-r4q5-qw2c
+ uv run pip-audit --ignore-vuln GHSA-f4j7-r4q5-qw2c
 ```
 
 - [ ] **Step 3: Verify SBOM + audit locally**
@@ -577,6 +583,7 @@ git commit -m "ci(supply-chain): CycloneDX SBOM + osv-scanner CVE gate; make sbo
 ## Task 7: Dependency policy doc + CHANGELOG + version bump
 
 **Files:**
+
 - Create: `docs/development/dependencies.md`
 - Modify: `CHANGELOG.md`, `pyproject.toml`
 

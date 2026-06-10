@@ -129,7 +129,6 @@ Enable or disable specific features:
 # Feature Flags
 FF_PERPLEXITY_RESEARCH=false
 FF_ENHANCED_SENTIMENT=true
-FF_ADVANCED_TECHNICAL=true
 FF_CHART_ANALYSIS=true
 PORTFOLIO_REVIEW_ENABLED=true
 DEEP_PORTFOLIO_ANALYSIS=true
@@ -369,7 +368,6 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | -------------------------- | ------- | --------------------------- |
 | `FF_PERPLEXITY_RESEARCH`   | `false` | Perplexity integration      |
 | `FF_ENHANCED_SENTIMENT`    | `true`  | Enhanced sentiment analysis |
-| `FF_ADVANCED_TECHNICAL`    | `true`  | Advanced technical analysis |
 | `PORTFOLIO_REVIEW_ENABLED` | `true`  | Portfolio review feature    |
 
 ## Troubleshooting
@@ -514,7 +512,6 @@ After setting up your environment:
 ## Related Documentation
 
 - [Getting Started Tutorial](../tutorials/getting_started.md)
-- [Performance Configuration](performance_optimization.md)
 - [Template Configuration](template_configuration.md)
 - [API Reference](../reference/api/index.md)
 

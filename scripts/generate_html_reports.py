@@ -15,7 +15,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from finwiz.integration.html_auto_generator import auto_generate_html
+from finwiz.reporting.html_auto_generator import auto_generate_html
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)

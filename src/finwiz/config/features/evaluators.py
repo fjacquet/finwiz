@@ -155,11 +155,6 @@ def get_default_values(flag_name: str) -> Any:
     """
     defaults = {
         "enhanced_sentiment_analysis": {"sentiment_score": 0.0, "article_count": 0, "trending_topics": [], "source": "default"},
-        "advanced_technical_analysis": {
-            "indicators": {},
-            "confluence_zones": [],
-            "support_resistance": {"support": [], "resistance": []},
-        },
         "chart_analysis": {"chart_url": None, "pattern_insights": [], "visual_analysis": "Chart analysis unavailable"},
         "perplexity_research": {
             "sonar_articles": [],

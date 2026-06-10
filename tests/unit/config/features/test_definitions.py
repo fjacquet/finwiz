@@ -167,7 +167,6 @@ class TestCreateDefaultFlags:
         flags = create_default_flags()
 
         assert "enhanced_sentiment_analysis" in flags
-        assert "advanced_technical_analysis" in flags
         assert "chart_analysis" in flags
         assert "perplexity_research" in flags
 

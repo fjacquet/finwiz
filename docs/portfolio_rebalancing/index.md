@@ -260,8 +260,6 @@ risk_parity_weights = optimizer.calculate_risk_parity_weights(
 ### Advanced Topics
 
 - **[Risk Management Strategies](../how-to/risk_management.md)** - Advanced risk management techniques
-- **[Custom Optimization](../how-to/custom_optimization.md)** - Create custom optimization objectives
-- **[Backtesting](../how-to/backtesting.md)** - Test rebalancing strategies historically
 
 ## Integration with FinWiz
 

@@ -366,6 +366,5 @@ def test_ticker_validation(ticker):
 ## Related Documentation
 
 - **[API Reference](../api/index.md)** - How to use schemas in API calls
-- **[Validation Guide](../../how-to/data_validation.md)** - Implementing validation
-- **[Error Handling](../../DEVELOPER_GUIDE.md#error-handling)** - Error handling strategies
-- **[Testing Guide](../../DEVELOPER_GUIDE.md#testing)** - Testing schema validation
+- **[Error Handling](../../development/DEVELOPER_GUIDE.md)** - Error handling strategies
+- **[Testing Guide](../../development/DEVELOPER_GUIDE.md#testing)** - Testing schema validation

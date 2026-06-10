@@ -7,7 +7,7 @@ tags:
   - "setup"
   - "installation"
 date: "2025-10-26"
-source: "tutorials/USER_GUIDE.md"
+source: "how-to/OPERATIONS_GUIDE.md"
 ---
 
 # Getting Started with FinWiz

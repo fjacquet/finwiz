@@ -277,6 +277,4 @@ llm = get_configured_llm(model_type="standard")
 
 ## See Also
 
-- [Performance Configuration](how-to/performance_optimization.md)
-- [Environment Variables](reference/environment_variables.md)
 - CrewAI Standards (.kiro/steering/crewai-standards.md in project root)

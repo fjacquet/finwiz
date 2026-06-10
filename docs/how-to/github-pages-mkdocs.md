@@ -18,14 +18,6 @@ To disable Jekyll processing, we create a `.nojekyll` file in the root of the bu
 
 The `.nojekyll` file is automatically created during the build process:
 
-**In `scripts/build_docs.py`:**
-
-```python
-# Create .nojekyll file to disable GitHub Pages Jekyll processing
-nojekyll_file = self.build_dir / ".nojekyll"
-nojekyll_file.touch()
-```
-
 **In `Makefile`:**
 
 ```makefile
