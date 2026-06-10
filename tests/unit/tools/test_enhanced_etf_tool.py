@@ -83,9 +83,19 @@ class TestEnhancedETFAnalysisTool:
         </html>
         """
 
-    def test_should_normalize_ticker_input(self, tool):
+    def test_should_normalize_ticker_input(self, tool, mocker):
         """Test ticker normalization."""
-        # Arrange & Act
+        # Arrange — mock the network boundary so no real HTTP calls are made
+        mock_factsheet = mocker.patch.object(tool, "_extract_factsheet_data")
+        mock_factsheet.return_value = {
+            "issuer": "SPDR",
+            "expense_ratio": 0.09,
+            "factsheet_url": "https://test.com",
+            "as_of": "2024-01-01",
+            "factsheet_highlights": [],
+        }
+
+        # Act
         result = tool._run(ticker="  spy  ", include_holdings=False, include_risk_assessment=False)
 
         # Assert
@@ -372,7 +382,7 @@ class TestIntegrationScenarios:
 
     def test_should_handle_risk_assessment_disabled(self, tool, mocker):
         """Test behavior when risk assessment is disabled."""
-        # Arrange & Act
+        # Arrange — mock both network boundaries
         mock_factsheet = mocker.patch.object(tool, "_extract_factsheet_data")
         mock_factsheet.return_value = {
             "issuer": "Test",
@@ -381,6 +391,7 @@ class TestIntegrationScenarios:
             "as_of": date.today(),
             "factsheet_highlights": [],
         }
+        mocker.patch.object(tool, "_extract_top_holdings", return_value=[])
 
         result = tool._run(ticker="SPY", include_risk_assessment=False)
 
