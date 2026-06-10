@@ -1532,41 +1532,40 @@ The FinWiz feature flag system provides:
 - **Circuit breaker patterns** for service reliability
 - **Graceful degradation** when services fail
 - **Centralized API key management** with validation
-- **Multiple evaluation strategies** (boolean, percentage, user lists, time windows)
+- **Multiple evaluation strategies** (boolean, percentage, circuit_breaker)
 
 ### Quick Start
 
 #### Basic Feature Flag Usage
 
 ```python
-from finwiz.utils.feature_flags import is_feature_enabled, execute_with_feature_flag
+from finwiz.config.features.flags import is_feature_enabled, execute_with_feature_flag
 
-# Check if a feature is enabled
-if is_feature_enabled("enhanced_sentiment_analysis"):
-    result = perform_enhanced_analysis()
+# Check if a feature is enabled (perplexity_research uses circuit_breaker strategy)
+if is_feature_enabled("perplexity_research"):
+    result = perform_perplexity_research()
 else:
-    result = perform_basic_analysis()
+    result = perform_basic_research()
 
-# Execute with automatic fallback
+# Execute with automatic fallback — circuit breaker opens after FF_PERPLEXITY_BREAKER_THRESHOLD failures
 result = execute_with_feature_flag(
-    "enhanced_sentiment_analysis",
-    primary_function=perform_enhanced_analysis,
-    fallback_function=perform_basic_analysis,
-    ticker="AAPL"
+    "perplexity_research",
+    primary_func=perform_perplexity_research,
+    fallback_func=perform_basic_research,
 )
 ```
 
 #### Configuration Management
 
 ```python
-from finwiz.utils.configuration_manager import validate_startup_configuration, get_api_key
+from finwiz.config.manager import validate_startup_configuration, get_api_key
 
 # Validate all required API keys at startup
 try:
     validate_startup_configuration()
-    print("✅ All required API keys configured")
+    print("All required API keys configured")
 except ConfigurationError as e:
-    print(f"❌ Configuration error: {e.remediation_guidance}")
+    print(f"Configuration error: {e.remediation_guidance}")
 
 # Get API key for a service
 openai_key = get_api_key("OpenAI")
@@ -1582,21 +1581,46 @@ if openai_key:
 Control feature flags using environment variables:
 
 ```bash
-# Enable/disable features
-FF_ENHANCED_SENTIMENT=true
-FF_CHART_ANALYSIS=true
-FF_TWELVE_DATA=true
-FF_PERPLEXITY_RESEARCH=false
+# Enable/disable features (boolean strategy)
+FF_STOCK_ANALYSIS=true
+FF_ETF_ANALYSIS=true
+FF_CRYPTO_ANALYSIS=true
+FF_STOCK_SCREENING=true
+FF_STRICT_VALIDATION=true
+FF_NEWCOMER_DISCOVERY=true
+FF_PORTFOLIO_AWARE_DISCOVERY=true
+FF_MONITORING=false
+FF_SENTIMENT_SCORING=false
+FF_MACRO_SCORING=false
+FF_ECONOMIC_CALENDAR=false
 
-# Percentage rollouts (0-100)
-FF_ENHANCED_SENTIMENT_ROLLOUT=75.0
+# Circuit-breaker-guarded integrations (fail-safe: flag stays enabled but circuit opens on errors)
+FF_PERPLEXITY_RESEARCH=true
+FF_FINNHUB_NEWS=false
+FF_FRED_MACRO=false
+FF_FEAR_GREED=false
+FF_QUANTITATIVE_BACKTESTING=true
 
-# Circuit breaker thresholds
-FF_CHART_BREAKER_THRESHOLD=3
-FF_CHART_BREAKER_TIMEOUT=300
-FF_TWELVE_DATA_BREAKER_THRESHOLD=5
-FF_PERPLEXITY_BREAKER_THRESHOLD=5
-FF_PERPLEXITY_BREAKER_TIMEOUT=300
+# Circuit breaker tuning
+FF_PERPLEXITY_BREAKER_THRESHOLD=5     # failures before open
+FF_PERPLEXITY_BREAKER_TIMEOUT=300     # seconds before retry
+FF_BACKTEST_BREAKER_THRESHOLD=3
+FF_BACKTEST_BREAKER_TIMEOUT=600
+FF_FINNHUB_BREAKER_THRESHOLD=5
+FF_FINNHUB_BREAKER_TIMEOUT=300
+FF_FRED_BREAKER_THRESHOLD=5
+FF_FRED_BREAKER_TIMEOUT=600
+FF_FEAR_GREED_BREAKER_THRESHOLD=3
+FF_FEAR_GREED_BREAKER_TIMEOUT=600
+
+# Percentage-rollout features
+FF_QUANTITATIVE_ANALYSIS=true
+FF_QUANTITATIVE_ANALYSIS_ROLLOUT=1.0  # 0.0-1.0
+FF_INVESTMENT_DISCOVERY=true
+FF_INVESTMENT_DISCOVERY_ROLLOUT=1.0
+FF_PORTFOLIO_REBALANCING=false
+FF_PORTFOLIO_REBALANCING_ROLLOUT=0.0
+FF_STRICT_VALIDATION_ROLLOUT=1.0
 ```
 
 #### API Key Configuration
