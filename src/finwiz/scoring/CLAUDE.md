@@ -43,7 +43,7 @@ scoring/
 |------|---------------|---------|
 | `deep_analysis_scorer.py` | `DeepAnalysisScorer` | Composite scoring engine |
 | `grading_system.py` | `score_to_grade()` | Convert score (0-1) to letter grade (A+ to F) |
-| `grading_system.py` | `GradeInfo` | Grade with label, CSS class, description |
+| `grading_system.py` | `GradeInfo` | Grade with label, description, action |
 | `portfolio_deep_analyzer.py` | `analyze_portfolio_with_python()` | Score entire portfolio |
 | `asset_analyzers/factory.py` | `AnalyzerFactory` | Get analyzer by asset class |
 

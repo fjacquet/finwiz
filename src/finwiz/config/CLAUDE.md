@@ -61,7 +61,7 @@ from finwiz.config.features.flags import is_feature_enabled
 
 settings = get_settings()
 if is_feature_enabled("newcomer_discovery"):
-    batch_size = settings.deep_analysis_batch_size
+    time_budget = settings.max_batch_processing_time_seconds
 ```
 
 ## Related Modules
