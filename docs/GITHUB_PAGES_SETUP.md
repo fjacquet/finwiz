@@ -89,14 +89,12 @@ python3 -m http.server 8000
 
 ```
 docs/
-├── _config.yml           # Jekyll configuration
 ├── index.md              # Homepage
-├── README.md             # Project overview
-├── DEVELOPER_GUIDE.md    # Development guide
 ├── tutorials/            # Learning-oriented guides
-├── how-to/               # Problem-solving guides
+├── how-to/               # Problem-solving guides (incl. Operations Guide)
 ├── reference/            # Technical references
-└── explanations/         # Understanding-oriented content
+├── explanations/         # Understanding-oriented content
+└── development/          # Developer guide and dependency policy
 ```
 
 ## Key Files

@@ -77,7 +77,7 @@ Each tutorial includes:
 
 ### Core Documentation
 
-- [User Guide](USER_GUIDE.md) - Complete user documentation
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
 - [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### How-To Guides

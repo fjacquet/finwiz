@@ -112,7 +112,7 @@ All reference material follows these standards:
 
 ### Core Documentation
 
-- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
 - [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
@@ -168,7 +168,7 @@ See [Contributing Guidelines](../development/DEVELOPER_GUIDE.md#contributing) fo
 
 ## Need Help?
 
-- **Can't find something?** Check [User Guide](../tutorials/USER_GUIDE.md)
+- **Can't find something?** Check [Getting Started](../tutorials/getting_started.md) or the [Operations Guide](../how-to/OPERATIONS_GUIDE.md)
 - **Need examples?** See [Tutorials](../tutorials/index.md)
 - **Have questions?** Visit [GitHub Discussions](https://github.com/fjacquet/finwiz/discussions)
 - **Found an error?** Report via [GitHub Issues](https://github.com/fjacquet/finwiz/issues)

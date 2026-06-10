@@ -74,7 +74,7 @@ CrewAI Flow orchestration:
 
 New to the FinWiz API? Check out these resources:
 
-- [User Guide](../tutorials/USER_GUIDE.md) - End-user documentation
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment and operations
 - [Developer Guide](../development/DEVELOPER_GUIDE.md) - Development guide
 - [Tutorials](../tutorials/index.md) - Step-by-step tutorials
 

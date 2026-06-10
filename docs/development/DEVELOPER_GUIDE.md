@@ -1854,7 +1854,7 @@ jobs:
 
 ## Additional Resources
 
-- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
 - [API Reference](../reference/API_REFERENCE.md) - API documentation
 - [Architecture Overview](../explanations/ARCHITECTURE.md) - System design
 - [Testing Guide](#testing) - Testing best practices

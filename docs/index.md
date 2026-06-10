@@ -25,11 +25,10 @@ FinWiz emphasizes **AI Minimalism** - using Python for deterministic tasks and A
 
 New to FinWiz? Start here:
 
-1. **[User Guide](tutorials/USER_GUIDE.md)** - Complete guide for using FinWiz
-   - Installation and setup
-   - Core features and capabilities
-   - Portfolio analysis workflows
-   - Configuration and troubleshooting
+1. **[Getting Started Tutorial](tutorials/getting_started.md)** - Step-by-step walkthrough
+   - First-time setup
+   - Running your first analysis
+   - Understanding outputs
 
 2. **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
    - System architecture overview
@@ -37,10 +36,10 @@ New to FinWiz? Start here:
    - Creating custom crews
    - Testing and deployment
 
-3. **[Getting Started Tutorial](tutorials/getting_started.md)** - Step-by-step walkthrough
-   - First-time setup
-   - Running your first analysis
-   - Understanding outputs
+3. **[Operations Guide](how-to/OPERATIONS_GUIDE.md)** - Running FinWiz in production
+   - Deployment and environment configuration
+   - Operations, monitoring, and maintenance
+   - Migration and troubleshooting
 
 ## Documentation Structure
 
@@ -205,7 +204,8 @@ Professional-grade quantitative analysis framework:
 
 ### Core Documentation
 
-- **[User Guide](tutorials/USER_GUIDE.md)** - Complete user documentation
+- **[Getting Started](tutorials/getting_started.md)** - Setup and first analysis
+- **[Operations Guide](how-to/OPERATIONS_GUIDE.md)** - Deployment, operations, and migration
 - **[Developer Guide](development/DEVELOPER_GUIDE.md)** - Architecture and development
 - **[API Reference](reference/api/index.md)** - API documentation
 - **[Tutorials](tutorials/index.md)** - Learning-oriented guides
@@ -225,9 +225,9 @@ Professional-grade quantitative analysis framework:
 
 ### For Users
 
-- [Installation Guide](tutorials/USER_GUIDE.md#installation)
+- [Installation Guide](tutorials/getting_started.md)
 - [First Analysis](tutorials/first_analysis.md)
-- [Portfolio Analysis](tutorials/USER_GUIDE.md)
+- [Portfolio Analysis](tutorials/portfolio_analysis.md)
 - [Troubleshooting](how-to/troubleshooting.md)
 
 ### For Developers
@@ -329,7 +329,7 @@ FinWiz is released under the MIT License. See the [LICENSE](https://github.com/f
 
 ---
 
-**Ready to get started?** Check out the [User Guide](tutorials/USER_GUIDE.md) or jump into a [tutorial](tutorials/getting_started.md)!
+**Ready to get started?** Jump into the [Getting Started tutorial](tutorials/getting_started.md) or see the [Operations Guide](how-to/OPERATIONS_GUIDE.md) for deployment!
 
 ---
 

@@ -350,7 +350,7 @@ logger.info("Risk assessor using gpt-4o-mini for faster execution")
 - **Implementation Details**: See `PHASE_1_SPEEDUP_IMPLEMENTATION.md` and `PHASE_2_SPEEDUP_IMPLEMENTATION.md`
 - **Complete Results**: See `RISK_ASSESSMENT_SPEEDUP_COMPLETE.md`
 - **Source Code**: `src/finwiz/crews/deep_analysis/deep_analysis.py`
-- **User Guide**: `docs/tutorials/USER_GUIDE.md` (Deep Analysis Crew section)
+- **Operations Guide**: `docs/how-to/OPERATIONS_GUIDE.md` (Deep Analysis Crew section)
 - **Developer Guide**: `docs/development/DEVELOPER_GUIDE.md` (Performance Optimization section)
 
 ---

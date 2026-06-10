@@ -102,7 +102,7 @@ Each guide follows this structure:
 
 ### Core Documentation
 
-- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Operations Guide](OPERATIONS_GUIDE.md) - Deployment, operations, and migration
 - [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
@@ -126,11 +126,11 @@ Each guide follows this structure:
 
 Can't find what you're looking for?
 
-- **Check**: [User Guide](../tutorials/USER_GUIDE.md) for comprehensive documentation
+- **Check**: [Getting Started](../tutorials/getting_started.md) for setup basics, or the [Operations Guide](OPERATIONS_GUIDE.md) for deployment and operations
 - **Search**: Use GitHub search across all documentation
 - **Ask**: [GitHub Discussions](https://github.com/fjacquet/finwiz/discussions)
 - **Report**: [GitHub Issues](https://github.com/fjacquet/finwiz/issues) for bugs
 
 ---
 
-*Browse the guides above or check the [User Guide](../tutorials/USER_GUIDE.md) for comprehensive documentation.*
+*Browse the guides above or check the [Operations Guide](OPERATIONS_GUIDE.md) for deployment and operations topics.*

@@ -1,4 +1,4 @@
-# FinWiz User Guide
+# FinWiz Operations Guide
 
 Complete guide for deploying, operating, and migrating FinWiz.
 

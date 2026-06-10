@@ -245,7 +245,7 @@ Portfolio CSV → Data Accessor → Validation → Cache
 
 ### Core Documentation
 
-- [User Guide](../tutorials/USER_GUIDE.md) - Complete user documentation
+- [Operations Guide](../how-to/OPERATIONS_GUIDE.md) - Deployment, operations, and migration
 - [Developer Guide](../development/DEVELOPER_GUIDE.md) - Architecture and development
 
 ### Tutorials
