@@ -278,7 +278,7 @@ uv run python scripts/validate_api_keys.py
 ```bash
 # Validate complete configuration
 uv run python -c "
-from finwiz.utils.configuration_manager import validate_startup_configuration
+from finwiz.config.manager import validate_startup_configuration
 try:
     validate_startup_configuration()
     print('✅ All configuration valid')
@@ -368,8 +368,8 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 
 ### Feature Flags
 
-| Variable                        | Default  | Description                                             |
-| ------------------------------- | -------- | ------------------------------------------------------- |
+| Variable                        | Default (code fallback) | Description                              |
+| ------------------------------- | ----------------------- | ---------------------------------------- |
 | `FF_PERPLEXITY_RESEARCH`        | `true`   | Perplexity Sonar integration (circuit breaker)          |
 | `FF_STOCK_ANALYSIS`             | `true`   | Stock analysis crew                                     |
 | `FF_ETF_ANALYSIS`               | `true`   | ETF analysis crew                                       |
@@ -379,14 +379,16 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | `FF_INVESTMENT_DISCOVERY`       | `true`   | A+ investment discovery (percentage rollout)            |
 | `FF_NEWCOMER_DISCOVERY`         | `true`   | Route analyzers through newcomer discovery pipeline     |
 | `FF_PORTFOLIO_AWARE_DISCOVERY`  | `true`   | Rank discovery candidates by portfolio fit              |
-| `FF_PORTFOLIO_REBALANCING`      | `false`  | Portfolio rebalancing (experimental, percentage rollout)|
+| `FF_PORTFOLIO_REBALANCING`      | `true`   | Portfolio rebalancing (experimental, percentage rollout)|
 | `FF_STRICT_VALIDATION`          | `true`   | Strict Pydantic validation (percentage rollout)         |
-| `FF_MONITORING`                 | `false`  | Performance monitoring and metrics collection           |
+| `FF_MONITORING`                 | `true`   | Performance monitoring and metrics collection           |
 | `FF_FINNHUB_NEWS`               | `false`  | Finnhub news sentiment (circuit breaker)                |
 | `FF_FRED_MACRO`                 | `false`  | FRED macroeconomic data (circuit breaker)               |
 | `FF_FEAR_GREED`                 | `false`  | CNN Fear & Greed index (circuit breaker)                |
 | `FF_SENTIMENT_SCORING`          | `false`  | Sentiment scoring overlay on composite score            |
 | `FF_MACRO_SCORING`              | `false`  | Macro scoring overlay on composite score                |
+
+Note: the shipped `.env.example` disables `FF_MONITORING` and `FF_PORTFOLIO_REBALANCING`; the values above are the code fallbacks when the variable is unset.
 
 ## Troubleshooting
 

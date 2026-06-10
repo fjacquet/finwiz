@@ -132,18 +132,18 @@ grep -i "warning\|error" logs/finwiz.log | tail -n 20
 1. **Performance Metrics**:
 
 ```python
-from finwiz.cache import get_cache_manager
+from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-stats = cache.get_statistics()
-print(f"Cache hit rate: {stats.hit_rate:.2%}")
-print(f"Total requests: {stats.total_requests}")
+stats = cache.get_stats()
+print(f"Cache hit rate: {stats['hit_rate']:.2%}")
+print(f"Hits: {stats['hits']}, misses: {stats['misses']}")
 ```
 
 1. **Feature Flags**:
 
 ```python
-from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.config.features.flags import get_feature_flags
 
 flags = get_feature_flags()
 print(f"Perplexity: {flags.is_enabled('perplexity_research')}")
@@ -1089,17 +1089,17 @@ if not result.is_valid:
 **Caching System**:
 
 ```python
-from finwiz.cache import get_cache_manager
+from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-cache.set("key", value, ttl=3600)
-value = cache.get("key")
+await cache.set("key", value, ttl=3600)  # get/set are async
+value = await cache.get("key")
 ```
 
 **Feature Flags**:
 
 ```python
-from finwiz.utils.feature_flags import get_feature_flags
+from finwiz.config.features.flags import get_feature_flags
 
 flags = get_feature_flags()
 if flags.is_enabled("perplexity_research"):
@@ -1131,7 +1131,7 @@ export VALIDATION_STRICTNESS=warn
 
 ```bash
 # Solution: Check cache configuration
-python -c "from finwiz.cache import get_cache_manager; print(get_cache_manager().get_statistics())"
+python -c "from finwiz.infrastructure.caching.manager import get_cache_manager; print(get_cache_manager().get_stats())"
 
 # Clear cache if needed
 rm -rf cache/*
