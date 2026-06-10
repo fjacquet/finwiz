@@ -160,6 +160,54 @@ class BaseReportGenerator(ABC):
         """
         pass
 
+    def _apply_common_defaults(self, template_vars: dict[str, Any]) -> dict[str, Any]:
+        """Apply defaults that every subclass needs in prepare_template_variables.
+
+        Handles: analysis_date formatting, session_id, data_sources guard,
+        and report path defaults.  Call this once at the start of every
+        subclass ``prepare_template_variables`` implementation (after
+        ``template_vars = data.copy()``) so the common boilerplate stays in
+        one place.
+
+        Args:
+            template_vars: Mutable copy of the input data dict.
+
+        Returns:
+            The same dict (mutated in-place and returned for chaining).
+
+        """
+        # Ensure analysis_date is formatted as a string for templates.
+        if "analysis_date" not in template_vars or not template_vars["analysis_date"]:
+            template_vars["analysis_date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        elif isinstance(template_vars["analysis_date"], datetime):
+            template_vars["analysis_date"] = template_vars["analysis_date"].strftime("%Y-%m-%d %H:%M:%S")
+
+        # Ensure session_id exists.
+        template_vars.setdefault("session_id", "default")
+
+        # Ensure data sources list exists (subclass _get_default_data_sources() provides the values).
+        if "data_sources" not in template_vars or not template_vars["data_sources"]:
+            template_vars["data_sources"] = self._get_default_data_sources()
+
+        # Ensure report paths exist.
+        template_vars.setdefault("report_json_path", "N/A")
+        template_vars.setdefault("report_html_path", "N/A")
+
+        return template_vars
+
+    def _get_default_data_sources(self) -> list[str]:
+        """Return the default data-source list for this generator.
+
+        Each subclass overrides this to return its own list; this base
+        implementation provides a generic fallback so that the method is
+        always callable from ``_apply_common_defaults``.
+
+        Returns:
+            List of data source description strings.
+
+        """
+        return ["Yahoo Finance API", "FinWiz Python Scoring Engine"]
+
     def validate_data(self, data: dict[str, Any]) -> bool:
         """
         Validate that required fields are present in input data.
