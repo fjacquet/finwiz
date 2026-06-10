@@ -20,7 +20,7 @@ orchestrators/
 ├── alternatives_matching_orchestrator.py # A+ alternatives matching
 │
 ├── # Portfolio orchestrators
-├── portfolio_review_orchestrator.py     # run(), run_with_rebalancing()
+├── portfolio_review_orchestrator.py     # run()
 ├── portfolio_rebalancing.py             # run_rebalancing(), calculate_trades()
 ├── portfolio_holdings_processor.py      # PortfolioHoldingsProcessor
 │
@@ -73,7 +73,6 @@ orchestrators/
 | `discovery_orchestrator.py` | `DiscoveryOrchestrator` | A+ investment discovery + opportunity shortlist |
 | `gap_profile_orchestrator.py` | `GapProfileOrchestrator` | Phase 3.6 portfolio gap profile for the opportunity cascade |
 | `portfolio_review_orchestrator.py` | `run()` | Run portfolio review |
-| `portfolio_review_orchestrator.py` | `run_with_rebalancing()` | Review + rebalancing |
 | `reporting_orchestrator.py` | `ReportingOrchestrator` | Report generation and consolidation |
 | `error_handling_orchestrator.py` | `ErrorHandlingOrchestrator` | Error handling & recovery |
 | `registry/registry_manager.py` | `RegistryManager` | Orchestration registry |
