@@ -4,6 +4,7 @@ import json
 from typing import Any
 
 from finwiz.tools.logger import get_logger
+from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 
 logger = get_logger(__name__)
 
@@ -317,22 +318,25 @@ class DeepAnalysisDataCollector:
         return collected_data
 
     def _collect_sentiment_data(self, ticker: str, asset_class: str, collected_data: dict[str, Any]) -> dict[str, Any]:
-        """Collect sentiment analysis data."""
-        from finwiz.tools.enhanced_sentiment_tool import EnhancedSentimentAnalysisTool
+        """Collect sentiment analysis data using StandardizedSentimentAnalysisTool."""
+        # Normalize asset_class to the tool's Literal["stock","etf","crypto"]
+        _asset_class = asset_class.lower() if asset_class else "stock"
+        if _asset_class not in ("stock", "etf", "crypto"):
+            self.logger.warning(f"Unexpected asset_class '{_asset_class}' — normalizing to 'stock'")
+            _asset_class = "stock"
 
         try:
-            self.logger.info(f"🐍 Calling SentimentAnalysisTool for {ticker}")
-            sentiment_tool = EnhancedSentimentAnalysisTool()
-            sentiment_result = sentiment_tool._run(ticker=ticker, asset_type=asset_class, max_articles=20, days_back=30)
+            self.logger.info(f"🐍 Calling StandardizedSentimentAnalysisTool for {ticker}")
+            result = StandardizedSentimentAnalysisTool()._run(symbol=ticker, asset_class=_asset_class, max_articles=20, days_back=30)
 
-            if isinstance(sentiment_result, dict):
-                collected_data["sentiment_score"] = sentiment_result.get("sentiment_score", 0.0)
-                collected_data["overall_sentiment"] = sentiment_result.get("overall_sentiment", "neutral")
-                collected_data["sentiment_confidence"] = sentiment_result.get("confidence", 0.0)
-                collected_data["sentiment_analysis"] = sentiment_result
-                self.logger.info(f"✅ Got sentiment: score={collected_data['sentiment_score']:.3f}")
-            else:
-                collected_data["sentiment_score"] = 0.0
+            score = float(result.get("weighted_score") or result.get("mean_score") or 0.0)
+            counts = result.get("counts") or {}
+            total = max(1, sum(counts.values()))
+            collected_data["sentiment_score"] = score
+            collected_data["overall_sentiment"] = "positive" if score > 0.1 else "negative" if score < -0.1 else "neutral"
+            collected_data["sentiment_confidence"] = round(max(counts.values(), default=0) / total, 2)
+            collected_data["sentiment_analysis"] = result
+            self.logger.info(f"✅ Got sentiment: score={score:.3f}")
 
         except Exception as e:
             self.logger.error(f"❌ Sentiment analysis failed: {e}", exc_info=True)

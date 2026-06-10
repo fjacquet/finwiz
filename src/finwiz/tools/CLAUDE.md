@@ -37,7 +37,6 @@ tools/
 ├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
-├── enhanced_sentiment_tool.py       # Enhanced sentiment
 ├── a_plus_scoring_tool.py           # A+ scoring
 ├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking

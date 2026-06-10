@@ -121,9 +121,17 @@ class TestBetaExtraction:
         # Quantitative tool returns JSON string
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
 
-        # Mock sentiment tool (returns markdown)
+        # Mock sentiment tool (returns dict)
         mock_sentiment = mocker.patch(
-            "finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment Analysis\n\nPositive sentiment detected."
+            "finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run",
+            return_value={
+                "symbol": "AAPL",
+                "asset_class": "stock",
+                "weighted_score": 0.3,
+                "mean_score": 0.3,
+                "counts": {"pos": 3, "neu": 2, "neg": 1},
+                "articles_analyzed": 6,
+            },
         )
 
         # Call data collection (method moved to data_collector in Phase 1.1 refactoring)
@@ -249,7 +257,10 @@ class TestBetaExtraction:
 
         mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
 
-        mocker.patch("finwiz.tools.enhanced_sentiment_tool.EnhancedSentimentAnalysisTool._run", return_value="# Sentiment\n\nPositive")
+        mocker.patch(
+            "finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run",
+            return_value={"symbol": "AAPL", "asset_class": "stock", "weighted_score": 0.3, "mean_score": 0.3, "counts": {"pos": 3, "neu": 2, "neg": 1}, "articles_analyzed": 6},
+        )
 
         mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run", return_value="# SEC Analysis\n\nStrong fundamentals")
 

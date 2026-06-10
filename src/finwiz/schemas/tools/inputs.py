@@ -104,15 +104,6 @@ class TwelveDataMultiIndicatorInput(BaseModel):
 
 
 # Sentiment Analysis Tool Inputs
-class EnhancedSentimentInput(BaseModel):
-    """Input schema for enhanced sentiment analysis."""
-
-    ticker: str = Field(..., description="The ticker symbol (e.g., 'AAPL', 'VTI', 'BTC-USD')")
-    asset_type: str = Field("stock", description="Asset type: 'stock', 'etf', or 'crypto'")
-    days_back: int = Field(7, description="Number of days to look back for news (1-30)")
-    max_articles: int = Field(20, description="Maximum number of articles to analyze (5-50)")
-
-
 class StandardizedSentimentInput(BaseModel):
     """Input schema for Standardized Sentiment Analysis Tool."""
 

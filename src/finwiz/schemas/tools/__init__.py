@@ -27,8 +27,6 @@ from .inputs import (
     EnhancedETFAnalysisInput,
     # SEC analysis inputs
     EnhancedSECAnalysisInput,
-    # Sentiment analysis inputs
-    EnhancedSentimentInput,
     FeedbackCollectionInput,
     GetCompanyInfoInput,
     GetETFHoldingsInput,
@@ -75,7 +73,6 @@ __all__ = [
     "TwelveDataIndicatorInput",
     "TwelveDataMultiIndicatorInput",
     # Sentiment analysis inputs
-    "EnhancedSentimentInput",
     "StandardizedSentimentInput",
     "CrossAssetSentimentComparatorInput",
     # Crypto analysis inputs

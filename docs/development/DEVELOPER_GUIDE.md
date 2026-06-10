@@ -264,7 +264,7 @@ src/finwiz/
 ├── tools/                          # Custom Financial Tools
 │   ├── tool_factories.py          # Centralized tool initialization
 │   ├── quantitative_analysis_tool.py
-│   ├── enhanced_sentiment_tool.py
+│   ├── standardized_sentiment_tool.py
 │   └── scoring/                   # Python scoring engines
 │
 ├── schemas/                        # Pydantic Data Models

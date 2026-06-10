@@ -40,8 +40,6 @@ from finwiz.schemas.tools.inputs import (
     EnhancedETFAnalysisInput,
     # SEC Analysis
     EnhancedSECAnalysisInput,
-    # Sentiment Analysis
-    EnhancedSentimentInput,
     # Feedback
     FeedbackCollectionInput,
     GetCompanyInfoInput,
@@ -521,35 +519,6 @@ class TestTwelveDataMultiIndicatorInput:
 # ============================================================================
 # Sentiment Analysis Tool Tests
 # ============================================================================
-
-
-class TestEnhancedSentimentInput:
-    """Tests for EnhancedSentimentInput model."""
-
-    def test_required_ticker(self, fake):
-        """Test instantiation with required ticker."""
-        ticker = "AAPL"
-        model = EnhancedSentimentInput(ticker=ticker)
-
-        assert model.ticker == ticker
-
-    def test_default_values(self):
-        """Test default values."""
-        model = EnhancedSentimentInput(ticker="AAPL")
-
-        assert model.asset_type == "stock"
-        assert model.days_back == 7
-        assert model.max_articles == 20
-
-    def test_custom_values(self, fake):
-        """Test custom values."""
-        days_back = fake.random_int(min=1, max=30)
-        max_articles = fake.random_int(min=5, max=50)
-
-        model = EnhancedSentimentInput(ticker="AAPL", days_back=days_back, max_articles=max_articles)
-
-        assert model.days_back == days_back
-        assert model.max_articles == max_articles
 
 
 class TestStandardizedSentimentInput:
