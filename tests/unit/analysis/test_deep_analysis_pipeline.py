@@ -198,6 +198,21 @@ class TestAnalysisContext:
 class TestCollectRawData:
     """Tests for collect_raw_data function."""
 
+    @pytest.fixture(autouse=True)
+    def _mock_sentiment_macro(self, mocker):
+        """Mock the v4 sentiment/macro collector — its FRED/news fetches are remote.
+
+        Without this, collect_raw_data reaches the FRED API (blocked by the
+        network guard) and tenacity retries with sleeps add ~22s per test.
+        """
+        mock_v4 = mocker.MagicMock()
+        mock_v4.collect_sentiment.return_value = None
+        mock_v4.collect_macro.return_value = None
+        mocker.patch(
+            "finwiz.data.sentiment_collector.SentimentMacroCollector",
+            return_value=mock_v4,
+        )
+
     def test_collect_raw_data_calls_collector(self, mocker, analysis_context, mock_raw_data):
         """Test that collect_raw_data uses DeepAnalysisDataCollector."""
         mock_collector = mocker.MagicMock()

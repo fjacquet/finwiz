@@ -85,7 +85,7 @@ class TestEnhancedETFAnalysisTool:
 
     def test_should_normalize_ticker_input(self, tool, mocker):
         """Test ticker normalization."""
-        # Arrange — mock the network boundary so no real HTTP calls are made
+        # Arrange — mock the network boundaries so no real HTTP calls are made
         mock_factsheet = mocker.patch.object(tool, "_extract_factsheet_data")
         mock_factsheet.return_value = {
             "issuer": "SPDR",
@@ -94,6 +94,7 @@ class TestEnhancedETFAnalysisTool:
             "as_of": "2024-01-01",
             "factsheet_highlights": [],
         }
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(ticker="  spy  ", include_holdings=False, include_risk_assessment=False)
@@ -350,6 +351,7 @@ class TestIntegrationScenarios:
             {"ticker": "AAPL", "weight_pct": 7.2, "source_url": "https://test.com", "as_of": date.today()},
             {"ticker": "MSFT", "weight_pct": 6.8, "source_url": "https://test.com", "as_of": date.today()},
         ]
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(ticker="SPY", include_holdings=True, include_risk_assessment=True, max_holdings=10)
@@ -373,6 +375,7 @@ class TestIntegrationScenarios:
             "as_of": date.today(),
             "factsheet_highlights": [],
         }
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(ticker="SPY", include_holdings=False)
 
@@ -392,6 +395,7 @@ class TestIntegrationScenarios:
             "factsheet_highlights": [],
         }
         mocker.patch.object(tool, "_extract_top_holdings", return_value=[])
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         result = tool._run(ticker="SPY", include_risk_assessment=False)
 
