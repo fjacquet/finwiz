@@ -6,7 +6,6 @@ that can be used by CrewAI agents to perform portfolio analysis and optimization
 """
 
 import asyncio
-import json
 from typing import Any
 
 from crewai.tools import BaseTool
@@ -16,6 +15,7 @@ from finwiz.orchestrators.portfolio_rebalancing import PortfolioRebalancingOrche
 from finwiz.schemas.portfolio_rebalancing import Holding, PortfolioConfiguration
 from finwiz.schemas.tools import PortfolioRebalancingInput
 from finwiz.tools.logger import get_logger
+from finwiz.tools.run_helpers import json_error, json_ok
 
 
 class PortfolioRebalancingTool(BaseTool):
@@ -145,12 +145,11 @@ class PortfolioRebalancingTool(BaseTool):
             }
 
             logger.info("Portfolio rebalancing analysis completed successfully")
-            return json.dumps(formatted_result, indent=2, default=str)
+            return json_ok(formatted_result)
 
         except Exception as e:
             logger.error(f"Portfolio rebalancing analysis failed: {e}")
-            error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2, default=str)
+            return json_error(e)
 
 
 def get_portfolio_rebalancing_tool() -> PortfolioRebalancingTool:

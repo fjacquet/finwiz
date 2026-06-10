@@ -27,3 +27,10 @@ class TestJsonError:
         assert parsed["error"] == "bad ticker"
         assert parsed["error_type"] == "ValueError"
         assert parsed["ticker"] == "AAPL"
+
+    def test_context_cannot_clobber_envelope_keys(self):
+        out = json_error(ValueError("x"), error="hacked", success=True, error_type="Spoofed")
+        parsed = json.loads(out)
+        assert parsed["error"] == "x"
+        assert parsed["success"] is False
+        assert parsed["error_type"] == "ValueError"

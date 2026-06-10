@@ -52,6 +52,7 @@ tools/
 │
 ├── # Infrastructure
 ├── tool_result.py                   # ToolResult class
+├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # Error wrapping
 ├── base_tools.py                    # AsyncFeedbackTool base
 ├── crewai_retry_patch.py            # Retry patch
@@ -103,6 +104,8 @@ from finwiz.tools.tool_factories import get_stock_crew_tools
 
 tools = get_stock_crew_tools(include_quantitative=True)
 ```
+
+Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`; adopt opportunistically when touching older tools.
 
 ## Related Modules
 
