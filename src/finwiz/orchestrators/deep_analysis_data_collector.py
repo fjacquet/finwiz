@@ -329,11 +329,12 @@ class DeepAnalysisDataCollector:
             self.logger.info(f"🐍 Calling StandardizedSentimentAnalysisTool for {ticker}")
             result = StandardizedSentimentAnalysisTool()._run(symbol=ticker, asset_class=_asset_class, max_articles=20, days_back=30)
 
-            score = float(result.get("weighted_score") or result.get("mean_score") or 0.0)
+            score = float(result.get("weighted_score", result.get("mean_score", 0.0)) or 0.0)
             counts = result.get("counts") or {}
             total = max(1, sum(counts.values()))
             collected_data["sentiment_score"] = score
             collected_data["overall_sentiment"] = "positive" if score > 0.1 else "negative" if score < -0.1 else "neutral"
+            # kept for the collector output contract; DeepAnalysisScorer derives its own confidence from news_sentiment
             collected_data["sentiment_confidence"] = round(max(counts.values(), default=0) / total, 2)
             collected_data["sentiment_analysis"] = result
             self.logger.info(f"✅ Got sentiment: score={score:.3f}")
