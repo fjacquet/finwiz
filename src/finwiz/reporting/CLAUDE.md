@@ -27,14 +27,18 @@ reporting/
 ├── html_collector.py                    # collect_html_report_paths()
 ├── html_auto_generator.py               # auto_generate_html()
 ├── export_loaders.py                    # load_exports(), load_deep_analysis_exports()
-├── css_styles.py                        # get_rebalancing_css()
+├── css_styles.py                        # get_report_css() — reads assets/report_styles.css
 │
-├── css/                                 # Modular CSS
-│   ├── css_styles.py                    # get_rebalancing_css()
-│   ├── css_elements.py                  # get_base_styles(), get_table_styles()
-│   └── css_layouts.py                   # get_responsive_styles()
+├── assets/                              # Static CSS/JS files; one file per loader function,
+│                                        # named after the function (report_styles.css is the
+│                                        # top-level report stylesheet exception)
 │
-├── js/                                  # JavaScript
+├── css/                                 # Modular CSS loaders (read from assets/)
+│   ├── css_styles.py                    # get_rebalancing_css() — concatenates the loaders below
+│   ├── css_elements.py                  # get_base_styles(), get_table_styles(), ...
+│   └── css_layouts.py                   # get_responsive_styles(), ...
+│
+├── js/                                  # JavaScript loaders (read from assets/)
 │   └── javascript_code.py              # get_rebalancing_javascript()
 │
 └── rebalancing/                         # Rebalancing report builders
