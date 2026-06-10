@@ -1,0 +1,39 @@
+
+    /* Cost analysis */
+    .cost-breakdown {
+        background: var(--bg-card);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .cost-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .cost-item.total {
+        border-top: 2px solid var(--text-secondary);
+        border-bottom: none;
+        margin-top: 10px;
+        font-size: 1.1em;
+    }
+
+    .cost-label {
+        color: var(--text-muted);
+    }
+
+    .cost-value {
+        color: var(--text-primary);
+        font-weight: 600;
+    }
+
+    .cost-metrics {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: var(--bg-secondary);
+        border-radius: 6px;
+    }

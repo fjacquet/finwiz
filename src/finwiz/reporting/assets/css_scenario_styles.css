@@ -1,0 +1,36 @@
+
+    /* Scenario cards */
+    .scenario-card {
+        background: var(--bg-card);
+        border-radius: 8px;
+        padding: 20px;
+        margin: 15px 0;
+        box-shadow: var(--shadow-sm);
+        cursor: pointer;
+        transition: var(--transition);
+    }
+
+    .scenario-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    .scenario-card h4 {
+        margin: 0 0 15px 0;
+        color: var(--text-primary);
+        border: none;
+    }
+
+    .scenario-metrics {
+        display: flex;
+        gap: 20px;
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+
+    .scenario-metrics .metric {
+        padding: 8px 12px;
+        background-color: var(--bg-secondary);
+        border-radius: 4px;
+        font-size: 0.9em;
+    }

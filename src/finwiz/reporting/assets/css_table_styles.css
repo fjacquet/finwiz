@@ -1,0 +1,28 @@
+
+    /* Table styles */
+    .portfolio-table, .trades-table, .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        background: var(--bg-card);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .portfolio-table th, .trades-table th, .comparison-table th {
+        background: var(--text-secondary);
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .portfolio-table td, .trades-table td, .comparison-table td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .portfolio-table tr:hover, .trades-table tr:hover, .comparison-table tr:hover {
+        background-color: var(--bg-secondary);
+    }

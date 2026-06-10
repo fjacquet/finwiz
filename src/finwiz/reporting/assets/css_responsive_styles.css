@@ -1,0 +1,44 @@
+
+    /* Print-friendly styles */
+    @media print {
+        .execute-btn {
+            display: none;
+        }
+
+        .section {
+            break-inside: avoid;
+        }
+
+        .scenario-card {
+            break-inside: avoid;
+        }
+
+        .next-steps {
+            padding-left: 0;
+        }
+
+        .next-steps li::before {
+            display: none;
+        }
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .summary-metrics {
+            grid-template-columns: 1fr;
+        }
+
+        .risk-scores {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .scenario-metrics {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .execution-stats {
+            grid-template-columns: 1fr;
+        }
+    }
