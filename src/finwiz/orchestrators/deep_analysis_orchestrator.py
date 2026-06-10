@@ -24,6 +24,115 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
+def _analyze_single_sync(
+    holding: dict[str, Any],
+    *,
+    prefetched_data: Any,
+    ledger: Any,
+    logger: Any,
+    make_synthetic_pending: Any,
+) -> tuple[str, "DeepAnalysisResult | None", Any | None]:
+    """Synchronous per-holding analysis (runs inside the thread pool).
+
+    Extracted from ``run_deep_analysis_concurrent`` to reduce that method's
+    cyclomatic complexity (C901) and statement count (PLR0915).  All
+    previously-closed-over names are passed as explicit keyword arguments.
+    """
+    from finwiz.analysis import analyze_holding
+
+    ticker = holding.get("ticker")
+    asset_class = holding.get("asset_class")
+    company_name = holding.get("name", "")
+
+    if not ticker or not asset_class:
+        return (ticker or "unknown", None, None)
+
+    try:
+        result, enriched = analyze_holding(
+            ticker,
+            asset_class,
+            company_name,
+            prefetched_data=prefetched_data,
+            ledger=ledger,
+            run_id=ledger.run_id,
+        )
+        return (ticker, result, enriched)
+    except Exception as e:
+        logger.error(f"Concurrent analysis failed for {ticker}: {e}", exc_info=True)
+        # Surface the specific exception in a synthetic pending result so
+        # the report renderer can show "Analyse interrompue : <Type> ..."
+        # instead of falling back to the generic placeholder.
+        pending = make_synthetic_pending(
+            ticker=ticker,
+            asset_class=asset_class,
+            rationale=f"Analyse interrompue : {type(e).__name__} — voir logs",
+        )
+        return (ticker, pending, None)
+
+
+async def _analyze_with_timeout(
+    holding: dict[str, Any],
+    *,
+    executor: Any,
+    semaphore: Any,
+    loop: Any,
+    timeout_seconds: int,
+    prefetched_data: Any,
+    ledger: Any,
+    logger: Any,
+    make_synthetic_pending: Any,
+) -> tuple[str, "DeepAnalysisResult | None", Any | None]:
+    """Per-holding timeout wrapper around ``_analyze_single_sync``.
+
+    Extracted from ``run_deep_analysis_concurrent`` to reduce that method's
+    cyclomatic complexity (C901) and statement count (PLR0915).  Per-holding
+    timeout semantics are UNTOUCHED: the semaphore is acquired *before*
+    the timer starts so timeouts only count active work, not queue-wait time.
+    """
+    import asyncio
+    from functools import partial
+
+    ticker = holding.get("ticker", "unknown")
+    # Acquire semaphore BEFORE starting timeout - this ensures timeout
+    # only counts time spent actually working, not time spent in queue
+    async with semaphore:
+        logger.debug(f"Starting analysis for {ticker} (timeout={timeout_seconds}s)")
+        try:
+            sync_fn = partial(
+                _analyze_single_sync,
+                holding,
+                prefetched_data=prefetched_data,
+                ledger=ledger,
+                logger=logger,
+                make_synthetic_pending=make_synthetic_pending,
+            )
+            return await asyncio.wait_for(
+                loop.run_in_executor(executor, sync_fn),
+                timeout=timeout_seconds,
+            )
+        except TimeoutError:
+            logger.error(f"Analysis timed out for {ticker} after {timeout_seconds}s")
+            # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
+            # Surface the timeout reason in a synthetic pending result so
+            # the renderer can show "crew dépassé Xs — voir logs" instead
+            # of a generic placeholder.
+            pending = make_synthetic_pending(
+                ticker=ticker,
+                asset_class=str(holding.get("asset_class") or "unknown"),
+                rationale=(f"Analyse interrompue : crew dépassé {timeout_seconds}s — voir logs"),
+            )
+            return (ticker, pending, None)
+        except Exception as e:
+            logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
+            # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
+            pending = make_synthetic_pending(
+                ticker=ticker,
+                asset_class=str(holding.get("asset_class") or "unknown"),
+                rationale=(f"Analyse interrompue : {type(e).__name__} — voir logs"),
+            )
+            return (ticker, pending, None)
+
+
 class DeepAnalysisOrchestrator:
     """Orchestrates deep analysis execution on portfolio holdings."""
 
@@ -331,7 +440,6 @@ class DeepAnalysisOrchestrator:
         import asyncio
         from concurrent.futures import ThreadPoolExecutor
 
-        from finwiz.analysis import analyze_holding
         from finwiz.config.performance.performance_config import get_batch_size
 
         # Get max_workers from config if not specified
@@ -346,37 +454,6 @@ class DeepAnalysisOrchestrator:
         results: dict[str, DeepAnalysisResult] = {}
         self._enriched_analyses = {}
 
-        def analyze_single_sync(holding: dict[str, Any]) -> tuple[str, DeepAnalysisResult | None, Any | None]:
-            """Synchronous wrapper for analyze_holding (runs in thread pool)."""
-            ticker = holding.get("ticker")
-            asset_class = holding.get("asset_class")
-            company_name = holding.get("name", "")
-
-            if not ticker or not asset_class:
-                return (ticker or "unknown", None, None)
-
-            try:
-                result, enriched = analyze_holding(
-                    ticker,
-                    asset_class,
-                    company_name,
-                    prefetched_data=self.state.prefetched_data if self.state.batch_prefetch_enabled else None,
-                    ledger=self._ledger,
-                    run_id=self._ledger.run_id,
-                )
-                return (ticker, result, enriched)
-            except Exception as e:
-                self.logger.error(f"Concurrent analysis failed for {ticker}: {e}", exc_info=True)
-                # Surface the specific exception in a synthetic pending result so
-                # the report renderer can show "Analyse interrompue : <Type> ..."
-                # instead of falling back to the generic placeholder.
-                pending = self._make_synthetic_pending(
-                    ticker=ticker,
-                    asset_class=asset_class,
-                    rationale=f"Analyse interrompue : {type(e).__name__} — voir logs",
-                )
-                return (ticker, pending, None)
-
         # Use a semaphore to limit concurrency - this ensures timeout starts when work begins
         # NOT when it's queued (which was the bug causing all timeouts at same second)
         loop = asyncio.get_running_loop()
@@ -386,44 +463,13 @@ class DeepAnalysisOrchestrator:
         # Per-holding timeout - prevents one stuck ticker blocking all.
         # Default 900 s after the 2026-04-29 run (DELL succeeded at 1488 s,
         # asyncio.wait_for cannot interrupt sync crew.kickoff() in a thread).
-        PER_HOLDING_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
+        per_holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
 
-        async def analyze_with_timeout(holding: dict[str, Any], executor: Any) -> tuple[str, DeepAnalysisResult | None, Any | None]:
-            """Wrap analysis with per-holding timeout that starts when work begins."""
-            ticker = holding.get("ticker", "unknown")
-            # Acquire semaphore BEFORE starting timeout - this ensures timeout
-            # only counts time spent actually working, not time spent in queue
-            async with semaphore:
-                self.logger.debug(f"Starting analysis for {ticker} (timeout={PER_HOLDING_TIMEOUT}s)")
-                try:
-                    return await asyncio.wait_for(
-                        loop.run_in_executor(executor, analyze_single_sync, holding),
-                        timeout=PER_HOLDING_TIMEOUT,
-                    )
-                except TimeoutError:
-                    self.logger.error(f"Analysis timed out for {ticker} after {PER_HOLDING_TIMEOUT}s")
-                    # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
-                    # Surface the timeout reason in a synthetic pending result so
-                    # the renderer can show "crew dépassé Xs — voir logs" instead
-                    # of a generic placeholder.
-                    pending = self._make_synthetic_pending(
-                        ticker=ticker,
-                        asset_class=str(holding.get("asset_class") or "unknown"),
-                        rationale=(f"Analyse interrompue : crew dépassé {PER_HOLDING_TIMEOUT}s — voir logs"),
-                    )
-                    return (ticker, pending, None)
-                except Exception as e:
-                    self.logger.error(f"Analysis failed for {ticker}: {e}", exc_info=True)
-                    # Failure recorded by ledger via @stage decorator on emit; no manual append needed.
-                    pending = self._make_synthetic_pending(
-                        ticker=ticker,
-                        asset_class=str(holding.get("asset_class") or "unknown"),
-                        rationale=(f"Analyse interrompue : {type(e).__name__} — voir logs"),
-                    )
-                    return (ticker, pending, None)
+        # Resolve prefetched_data once so the helper receives the value, not self
+        prefetched_data = self.state.prefetched_data if self.state.batch_prefetch_enabled else None
 
-        # NO AGGREGATE TIMEOUT. Each holding has its own PER_HOLDING_TIMEOUT
-        # (analyze_with_timeout above). An aggregate cap would discard already
+        # NO AGGREGATE TIMEOUT. Each holding has its own per_holding_timeout
+        # (_analyze_with_timeout). An aggregate cap would discard already
         # completed work when one slow ticker pushes total runtime over —
         # which is exactly what discarded XRP-USD's grade=D verdict on
         # 2026-04-27 (XRP finished at 09:00:12, the 1800s aggregate timeout
@@ -435,10 +481,23 @@ class DeepAnalysisOrchestrator:
         try:
             # Submit all holdings - semaphore ensures only max_workers run at a
             # time and per-holding timeout starts when semaphore is acquired.
-            futures = [analyze_with_timeout(holding, executor) for holding in holdings]
+            futures = [
+                _analyze_with_timeout(
+                    holding,
+                    executor=executor,
+                    semaphore=semaphore,
+                    loop=loop,
+                    timeout_seconds=per_holding_timeout,
+                    prefetched_data=prefetched_data,
+                    ledger=self._ledger,
+                    logger=self.logger,
+                    make_synthetic_pending=self._make_synthetic_pending,
+                )
+                for holding in holdings
+            ]
             # return_exceptions=True so one holding's escaped exception doesn't
-            # cancel siblings. Per-holding handlers (analyze_with_timeout +
-            # analyze_single_sync) already log failures — this is defense-in-depth.
+            # cancel siblings. Per-holding handlers (_analyze_with_timeout +
+            # _analyze_single_sync) already log failures — this is defense-in-depth.
             results_or_excs = await asyncio.gather(*futures, return_exceptions=True)
             for item in results_or_excs:
                 if isinstance(item, BaseException):
