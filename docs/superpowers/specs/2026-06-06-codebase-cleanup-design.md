@@ -26,14 +26,17 @@ precedes the dead-code sweep (P3). Every step is an atomic commit gated by tests
 is independently revertible against the P0 green baseline.
 
 ### P0 — Baseline & isolate
+
 - Commit the finished **Portfolio-Aware Opportunity Cascade** work as its own commit so cleanup
   commits are isolated/reviewable. Exclude unrelated `uv.lock` and the `.serena/` cache.
 - Activate the Serena project and read its `initial_instructions` (Serena protocol).
 - Capture a **GREEN baseline**: run the test suite + `make mypy`; record what passes before any change.
 
 ### P1 — Cross-check (analysis only; NO deletions/moves)
+
 Two independent signals must agree before a function is eligible for removal. Per candidate, mark
 **CONFIRMED dead** only if ALL hold:
+
 1. Serena `find_referencing_symbols(name, file)` → **0 references** (language-aware; authoritative).
 2. grep fallback for indirect use → **0**, across `src/` + `tests/` **and `crews/**/*.yaml`**
    (CrewAI wires agents/tools by name in `agents.yaml`/`tasks.yaml`) — catches `getattr`/string dispatch.
@@ -46,6 +49,7 @@ Fail any gate → **QUARANTINE** (untouched, logged with reason). Output: a comm
 god-file decomposition boundaries (which symbols group into which new submodule).
 
 ### P2 — Decompose god-files (re-export shims)
+
 - `get_symbols_overview` each god-file → group cohesive symbols into focused submodules.
 - Per group: `find_symbol(include_body=True)` to read → `create_text_file` new submodule → remove the
   moved symbols from the original via Serena edits → original becomes a thin `from .sub import *` shim.
@@ -56,24 +60,29 @@ god-file decomposition boundaries (which symbols group into which new submodule)
   the first cut unless they fall out naturally.
 
 ### P3 — Remove confirmed dead code
+
 - Tier 1 (8 funcs) first, then Tier 2 **CONFIRMED only**, in directory-sized atomic commits.
 - Tests + `make mypy` after each batch. QUARANTINE list never touched.
 
 ### P4 — Final verification & PR
+
 - Full `make check` + `make mypy` + semgrep on touched files.
 - Open PR including `cross-check-report.md` and a per-phase changelog.
 
 ## Error handling / rollback
+
 Atomic commit per move/removal-batch. After each: affected tests + `make mypy` (catches broken
 imports from moves) + `make check`. Red → `git revert` that commit, move the item to QUARANTINE,
 continue. The P0 green baseline is the reference for "did I break something."
 
 ## Out of scope
+
 - Tier 3 oversized-function decomposition beyond the two god-files (follow-up).
 - Any QUARANTINE-listed function (kept until individually proven dead).
 - `uv.lock` / dependency changes; behavior changes of any kind.
 
 ## Verification
+
 - Per phase: targeted suites + `make mypy` green.
 - Final: `make check` (lint + tests + unittest.mock ban + docs + file-size + stage-contract) green;
   `make mypy` clean; semgrep clean on touched files; `git diff` shows only intended removals/moves +

@@ -9,6 +9,7 @@
 **Tech Stack:** Python 3.12, uv, pytest (pytest-mock only — unittest.mock is banned), ruff, mkdocs, pre-commit hooks (docs validation + mkdocs build run on every commit). Prefix shell commands with `rtk` per project convention; use `rtk proxy <cmd>` when you need unfiltered output.
 
 **Verified facts this plan relies on (re-verify in each task before deleting):**
+
 - `tools/notification_service.py` is referenced only by its own test.
 - `orchestrators/portfolio_review_enhanced.py` has zero importers (only a stale `.pyc`). It is the ONLY importer of `reporting/portfolio_review_html.py`.
 - `orchestrators/portfolio_review_orchestrator.py` is ALIVE (imported at `src/finwiz/orchestrators/validation_orchestrator.py:94`) — keep it; it only mentions `portfolio_review_html` in a docstring.
@@ -38,6 +39,7 @@ Expected: exits 0. If it fails, STOP — fix main first; this plan assumes a gre
 ### Task 1: Delete the notification service
 
 **Files:**
+
 - Delete: `src/finwiz/tools/notification_service.py`
 - Delete: `tests/unit/tools/test_notification_service.py`
 - Delete: `docs/explanations/NOTIFICATION_SERVICE_ARCHITECTURE.md`
@@ -80,6 +82,7 @@ rtk git add -A && rtk git commit -m "chore: delete dead notification service (on
 ### Task 2: Delete examples/ and its Makefile targets
 
 **Files:**
+
 - Delete: `examples/` (entire directory, 18 files — user confirmed unused)
 - Modify: `Makefile` (help lines 34–35, targets at lines 273–280)
 
@@ -100,21 +103,21 @@ rtk git rm -r examples/
 In `Makefile`, delete these two help lines (currently 34–35):
 
 ```makefile
-	@echo "  make html-example - Run inline HTML generation examples"
-	@echo "  make html-integration - Run HTML integration examples"
+ @echo "  make html-example - Run inline HTML generation examples"
+ @echo "  make html-integration - Run HTML integration examples"
 ```
 
 and these two targets (currently 273–280):
 
 ```makefile
 html-example:
-	@echo "🚀 Running inline HTML generation examples..."
-	python examples/inline_html_example.py
-	@echo "✅ Examples completed - check output/examples/ directory"
+ @echo "🚀 Running inline HTML generation examples..."
+ python examples/inline_html_example.py
+ @echo "✅ Examples completed - check output/examples/ directory"
 
 html-integration:
-	@echo "🔄 Running HTML integration examples..."
-	python examples/integration_example.py
+ @echo "🔄 Running HTML integration examples..."
+ python examples/integration_example.py
 ```
 
 Also remove `html-example` / `html-integration` from any `.PHONY:` line.
@@ -143,6 +146,7 @@ rtk git add -A && rtk git commit -m "chore: delete unused examples/ demos and th
 ### Task 3: Delete the dead portfolio-review report chain
 
 **Files:**
+
 - Delete: `src/finwiz/orchestrators/portfolio_review_enhanced.py`
 - Delete: `src/finwiz/reporting/portfolio_review_html.py`
 - Modify: `src/finwiz/orchestrators/portfolio_review_orchestrator.py:10` (stale docstring only — this module is ALIVE, do not delete it)
@@ -195,6 +199,7 @@ rtk git add -A && rtk git commit -m "chore: delete orphaned portfolio_review_enh
 ### Task 4: Purge orphaned scripts/
 
 **Files:**
+
 - Keep (wired into Makefile/CI/pre-commit — verified): `scripts/analyze_test_failures.py`, `scripts/check_new_file_size.py`, `scripts/cleanup_temp_files.py`, `scripts/cleanup_master.py`, `scripts/fix_csv_currencies.py`, `scripts/generate_html_reports.py`, `scripts/generate_demo.py`, `scripts/validate_docs.py`, `scripts/__init__.py`
 - Delete: everything else in `scripts/`, including `archive/`, the three `README*/QUICK_START*` markdown files, both `.sh` jekyll scripts, `rollback.sh`, `verify_*.sh`, and all unwired Python scripts (`build_docs.py`, `deploy_docs.py`, `migrate_docs.py`, `migration_models.py`, `migration_rules.yml`, `create_missing_docs.py`, `convert_json_to_html.py`, `run_python_analysis.py`, `run_python_analysis_fixed.py`, `validate_finwiz_architecture.py`, `mkdocs_schema_plugin.py`, `setup_schema_plugin.py`, `test_schema_plugin.py`, `integrate_schemas.py`, `fix_mypy_mechanical.py`, `fix_mypy_tier1.py`, `extract_mypy_context.py`, `check_imports.py`, `check_docs_quality.py`, `check_jekyll_syntax.py`, `check_stage_contract.py`, `add_json_requirements.py`, `monitor_deployment.py`, `monitor_supabase_metrics.py`, `organize_documentation.py`, `invalidate_fact_pack.py`, `test_graceful_degradation.py`, `test_report_generation.py`, `validate_build.py`, `validate_report.py`, `validate_success_criteria.py`, `validate_supabase_deployment.py`, `verify_html_reports.py`, `verify_logging.py`, `zero_downtime_deploy.py`)
 
@@ -265,6 +270,7 @@ rtk git add -A && rtk git commit -m "chore: purge orphaned scripts/ (keep only M
 ### Task 5: Purge meta-docs and historical doc logs
 
 **Files:**
+
 - Delete: `docs/DOCUMENTATION_ENHANCEMENT_SUMMARY.md`, `docs/DOCUMENTATION_ORGANIZATION.md`, `docs/IMPROVEMENT_PLAN.md`, `docs/MKDOCS_SETUP.md`, `docs/QUICK_START_MKDOCS.md`
 - Delete: `docs/fixes/` (entire directory, 6 files of historical fix logs)
 - Delete: `docs/reference/IMPLEMENTATION_SUMMARIES.md`
@@ -312,6 +318,7 @@ rtk git add -A && rtk git commit -m "docs: purge meta-docs, historical fix logs,
 ### Task 6: Remove never-queried feature flags
 
 **Files:**
+
 - Modify: `src/finwiz/config/features/definitions.py` (`create_default_flags()`, lines 89–327)
 - Modify: `.env.example` (drop matching `FF_*` lines)
 - Modify: feature-flag tests under `tests/` that assert on the removed names or on flag counts
@@ -375,6 +382,7 @@ rtk git add -A && rtk git commit -m "chore: remove feature flags that are define
 ### Task 7: Deduplicate top-level doc guides into Diátaxis structure
 
 **Files:**
+
 - Compare/merge: `docs/USER_GUIDE.md` (31K, in nav line 161) vs `docs/tutorials/USER_GUIDE.md`
 - Move: `docs/DEVELOPER_GUIDE.md` (49K, in nav line 162) → `docs/development/DEVELOPER_GUIDE.md`
 - Modify: `mkdocs.yml` nav lines 161–162

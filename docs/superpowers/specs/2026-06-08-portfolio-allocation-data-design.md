@@ -19,6 +19,7 @@ Tickers are source-prefixed: `Yahoo:AAPL`, `Yahoo:AEEM.PA`; crypto is bare (`BTC
 ## Goals / Non-goals
 
 **Goals**
+
 - Each holding carries a position **Quantity** (units/shares) from the CSV.
 - Compute each holding's market value in its **native currency** (from the price API) and
   convert to a **EUR** base via **live FX**, yielding a portfolio **weight** (`% of total EUR value`).
@@ -29,6 +30,7 @@ Tickers are source-prefixed: `Yahoo:AAPL`, `Yahoo:AEEM.PA`; crypto is bare (`BTC
   `None`; the run never crashes and other weights still compute (over the holdings that do have data).
 
 **Non-goals**
+
 - Cost basis, P&L, tax lots, or historical performance.
 - Rebalancing trade math (separate module already exists).
 - Changing the report-posture plan here (it consumes the new weights; the upgrade is a small
@@ -95,11 +97,13 @@ to the strategic-posture combine.
      Prints a diff summary (old→new per ticker). Idempotent. Not invoked by the analysis flow.
 
 ### Data flow
+
 CSV (`Quantity`) → `RawHolding.quantity` → `value_holdings(price_fn, fx_fn)` →
 per-holding `{native_value, eur_value, weight}` + `total_value_eur` → stamped on `HoldingDecision`
 / `PortfolioReview` → consumed by report renderer + strategic-posture combine.
 
 ### Error handling
+
 - Blank/invalid quantity → `None`, debug log, holding excluded from weighting (still analyzed/rendered).
 - Price or FX unavailable for a holding → its `weight=None`; it's excluded from `total_eur` (weights
   of the rest still sum to ~1.0 over priced holdings; coverage note states how many were priced).
@@ -109,6 +113,7 @@ per-holding `{native_value, eur_value, weight}` + `total_value_eur` → stamped 
   corrupts the file (write to temp, atomic replace).
 
 ### Testing
+
 - `fx_rates`: identity rate; mocked pair lookup; GBp handling; failure→None; per-run cache hit.
 - `value_holdings` (pure, injected fns): full data → correct weights summing ~1.0; missing quantity →
   weight None + excluded from total; missing price/FX → weight None; empty → no crash; multi-currency
@@ -119,6 +124,7 @@ per-holding `{native_value, eur_value, weight}` + `total_value_eur` → stamped 
 - The live price/FX calls themselves are network → their direct tests `@pytest.mark.integration`.
 
 ## Affected files (reference)
+
 - `data/stock.csv`, `data/etf.csv`, `data/crypto.csv` — add `Quantity` (+ crypto `Currency` via the fix tool).
 - `src/finwiz/schemas/portfolio_processing.py` — `RawHolding.quantity`.
 - `src/finwiz/schemas/portfolio_review.py` — `HoldingDecision` weight fields; `PortfolioReview.base_currency`/`total_value_eur`.
@@ -129,6 +135,7 @@ per-holding `{native_value, eur_value, weight}` + `total_value_eur` → stamped 
 - `scripts/fix_csv_currencies.py` (new) + `Makefile` `fix-currencies` target.
 
 ## Risks / open items for planning
+
 - Confirm the existing price service exposes both **price and quote currency** per ticker (yfinance
   `fast_info.last_price` + `fast_info.currency`); if not, add a thin accessor.
 - Confirm the source-prefixed ticker (`Yahoo:AAPL`) → price-API symbol normalization already done by

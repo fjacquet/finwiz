@@ -43,6 +43,7 @@
 ## Task 1: `RawHolding.quantity` field + CSV ingestion
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/portfolio_processing.py:17-26`
 - Modify: `src/finwiz/orchestrators/portfolio_holdings_processor.py:125-188`
 - Test: `tests/unit/orchestrators/test_portfolio_holdings_processor.py` (add to existing file)
@@ -192,6 +193,7 @@ git commit -m "feat(portfolio): parse CSV Quantity into RawHolding.quantity"
 ## Task 2: Holding-model weight fields
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/portfolio_review.py:134-181` (`HoldingDecision`), `:210-230` (`PortfolioReview`)
 - Test: `tests/unit/schemas/test_portfolio_review_enhancements.py` (add to existing file)
 
@@ -326,6 +328,7 @@ git commit -m "feat(portfolio): add allocation/weight fields to HoldingDecision 
 ## Task 3: Valuation result schemas
 
 **Files:**
+
 - Create: `src/finwiz/schemas/portfolio_valuation.py`
 - Test: `tests/unit/schemas/test_portfolio_valuation.py`
 
@@ -432,6 +435,7 @@ git commit -m "feat(portfolio): add HoldingValuation/ValuationResult schemas"
 ## Task 4: Live FX provider (`fx_rates.py`)
 
 **Files:**
+
 - Create: `src/finwiz/data/fx_rates.py`
 - Test: `tests/unit/data/test_fx_rates.py`
 
@@ -641,6 +645,7 @@ git commit -m "feat(portfolio): add live yfinance FX->EUR provider with per-run 
 ## Task 5: Pure `value_holdings`
 
 **Files:**
+
 - Create: `src/finwiz/scoring/portfolio_valuation.py`
 - Test: `tests/unit/scoring/test_portfolio_valuation.py`
 
@@ -895,6 +900,7 @@ git commit -m "feat(portfolio): pure value_holdings (quantity+price+FX -> EUR we
 ## Task 6: Wire valuation into `build_portfolio_review`
 
 **Files:**
+
 - Modify: `src/finwiz/orchestrators/portfolio_review_orchestrator.py:80-143`
 - Test: `tests/unit/orchestrators/test_portfolio_review.py` (add to existing file)
 
@@ -1087,6 +1093,7 @@ git commit -m "feat(portfolio): stamp EUR weights and total_value_eur in build_p
 ## Task 7: `make fix-currencies` (CSV Currency rewrite tool)
 
 **Files:**
+
 - Create: `scripts/fix_csv_currencies.py`
 - Modify: `Makefile` (add `fix-currencies` target + `.PHONY`)
 - Test: `tests/unit/scripts/test_fix_csv_currencies.py`
@@ -1340,7 +1347,7 @@ In `Makefile`, add `fix-currencies` to the `.PHONY` line (line 3) and add this t
 
 ```makefile
 fix-currencies:  ## Rewrite data/*.csv Currency columns from the authoritative price API (network; explicit)
-	uv run python scripts/fix_csv_currencies.py
+ uv run python scripts/fix_csv_currencies.py
 ```
 
 - [ ] **Step 6: Verify the target is wired (dry check — no network needed for `make -n`)**
@@ -1362,6 +1369,7 @@ git commit -m "feat(portfolio): add 'make fix-currencies' CSV currency rewrite t
 This is the operational enablement step. We add an empty `Quantity` column to each CSV (blank = no position size yet; the pipeline stays inert/graceful until a user fills values). We do **not** invent position sizes.
 
 **Files:**
+
 - Modify: `data/stock.csv`, `data/etf.csv`, `data/crypto.csv`
 
 - [ ] **Step 1: Add an empty `Quantity` column to all three CSVs**
@@ -1459,4 +1467,5 @@ git commit -m "chore(portfolio): lint/format/type fixups for allocation data" ||
 **Deliberate scope decision (flag for reviewer):** `PortfolioReview.base_currency` keeps its existing default (`"CHF"`) and is **not** changed to `"EUR"`. The spec's narrative says "base currency EUR", but the *weight* is a dimensionless ratio and `total_value_eur` already carries the EUR total explicitly, so changing the long-standing `base_currency` default is unnecessary and risks regressions elsewhere. The valuation is hard-coded to EUR internally. If the report header must literally display "EUR", that is a one-line follow-up in the report renderer (out of scope here, consistent with the spec's "Non-goals: changing the report-posture plan").
 
 **Consumption by the strategic-posture combine** (the prerequisite-of relationship in the spec header) is explicitly out of scope for this plan — it is the small follow-up edit to the report-posture plan's B2/B4, as the spec states.
+
 ```

@@ -34,18 +34,21 @@ structural, not advisory.
 ### Implementation
 
 **Schema** (`src/finwiz/schemas/hybrid_analysis/fact_pack.py`):
+
 - `FactPack` Pydantic model with `corporate_structure`, `recent_events`,
   `leadership`, `fetched_at`, `freshness`, `confidence`, `source_citations`
 - `freshness` is Python-derived from `fetched_at` -- AI cannot lie about
   staleness (cross-checked by `model_validator`)
 
 **Fetcher** (`src/finwiz/analysis/fact_pack_research.py`):
+
 - `fetch_fact_pack()` async via `perplexity_structured()` (mirrors
   `strategic_research.py`'s pattern -- direct httpx + json_schema, no
   CrewAI subagent)
 - Sync wrapper for non-async callers
 
 **Cache** (`src/finwiz/cache/fact_pack_cache.py`):
+
 - Schema-version-tagged JSON envelopes (entries with mismatched version
   trigger silent re-fetch)
 - Two-band freshness model (NOT a hard TTL):
@@ -66,6 +69,7 @@ structural, not advisory.
   (defense-in-depth path-traversal guard).
 
 **Stage** (`src/finwiz/analysis/stages/fact_pack.py`):
+
 - `@stage(name="fact_pack", timeout_s=60, retries=1)` -- NOT
   `allow_degrade`. The trust-spine invariant from ADR-009 stays intact:
   only `qualify` may DEGRADE.
@@ -84,6 +88,7 @@ structural, not advisory.
   must have evicted).
 
 **Prompt template** (`src/finwiz/crews/deep_analysis/config/tasks.yaml`):
+
 - New FACT PACK section before CONTEXT block declaring the fact pack
   AUTORITAIRE for corporate structure, recent events (12 months),
   leadership
@@ -93,6 +98,7 @@ structural, not advisory.
   "max 1" (fact pack pre-loads common verifications)
 
 **Report** (`src/finwiz/reporting/section_generators.py`):
+
 - Provenance footer rendered next to rationale cell:
   - fresh -> green pill "Faits actuels"
   - recent -> neutral pill

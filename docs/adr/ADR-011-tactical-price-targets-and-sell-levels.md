@@ -12,6 +12,7 @@ The deep-analysis report shows a verdict per holding (grade, recommendation, nar
 2. **"À quel prix devrais-je vendre si la thèse se casse ?"** (niveau de vente / stop-loss)
 
 The compute primitives already exist:
+
 - `quantitative/price_targets.py` — DCF, P/E, technical, support/resistance, consensus.
 - `quantitative/derivative_pricing.py` — full Black-Scholes + Greeks.
 - `quantitative/technical/` + TA-Lib — ATR, Fibonacci, support/resistance.

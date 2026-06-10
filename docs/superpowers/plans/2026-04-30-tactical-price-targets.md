@@ -34,6 +34,7 @@
 ## Task 1: Create `tactical_pricing.py` core module
 
 **Files:**
+
 - Create: `src/finwiz/quantitative/tactical_pricing.py`
 - Test: `tests/unit/quantitative/test_tactical_pricing.py`
 
@@ -456,6 +457,7 @@ quantify stage in the next task. See ADR-011."
 ## Task 2: Add `price_targets` field to `QuantitativeAnalysis` schema
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/quantitative.py`
 - Test: extend `tests/unit/schemas/test_hybrid_analysis_schemas.py` (or create if absent)
 
@@ -582,6 +584,7 @@ Optional Pydantic field. None when tactical_pricing returns None
 ## Task 3: Wire `compute_tactical_pricing` into the quantify stage
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/stages/quantify.py`
 - Test: extend `tests/unit/analysis/stages/test_quantify.py`
 
@@ -789,6 +792,7 @@ compute tactical pricing never fails the scoring pipeline."
 ## Task 4: Propagate `price_targets` through merge to `HoldingDecision`
 
 **Files:**
+
 - Modify: `src/finwiz/orchestrators/portfolio_review/merge.py`
 - Test: extend `tests/unit/orchestrators/test_merge.py`
 
@@ -885,6 +889,7 @@ git commit -m "feat(merge): propagate price_targets onto HoldingDecision (ADR-01
 ## Task 5: Render compact target/sell columns in the holdings table
 
 **Files:**
+
 - Modify: `src/finwiz/reporting/section_generators.py`
 - Test: extend `tests/unit/reporting/test_section_generators.py`
 
@@ -1027,6 +1032,7 @@ escaping."
 ## Task 6: Render "🎯 Targets" detail panel in per-ticker HTML
 
 **Files:**
+
 - Modify: `src/finwiz/reporting/enriched_analysis_report_generator.py`
 - Modify: `src/finwiz/templates/enriched_analysis_report.html`
 - Test: extend `tests/property/test_enriched_analysis_report_properties.py`

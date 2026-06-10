@@ -37,6 +37,7 @@ The fix: clear the config-driving env vars before *every* test (restored by `mon
 | `CHANGELOG.md` | `[Unreleased]` note | Modify |
 
 Singletons reset by the fixture, with rationale:
+
 - `src/finwiz/config/manager.py:379` — `_config_manager` (env-derived; no reset fn — null directly).
 - `src/finwiz/config/settings.py:216` — `_settings` (env/`.env`-derived cache; `reset_settings()` existed but was unused). **Was missing from the original plan.**
 - `src/finwiz/config/resilience_config.py:87` — `_resilience_config` (env-derived; `reset_resilience_config()` at line 179).
@@ -50,6 +51,7 @@ Singletons reset by the fixture, with rationale:
 ## Task 1: Autouse isolation fixture (clear env + reset singletons)
 
 **Files:**
+
 - Modify: `tests/conftest.py`
 - Test: `tests/unit/test_global_isolation.py`
 
@@ -211,6 +213,7 @@ git commit -m "test: autouse fixture to isolate config env + reset singletons (r
 ## Task 2: Remove the destructive env-clearing from the config-manager tests
 
 **Files:**
+
 - Modify: `tests/unit/utils/test_configuration_manager.py`
 
 The class `TestConfigurationManager` (line 25) has a `setup_method` (lines 28-42) that does `del os.environ[var]` for 7 vars — a **non-restored global mutation** and the source of the order-dependence (see Root cause). The autouse fixture from Task 1 now provides clean, restored isolation for ALL classes (including `TestConfigurationManagerIntegration` at line 429, which had none). Remove the manual `setup_method`.
@@ -263,6 +266,7 @@ git commit -m "test(config): drop destructive env-clearing; rely on autouse isol
 ## Task 3: Confirm the resilience reset test is reorder-safe
 
 **Files:**
+
 - Verify only: `tests/unit/config/test_resilience_config.py` (no change expected)
 
 `TestResetResilienceConfig::test_should_reset_singleton` (line ~533) assumes the singleton starts unset. It failed under xdist when a prior test had already cached `_resilience_config`. Task 1's autouse fixture now nulls `_resilience_config` before every test, so the assumption holds regardless of order.
@@ -284,6 +288,7 @@ Expected: ALL pass — the autouse reset makes the singleton's starting state in
 ## Task 4: Enable pytest-xdist
 
 **Files:**
+
 - Modify: `pyproject.toml`, `Makefile`
 
 - [ ] **Step 1: Add the dev dependency**
@@ -305,26 +310,26 @@ In `Makefile`, change the `test` recipe from:
 
 ```makefile
 test:
-	uv run pytest -m "not integration" -q
+ uv run pytest -m "not integration" -q
 ```
 
 to:
 
 ```makefile
 test:
-	uv run pytest -m "not integration" -q -n auto --dist=loadscope
+ uv run pytest -m "not integration" -q -n auto --dist=loadscope
 ```
 
 And change the `coverage-check` recipe from:
 
 ```makefile
-	uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet
+ uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet
 ```
 
 to:
 
 ```makefile
-	uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet -n auto --dist=loadscope
+ uv run pytest --cov=src/finwiz --cov-report=term-missing --cov-fail-under=65 --quiet -n auto --dist=loadscope
 ```
 
 (Recipe lines use TAB indentation. `loadscope` keeps each module/class on one worker, so class-scoped fixtures stay correct. `pytest-cov` combines per-worker coverage automatically. Leave `test-verbose` and `coverage` serial.)
@@ -368,6 +373,7 @@ Expected: `Coverage meets minimum threshold (65%)` and `0 failed`. If a test tha
 git add -A
 git commit -m "test: isolate remaining order-dependent state for xdist"
 ```
+
 (Skip if Steps 1-4 were clean with no changes.)
 
 ---
@@ -375,6 +381,7 @@ git commit -m "test: isolate remaining order-dependent state for xdist"
 ## Task 6: CHANGELOG + final gate
 
 **Files:**
+
 - Modify: `CHANGELOG.md`
 
 - [ ] **Step 1: Update the changelog** (use the wall-clock numbers actually measured in Task 5)
