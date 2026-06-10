@@ -1803,7 +1803,7 @@ grep "duration" logs/finwiz.log | tail -n 20
 
 ### Continuous Integration
 
-**GitHub Actions** (`.github/workflows/ci.yml`):
+**GitHub Actions** (`.github/workflows/quality.yml`):
 
 ```yaml
 name: CI
