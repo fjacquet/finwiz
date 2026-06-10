@@ -34,6 +34,7 @@ from finwiz.quantitative.price_targets import (
     calculate_technical_target,
 )
 from finwiz.tools.logger import get_logger
+from finwiz.tools.run_helpers import json_ok
 
 logger = get_logger(__name__)
 
@@ -179,7 +180,7 @@ class ValuationTool(BaseTool):
                 "has_consensus": "consensus" in results["valuations"],
             }
 
-            return json.dumps(results, indent=2, default=str)
+            return json_ok(results)
 
         except Exception as e:
             error_msg = f"Valuation calculation failed: {e!s}"

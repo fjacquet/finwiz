@@ -5,7 +5,6 @@ This module provides comprehensive risk assessment capabilities for individual
 assets and portfolios, including various risk metrics and scenario analysis.
 """
 
-import json
 from datetime import datetime
 from typing import Any, cast
 
@@ -15,6 +14,7 @@ from pydantic import BaseModel
 
 from finwiz.schemas.tools import RiskAssessmentInput
 from finwiz.tools.logger import get_logger
+from finwiz.tools.run_helpers import json_error, json_ok
 
 
 class RiskAssessmentTool(BaseTool):
@@ -82,12 +82,11 @@ class RiskAssessmentTool(BaseTool):
                 result = self._assess_comprehensive_risk(input_data)
 
             logger.info("Risk assessment completed successfully")
-            return json.dumps(result, indent=2, default=str)
+            return json_ok(result)
 
         except Exception as e:
             logger.error(f"Risk assessment failed: {e}")
-            error_result = {"success": False, "error": str(e), "error_type": type(e).__name__}
-            return json.dumps(error_result, indent=2, default=str)
+            return json_error(e)
 
     def _assess_individual_risks(self, input_data: RiskAssessmentInput) -> dict[str, Any]:
         """Assess individual asset risks."""
