@@ -97,91 +97,6 @@ class TestEvaluateFlag:
 
         assert result is False
 
-    def test_should_evaluate_user_list_with_allowed_user(self, fake):
-        """Test USER_LIST strategy with allowed user."""
-        user_id = fake.uuid4()
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.USER_LIST,
-            allowed_users={user_id},
-        )
-
-        result = evaluate_flag(config, user_id, None, {})
-
-        assert result is True
-
-    def test_should_evaluate_user_list_with_disallowed_user(self, fake):
-        """Test USER_LIST strategy with disallowed user."""
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.USER_LIST,
-            allowed_users={"allowed_user"},
-        )
-
-        result = evaluate_flag(config, "other_user", None, {})
-
-        assert result is False
-
-    def test_should_evaluate_user_list_with_no_user(self):
-        """Test USER_LIST strategy with no user ID."""
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.USER_LIST,
-            allowed_users={"allowed_user"},
-        )
-
-        result = evaluate_flag(config, None, None, {})
-
-        assert result is False
-
-    def test_should_evaluate_time_window_within_window(self):
-        """Test TIME_WINDOW strategy within active window."""
-        now = time.time()
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.TIME_WINDOW,
-            start_time=now - 3600,  # 1 hour ago
-            end_time=now + 3600,  # 1 hour from now
-        )
-
-        result = evaluate_flag(config, None, None, {})
-
-        assert result is True
-
-    def test_should_evaluate_time_window_before_start(self):
-        """Test TIME_WINDOW strategy before start time."""
-        now = time.time()
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.TIME_WINDOW,
-            start_time=now + 3600,  # 1 hour from now
-            end_time=now + 7200,  # 2 hours from now
-        )
-
-        result = evaluate_flag(config, None, None, {})
-
-        assert result is False
-
-    def test_should_evaluate_time_window_after_end(self):
-        """Test TIME_WINDOW strategy after end time."""
-        now = time.time()
-        config = FeatureFlagConfig(
-            name="test_flag",
-            enabled=True,
-            strategy=FeatureFlagStrategy.TIME_WINDOW,
-            start_time=now - 7200,  # 2 hours ago
-            end_time=now - 3600,  # 1 hour ago
-        )
-
-        result = evaluate_flag(config, None, None, {})
-
-        assert result is False
-
     def test_should_evaluate_circuit_breaker_strategy(self):
         """Test CIRCUIT_BREAKER strategy delegates correctly."""
         config = FeatureFlagConfig(
@@ -384,21 +299,6 @@ class TestRecordFailure:
 
 class TestGetDefaultValues:
     """Tests for get_default_values function."""
-
-    def test_should_return_sentiment_defaults(self):
-        """Test default values for sentiment analysis."""
-        result = get_default_values("enhanced_sentiment_analysis")
-
-        assert result["sentiment_score"] == 0.0
-        assert result["article_count"] == 0
-        assert result["source"] == "default"
-
-    def test_should_return_chart_defaults(self):
-        """Test default values for chart analysis."""
-        result = get_default_values("chart_analysis")
-
-        assert result["chart_url"] is None
-        assert result["pattern_insights"] == []
 
     def test_should_return_perplexity_defaults(self):
         """Test default values for perplexity research."""
