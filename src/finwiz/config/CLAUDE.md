@@ -60,7 +60,7 @@ from finwiz.config.settings import get_settings
 from finwiz.config.features.flags import is_feature_enabled
 
 settings = get_settings()
-if is_feature_enabled("batch_prefetch"):
+if is_feature_enabled("newcomer_discovery"):
     batch_size = settings.deep_analysis_batch_size
 ```
 
