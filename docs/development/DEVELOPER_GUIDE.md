@@ -265,7 +265,6 @@ src/finwiz/
 │   ├── tool_factories.py          # Centralized tool initialization
 │   ├── quantitative_analysis_tool.py
 │   ├── enhanced_sentiment_tool.py
-│   ├── technical_analyzer.py
 │   └── scoring/                   # Python scoring engines
 │
 ├── schemas/                        # Pydantic Data Models
@@ -651,11 +650,9 @@ def get_stock_crew_tools(
 
     # Core tools (always included)
     from finwiz.tools.data_fetcher import DataFetcherTool
-    from finwiz.tools.technical_analyzer import TechnicalAnalyzerTool
 
     tools.extend([
         DataFetcherTool(),
-        TechnicalAnalyzerTool()
     ])
 
     # Optional RAG integration

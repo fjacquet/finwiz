@@ -31,8 +31,6 @@ tools/
 ├── risk_assessment_tool.py          # RiskAssessmentTool
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
 ├── market_screening_tool.py         # MarketScreeningTool
-├── technical_analyzer.py            # TechnicalAnalyzer
-├── sentiment_analyzer.py            # SentimentAnalyzer
 ├── chart_analyzer.py                # Chart analysis
 │
 ├── # Enhanced tools (per-asset specialization)
@@ -40,7 +38,6 @@ tools/
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
 ├── enhanced_sentiment_tool.py       # Enhanced sentiment
-├── enhanced_technical_analyzer_tool.py # Enhanced technical
 ├── a_plus_scoring_tool.py           # A+ scoring
 ├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking
