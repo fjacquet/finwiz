@@ -480,19 +480,6 @@ class ContextPreparationManager:
                 "data_availability_summary_formatted": self.availability_tracker.format_summary_for_report(error_summary),
             }
 
-    def _extract_backtesting_data_from_results(self, backtesting_status_result: dict[str, Any]) -> dict[str, Any]:
-        """Extract backtesting data from backtesting status result.
-
-        Delegates to the module-level function, preserving the instance method
-        signature for any callers that reference self._extract_backtesting_data_from_results.
-        """
-        return _extract_backtesting_data_from_results(self.backtesting_extractor, backtesting_status_result)
-
-    @staticmethod
-    def _safe_get_metric(data: dict[str, Any], key: str) -> Any:
-        """Safely get a metric from data dictionary. Delegates to module-level helper."""
-        return _safe_get_metric(data, key)
-
     def prepare_crew_context(self, max_age_hours: int = 24, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
         """Prepare integrated context for crew execution."""
         try:

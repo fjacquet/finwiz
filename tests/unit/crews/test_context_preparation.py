@@ -3,6 +3,7 @@
 import pytest
 
 from finwiz.crews.helpers.context_preparation import (
+    _extract_backtesting_data_from_results,
     _load_backtesting_data,
     _load_discovery_data,
     _load_reporter_input,
@@ -145,6 +146,21 @@ class TestTrackPortfolioStats:
 
         assert integrated["deep_analysis_summary"] is None
 
+    def test_handles_none_portfolio_review_when_marked_available(self, mocker):
+        """Pin the AttributeError fix: portfolio_review=None with portfolio_available=True degrades to empty holdings."""
+        tracker = mocker.MagicMock()
+        mocker.patch("finwiz.crews.helpers.context_preparation.DataAgeExtractor.extract_age_from_summary", return_value=1.0)
+        integrated = {"portfolio_review": None}
+
+        _track_portfolio_stats(integrated, self._make_report(mocker), tracker, max_age_hours=24)
+
+        portfolio_call = next(c for c in tracker.track_data_source.call_args_list if c.kwargs["source"] == "portfolio_review")
+        assert portfolio_call.kwargs["status"] == "available"
+        assert portfolio_call.kwargs["record_count"] == 0
+        deep_call = next(c for c in tracker.track_data_source.call_args_list if c.kwargs["source"] == "deep_portfolio_analysis")
+        assert deep_call.kwargs["status"] == "unavailable"
+        assert integrated["deep_analysis_summary"] is None
+
 
 class TestLoadDiscoveryData:
     """Tests for _load_discovery_data."""
@@ -251,6 +267,56 @@ class TestLoadBacktestingData:
         assert result["backtesting_summary"] == {"total_candidates_tested": 1}
         assert result["backtesting_status"]["has_data"] is True
         tracker.track_data_source.assert_called_once_with(source="backtesting", status="available", record_count=1)
+
+
+class TestExtractBacktestingDataFromResults:
+    """Tests for _extract_backtesting_data_from_results."""
+
+    def test_summary_is_populated_when_metrics_extracted(self, mocker):
+        """Pin the summary fix: result['summary'] must be non-None with aggregate stats (was unconditionally None)."""
+        extractor = mocker.MagicMock()
+        extractor.format_for_display.return_value = "display"
+        extractor.get_available_metrics.return_value = ["annualized_return"]
+        status_result = {
+            "has_backtesting_data": True,
+            "validation_results": [
+                {
+                    "symbol": "NVDA",
+                    "annualized_return": 0.18,
+                    "win_rate": 0.6,
+                    "average_sharpe_ratio": 1.2,
+                    "average_sortino_ratio": 1.5,
+                    "average_max_drawdown": -0.25,
+                    "backtest_period_years": 5,
+                    "validation_details": [{"total_trades": 42}],
+                },
+                {
+                    "symbol": "AMD",
+                    "annualized_return": 0.30,
+                    "win_rate": 0.5,
+                    "average_sharpe_ratio": 0.8,
+                    "average_sortino_ratio": 1.0,
+                    "average_max_drawdown": -0.15,
+                    "backtest_period_years": 3,
+                    "validation_details": [{"total_trades": 10}],
+                },
+            ],
+        }
+
+        result = _extract_backtesting_data_from_results(extractor, status_result)
+
+        assert result["has_backtesting_data"] is True
+        assert result["total_candidates"] == 2
+        assert set(result["backtesting_by_candidate"]) == {"NVDA", "AMD"}
+        assert result["backtesting_by_candidate"]["NVDA"]["metrics"]["annualized_return"] == pytest.approx(0.18)
+        assert result["backtesting_by_candidate"]["NVDA"]["metrics"]["total_trades"] == 42
+        summary = result["summary"]
+        assert summary is not None
+        assert summary["total_candidates_tested"] == 2
+        assert summary["candidates_with_data"] == 2
+        assert summary["average_annualized_return"] == pytest.approx(0.24)
+        assert summary["average_sharpe_ratio"] == pytest.approx(1.0)
+        assert summary["average_max_drawdown"] == pytest.approx(-0.20)
 
 
 class TestSummarizeAvailability:
