@@ -195,18 +195,17 @@ class BaseReportGenerator(ABC):
 
         return template_vars
 
+    @abstractmethod
     def _get_default_data_sources(self) -> list[str]:
         """Return the default data-source list for this generator.
 
-        Each subclass overrides this to return its own list; this base
-        implementation provides a generic fallback so that the method is
-        always callable from ``_apply_common_defaults``.
+        Abstract so a new subclass cannot silently ship generic data-source
+        attributions in its reports; ``_apply_common_defaults`` relies on it.
 
         Returns:
             List of data source description strings.
 
         """
-        return ["Yahoo Finance API", "FinWiz Python Scoring Engine"]
 
     def validate_data(self, data: dict[str, Any]) -> bool:
         """
