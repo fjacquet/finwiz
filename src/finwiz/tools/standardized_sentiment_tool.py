@@ -610,3 +610,14 @@ class CrossAssetSentimentComparatorTool(BaseTool):
             "message": "Use StandardizedSentimentAnalysisTool for individual asset analysis",
             "methodology": "Cross-asset sentiment comparison with relative scoring",
         }
+
+
+def get_standardized_sentiment_tool() -> StandardizedSentimentAnalysisTool:
+    """
+    Get StandardizedSentimentAnalysisTool instance for use outside crew tool lists.
+
+    Returns:
+        StandardizedSentimentAnalysisTool instance
+
+    """
+    return StandardizedSentimentAnalysisTool()

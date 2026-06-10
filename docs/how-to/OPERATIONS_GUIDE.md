@@ -1438,7 +1438,7 @@ await cache.cleanup_expired()  # Remove expired entries
 Configure caching behavior through `CacheConfig`:
 
 ```python
-from finwiz.infrastructure.caching.manager import CacheConfig, CacheBackend, CacheStrategy
+from finwiz.infrastructure.caching.manager import CacheBackend, CacheConfig, CacheManager, CacheStrategy
 
 config = CacheConfig(
     backend=CacheBackend.HYBRID,        # memory, file, or hybrid

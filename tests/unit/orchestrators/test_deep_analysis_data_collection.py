@@ -36,7 +36,7 @@ def test_collect_sentiment_uses_standardized_tool(mocker):
         "top_pos": [],
         "top_neg": [],
     }
-    mock_tool = mocker.patch("finwiz.orchestrators.deep_analysis_data_collector.StandardizedSentimentAnalysisTool")
+    mock_tool = mocker.patch("finwiz.orchestrators.deep_analysis_data_collector.get_standardized_sentiment_tool")
     mock_tool.return_value._run.return_value = fake_result
 
     state = FinwizState()

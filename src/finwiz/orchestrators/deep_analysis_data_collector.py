@@ -4,7 +4,7 @@ import json
 from typing import Any
 
 from finwiz.tools.logger import get_logger
-from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
+from finwiz.tools.standardized_sentiment_tool import get_standardized_sentiment_tool
 
 logger = get_logger(__name__)
 
@@ -327,7 +327,7 @@ class DeepAnalysisDataCollector:
 
         try:
             self.logger.info(f"🐍 Calling StandardizedSentimentAnalysisTool for {ticker}")
-            result = StandardizedSentimentAnalysisTool()._run(symbol=ticker, asset_class=_asset_class, max_articles=20, days_back=30)
+            result = get_standardized_sentiment_tool()._run(symbol=ticker, asset_class=_asset_class, max_articles=20, days_back=30)
 
             score = float(result.get("weighted_score", result.get("mean_score", 0.0)) or 0.0)
             counts = result.get("counts") or {}
