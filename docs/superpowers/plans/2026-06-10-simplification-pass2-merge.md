@@ -42,6 +42,7 @@ Expected: exit 0 (Pass 1 left it fully green, including docs-lint).
 ### Task 1: Delete the three stub tools and dewire them
 
 **Files:**
+
 - Modify: `src/finwiz/tools/enhanced_crypto_tool.py` (delete `CryptoThesisGeneratorTool`, `CryptoRiskScoringTool` classes, ~lines 504–545)
 - Modify: `src/finwiz/tools/enhanced_etf_tool.py` (delete `ETFTrackingAnalysisTool` class, ~lines 179–199)
 - Modify: `src/finwiz/tools/finance_tools.py` (remove imports + instantiations)
@@ -83,6 +84,7 @@ rtk git add -A && rtk git commit -m "chore: delete placeholder stub tools (Crypt
 ### Task 2: Delete orphaned analyzer modules
 
 **Files:**
+
 - Delete: `src/finwiz/tools/sentiment_analyzer.py` (501 lines)
 - Delete: `src/finwiz/tools/enhanced_technical_analyzer_tool.py` (270 lines)
 - Delete: `src/finwiz/tools/technical_analyzer.py` (75 lines — only consumer is the file above)
@@ -100,7 +102,7 @@ rtk proxy grep -rn "SentimentAnalyzer\b\|TechnicalAnalyzer\b\|EnhancedTechnicalA
 
 Expected: hits only in dedicated test files (delete those too) and possibly `tools/__init__.py` lazy exports (remove those lines). CAUTION: `TechnicalAlgorithms` and `TechnicalPatterns` (technical_algorithms.py / technical_patterns.py) are SEPARATE modules — if the deep-analysis quantitative path imports them directly, they are ALIVE; only `technical_analyzer.py` (the thin `TechnicalAnalyzer` wrapper) is the orphan. Verify `technical_algorithms.py` has consumers outside the deleted files before assuming anything. Any production import of the three target modules = STOP and report.
 
-- [ ] **Step 2: Delete modules + dedicated tests + __init__ exports**
+- [ ] **Step 2: Delete modules + dedicated tests + **init** exports**
 
 ```bash
 rtk git rm src/finwiz/tools/sentiment_analyzer.py src/finwiz/tools/enhanced_technical_analyzer_tool.py src/finwiz/tools/technical_analyzer.py
@@ -125,6 +127,7 @@ rtk git add -A && rtk git commit -m "chore: delete orphaned analyzer modules (se
 ### Task 3: Unify sentiment on StandardizedSentimentAnalysisTool
 
 **Files:**
+
 - Modify: `src/finwiz/orchestrators/deep_analysis_data_collector.py` `_collect_sentiment_data()` (~line 321)
 - Delete: `src/finwiz/tools/enhanced_sentiment_tool.py` + `tests/unit/tools/test_enhanced_sentiment_tool.py`
 - Modify: `src/finwiz/schemas/tools/inputs.py` (delete `EnhancedSentimentInput`, ~lines 117–123) + `schemas/tools/__init__.py` exports
@@ -241,6 +244,7 @@ within the same -1..1 scale; collector output contract unchanged."
 ### Task 4: Shared JSON error/serialization helper for `_run` methods
 
 **Files:**
+
 - Create: `src/finwiz/tools/run_helpers.py` (small — well under the 300-line new-file limit)
 - Test: `tests/unit/tools/test_run_helpers.py`
 - Modify (migration, top payoff only): `tools/risk_assessment_tool.py`, `tools/backtesting_tool.py`, `tools/portfolio_analysis_tool.py`, `tools/quantitative_analysis_tool.py`, `tools/valuation_tool.py`
@@ -331,6 +335,7 @@ rtk git add -A && rtk git commit -m "refactor(tools): shared json_ok/json_error 
 ### Task 5: Remove dead GradeInfo.css_class and fix the batch_prefetch doc example
 
 **Files:**
+
 - Modify: `src/finwiz/scoring/grading_system.py` (drop `css_class` field, ~line 24, + its 8 populate sites in `score_to_grade`)
 - Modify: `tests/unit/utils/test_grading_system.py` (only if any test reads css_class)
 - Modify: `src/finwiz/config/CLAUDE.md:63` (example uses nonexistent `batch_prefetch` flag)
@@ -365,6 +370,7 @@ rtk git add -A && rtk git commit -m "chore: drop write-only GradeInfo.css_class;
 ### Task 6: Delete the self-validating feature-flag loop and unused strategy enums
 
 **Files:**
+
 - Modify: `src/finwiz/config/features/definitions.py` (remove `chart_analysis`, `enhanced_sentiment_analysis`, `twelve_data_integration` entries)
 - Modify: `src/finwiz/config/manager.py` (`_validate_feature_flag_consistency`, lines ~332–349)
 - Modify: `src/finwiz/config/features/` flags/evaluators (remove `FeatureFlagStrategy.USER_LIST` + `TIME_WINDOW` members and their evaluator branches)
@@ -445,6 +451,7 @@ rtk git add -A && rtk git commit -m "refactor: extract shared helpers for clone 
 ### Task 8: Fix pre-existing broken doc links
 
 **Files:**
+
 - Modify: `docs/reference/index.md` (links to never-created pages: `api/analysis.md`, `api/scoring.md`, `api/reporting.md`, `schemas/crew_exports.md`, …)
 - Modify: `docs/maintenance/content-creation-guide.md`, `content-governance.md`, `troubleshooting-guide.md` (fictional example links)
 - DO NOT touch: `docs/maintenance/style-guide.md` links that are intentional formatting EXAMPLES (read context before editing)
