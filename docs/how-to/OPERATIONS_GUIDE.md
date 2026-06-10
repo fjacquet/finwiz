@@ -969,7 +969,7 @@ class CustomFlow(Flow[MyState]):
 **Custom Error Handling:**
 
 ```python
-from finwiz.utils.retry_handler import classify_error, get_remediation_suggestion
+from finwiz.infrastructure.resilience.retry import classify_error, get_remediation_suggestion
 
 try:
     result = analyze_holding(ticker)
@@ -1418,7 +1418,7 @@ The caching system consists of:
 The `CacheManager` class provides the main interface for caching operations:
 
 ```python
-from finwiz.utils.cache_manager import get_cache_manager, CacheConfig
+from finwiz.infrastructure.caching.manager import get_cache_manager, CacheConfig
 
 # Get the global cache manager instance
 cache = get_cache_manager()
@@ -1438,7 +1438,7 @@ await cache.cleanup_expired()  # Remove expired entries
 Configure caching behavior through `CacheConfig`:
 
 ```python
-from finwiz.utils.cache_manager import CacheConfig, CacheBackend, CacheStrategy
+from finwiz.infrastructure.caching.manager import CacheConfig, CacheBackend, CacheStrategy
 
 config = CacheConfig(
     backend=CacheBackend.HYBRID,        # memory, file, or hybrid
