@@ -6,7 +6,7 @@ used throughout the FinWiz system.
 """
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import StrEnum
 
 from finwiz.tools.logger import get_logger
@@ -40,14 +40,10 @@ class FeatureFlagConfig:
     enabled: bool = False
     strategy: FeatureFlagStrategy = FeatureFlagStrategy.BOOLEAN
     rollout_percentage: float = 0.0  # 0-100
-    allowed_users: set[str] = field(default_factory=set)
-    start_time: float | None = None
-    end_time: float | None = None
     fallback_strategy: FallbackStrategy = FallbackStrategy.DISABLE
     circuit_breaker_threshold: int = 5  # Failures before circuit opens
     circuit_breaker_timeout: int = 300  # Seconds before retry
     description: str = ""
-    tags: set[str] = field(default_factory=set)
 
 
 @dataclass

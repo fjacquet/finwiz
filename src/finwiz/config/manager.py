@@ -177,11 +177,8 @@ class ConfigurationManager:
         return len(self.missing_keys) == 0
 
     def _is_key_required(self, key_config: APIKeyConfig) -> bool:
-        """Check if an API key is required based on feature flags."""
-        if key_config.required:
-            return True
-
-        return False
+        """Check if an API key is required (optional keys are never required)."""
+        return key_config.required
 
     def _validate_key_format(self, key_config: APIKeyConfig, api_key: str) -> bool:
         """Validate API key format based on known patterns."""
@@ -217,7 +214,7 @@ class ConfigurationManager:
                     [
                         f"• {key_config.env_var}",
                         f"  Description: {key_config.description}",
-                        f"  Required: {'Yes' if self._is_key_required(key_config) else 'No (feature disabled)'}",
+                        f"  Required: {'Yes' if self._is_key_required(key_config) else 'No (optional)'}",
                         "",
                     ]
                 )

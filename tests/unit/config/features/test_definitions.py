@@ -225,14 +225,10 @@ class TestFeatureFlagConfigDataclass:
         assert hasattr(config, "enabled")
         assert hasattr(config, "strategy")
         assert hasattr(config, "rollout_percentage")
-        assert hasattr(config, "allowed_users")
-        assert hasattr(config, "start_time")
-        assert hasattr(config, "end_time")
         assert hasattr(config, "fallback_strategy")
         assert hasattr(config, "circuit_breaker_threshold")
         assert hasattr(config, "circuit_breaker_timeout")
         assert hasattr(config, "description")
-        assert hasattr(config, "tags")
 
     def test_should_have_correct_defaults(self):
         """Test FeatureFlagConfig has correct default values."""
@@ -241,11 +237,7 @@ class TestFeatureFlagConfigDataclass:
         assert config.enabled is False
         assert config.strategy == FeatureFlagStrategy.BOOLEAN
         assert config.rollout_percentage == 0.0
-        assert config.allowed_users == set()
-        assert config.start_time is None
-        assert config.end_time is None
         assert config.fallback_strategy == FallbackStrategy.DISABLE
         assert config.circuit_breaker_threshold == 5
         assert config.circuit_breaker_timeout == 300
         assert config.description == ""
-        assert config.tags == set()
