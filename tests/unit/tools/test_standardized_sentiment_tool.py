@@ -102,9 +102,13 @@ class TestStandardizedSentimentAnalysisTool:
             },
         ]
 
-    def test_should_normalize_symbol_input(self, tool):
+    def test_should_normalize_symbol_input(self, tool, mocker):
         """Test symbol normalization."""
-        # Arrange & Act
+        # Arrange — mock the news-collection seam so no real HTTP calls are made
+        mock_collect = mocker.patch.object(tool, "_collect_news_articles")
+        mock_collect.return_value = []
+
+        # Act
         result = tool._run(symbol="  aapl  ", asset_class="stock", max_articles=10)
 
         # Assert

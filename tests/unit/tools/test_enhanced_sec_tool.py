@@ -306,6 +306,7 @@ class TestIntegrationScenarios:
                 "assessment_date": "2024-01-01",
             },
         )
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(ticker="AAPL", sections=["Item 1", "Item 1A", "Item 7"], risk_assessment=True)
@@ -345,6 +346,7 @@ class TestIntegrationScenarios:
         ]
 
         mocker.patch.object(tool, "_extract_section_insights", return_value=mock_insights)
+        mocker.patch.object(tool, "_get_perplexity_integration", return_value=None)
 
         # Act
         result = tool._run(ticker="AAPL", risk_assessment=False)

@@ -134,6 +134,10 @@ class TestBetaExtraction:
             },
         )
 
+        # Mock SEC tool — Step 3 of collect_data runs it for stocks (real SEC +
+        # Perplexity fetches otherwise; same seam as the sibling test below)
+        mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run", return_value="# SEC Analysis\n\nStrong fundamentals")
+
         # Call data collection (method moved to data_collector in Phase 1.1 refactoring)
         result = orchestrator.data_collector.collect_data(ticker="AAPL", asset_class="stock", batch_enabled=False)
 
