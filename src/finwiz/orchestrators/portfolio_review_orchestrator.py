@@ -5,7 +5,6 @@ This module contains business logic orchestration for portfolio review:
 - Configuration and thresholds
 - Holdings decision building (pure functions)
 - Portfolio review building and execution
-- Integration with rebalancing
 
 HTML generation is delegated to the reporting layer (finwiz.reporting.python_report_generator).
 """

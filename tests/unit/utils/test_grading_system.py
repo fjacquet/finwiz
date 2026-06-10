@@ -1,8 +1,7 @@
 """
 Unit tests for the grading system utilities.
 
-Tests the conversion of composite scores to letter grades and
-the generation of portfolio-wide grade summaries.
+Tests the conversion of composite scores to letter grades.
 """
 
 from pytest import approx
