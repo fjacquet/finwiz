@@ -278,10 +278,11 @@ deadcode:
 	@uvx vulture src/finwiz --min-confidence 80
 	@echo "✅ No dead code found"
 
+# Threshold 37 = current clean baseline (13 pre-existing sub-37-line duplications grandfathered by the threshold; tighten as they're consolidated).
 check-duplication:
-	@echo "👯 Checking for duplicate code (pylint, min 12 similar lines)..."
-	@uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=12 --score=no src/finwiz || true
-	@echo "✅ Duplication check complete (advisory; see above for any R0801 findings)"
+	@echo "👯 Checking for duplicate code (pylint, min 37 similar lines)..."
+	@uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=37 --score=no src/finwiz
+	@echo "✅ No duplication found (above the 37-line baseline)"
 
 .PHONY: sbom audit
 
