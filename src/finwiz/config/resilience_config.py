@@ -98,7 +98,12 @@ def get_resilience_config() -> ResilienceConfig:
         FINWIZ_MAX_RETRIES: Maximum retry attempts (default: 3)
         FINWIZ_RETRY_BASE_DELAY: Base delay in seconds (default: 2)
         FINWIZ_RETRY_MAX_DELAY: Maximum delay in seconds (default: 60)
-        FINWIZ_HOLDING_TIMEOUT: Per-holding timeout in seconds (default: 600)
+        FINWIZ_HOLDING_TIMEOUT: Outer per-holding budget in seconds (default: 900).
+            Auto-raised by the orchestrator to FINWIZ_CREW_TIMEOUT + 300 s when
+            set below that floor, so the @stage retry always has headroom.
+        FINWIZ_CREW_TIMEOUT: Inner per-crew-attempt budget in seconds (default: 600).
+            Independent of FINWIZ_HOLDING_TIMEOUT; governs asyncio.wait_for inside
+            execute_crew_with_timeout.
         FINWIZ_FLOW_TIMEOUT: Global flow timeout in seconds (default: 7200)
         FINWIZ_CIRCUIT_BREAKER_THRESHOLD: Consecutive failures to open breaker (default: 5)
         FINWIZ_CIRCUIT_BREAKER_RECOVERY: Seconds before half-open retry (default: 120)
@@ -129,7 +134,7 @@ def get_resilience_config() -> ResilienceConfig:
         retry_max_delay = float(os.getenv("FINWIZ_RETRY_MAX_DELAY", "60"))
 
         # Load timeout configuration
-        holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "600"))
+        holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
         flow_timeout = int(os.getenv("FINWIZ_FLOW_TIMEOUT", "7200"))
 
         # Load resume configuration

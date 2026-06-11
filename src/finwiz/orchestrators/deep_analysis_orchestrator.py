@@ -23,10 +23,31 @@ from uuid import uuid4
 
 from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
+from finwiz.infrastructure.resilience.crew_execution import CREW_TIMEOUT
 from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
+
+# Minimum gap between the per-crew-attempt budget and the per-holding outer budget.
+# This guarantees the @stage retry of the qualify crew has at least this many
+# seconds to complete after an inner-attempt timeout fires.
+RETRY_HEADROOM_S = 300
+
+
+def _effective_holding_timeout() -> int:
+    """Return the effective per-holding timeout, auto-raised when necessary.
+
+    The holding timeout must always exceed the crew attempt budget by at least
+    RETRY_HEADROOM_S so that the @stage retry triggered by an inner timeout has
+    room to complete before the outer _analyze_with_timeout kills the holding.
+
+    FINWIZ_HOLDING_TIMEOUT — outer per-holding budget (default 900 s)
+    FINWIZ_CREW_TIMEOUT    — inner crew attempt budget (default 600 s)
+    """
+    configured = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
+    floor = CREW_TIMEOUT + RETRY_HEADROOM_S
+    return max(configured, floor)
 
 
 def _analyze_single_sync(
@@ -457,7 +478,16 @@ class DeepAnalysisOrchestrator:
         # Per-holding timeout - prevents one stuck ticker blocking all.
         # Default 900 s after the 2026-04-29 run (DELL succeeded at 1488 s,
         # asyncio.wait_for cannot interrupt sync crew.kickoff() in a thread).
-        per_holding_timeout = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
+        # 2026-06-11: auto-raised to CREW_TIMEOUT + RETRY_HEADROOM_S when set
+        # too low so the @stage retry has guaranteed headroom after an inner
+        # crew-attempt timeout fires (root cause of 8 dropped holdings).
+        configured_holding = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
+        per_holding_timeout = _effective_holding_timeout()
+        if per_holding_timeout > configured_holding:
+            self.logger.warning(
+                f"FINWIZ_HOLDING_TIMEOUT={configured_holding}s leaves no retry headroom over the crew budget "
+                f"({CREW_TIMEOUT}s); raising per-holding timeout to {per_holding_timeout}s"
+            )
 
         # Resolve prefetched_data once so the helper receives the value, not self
         prefetched_data = self.state.prefetched_data if self.state.batch_prefetch_enabled else None
