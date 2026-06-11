@@ -11,7 +11,12 @@ Architecture (Clean Functional Pipeline):
     4. synthesize(ctx, quant, qual) -> Enriched    [Python]
 """
 
+import asyncio
+import logging
 import os
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -28,16 +33,13 @@ def _analyze_single_sync(
     holding: dict[str, Any],
     *,
     prefetched_data: Any,
-    ledger: Any,
-    logger: Any,
-    make_synthetic_pending: Any,
-) -> tuple[str, "DeepAnalysisResult | None", Any | None]:
-    """Synchronous per-holding analysis (runs inside the thread pool).
-
-    Extracted from ``run_deep_analysis_concurrent`` to reduce that method's
-    cyclomatic complexity (C901) and statement count (PLR0915).  All
-    previously-closed-over names are passed as explicit keyword arguments.
-    """
+    ledger: RunLedger,
+    logger: logging.Logger,
+    make_synthetic_pending: Callable[..., DeepAnalysisResult],
+) -> tuple[str, DeepAnalysisResult | None, Any | None]:
+    """Synchronous per-holding analysis (runs inside the thread pool)."""
+    # Lazy import is load-bearing: tests patch "finwiz.analysis.analyze_holding",
+    # which only intercepts when the name resolves at call time.
     from finwiz.analysis import analyze_holding
 
     ticker = holding.get("ticker")
@@ -73,25 +75,20 @@ def _analyze_single_sync(
 async def _analyze_with_timeout(
     holding: dict[str, Any],
     *,
-    executor: Any,
-    semaphore: Any,
-    loop: Any,
+    executor: ThreadPoolExecutor,
+    semaphore: asyncio.Semaphore,
+    loop: asyncio.AbstractEventLoop,
     timeout_seconds: int,
     prefetched_data: Any,
-    ledger: Any,
-    logger: Any,
-    make_synthetic_pending: Any,
-) -> tuple[str, "DeepAnalysisResult | None", Any | None]:
+    ledger: RunLedger,
+    logger: logging.Logger,
+    make_synthetic_pending: Callable[..., DeepAnalysisResult],
+) -> tuple[str, DeepAnalysisResult | None, Any | None]:
     """Per-holding timeout wrapper around ``_analyze_single_sync``.
 
-    Extracted from ``run_deep_analysis_concurrent`` to reduce that method's
-    cyclomatic complexity (C901) and statement count (PLR0915).  Per-holding
-    timeout semantics are UNTOUCHED: the semaphore is acquired *before*
-    the timer starts so timeouts only count active work, not queue-wait time.
+    The semaphore is acquired *before* the timer starts so timeouts only
+    count active work, not queue-wait time.
     """
-    import asyncio
-    from functools import partial
-
     ticker = holding.get("ticker", "unknown")
     # Acquire semaphore BEFORE starting timeout - this ensures timeout
     # only counts time spent actually working, not time spent in queue
@@ -437,9 +434,6 @@ class DeepAnalysisOrchestrator:
         Returns:
             Dictionary mapping tickers to DeepAnalysisResult objects
         """
-        import asyncio
-        from concurrent.futures import ThreadPoolExecutor
-
         from finwiz.config.performance.performance_config import get_batch_size
 
         # Get max_workers from config if not specified

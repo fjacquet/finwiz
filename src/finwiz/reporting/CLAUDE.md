@@ -54,6 +54,7 @@ reporting/
 | `__init__.py` | `CREW_GENERATORS` | Registry mapping crew names → generators |
 | `__init__.py` | `get_generator_for_crew()` | Get generator by crew name |
 | `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
+| `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
 | `consolidator.py` | `ReportConsolidator` | Consolidate multiple reports |
 | `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
