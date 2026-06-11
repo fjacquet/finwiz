@@ -49,14 +49,13 @@ class TestFileSizeConstraints:
         """
         **Feature: flow-orchestrator-refactoring, Property 1: File Size Constraint**.
 
-        For the Flow Orchestrator file (backward compatibility layer),
-        the line count should not exceed 400 lines.
+        The main flow orchestrator (flows/orchestrator.py) must not exceed 400 lines.
 
         **Validates: Requirements 1.1**
         """
         flow_files = get_flow_orchestrator_files()
 
-        # Should have at least the main flow_orchestrator.py
+        # Should have at least the main flows/orchestrator.py
         assert len(flow_files) > 0, "Flow orchestrator file not found"
 
         for file_path in flow_files:

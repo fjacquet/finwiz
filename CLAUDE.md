@@ -14,7 +14,7 @@ uv sync
 # Unit tests (default, excludes integration)
 make test
 
-# All quality checks (lint + test + unittest.mock check + docs validation)
+# All quality checks (lint + test + unittest.mock check + docs validation + complexity + dead-code)
 make check
 
 # Run a single test

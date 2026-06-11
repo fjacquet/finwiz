@@ -33,10 +33,13 @@ help:
 	@echo "  make html-demo   - Generate HTML template demo file"
 	@echo ""
 	@echo "Quality Assurance:"
-	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict)"
+	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict + complexity + deadcode + duplication)"
 	@echo "  make ci          - Alias for 'make all' (matches CI workflow checks)"
-	@echo "  make check       - Quick quality checks (lint --fix + tests + docs-validate)"
+	@echo "  make check       - Quick quality checks (lint --fix + tests + docs-validate + complexity + deadcode)"
 	@echo "  make lint-check  - Read-only lint (no autofix) + format --check"
+	@echo "  make lint-complexity - C901/PLR0915 complexity gate (grandfather list in pyproject; shrink-only)"
+	@echo "  make deadcode    - Dead-code scan (vulture, min confidence 80)"
+	@echo "  make check-duplication - Duplicate-code gate (pylint R0801, 37-line clean baseline)"
 	@echo "  make check-unittest-mock - Check for banned unittest.mock"
 	@echo "  make coverage    - Run tests with coverage report (65% minimum)"
 	@echo "  make coverage-report - Open coverage report in browser"
@@ -269,9 +272,9 @@ html-demo:
 	@echo "✅ Demo generated - open demo.html in your browser"
 
 lint-complexity:
-	@echo "🧠 Checking cyclomatic complexity (C901) and statement counts (PLR0915)..."
+	@echo "🧠 Checking complexity (C901/PLR0915) — grandfathered files in pyproject per-file-ignores; shrink-only, never add entries"
 	@uv run ruff check src/finwiz --select C901,PLR0915
-	@echo "✅ Complexity within limits (grandfathered files listed in pyproject per-file-ignores)"
+	@echo "✅ Complexity within limits"
 
 deadcode:
 	@echo "🦅 Scanning for dead code (vulture, min confidence 80)..."

@@ -1649,8 +1649,17 @@ def calculate_composite_score(
 3. **Run Quality Checks**:
 
    ```bash
-   make check  # Runs lint, mypy, tests
+   make check  # lint + complexity + tests + unittest-mock + file-size + docs-validate + stage-contract + deadcode
+   make all    # everything above plus mypy, strict docs build, and the duplication gate (PR-ready)
    ```
+
+   Two guardrails carry a contract worth knowing: the complexity gate
+   (C901/PLR0915) grandfathers pre-existing offenders via per-file-ignores in
+   `pyproject.toml` — that list is **shrink-only**; never add an entry, refactor
+   the function instead. The duplication gate (`make check-duplication`, pylint
+   R0801) runs at a 37-similar-lines threshold — the current clean baseline; 13
+   pre-existing sub-37-line clones are grandfathered by the threshold, which
+   should be tightened as they are consolidated.
 
 4. **Commit Changes**:
 

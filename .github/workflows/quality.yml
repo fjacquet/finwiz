@@ -36,14 +36,23 @@ jobs:
       - name: Ruff format check
         run: uv run ruff format --check .
 
+      - name: Dead code check (vulture)
+        run: uvx vulture src/finwiz --min-confidence 80
+
+      - name: Duplicate code check (pylint, 37-line clean baseline)
+        run: uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=37 --score=no src/finwiz
+
       - name: Check for banned unittest.mock
         run: make check-unittest-mock
 
       - name: Check new file sizes (300 lines max)
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
           # In CI, check files added in this PR compared to base branch
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            NEW_FILES=$(git diff --name-only --diff-filter=A origin/${{ github.base_ref }}...HEAD -- '*.py')
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            NEW_FILES=$(git diff --name-only --diff-filter=A "origin/$BASE_REF...HEAD" -- '*.py')
           else
             NEW_FILES=$(git diff --name-only --diff-filter=A HEAD~1...HEAD -- '*.py' 2>/dev/null || true)
           fi

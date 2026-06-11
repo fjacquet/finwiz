@@ -150,6 +150,12 @@ unfixable = []
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+# Explicit complexity ceiling for the C901 guardrail (this is the ruff default,
+# pinned so the number lives next to the grandfather list below).
+# PLR0915 max-statements uses the ruff default of 50.
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["ANN", "D", "S", "B017", "RUF013", "RUF043", "C901", "PLR0915"]
 "src/finwiz/schemas/**/*.py" = ["D100", "D101", "D102", "D103", "D401", "UP045"]
