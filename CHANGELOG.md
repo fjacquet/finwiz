@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.7.0] - 2026-06-11
+
+The three-pass codebase simplification (Delete → Merge → Decompose), ~42,000
+lines removed across PRs #64, #65, and #66 with permanent guardrails so
+complexity cannot silently regrow. Every commit passed spec-compliance plus
+adversarial quality review; each pass was validated by a production flow run.
+
+### Removed
+
+- **Pass 1 (Delete, −32.7k lines):** dead notification service, unused
+  `examples/` demos, the orphaned `portfolio_review_enhanced`/
+  `portfolio_review_html` report chain, ~45 orphaned `scripts/` (54 → 13,
+  keep-list verified against Makefile/CI/pre-commit), 61 doc pages
+  (meta-docs, historical fix logs, auto-generated placeholder stubs that were
+  live in the published nav), 8 never-queried feature flags, and
+  vulture-confirmed dead functions.
+- **Pass 2 (Merge, −7.2k lines):** three stub tools whose `_run` only returned
+  "use the other tool" messages, the orphaned analyzer cluster
+  (`sentiment_analyzer`, `technical_analyzer` + algorithms/patterns/models),
+  the enhanced sentiment tool and its private helpers (sentiment unified on
+  `StandardizedSentimentAnalysisTool` — one methodology for crews and deep
+  analysis), the self-validating feature-flag loop, and the write-only
+  `GradeInfo.css_class` field.
+
+### Added
+
+- **Build guardrails (Pass 3):** cyclomatic-complexity (C901, max 10) and
+  statement-count (PLR0915) gates with a shrink-only grandfather list;
+  vulture dead-code gate; pylint duplicate-code gate (37-line clean baseline)
+  — all real failing gates in `make check`/`make all` AND CI.
+- **Network isolation for unit tests:** a pytest-socket guard blocks all
+  remote access in `make test` (integration tests exempt); 16 silently
+  leaking tests were caught and mocked at the seam, roughly halving suite
+  wall-clock. Remote access must be mocked — the guard enforces it.
+- Shared `json_ok`/`json_error` tool-response envelopes (`tools/run_helpers`),
+  a `create_report_jinja_env` factory, and `BaseReportGenerator`
+  `_apply_common_defaults()` deduplicating five report generators.
+
+### Changed
+
+- **Pass 3 decomposition (functional core / imperative shell):** ~870 lines of
+  pure CSS/JS moved from Python strings to `reporting/assets/` files
+  (byte-identical, APIs unchanged); `get_integrated_data_context` (236 lines,
+  the repo's worst complexity offender) decomposed to a thin orchestrator over
+  module-level loaders; `run_deep_analysis_concurrent`'s nested closures
+  hoisted to typed module-level helpers.
+- Deep-analysis sentiment now uses the standardized rule-based scorer (same
+  −1..1 scale; values shift; collector output contract unchanged).
+- Docs ground-truthed: the phantom `finwiz.utils.*` namespace retired
+  (14 modules repointed with execution-verified imports), fictional API
+  reference pages removed, feature-flag docs rewritten to the surviving API.
+
+### Fixed
+
+- **Layered-timeout collision that discarded computed analyses.** The inner
+  crew timeout and outer per-holding timeout both read
+  `FINWIZ_HOLDING_TIMEOUT`, so when an LLM call hung, the qualify retry could
+  never complete before the holding was discarded — quantitative scores
+  included. Crew attempts now have their own budget (`FINWIZ_CREW_TIMEOUT`,
+  default 600 s) and the holding timeout auto-raises to crew + 300 s headroom.
+- `backtesting_summary` was unconditionally `None` (a flag never set since
+  inception) — report-crew context now receives real aggregate summaries.
+- `AttributeError` crash path when a portfolio review is marked available but
+  empty is now guarded.
+- GitHub Actions context-injection vector in `quality.yml` (interpolations in
+  `run:` blocks) fixed via quoted `env:` indirection.
+- `make html-reports`/`html-convert` had been crashing on a stale import.
+
 ## [5.6.0] - 2026-06-09
 
 ### Added
