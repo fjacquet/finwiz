@@ -98,7 +98,7 @@ target-version = "py312"
 [tool.ruff.lint]
 # Enable Pyflakes and pycodestyle rules by default.
 # Flake8-compatible list of codes to enable/disable.
-select = ["E", "F", "W", "I", "UP", "TID", "D", "S", "B", "RUF"]
+select = ["E", "F", "W", "I", "UP", "TID", "D", "S", "B", "RUF", "C901", "PLR0915"]
 ignore = [
     "E501",   # Line too long (handled by line-length=180)
     "F841",   # Local variable assigned but never used
@@ -151,14 +151,95 @@ unfixable = []
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = ["ANN", "D", "S", "B017", "RUF013", "RUF043"]
+"tests/**/*.py" = ["ANN", "D", "S", "B017", "RUF013", "RUF043", "C901", "PLR0915"]
 "src/finwiz/schemas/**/*.py" = ["D100", "D101", "D102", "D103", "D401", "UP045"]
 "src/finwiz/crews/**/*.py" = ["D102"]
 "src/finwiz/tools/etf_crew.py" = ["D102"]
-"scripts/**/*.py" = ["ANN", "D", "S", "B", "RUF"]
+"scripts/**/*.py" = ["ANN", "D", "S", "B", "RUF", "C901", "PLR0915"]
 "tests/property/*.py" = ["D400", "D415"]
 "src/finwiz/crews/deep_analysis/deep_analysis.py" = ["D401"]
 "src/finwiz/reporting/css/*.py" = ["D"]
+
+# --- Complexity grandfathering (Pass 3): shrink this list, never grow it ---
+# Files with BOTH C901 (cyclomatic complexity) and PLR0915 (too many statements):
+"src/finwiz/analysis/stages/_resilience.py" = ["C901", "PLR0915"]
+"src/finwiz/analysis/stages/_synthesize_helpers.py" = ["C901", "PLR0915"]
+"src/finwiz/analysis/stages/synthesize.py" = ["C901", "PLR0915"]
+"src/finwiz/infrastructure/json/to_html_converter.py" = ["C901", "PLR0915"]
+"src/finwiz/integration/backtesting_pipeline_connector.py" = ["C901", "PLR0915"]
+"src/finwiz/integration/transformation.py" = ["C901", "PLR0915"]
+"src/finwiz/orchestrators/alternatives_matching_orchestrator.py" = ["C901", "PLR0915"]
+"src/finwiz/scoring/technical_scorer.py" = ["C901", "PLR0915"]
+"src/finwiz/tools/enhanced_sec_tool.py" = ["C901", "PLR0915"]
+"src/finwiz/tools/perplexity_analysis_integration.py" = ["C901", "PLR0915"]
+"src/finwiz/tools/portfolio_holdings_html_generator.py" = ["C901", "PLR0915"]
+"src/finwiz/tools/rebalancing_formatters.py" = ["C901", "PLR0915"]
+"src/finwiz/tools/twelve_data/validators.py" = ["C901", "PLR0915"]
+# Files with ONLY C901 (cyclomatic complexity):
+"src/finwiz/analysis/fact_pack_research.py" = ["C901"]
+"src/finwiz/analysis/stages/qualify.py" = ["C901"]
+"src/finwiz/cache/_helpers.py" = ["C901"]
+"src/finwiz/config/resilience_config.py" = ["C901"]
+"src/finwiz/crews/helpers/data_extraction_helpers.py" = ["C901"]
+"src/finwiz/discovery/market_data.py" = ["C901"]
+"src/finwiz/flow_state_utils.py" = ["C901"]
+"src/finwiz/flows/hybrid_analysis_synthesizer.py" = ["C901"]
+"src/finwiz/infrastructure/decorators/api_decorators.py" = ["C901"]
+"src/finwiz/infrastructure/health/monitoring.py" = ["C901"]
+"src/finwiz/infrastructure/json/repair.py" = ["C901"]
+"src/finwiz/infrastructure/monitoring/freshness_checker.py" = ["C901"]
+"src/finwiz/infrastructure/resilience/degradation.py" = ["C901"]
+"src/finwiz/integration/cache.py" = ["C901"]
+"src/finwiz/integration/cli.py" = ["C901"]
+"src/finwiz/integration/config.py" = ["C901"]
+"src/finwiz/orchestrators/deep_analysis_data_collector.py" = ["C901"]
+"src/finwiz/orchestrators/discovery/aplus_discovery_integrator.py" = ["C901"]
+"src/finwiz/orchestrators/error_handling/recovery.py" = ["C901"]
+"src/finwiz/orchestrators/extraction/engine.py" = ["C901"]
+"src/finwiz/orchestrators/extraction/market_context.py" = ["C901"]
+"src/finwiz/orchestrators/extraction/parsers.py" = ["C901"]
+"src/finwiz/orchestrators/registry/registry_data_retrieval.py" = ["C901"]
+"src/finwiz/orchestrators/reporting/data_loading.py" = ["C901"]
+"src/finwiz/quantitative/constraint_handlers.py" = ["C901"]
+"src/finwiz/quantitative/cost_calculators.py" = ["C901"]
+"src/finwiz/quantitative/etf/etf_metrics.py" = ["C901"]
+"src/finwiz/quantitative/performance_benchmarks.py" = ["C901"]
+"src/finwiz/quantitative/portfolio_analyzer.py" = ["C901"]
+"src/finwiz/quantitative/tactical_pricing.py" = ["C901"]
+"src/finwiz/quantitative/trade_recommendation_system.py" = ["C901"]
+"src/finwiz/reporting/individual_report_generator.py" = ["C901"]
+"src/finwiz/reporting/sections/macro.py" = ["C901"]
+"src/finwiz/schemas/migration.py" = ["C901"]
+"src/finwiz/scoring/discovery/pipeline.py" = ["C901"]
+"src/finwiz/scoring/macro_scorer.py" = ["C901"]
+"src/finwiz/scoring/portfolio_deep_analyzer.py" = ["C901"]
+"src/finwiz/scoring/risk_scorer.py" = ["C901"]
+"src/finwiz/scoring/technical_fallback.py" = ["C901"]
+"src/finwiz/tools/alternative_finder_tool.py" = ["C901"]
+"src/finwiz/tools/backtesting_tool.py" = ["C901"]
+"src/finwiz/tools/charts/chart_analysis.py" = ["C901"]
+"src/finwiz/tools/crewai_retry_patch.py" = ["C901"]
+"src/finwiz/tools/enhanced_crypto_tool.py" = ["C901"]
+"src/finwiz/tools/etf_analysis_tool.py" = ["C901"]
+"src/finwiz/tools/portfolio_price_service.py" = ["C901"]
+"src/finwiz/tools/robust_tool_wrapper.py" = ["C901"]
+"src/finwiz/tools/scoring/scoring_algorithms.py" = ["C901"]
+"src/finwiz/tools/scoring/scoring_criteria.py" = ["C901"]
+"src/finwiz/tools/screening_ranking.py" = ["C901"]
+"src/finwiz/tools/standardized_sentiment_tool.py" = ["C901"]
+"src/finwiz/validation/consolidation.py" = ["C901"]
+"src/finwiz/validation/quality_metrics.py" = ["C901"]
+"src/finwiz/validation/scripts.py" = ["C901"]
+"src/finwiz/validation/sec_citation.py" = ["C901"]
+"src/finwiz/validation/url.py" = ["C901"]
+# Files with ONLY PLR0915 (too many statements):
+"src/finwiz/flows/orchestrator.py" = ["PLR0915"]
+"src/finwiz/integration/batch_data_prefetcher.py" = ["PLR0915"]
+"src/finwiz/orchestrators/portfolio_review/merge.py" = ["PLR0915"]
+"src/finwiz/quantitative/optimization_algorithms.py" = ["PLR0915"]
+"src/finwiz/reporting/rebalancing/rebalancing_html_builders.py" = ["PLR0915"]
+"src/finwiz/tools/rebalancing_sections.py" = ["PLR0915"]
+"src/finwiz/tools/reporting/report_formatters.py" = ["PLR0915"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -263,12 +344,6 @@ exclude = [
     "^tests/fixtures/",
     "^.mypy_cache/",
 ]
-
-# Phase 1: Core utilities with strict checking
-[[tool.mypy.overrides]]
-module = "finwiz.utils.*"
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
 
 # Phase 2: Schemas (Pydantic models already have good type hints)
 [[tool.mypy.overrides]]

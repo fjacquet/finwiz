@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit
+.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit lint-complexity deadcode check-duplication
 
 # Default target
 help:
@@ -125,12 +125,12 @@ format:
 	ruff check --fix .
 	ruff format .
 
-check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract
+check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract lint-complexity deadcode
 	@echo "✅ All quality checks passed"
 
 # Full validation matching CI workflows (docs.yml + quality.yml). Use this
 # before opening a PR to catch regressions locally without round-tripping CI.
-all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict docs-validate
+all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict docs-validate lint-complexity deadcode check-duplication
 	@echo ""
 	@echo "✅✅✅ All quality checks AND builds passed — branch is PR-ready ✅✅✅"
 
@@ -267,6 +267,21 @@ html-demo:
 	@echo "🎨 Generating HTML template demo..."
 	python scripts/generate_demo.py
 	@echo "✅ Demo generated - open demo.html in your browser"
+
+lint-complexity:
+	@echo "🧠 Checking cyclomatic complexity (C901) and statement counts (PLR0915)..."
+	@uv run ruff check src/finwiz --select C901,PLR0915
+	@echo "✅ Complexity within limits (grandfathered files listed in pyproject per-file-ignores)"
+
+deadcode:
+	@echo "🦅 Scanning for dead code (vulture, min confidence 80)..."
+	@uvx vulture src/finwiz --min-confidence 80
+	@echo "✅ No dead code found"
+
+check-duplication:
+	@echo "👯 Checking for duplicate code (pylint, min 12 similar lines)..."
+	@uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=12 --score=no src/finwiz || true
+	@echo "✅ Duplication check complete (advisory; see above for any R0801 findings)"
 
 .PHONY: sbom audit
 

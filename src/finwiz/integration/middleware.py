@@ -203,7 +203,7 @@ class CrewIntegrationMiddleware:
                 schema_version=1,
             )
 
-    async def _store_crew_output(self, context: CrewExecutionContext, crew_output: dict[str, Any], execution_duration: float | None) -> dict[str, Any]:
+    async def _store_crew_output(self, context: CrewExecutionContext, crew_output: dict[str, Any], _execution_duration: float | None) -> dict[str, Any]:
         """
         Store crew output in the integration directory.
 
@@ -219,7 +219,7 @@ class CrewIntegrationMiddleware:
         context: CrewExecutionContext,
         crew_output: dict[str, Any],
         validation_result: ValidationStatus,
-        execution_duration: float | None,
+        _execution_duration: float | None,
     ) -> dict[str, Any]:
         """
         Store execution metadata.
