@@ -113,12 +113,12 @@ The system follows a strict data flow from generation to report:
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                    4. DATA MERGE                                 │
-│  DeepAnalysisDataMerger merges analysis into portfolio          │
-│  - Validates deep analysis exists                                │
-│  - Detects fallback data patterns                                │
-│  - Merges actual grades and scores                               │
-│  - Verifies merge succeeded                                      │
+│                    4. DATA CONSOLIDATION                         │
+│  ReportConsolidator merges crew exports into one report          │
+│  - Loads deep analysis exports                                   │
+│  - Validates export structure                                    │
+│  - Tracks per-crew execution status                              │
+│  - Records validation errors in the report                       │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -519,16 +519,14 @@ grep "DataConsolidationValidator" logs/finwiz.log
 # ✅ Successfully retrieved data for crypto
 ```
 
-#### Step 4: Verify Data Merge
+#### Step 4: Verify Data Consolidation
 
 ```bash
-# Check merge logs
-grep "DeepAnalysisDataMerger" logs/finwiz.log
+# Check consolidation logs
+grep "Deep analysis consolidation" logs/finwiz.log
 
 # Expected output:
-# ✅ Merged AAPL: Grade A+, Score 0.95
-# ✅ Merged GOOGL: Grade A, Score 0.88
-# Deep analysis merge complete: 5/5 holdings successfully merged
+# Deep analysis consolidation: success (5 exports)
 ```
 
 #### Step 5: Verify Report Generation
@@ -647,10 +645,10 @@ for field in required_fields:
    ls -la output/stock/stock_output_*.json
    ```
 
-2. Check merge logs:
+2. Check consolidation logs:
 
    ```bash
-   grep "DeepAnalysisDataMerger" logs/finwiz.log
+   grep "Deep analysis consolidation" logs/finwiz.log
    ```
 
 3. Verify ticker matching:

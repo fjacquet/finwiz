@@ -10,7 +10,7 @@ Successfully implemented fully environment-variable driven LLM configuration acr
 
 1. ✅ `.env.example` - Added 5 new LLM model environment variables
 2. ✅ `.env` - Configured with Gemini models
-3. ✅ `src/finwiz/utils/llm_config.py` - Core LLM configuration with model type system
+3. ✅ `src/finwiz/config/llm/llm_config.py` - Core LLM configuration with model type system
 
 ### Helper Modules (1 file)
 

@@ -168,7 +168,7 @@ python_version = "3.12"
 mypy src/finwiz
 
 # Check specific module
-mypy src/finwiz/utils/datetime_utils.py
+mypy src/finwiz/infrastructure/time/datetime_utils.py
 
 # Check with explicit config
 mypy --config-file=pyproject.toml src/finwiz
@@ -184,10 +184,10 @@ mypy --show-error-codes src/finwiz
 mypy --html-report ./mypy-report src/finwiz
 
 # Check specific package
-mypy --package finwiz.utils
+mypy --package finwiz.validation
 
 # Strict mode for new code
-mypy --strict src/finwiz/utils/new_module.py
+mypy --strict src/finwiz/validation/new_module.py
 ```
 
 ## Next Steps
@@ -223,7 +223,7 @@ Verified configuration works correctly:
 $ mypy --version
 mypy 1.18.2 (compiled: yes)
 
-$ mypy --config-file=pyproject.toml src/finwiz/utils/datetime_utils.py
+$ mypy --config-file=pyproject.toml src/finwiz/infrastructure/time/datetime_utils.py
 Success: no issues found in 1 source file
 ```
 

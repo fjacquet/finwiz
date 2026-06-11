@@ -1775,18 +1775,13 @@ SUPABASE_ENCRYPTION_KEY=your-32-char-key
 #### Health Checks
 
 ```python
-from finwiz.utils import run_health_check
+from finwiz.infrastructure.health.checker import perform_comprehensive_health_check
 
-# Run health check
-results = run_health_check(
-    check_apis=True,
-    check_cache=True,
-    check_data=True,
-    check_validation=True
-)
+# Run comprehensive health check (data freshness, availability, directories, resources)
+report = perform_comprehensive_health_check()
 
-if not results.healthy:
-    logger.error(f"Health check failed: {results.errors}")
+if report.overall_status not in ("healthy", "warning"):
+    logger.error(f"Health check failed: {report.overall_status} - {report.recommendations}")
     sys.exit(1)
 ```
 

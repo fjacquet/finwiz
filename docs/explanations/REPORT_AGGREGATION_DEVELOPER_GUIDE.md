@@ -172,7 +172,7 @@ def execute_my_new_crew(self) -> dict[str, Any]:
 Update `ReportConsolidator` to handle the new crew type:
 
 ```python
-# In src/finwiz/utils/report_consolidator.py
+# In src/finwiz/reporting/consolidator.py
 
 from finwiz.schemas.crew_exports import MyNewCrewExport
 

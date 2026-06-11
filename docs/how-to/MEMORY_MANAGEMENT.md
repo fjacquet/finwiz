@@ -39,13 +39,13 @@ The memory management system ensures that batch processing stays within acceptab
 
 ### Components
 
-1. **MemoryManager** (`src/finwiz/utils/memory_manager.py`)
+1. **MemoryManager** (`src/finwiz/infrastructure/monitoring/memory_manager.py`)
    - Core memory monitoring and management
    - Memory usage tracking and logging
    - Cache cleanup functionality
    - Memory constraint validation
 
-2. **BatchDataPreFetcher** (`src/finwiz/utils/batch_data_prefetcher.py`)
+2. **BatchDataPreFetcher** (`src/finwiz/integration/batch_data_prefetcher.py`)
    - Integrates MemoryManager for monitoring
    - Tracks memory during batch operations
    - Provides memory metrics and cleanup methods
@@ -475,8 +475,8 @@ def test_batch_prefetch_with_memory_management():
 ## References
 
 - **Requirements**: 17.70, 17.71, 17.72, 17.73, 17.74
-- **Implementation**: `src/finwiz/utils/memory_manager.py`
-- **Integration**: `src/finwiz/utils/batch_data_prefetcher.py`
+- **Implementation**: `src/finwiz/infrastructure/monitoring/memory_manager.py`
+- **Integration**: `src/finwiz/integration/batch_data_prefetcher.py`
 - **Configuration**: `src/finwiz/config/batch_prefetch_config.py`
 
 ---

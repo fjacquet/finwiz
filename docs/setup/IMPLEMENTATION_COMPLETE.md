@@ -99,7 +99,7 @@ All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism
 
 - Current HTML generation uses f-strings
 - Should refactor to use existing Jinja2 templates in `src/finwiz/templates/`
-- Use `TemplateRenderer` class from `src/finwiz/utils/template_renderer.py`
+- Use `TemplateRenderer` class from `src/finwiz/reporting/rebalancing/template_renderers.py`
 
 **Next Improvement**: Refactor to Jinja2 templates (tracked in backlog)
 

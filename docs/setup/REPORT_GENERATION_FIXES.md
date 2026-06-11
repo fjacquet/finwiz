@@ -253,4 +253,4 @@ open output/finwiz_family_financial_plan.html
 - **AI Minimalism**: `.kiro/steering/ai-minimalism.md`
 - **CLAUDE.md**: Main project documentation
 - **Templates**: `src/finwiz/templates/`
-- **Template Renderer**: `src/finwiz/utils/template_renderer.py`
+- **Template Renderer**: `src/finwiz/reporting/rebalancing/template_renderers.py`

@@ -475,17 +475,6 @@ except Exception as e:
     # JSON save still succeeds
 ```
 
-### Batch Processing
-
-Disable HTML for bulk operations:
-
-```python
-disable_html_generation()
-for item in large_dataset:
-    save_data(item)  # Only JSON, no HTML
-enable_html_generation()
-```
-
 ### Template Caching
 
 Templates are cached automatically by Jinja2 for performance.
@@ -505,10 +494,10 @@ Templates are cached automatically by Jinja2 for performance.
 
 ## See Also
 
-- Template Renderer Source
-- HTML Generator Source
-- [Template Directory]in the templates/ directory
-- Generation Script
+- HTML auto-generator: `src/finwiz/reporting/html_auto_generator.py`
+- JSON-to-HTML converter: `src/finwiz/infrastructure/json/to_html_converter.py`
+- Templates: `src/finwiz/templates/`
+- Generation script: `scripts/generate_html_reports.py`
 
 ---
 

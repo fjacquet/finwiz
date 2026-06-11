@@ -26,7 +26,7 @@ Modified FinWiz to support fully environment-variable driven LLM configuration, 
 - Configured with Gemini models for standard/mini/manager/planning
 - Configured with OpenAI GPT-4o for baseline
 
-### 3. `src/finwiz/utils/llm_config.py`
+### 3. `src/finwiz/config/llm/llm_config.py`
 
 **Changes:**
 

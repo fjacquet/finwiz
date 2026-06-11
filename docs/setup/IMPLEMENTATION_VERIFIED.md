@@ -103,7 +103,7 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 
 - `.env.example` - Template with all new variables
 - `.env` - Configured with Gemini models
-- `src/finwiz/utils/llm_config.py` - Core configuration system
+- `src/finwiz/config/llm/llm_config.py` - Core configuration system
 
 ### Helpers (1 file)
 
