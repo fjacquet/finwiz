@@ -14,8 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader
-
+from finwiz.reporting.base_report_generator import create_report_jinja_env
 from finwiz.schemas.hybrid_analysis.enriched import EnrichedAnalysis
 
 logger = logging.getLogger(__name__)
@@ -54,12 +53,7 @@ class EnrichedAnalysisReportGenerator:
         self.logger = logger
 
         # Initialize Jinja2 environment
-        self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)),
-            autoescape=True,  # Security: auto-escape HTML
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+        self.env = create_report_jinja_env(self.template_dir)
 
         # Load the enriched analysis template
         try:

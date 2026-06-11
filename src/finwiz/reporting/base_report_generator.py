@@ -24,6 +24,16 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
+def create_report_jinja_env(template_dir: Path | str) -> Environment:
+    """Jinja2 environment with the report-rendering configuration shared by all generators."""
+    return Environment(
+        loader=FileSystemLoader(str(template_dir)),
+        autoescape=True,  # Security: auto-escape HTML
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+
+
 class BaseReportGenerator(ABC):
     """
     Abstract base class for crew-specific report generators.
@@ -52,12 +62,7 @@ class BaseReportGenerator(ABC):
         self.logger = logger
 
         # Initialize Jinja2 environment with common configuration
-        self.env = Environment(
-            loader=FileSystemLoader(str(self.template_dir)),
-            autoescape=True,  # Security: auto-escape HTML
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+        self.env = create_report_jinja_env(self.template_dir)
 
         # Register common filters
         self._register_common_filters()

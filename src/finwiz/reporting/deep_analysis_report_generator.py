@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader
+from finwiz.reporting.base_report_generator import create_report_jinja_env
 
 logger = logging.getLogger(__name__)
 
@@ -47,12 +47,7 @@ class DeepAnalysisReportGenerator:
         # Initialize Jinja2 environment
         # Use parent directory so templates can reference each other correctly
         template_parent_dir = self.template_dir.parent
-        self.env = Environment(
-            loader=FileSystemLoader(str(template_parent_dir)),
-            autoescape=True,  # Security: auto-escape HTML
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
+        self.env = create_report_jinja_env(template_parent_dir)
 
         # Load the deep analysis template
         try:
