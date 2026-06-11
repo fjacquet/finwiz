@@ -1,0 +1,61 @@
+
+    /* Rebalancing-specific styles */
+    .executive-summary {
+        background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .status-indicator {
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+
+    .status-indicator.rebalance_now {
+        background-color: rgba(253, 126, 20, 0.15);
+        border: 1px solid var(--warning);
+    }
+
+    .status-indicator.no_action {
+        background-color: rgba(25, 135, 84, 0.15);
+        border: 1px solid var(--success);
+    }
+
+    .summary-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .metric-card {
+        background: var(--bg-card);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .metric-card h4 {
+        margin: 0 0 10px 0;
+        font-size: 0.9em;
+        color: var(--text-muted);
+        border: none;
+    }
+
+    .metric-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: var(--text-primary);
+    }
+
+    .metric-value.positive {
+        color: var(--success);
+    }
+
+    .metric-value.negative {
+        color: var(--danger);
+    }

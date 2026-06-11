@@ -9,8 +9,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+from jinja2 import TemplateNotFound
 
+from finwiz.reporting.base_report_generator import create_report_jinja_env
 from finwiz.schemas.crew_exports import ConsolidatedReportExport
 from finwiz.tools.logger import get_logger
 
@@ -40,7 +41,7 @@ class FinalReportGenerator:
         self.template_dir = Path(template_dir)
 
         # Initialize Jinja2 environment
-        self.env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True)
+        self.env = create_report_jinja_env(self.template_dir)
 
         logger.info(f"FinalReportGenerator initialized with template_dir: {template_dir}")
 

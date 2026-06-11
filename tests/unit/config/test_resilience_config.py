@@ -355,7 +355,7 @@ class TestGetResilienceConfig:
         assert config.max_retries == 3
         assert config.retry_base_delay == 2.0
         assert config.retry_max_delay == 60.0
-        assert config.holding_timeout == 600
+        assert config.holding_timeout == 900
         assert config.flow_timeout == 7200
         assert config.auto_resume is False
         assert config.state_max_age_hours == 24

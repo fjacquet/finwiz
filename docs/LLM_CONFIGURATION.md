@@ -174,12 +174,10 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 ### Using Specific Model Types
 
 ```python
-from finwiz.utils.llm_config import (
+from finwiz.config.llm.llm_config import (
     get_configured_llm,
     get_mini_llm,
     get_manager_llm,
-    get_planning_llm,
-    get_baseline_llm
 )
 
 # Get standard model
@@ -190,12 +188,6 @@ mini_llm = get_mini_llm()
 
 # Get manager model
 manager_llm = get_manager_llm()
-
-# Get planning model
-planning_llm = get_planning_llm()
-
-# Get baseline model
-baseline_llm = get_baseline_llm()
 ```
 
 ### Override with Specific Model
@@ -210,13 +202,15 @@ custom_llm = get_configured_llm(model_override="anthropic/claude-3-opus-20240229
 The LLM configuration works seamlessly with FinWiz's performance optimization modes:
 
 ```python
-from finwiz.utils.performance_config import OptimizationMode, get_performance_config_manager
+from finwiz.config.performance.performance_config import OptimizationMode, get_performance_config_manager
 
-# Set optimization mode
+# Inspect current optimization mode (mode is set via env vars, not programmatically)
 perf_config = get_performance_config_manager()
-perf_config.set_mode(OptimizationMode.MAXIMUM_SPEED)
+print(f"Current mode: {perf_config.get_mode().value}")
 
-# Crews will automatically use mini model in maximum speed mode
+# Crews automatically use mini model in maximum speed mode
+if perf_config.is_maximum_speed_mode():
+    print("Maximum speed mode active — mini model will be used")
 ```
 
 ## Troubleshooting
@@ -261,7 +255,7 @@ llm = LLM(
 ### After (Environment-Driven)
 
 ```python
-from finwiz.utils.llm_config import get_configured_llm
+from finwiz.config.llm.llm_config import get_configured_llm
 
 llm = get_configured_llm(model_type="standard")
 ```

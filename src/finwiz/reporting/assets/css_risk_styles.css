@@ -1,0 +1,62 @@
+
+    /* Risk analysis */
+    .risk-scores {
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        margin: 20px 0;
+        gap: 20px;
+    }
+
+    .risk-score {
+        text-align: center;
+        padding: 20px;
+        border-radius: 10px;
+        background: var(--bg-card);
+        box-shadow: var(--shadow-sm);
+        flex: 1;
+    }
+
+    .risk-score h4 {
+        margin: 0 0 10px 0;
+        color: var(--text-muted);
+        border: none;
+    }
+
+    .score-value {
+        font-size: 2em;
+        font-weight: bold;
+        color: var(--text-primary);
+    }
+
+    .risk-arrow {
+        font-size: 2em;
+        color: var(--accent);
+    }
+
+    .risk-improvement {
+        text-align: center;
+        padding: 15px;
+        border-radius: 8px;
+        margin: 15px 0;
+    }
+
+    .risk-improvement.improvement {
+        background-color: rgba(25, 135, 84, 0.15);
+        border: 1px solid var(--success);
+    }
+
+    .risk-improvement.deterioration {
+        background-color: rgba(220, 53, 69, 0.1);
+        border: 1px solid var(--danger);
+    }
+
+    .risk-improvement.neutral {
+        background-color: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+    }
+
+    .risk-value {
+        font-weight: bold;
+        font-size: 1.1em;
+    }

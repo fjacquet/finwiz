@@ -153,7 +153,7 @@ We already have templates in `src/finwiz/templates/`:
 **Should use `TemplateRenderer`** (already exists):
 
 ```python
-from finwiz.utils.template_renderer import TemplateRenderer
+from finwiz.reporting.rebalancing.template_renderers import TemplateRenderer
 
 renderer = TemplateRenderer()
 html = renderer.render_portfolio_review(portfolio_data)
@@ -253,4 +253,4 @@ open output/finwiz_family_financial_plan.html
 - **AI Minimalism**: `.kiro/steering/ai-minimalism.md`
 - **CLAUDE.md**: Main project documentation
 - **Templates**: `src/finwiz/templates/`
-- **Template Renderer**: `src/finwiz/utils/template_renderer.py`
+- **Template Renderer**: `src/finwiz/reporting/rebalancing/template_renderers.py`

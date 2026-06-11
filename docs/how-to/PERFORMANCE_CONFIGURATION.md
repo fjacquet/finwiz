@@ -124,7 +124,7 @@ DEEP_ANALYSIS_BATCH_SIZE=1
 The `PerformanceConfigManager` class handles all performance-related configuration:
 
 ```python
-from finwiz.utils.performance_config import PerformanceConfigManager, OptimizationMode
+from finwiz.config.performance.performance_config import PerformanceConfigManager, OptimizationMode
 
 # Initialize configuration manager
 config_manager = PerformanceConfigManager()
@@ -217,7 +217,7 @@ logger.info(f"  Cost per ticker: $0")
 Monitor performance during execution:
 
 ```python
-from finwiz.utils.performance_monitor import PerformanceMonitor
+from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
 monitor = PerformanceMonitor()
 
@@ -319,7 +319,7 @@ Monitor and manage memory usage during batch processing:
 
 ```python
 import psutil
-from finwiz.utils.memory_manager import MemoryManager
+from finwiz.infrastructure.monitoring.memory_manager import MemoryManager
 
 memory_manager = MemoryManager()
 

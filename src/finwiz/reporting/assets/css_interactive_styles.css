@@ -1,0 +1,21 @@
+
+    /* Interactive elements */
+    .execute-btn {
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9em;
+        transition: var(--transition);
+    }
+
+    .execute-btn:hover {
+        filter: brightness(0.9);
+    }
+
+    .execute-btn:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+    }

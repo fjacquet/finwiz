@@ -1,0 +1,31 @@
+
+    /* Trade details */
+    .trade-details {
+        background-color: var(--bg-secondary);
+    }
+
+    .trade-rationale {
+        padding: 15px;
+        font-size: 0.9em;
+        line-height: 1.4;
+    }
+
+    .rationale-content {
+        max-width: 100%;
+    }
+
+    .market-warning {
+        margin-top: 10px;
+        padding: 8px;
+        background-color: rgba(253, 126, 20, 0.15);
+        border-left: 4px solid var(--warning);
+        border-radius: 4px;
+    }
+
+    .tax-implications {
+        margin-top: 10px;
+        padding: 8px;
+        background-color: rgba(13, 110, 253, 0.1);
+        border-left: 4px solid var(--accent);
+        border-radius: 4px;
+    }

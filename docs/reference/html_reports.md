@@ -322,72 +322,20 @@ python scripts/generate_html_reports.py --file output/portfolio_review.json --ty
 
 ### Automatic HTML Generation
 
-Use helper functions for automatic JSON + HTML generation:
+Use `auto_generate_html` to convert a JSON output file to HTML after saving:
 
 ```python
-from finwiz.utils.html_generator import save_portfolio_review
+from pathlib import Path
+from finwiz.reporting.html_auto_generator import auto_generate_html
 
-# Automatically generates both JSON and HTML
-json_path, html_path = save_portfolio_review(data, "output/portfolio.json")
+json_path = Path("output/portfolio_review.json")
+html_path = auto_generate_html(json_path)
+if html_path:
+    print(f"HTML report: {html_path}")
 ```
 
-### Available Helper Functions
-
-```python
-from finwiz.utils.html_generator import (
-    save_backtesting_results,
-    save_portfolio_review,
-    save_a_plus_discovery,
-    save_deep_analysis_consolidated,
-    save_optimization_report,
-    save_validation_report,
-    save_discovery_latest,
-    save_portfolio_processing_summary,
-    save_feedback_learning_report
-)
-```
-
-### Integration Example
-
-```python
-# BEFORE (JSON only)
-with open("output/portfolio.json", 'w') as f:
-    json.dump(data, f, indent=2)
-
-# AFTER (JSON + HTML)
-from finwiz.utils.html_generator import save_portfolio_review
-json_path, html_path = save_portfolio_review(data, "output/portfolio.json")
-```
-
----
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# Enable/disable HTML generation
-FINWIZ_HTML_GENERATION=true
-
-# Custom templates directory
-FINWIZ_TEMPLATES_DIR=/path/to/templates
-
-# Debug mode
-FINWIZ_DEBUG=true
-```
-
-### Programmatic Control
-
-```python
-from finwiz.utils.html_generator import enable_html_generation, disable_html_generation
-
-# Disable for bulk operations
-disable_html_generation()
-# ... process many files ...
-
-# Re-enable for user reports
-enable_html_generation()
-```
+The function returns the `Path` of the generated HTML, or `None` if no matching
+template exists for that JSON file type.
 
 ---
 
@@ -527,17 +475,6 @@ except Exception as e:
     # JSON save still succeeds
 ```
 
-### Batch Processing
-
-Disable HTML for bulk operations:
-
-```python
-disable_html_generation()
-for item in large_dataset:
-    save_data(item)  # Only JSON, no HTML
-enable_html_generation()
-```
-
 ### Template Caching
 
 Templates are cached automatically by Jinja2 for performance.
@@ -557,10 +494,10 @@ Templates are cached automatically by Jinja2 for performance.
 
 ## See Also
 
-- Template Renderer Source
-- HTML Generator Source
-- [Template Directory]in the templates/ directory
-- Generation Script
+- HTML auto-generator: `src/finwiz/reporting/html_auto_generator.py`
+- JSON-to-HTML converter: `src/finwiz/infrastructure/json/to_html_converter.py`
+- Templates: `src/finwiz/templates/`
+- Generation script: `scripts/generate_html_reports.py`
 
 ---
 

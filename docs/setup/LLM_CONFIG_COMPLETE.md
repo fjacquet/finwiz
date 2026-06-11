@@ -10,7 +10,7 @@ Successfully implemented fully environment-variable driven LLM configuration acr
 
 1. ✅ `.env.example` - Added 5 new LLM model environment variables
 2. ✅ `.env` - Configured with Gemini models
-3. ✅ `src/finwiz/utils/llm_config.py` - Core LLM configuration with model type system
+3. ✅ `src/finwiz/config/llm/llm_config.py` - Core LLM configuration with model type system
 
 ### Helper Modules (1 file)
 
@@ -147,7 +147,7 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 
 ```bash
 # Test imports
-uv run python -c "from finwiz.utils.llm_config import get_configured_llm, get_mini_llm; print('✅ Imports OK')"
+uv run python -c "from finwiz.config.llm.llm_config import get_configured_llm, get_mini_llm; print('✅ Imports OK')"
 
 # Test crew imports
 uv run python -c "from finwiz.crews.stock_crew.stock_crew import StockCrew; print('✅ Crews OK')"

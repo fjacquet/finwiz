@@ -37,7 +37,7 @@ FinWiz enforces strict data quality standards to ensure report accuracy and reli
 The system tracks comprehensive quality metrics:
 
 ```python
-from finwiz.utils.data_quality_metrics import DataQualityMetrics
+from finwiz.validation.quality_metrics import DataQualityMetrics
 
 metrics = DataQualityMetrics()
 
@@ -113,12 +113,12 @@ The system follows a strict data flow from generation to report:
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
-│                    4. DATA MERGE                                 │
-│  DeepAnalysisDataMerger merges analysis into portfolio          │
-│  - Validates deep analysis exists                                │
-│  - Detects fallback data patterns                                │
-│  - Merges actual grades and scores                               │
-│  - Verifies merge succeeded                                      │
+│                    4. DATA CONSOLIDATION                         │
+│  ReportConsolidator merges crew exports into one report          │
+│  - Loads deep analysis exports                                   │
+│  - Validates export structure                                    │
+│  - Tracks per-crew execution status                              │
+│  - Records validation errors in the report                       │
 └─────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────┐
@@ -186,7 +186,7 @@ output/
 **Purpose**: Ensure crew data can be retrieved before processing
 
 ```python
-from finwiz.utils.data_consolidation_validator import DataConsolidationValidator
+from finwiz.validation.consolidation import DataConsolidationValidator
 
 validator = DataConsolidationValidator()
 
@@ -204,41 +204,13 @@ except DataRetrievalError as e:
     raise
 ```
 
-### Data Merge Phase
-
-**Component**: `DeepAnalysisDataMerger`
-**Purpose**: Merge deep analysis results into portfolio holdings
-
-```python
-from finwiz.utils.deep_analysis_merger import DeepAnalysisDataMerger
-
-merger = DeepAnalysisDataMerger()
-
-try:
-    # Merge deep analysis into holdings
-    merged_holdings = merger.merge_deep_analysis_into_holdings(
-        holdings=portfolio_holdings,
-        deep_analysis_results=deep_analysis_data
-    )
-
-    # Verify merge succeeded
-    for holding in merged_holdings:
-        assert holding.grade != "D" or holding.composite_score != 0.6
-        assert holding.has_deep_analysis == True
-
-except DataMergeError as e:
-    # Fail fast - merge failed
-    logger.error(f"❌ Data merge failed: {e}")
-    raise
-```
-
 ### Report Generation Phase
 
 **Component**: `ReportDataValidator`
 **Purpose**: Ensure report crew receives complete, validated data
 
 ```python
-from finwiz.utils.report_data_validator import ReportDataValidator
+from finwiz.validation.report_data import ReportDataValidator
 
 validator = ReportDataValidator()
 
@@ -418,7 +390,7 @@ grep -c "NOT PROVIDED" output/finwiz_family_financial_plan.html
 #### 5. Calculate Data Quality Score
 
 ```python
-from finwiz.utils.data_quality_metrics import DataQualityMetrics
+from finwiz.validation.quality_metrics import DataQualityMetrics
 
 # Load metrics from last run
 metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
@@ -547,16 +519,14 @@ grep "DataConsolidationValidator" logs/finwiz.log
 # ✅ Successfully retrieved data for crypto
 ```
 
-#### Step 4: Verify Data Merge
+#### Step 4: Verify Data Consolidation
 
 ```bash
-# Check merge logs
-grep "DeepAnalysisDataMerger" logs/finwiz.log
+# Check consolidation logs
+grep "Deep analysis consolidation" logs/finwiz.log
 
 # Expected output:
-# ✅ Merged AAPL: Grade A+, Score 0.95
-# ✅ Merged GOOGL: Grade A, Score 0.88
-# Deep analysis merge complete: 5/5 holdings successfully merged
+# Deep analysis consolidation: success (5 exports)
 ```
 
 #### Step 5: Verify Report Generation
@@ -675,10 +645,10 @@ for field in required_fields:
    ls -la output/stock/stock_output_*.json
    ```
 
-2. Check merge logs:
+2. Check consolidation logs:
 
    ```bash
-   grep "DeepAnalysisDataMerger" logs/finwiz.log
+   grep "Deep analysis consolidation" logs/finwiz.log
    ```
 
 3. Verify ticker matching:
@@ -730,7 +700,7 @@ for field in required_fields:
 4. Check URL validator:
 
    ```python
-   from finwiz.utils.url_validator import URLValidator
+   from finwiz.validation.url import URLValidator
 
    validator = URLValidator()
    is_valid = validator.validate_url("https://www.sec.gov/...")
@@ -802,7 +772,7 @@ for field in required_fields:
 1. Load quality metrics:
 
    ```python
-   from finwiz.utils.data_quality_metrics import DataQualityMetrics
+   from finwiz.validation.quality_metrics import DataQualityMetrics
 
    metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
    print(metrics.get_summary())

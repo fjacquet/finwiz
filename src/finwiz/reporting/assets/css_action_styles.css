@@ -1,0 +1,63 @@
+
+    /* Action styling */
+    .action-buy {
+        color: var(--success);
+        font-weight: bold;
+    }
+
+    .action-sell {
+        color: var(--danger);
+        font-weight: bold;
+    }
+
+    .action-hold {
+        color: var(--text-muted);
+    }
+
+    /* Deviation styling */
+    .deviation-high {
+        color: var(--danger);
+        font-weight: bold;
+    }
+
+    .deviation-medium {
+        color: var(--warning);
+        font-weight: bold;
+    }
+
+    .deviation-low {
+        color: var(--success);
+    }
+
+    /* Urgency styling */
+    .urgency-urgent {
+        color: var(--danger);
+        font-weight: bold;
+        background-color: rgba(220, 53, 69, 0.05);
+    }
+
+    .urgency-high {
+        color: var(--warning);
+        font-weight: bold;
+    }
+
+    .urgency-medium {
+        color: var(--accent);
+    }
+
+    .urgency-low {
+        color: var(--text-muted);
+    }
+
+    /* Weight change styling */
+    .weight-change.positive {
+        color: var(--success);
+    }
+
+    .weight-change.negative {
+        color: var(--danger);
+    }
+
+    .weight-change.neutral {
+        color: var(--text-muted);
+    }

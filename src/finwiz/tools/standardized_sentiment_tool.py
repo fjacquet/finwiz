@@ -319,17 +319,17 @@ class StandardizedSentimentAnalysisTool(BaseTool):
             logger.error(f"Error collecting general news for {symbol}: {e!s}")
             return []
 
-    def _create_sample_financial_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
+    def _create_sample_financial_articles(self, symbol: str, _search_term: str) -> list[dict[str, Any]]:
         """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_financial_articles called for {symbol} - this creates fake data and is disabled")
         return []
 
-    def _create_sample_crypto_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
+    def _create_sample_crypto_articles(self, symbol: str, _search_term: str) -> list[dict[str, Any]]:
         """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_crypto_articles called for {symbol} - this creates fake data and is disabled")
         return []
 
-    def _create_sample_general_articles(self, symbol: str, search_term: str) -> list[dict[str, Any]]:
+    def _create_sample_general_articles(self, symbol: str, _search_term: str) -> list[dict[str, Any]]:
         """Do not use: This method created fake articles with hallucinated URLs."""
         logger.warning(f"_create_sample_general_articles called for {symbol} - this creates fake data and is disabled")
         return []

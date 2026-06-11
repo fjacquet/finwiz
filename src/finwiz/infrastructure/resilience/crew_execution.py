@@ -1,7 +1,7 @@
 """Crew execution wrapper with timeout and circuit breaker protection.
 
 Wraps all crew.kickoff() calls with:
-- asyncio.wait_for() timeout (configurable via FINWIZ_HOLDING_TIMEOUT)
+- asyncio.wait_for() timeout (configurable via FINWIZ_CREW_TIMEOUT)
 - Circuit breaker that opens after FAILURE_THRESHOLD consecutive failures
 - ThreadPoolExecutor wrapping since crew.kickoff() is synchronous
 """
@@ -19,11 +19,21 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Configuration — loaded lazily from ResilienceConfig.
-# Default bumped from 600 → 900 s after the 2026-04-29 run had DELL succeed
-# at 1488 s (asyncio.wait_for cannot interrupt sync crew.kickoff() inside a
-# ThreadPoolExecutor; we want enough budget to keep long-tail successes).
-CREW_TIMEOUT = int(os.getenv("FINWIZ_HOLDING_TIMEOUT", "900"))
+# Per-crew-attempt timeout — loaded from FINWIZ_CREW_TIMEOUT.
+#
+# History:
+#   2026-04-29: Default bumped 600 → 900 s after DELL succeeded at 1488 s
+#               (asyncio.wait_for cannot interrupt sync crew.kickoff() inside a
+#               ThreadPoolExecutor; long-tail successes need budget).
+#   2026-06-11: Split from FINWIZ_HOLDING_TIMEOUT into its own var so the
+#               per-holding outer timeout can guarantee retry headroom.  The
+#               holding budget (FINWIZ_HOLDING_TIMEOUT, default 900 s) is now
+#               auto-raised to CREW_TIMEOUT + 300 s when set below that floor,
+#               giving the @stage retry at least 300 s to complete after an
+#               inner-attempt timeout fires.  Both vars are independent:
+#                 FINWIZ_CREW_TIMEOUT  — budget per crew attempt (default 600 s)
+#                 FINWIZ_HOLDING_TIMEOUT — outer per-holding budget (default 900 s)
+CREW_TIMEOUT = int(os.getenv("FINWIZ_CREW_TIMEOUT", "600"))
 
 
 def _get_failure_threshold() -> int:

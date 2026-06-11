@@ -49,7 +49,7 @@ Portfolio Holdings (66 tickers)
 The `BatchDataPreFetcher` class handles parallel data fetching:
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 
 # Initialize prefetcher
 prefetcher = BatchDataPreFetcher(
@@ -285,7 +285,7 @@ The system monitors memory usage and adjusts batch sizes:
 
 ```python
 import psutil
-from finwiz.utils.memory_manager import MemoryManager
+from finwiz.infrastructure.monitoring.memory_manager import MemoryManager
 
 def adjust_batch_size_for_memory(base_batch_size: int) -> int:
     """Adjust batch size based on available memory."""
@@ -621,20 +621,23 @@ grep "Failed to process.*data for" logs/finwiz.log
 **Monitor Batch Processing Performance**:
 
 ```python
-from finwiz.utils.performance_monitor import PerformanceMonitor
+from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
-monitor = PerformanceMonitor()
+monitor = PerformanceMonitor(session_id="batch-session-123")
 
-# Track batch processing performance
-with monitor.track_batch_processing() as tracker:
-    # Run batch processing
-    result = execute_batch_processing()
+# Track each ticker in the batch
+for ticker in ["AAPL", "MSFT", "GOOGL"]:
+    monitor.start_ticker_analysis(ticker, "stock")
+    analyze_ticker(ticker)  # your batch work
+    monitor.record_api_call(ticker=ticker)
+    monitor.complete_ticker_analysis(success=True, ticker=ticker)
 
-    # View performance metrics
-    metrics = tracker.get_metrics()
-    print(f"Total time: {metrics.total_duration_seconds:.1f}s")
-    print(f"Time savings: {metrics.time_savings_percentage:.1f}%")
-    print(f"Memory usage: {metrics.memory_usage_mb:.1f}MB")
+# Aggregate metrics (also saved to a JSON performance report)
+portfolio_metrics = monitor.complete_portfolio_analysis()
+summary = portfolio_metrics.calculate_portfolio_performance()
+print(f"Total time: {summary['total_execution_time']:.1f}s")
+print(f"Time savings: {summary['performance_improvements']['time_savings_pct']:.1f}%")
+print(f"Success rate: {summary['success_rate_pct']:.1f}%")
 ```
 
 **Analyze Performance Metrics**:

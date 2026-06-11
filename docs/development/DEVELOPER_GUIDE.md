@@ -383,9 +383,9 @@ crews/{crew_name}/
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.logging.helpers import CrewLogger
 
 class StockCrew:
     """Stock analysis crew."""
@@ -690,7 +690,7 @@ def get_etf_crew_tools(
 Final reporters MUST have empty tools and only consume upstream context.
 
 ```python
-from finwiz.utils.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
 
 @final_reporter  # Enforces NO tools
 @agent
@@ -711,7 +711,7 @@ def reporter(self) -> Agent:
 Use decorators to make async/sync execution explicit.
 
 ```python
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 @async_task
 @task
@@ -737,7 +737,7 @@ def final_report_task(self) -> Task:
 Use `CrewLogger` for consistent logging across crews.
 
 ```python
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.logging.helpers import CrewLogger
 import time
 
 class StockCrew:
@@ -929,9 +929,9 @@ mkdir -p src/finwiz/crews/my_custom_crew/config
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.logging.helpers import CrewLogger
 
 class MyCustomCrew:
     """Custom crew for specific analysis."""
@@ -1649,8 +1649,17 @@ def calculate_composite_score(
 3. **Run Quality Checks**:
 
    ```bash
-   make check  # Runs lint, mypy, tests
+   make check  # lint + complexity + tests + unittest-mock + file-size + docs-validate + stage-contract + deadcode
+   make all    # everything above plus mypy, strict docs build, and the duplication gate (PR-ready)
    ```
+
+   Two guardrails carry a contract worth knowing: the complexity gate
+   (C901/PLR0915) grandfathers pre-existing offenders via per-file-ignores in
+   `pyproject.toml` — that list is **shrink-only**; never add an entry, refactor
+   the function instead. The duplication gate (`make check-duplication`, pylint
+   R0801) runs at a 37-similar-lines threshold — the current clean baseline; 13
+   pre-existing sub-37-line clones are grandfathered by the threshold, which
+   should be tightened as they are consolidated.
 
 4. **Commit Changes**:
 
@@ -1766,18 +1775,13 @@ SUPABASE_ENCRYPTION_KEY=your-32-char-key
 #### Health Checks
 
 ```python
-from finwiz.utils import run_health_check
+from finwiz.infrastructure.health.checker import perform_comprehensive_health_check
 
-# Run health check
-results = run_health_check(
-    check_apis=True,
-    check_cache=True,
-    check_data=True,
-    check_validation=True
-)
+# Run comprehensive health check (data freshness, availability, directories, resources)
+report = perform_comprehensive_health_check()
 
-if not results.healthy:
-    logger.error(f"Health check failed: {results.errors}")
+if report.overall_status not in ("healthy", "warning"):
+    logger.error(f"Health check failed: {report.overall_status} - {report.recommendations}")
     sys.exit(1)
 ```
 

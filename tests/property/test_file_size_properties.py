@@ -36,9 +36,8 @@ def get_flow_orchestrator_files() -> list[Path]:
     if not flows_dir.exists():
         return []
 
-    # Only check the main flow_orchestrator.py (backward compatibility layer)
-    # The refactored version is allowed to be larger as it's the actual implementation
-    flow_file = flows_dir / "flow_orchestrator.py"
+    # Check the main orchestrator.py (was flow_orchestrator.py before rename)
+    flow_file = flows_dir / "orchestrator.py"
     return [flow_file] if flow_file.exists() else []
 
 
@@ -46,19 +45,17 @@ class TestFileSizeConstraints:
     """Test file size constraints for orchestrator modules."""
 
     @pytest.mark.property
-    @pytest.mark.skip(reason="Technical debt: flow_orchestrator.py (473 lines) needs refactoring to meet 400-line limit - tracked in backlog")
     def test_flow_orchestrator_file_size_constraint(self):
         """
         **Feature: flow-orchestrator-refactoring, Property 1: File Size Constraint**.
 
-        For the Flow Orchestrator file (backward compatibility layer),
-        the line count should not exceed 400 lines.
+        The main flow orchestrator (flows/orchestrator.py) must not exceed 400 lines.
 
         **Validates: Requirements 1.1**
         """
         flow_files = get_flow_orchestrator_files()
 
-        # Should have at least the main flow_orchestrator.py
+        # Should have at least the main flows/orchestrator.py
         assert len(flow_files) > 0, "Flow orchestrator file not found"
 
         for file_path in flow_files:

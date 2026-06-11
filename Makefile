@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit
+.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit lint-complexity deadcode check-duplication
 
 # Default target
 help:
@@ -33,10 +33,13 @@ help:
 	@echo "  make html-demo   - Generate HTML template demo file"
 	@echo ""
 	@echo "Quality Assurance:"
-	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict)"
+	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict + complexity + deadcode + duplication)"
 	@echo "  make ci          - Alias for 'make all' (matches CI workflow checks)"
-	@echo "  make check       - Quick quality checks (lint --fix + tests + docs-validate)"
+	@echo "  make check       - Quick quality checks (lint --fix + tests + docs-validate + complexity + deadcode)"
 	@echo "  make lint-check  - Read-only lint (no autofix) + format --check"
+	@echo "  make lint-complexity - C901/PLR0915 complexity gate (grandfather list in pyproject; shrink-only)"
+	@echo "  make deadcode    - Dead-code scan (vulture, min confidence 80)"
+	@echo "  make check-duplication - Duplicate-code gate (pylint R0801, 37-line clean baseline)"
 	@echo "  make check-unittest-mock - Check for banned unittest.mock"
 	@echo "  make coverage    - Run tests with coverage report (65% minimum)"
 	@echo "  make coverage-report - Open coverage report in browser"
@@ -125,12 +128,12 @@ format:
 	ruff check --fix .
 	ruff format .
 
-check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract
+check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract lint-complexity deadcode
 	@echo "✅ All quality checks passed"
 
 # Full validation matching CI workflows (docs.yml + quality.yml). Use this
 # before opening a PR to catch regressions locally without round-tripping CI.
-all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict docs-validate
+all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict docs-validate lint-complexity deadcode check-duplication
 	@echo ""
 	@echo "✅✅✅ All quality checks AND builds passed — branch is PR-ready ✅✅✅"
 
@@ -267,6 +270,22 @@ html-demo:
 	@echo "🎨 Generating HTML template demo..."
 	python scripts/generate_demo.py
 	@echo "✅ Demo generated - open demo.html in your browser"
+
+lint-complexity:
+	@echo "🧠 Checking complexity (C901/PLR0915) — grandfathered files in pyproject per-file-ignores; shrink-only, never add entries"
+	@uv run ruff check src/finwiz --select C901,PLR0915
+	@echo "✅ Complexity within limits"
+
+deadcode:
+	@echo "🦅 Scanning for dead code (vulture, min confidence 80)..."
+	@uvx vulture src/finwiz --min-confidence 80
+	@echo "✅ No dead code found"
+
+# Threshold 37 = current clean baseline (13 pre-existing sub-37-line duplications grandfathered by the threshold; tighten as they're consolidated).
+check-duplication:
+	@echo "👯 Checking for duplicate code (pylint, min 37 similar lines)..."
+	@uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=37 --score=no src/finwiz
+	@echo "✅ No duplication found (above the 37-line baseline)"
 
 .PHONY: sbom audit
 

@@ -39,13 +39,13 @@ The memory management system ensures that batch processing stays within acceptab
 
 ### Components
 
-1. **MemoryManager** (`src/finwiz/utils/memory_manager.py`)
+1. **MemoryManager** (`src/finwiz/infrastructure/monitoring/memory_manager.py`)
    - Core memory monitoring and management
    - Memory usage tracking and logging
    - Cache cleanup functionality
    - Memory constraint validation
 
-2. **BatchDataPreFetcher** (`src/finwiz/utils/batch_data_prefetcher.py`)
+2. **BatchDataPreFetcher** (`src/finwiz/integration/batch_data_prefetcher.py`)
    - Integrates MemoryManager for monitoring
    - Tracks memory during batch operations
    - Provides memory metrics and cleanup methods
@@ -60,7 +60,7 @@ The memory management system ensures that batch processing stays within acceptab
 ### Basic Usage with BatchDataPreFetcher
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 
 # Initialize prefetcher (automatically creates memory manager)
 # Yahoo Finance is ALWAYS used (primary source)
@@ -93,7 +93,7 @@ print(f"Freed {cleanup_result['disk_freed_mb']} MB")
 ### Direct MemoryManager Usage
 
 ```python
-from finwiz.utils.memory_manager import get_memory_manager
+from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
 # Create memory manager
 memory_manager = get_memory_manager(session_id="session-123")
@@ -118,8 +118,8 @@ cleanup_result = memory_manager.cleanup_cache()
 ### Flow Integration Example
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
-from finwiz.utils.memory_manager import get_memory_manager
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
 class FinwizFlow(Flow[FinwizState]):
     def __init__(self, *args, **kwargs):
@@ -475,8 +475,8 @@ def test_batch_prefetch_with_memory_management():
 ## References
 
 - **Requirements**: 17.70, 17.71, 17.72, 17.73, 17.74
-- **Implementation**: `src/finwiz/utils/memory_manager.py`
-- **Integration**: `src/finwiz/utils/batch_data_prefetcher.py`
+- **Implementation**: `src/finwiz/infrastructure/monitoring/memory_manager.py`
+- **Integration**: `src/finwiz/integration/batch_data_prefetcher.py`
 - **Configuration**: `src/finwiz/config/batch_prefetch_config.py`
 
 ---

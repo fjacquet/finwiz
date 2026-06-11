@@ -238,8 +238,8 @@ template_data = {
 Track and validate performance throughout the process:
 
 ```python
-from finwiz.utils.performance_config import get_performance_config_manager
-from finwiz.utils.performance_monitor import PerformanceMonitor
+from finwiz.config.performance.performance_config import get_performance_config_manager
+from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
 def monitor_deep_analysis_performance(ticker: str, asset_class: str):
     """Monitor deep analysis performance."""
@@ -339,7 +339,7 @@ def configure_balanced_mode():
 The system automatically detects and configures the appropriate mode:
 
 ```python
-from finwiz.utils.performance_config import PerformanceConfigManager
+from finwiz.config.performance.performance_config import PerformanceConfigManager
 
 def setup_deep_analysis_integration():
     """Setup deep analysis integration based on configuration."""

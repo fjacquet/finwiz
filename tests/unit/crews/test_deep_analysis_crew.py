@@ -258,18 +258,20 @@ class TestCrewMaxIter:
 
 
 class TestPerHoldingTimeoutDefault:
-    """``FINWIZ_HOLDING_TIMEOUT`` default bumped 600 → 900 s. Verified by
-    reading the source (env-var fallbacks are baked in at import time, so a
-    monkeypatch test would only assert the env-var path, not the literal).
+    """Timeout env-var split: FINWIZ_CREW_TIMEOUT (inner attempt) vs
+    FINWIZ_HOLDING_TIMEOUT (outer per-holding budget).  Verified by reading the
+    source because env-var fallbacks are baked in at import time.
     """
 
-    def test_crew_execution_default_is_900s(self) -> None:
+    def test_crew_execution_uses_crew_timeout_var(self) -> None:
+        """crew_execution.py must read FINWIZ_CREW_TIMEOUT (not FINWIZ_HOLDING_TIMEOUT)."""
         path = Path("src/finwiz/infrastructure/resilience/crew_execution.py")
         text = path.read_text(encoding="utf-8")
-        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "900")' in text
-        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "600")' not in text
+        assert 'os.getenv("FINWIZ_CREW_TIMEOUT", "600")' in text
+        assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT"' not in text
 
-    def test_orchestrator_default_is_900s(self) -> None:
+    def test_orchestrator_holding_timeout_default_is_900s(self) -> None:
+        """The orchestrator outer holding budget defaults to 900 s."""
         path = Path("src/finwiz/orchestrators/deep_analysis_orchestrator.py")
         text = path.read_text(encoding="utf-8")
         assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "900")' in text
