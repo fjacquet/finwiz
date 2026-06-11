@@ -55,6 +55,12 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 ```
 
+> **Note**: The `finwiz.utils.*` override section documented above was removed from
+> `pyproject.toml` when the `utils/` package was reorganised into
+> `infrastructure/`, `config/`, `reporting/`, and `validation/`. This section is
+> retained here as a historical record of the graduated-adoption approach; it no
+> longer corresponds to a live config entry.
+
 **Phase 2: Schemas (Enabled)**
 
 ```toml

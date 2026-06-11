@@ -37,7 +37,7 @@ FinWiz enforces strict data quality standards to ensure report accuracy and reli
 The system tracks comprehensive quality metrics:
 
 ```python
-from finwiz.utils.data_quality_metrics import DataQualityMetrics
+from finwiz.validation.quality_metrics import DataQualityMetrics
 
 metrics = DataQualityMetrics()
 
@@ -186,7 +186,7 @@ output/
 **Purpose**: Ensure crew data can be retrieved before processing
 
 ```python
-from finwiz.utils.data_consolidation_validator import DataConsolidationValidator
+from finwiz.validation.consolidation import DataConsolidationValidator
 
 validator = DataConsolidationValidator()
 
@@ -204,41 +204,13 @@ except DataRetrievalError as e:
     raise
 ```
 
-### Data Merge Phase
-
-**Component**: `DeepAnalysisDataMerger`
-**Purpose**: Merge deep analysis results into portfolio holdings
-
-```python
-from finwiz.utils.deep_analysis_merger import DeepAnalysisDataMerger
-
-merger = DeepAnalysisDataMerger()
-
-try:
-    # Merge deep analysis into holdings
-    merged_holdings = merger.merge_deep_analysis_into_holdings(
-        holdings=portfolio_holdings,
-        deep_analysis_results=deep_analysis_data
-    )
-
-    # Verify merge succeeded
-    for holding in merged_holdings:
-        assert holding.grade != "D" or holding.composite_score != 0.6
-        assert holding.has_deep_analysis == True
-
-except DataMergeError as e:
-    # Fail fast - merge failed
-    logger.error(f"❌ Data merge failed: {e}")
-    raise
-```
-
 ### Report Generation Phase
 
 **Component**: `ReportDataValidator`
 **Purpose**: Ensure report crew receives complete, validated data
 
 ```python
-from finwiz.utils.report_data_validator import ReportDataValidator
+from finwiz.validation.report_data import ReportDataValidator
 
 validator = ReportDataValidator()
 
@@ -418,7 +390,7 @@ grep -c "NOT PROVIDED" output/finwiz_family_financial_plan.html
 #### 5. Calculate Data Quality Score
 
 ```python
-from finwiz.utils.data_quality_metrics import DataQualityMetrics
+from finwiz.validation.quality_metrics import DataQualityMetrics
 
 # Load metrics from last run
 metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
@@ -730,7 +702,7 @@ for field in required_fields:
 4. Check URL validator:
 
    ```python
-   from finwiz.utils.url_validator import URLValidator
+   from finwiz.validation.url import URLValidator
 
    validator = URLValidator()
    is_valid = validator.validate_url("https://www.sec.gov/...")
@@ -802,7 +774,7 @@ for field in required_fields:
 1. Load quality metrics:
 
    ```python
-   from finwiz.utils.data_quality_metrics import DataQualityMetrics
+   from finwiz.validation.quality_metrics import DataQualityMetrics
 
    metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
    print(metrics.get_summary())

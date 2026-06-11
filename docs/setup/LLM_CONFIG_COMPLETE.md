@@ -147,7 +147,7 @@ LLM_MODEL_BASELINE=openai/gpt-4o
 
 ```bash
 # Test imports
-uv run python -c "from finwiz.utils.llm_config import get_configured_llm, get_mini_llm; print('✅ Imports OK')"
+uv run python -c "from finwiz.config.llm.llm_config import get_configured_llm, get_mini_llm; print('✅ Imports OK')"
 
 # Test crew imports
 uv run python -c "from finwiz.crews.stock_crew.stock_crew import StockCrew; print('✅ Crews OK')"

@@ -84,7 +84,7 @@ Add a final reporter agent to your crew that generates the export:
 ```python
 # In src/finwiz/crews/my_new_crew/my_new_crew.py
 
-from finwiz.utils.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
 from finwiz.schemas.crew_exports import MyNewCrewExport
 import json
 from pathlib import Path
@@ -625,7 +625,7 @@ def test_should_generate_html_from_export(mocker, tmp_path):
 # tests/unit/utils/test_report_consolidator.py
 
 import pytest
-from finwiz.utils.report_consolidator import ReportConsolidator
+from finwiz.reporting.consolidator import ReportConsolidator
 
 def test_should_consolidate_crew_exports(mocker, tmp_path):
     """Test consolidation of multiple crew exports."""

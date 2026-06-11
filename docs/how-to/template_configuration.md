@@ -639,7 +639,7 @@ Monitor template rendering performance:
 
 ```python
 import time
-from finwiz.utils.performance_monitor import PerformanceMonitor
+from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
 def monitor_template_performance():
     """Monitor template rendering performance."""

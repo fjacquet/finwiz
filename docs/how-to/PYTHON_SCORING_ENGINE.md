@@ -636,9 +636,10 @@ assert all(r.grade == results[0].grade for r in results), "Non-deterministic res
 
 ```python
 # Solution: Check optimization mode
-from finwiz.utils.performance_config import get_optimization_mode
-mode = get_optimization_mode()
-logger.info(f"Current mode: {mode}")
+from finwiz.config.performance.performance_config import OptimizationMode, get_performance_config_manager
+config_manager = get_performance_config_manager()
+mode = config_manager.get_mode()
+logger.info(f"Current mode: {mode.value}")
 
 # Ensure maximum speed mode
 assert mode == OptimizationMode.MAXIMUM_SPEED

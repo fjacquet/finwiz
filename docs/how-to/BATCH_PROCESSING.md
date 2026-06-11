@@ -49,7 +49,7 @@ Portfolio Holdings (66 tickers)
 The `BatchDataPreFetcher` class handles parallel data fetching:
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 
 # Initialize prefetcher
 prefetcher = BatchDataPreFetcher(
@@ -285,7 +285,7 @@ The system monitors memory usage and adjusts batch sizes:
 
 ```python
 import psutil
-from finwiz.utils.memory_manager import MemoryManager
+from finwiz.infrastructure.monitoring.memory_manager import MemoryManager
 
 def adjust_batch_size_for_memory(base_batch_size: int) -> int:
     """Adjust batch size based on available memory."""
@@ -621,7 +621,7 @@ grep "Failed to process.*data for" logs/finwiz.log
 **Monitor Batch Processing Performance**:
 
 ```python
-from finwiz.utils.performance_monitor import PerformanceMonitor
+from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
 monitor = PerformanceMonitor()
 

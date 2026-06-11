@@ -153,7 +153,7 @@ We already have templates in `src/finwiz/templates/`:
 **Should use `TemplateRenderer`** (already exists):
 
 ```python
-from finwiz.utils.template_renderer import TemplateRenderer
+from finwiz.reporting.rebalancing.template_renderers import TemplateRenderer
 
 renderer = TemplateRenderer()
 html = renderer.render_portfolio_review(portfolio_data)

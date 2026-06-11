@@ -383,9 +383,9 @@ crews/{crew_name}/
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.logging.helpers import CrewLogger
 
 class StockCrew:
     """Stock analysis crew."""
@@ -690,7 +690,7 @@ def get_etf_crew_tools(
 Final reporters MUST have empty tools and only consume upstream context.
 
 ```python
-from finwiz.utils.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
 
 @final_reporter  # Enforces NO tools
 @agent
@@ -711,7 +711,7 @@ def reporter(self) -> Agent:
 Use decorators to make async/sync execution explicit.
 
 ```python
-from finwiz.utils.task_decorators import async_task, sync_task
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 
 @async_task
 @task
@@ -737,7 +737,7 @@ def final_report_task(self) -> Task:
 Use `CrewLogger` for consistent logging across crews.
 
 ```python
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.logging.helpers import CrewLogger
 import time
 
 class StockCrew:
@@ -929,9 +929,9 @@ mkdir -p src/finwiz/crews/my_custom_crew/config
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
-from finwiz.utils.task_decorators import async_task, sync_task
-from finwiz.utils.logging_helpers import CrewLogger
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
+from finwiz.infrastructure.logging.helpers import CrewLogger
 
 class MyCustomCrew:
     """Custom crew for specific analysis."""

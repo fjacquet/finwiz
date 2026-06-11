@@ -60,7 +60,7 @@ The memory management system ensures that batch processing stays within acceptab
 ### Basic Usage with BatchDataPreFetcher
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 
 # Initialize prefetcher (automatically creates memory manager)
 # Yahoo Finance is ALWAYS used (primary source)
@@ -93,7 +93,7 @@ print(f"Freed {cleanup_result['disk_freed_mb']} MB")
 ### Direct MemoryManager Usage
 
 ```python
-from finwiz.utils.memory_manager import get_memory_manager
+from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
 # Create memory manager
 memory_manager = get_memory_manager(session_id="session-123")
@@ -118,8 +118,8 @@ cleanup_result = memory_manager.cleanup_cache()
 ### Flow Integration Example
 
 ```python
-from finwiz.utils.batch_data_prefetcher import BatchDataPreFetcher
-from finwiz.utils.memory_manager import get_memory_manager
+from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
+from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
 class FinwizFlow(Flow[FinwizState]):
     def __init__(self, *args, **kwargs):
