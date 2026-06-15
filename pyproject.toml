@@ -464,7 +464,7 @@ dev = [
     "hypothesis>=6.148.1",
     "pre-commit>=4.5.1",
     "ruff>=0.4.8,<1.0.0",
-    "pytest>=8.4.1",
+    "pytest>=9.1.0",
     "pytest-socket>=0.8.0",
 ]
 
