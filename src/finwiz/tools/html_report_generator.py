@@ -231,7 +231,7 @@ class HTMLReportGenerator:
 
             # Initialize Jinja2 environment for crew_reports templates
             template_dir = Path("src/finwiz/templates")
-            env = Environment(
+            env = Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
                 loader=FileSystemLoader(str(template_dir)),
                 autoescape=True,
                 trim_blocks=True,

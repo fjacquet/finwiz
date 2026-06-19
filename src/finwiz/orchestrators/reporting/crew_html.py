@@ -49,7 +49,9 @@ class CrewHtmlMixin:
             from jinja2 import Environment, FileSystemLoader, select_autoescape
 
             # Setup Jinja2 environment with autoescape to prevent XSS.
-            env = Environment(loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=select_autoescape(["html", "htm", "xml"]))
+            env = Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+                loader=FileSystemLoader(str(_TEMPLATE_DIR)), autoescape=select_autoescape(["html", "htm", "xml"])
+            )
 
             # Load template
             template = env.get_template(template_name)

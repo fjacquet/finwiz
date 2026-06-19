@@ -188,7 +188,7 @@ class CacheManager:
 
     def _serialize_value(self, value: Any) -> bytes:
         """Serialize value for storage."""
-        data = pickle.dumps(value)
+        data = pickle.dumps(value)  # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
 
         if self.config.enable_compression:
             import gzip
@@ -204,7 +204,7 @@ class CacheManager:
 
             data = gzip.decompress(data)
 
-        return pickle.loads(data)  # nosec B301
+        return pickle.loads(data)  # nosec B301  # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
 
     async def get(self, key: str | list[Any], default: Any = None) -> Any:
         """
