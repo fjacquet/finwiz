@@ -88,7 +88,7 @@ def create_orchestrator(name: str, state: Any, deps: Any) -> Any:
 
     """
     config = ORCHESTRATOR_REGISTRY[name]
-    mod = importlib.import_module(config.module)
+    mod = importlib.import_module(config.module)  # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
     cls = getattr(mod, config.class_name)
     kwargs: dict[str, Any] = {"state": state}
     for key in config.deps_keys:

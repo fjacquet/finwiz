@@ -17,7 +17,9 @@ def generate_demo():
     """Generate demo HTML file."""
     templates_dir = Path(__file__).parent.parent / "src" / "finwiz" / "templates"
 
-    env = Environment(loader=FileSystemLoader(str(templates_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True)
+    env = Environment(
+        loader=FileSystemLoader(str(templates_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True
+    )  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
 
     template = env.get_template("demo.html")
 

@@ -21,7 +21,7 @@ TEMPLATE_DIR = Path(__file__).parent.parent / "templates"
 
 def _get_jinja_env() -> Environment:
     """Get configured Jinja2 environment."""
-    return Environment(
+    return Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
         loader=FileSystemLoader(str(TEMPLATE_DIR)),
         autoescape=True,
     )

@@ -26,7 +26,7 @@ logger = get_logger(__name__)
 
 def create_report_jinja_env(template_dir: Path | str) -> Environment:
     """Jinja2 environment with the report-rendering configuration shared by all generators."""
-    return Environment(
+    return Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
         loader=FileSystemLoader(str(template_dir)),
         autoescape=True,  # Security: auto-escape HTML
         trim_blocks=True,

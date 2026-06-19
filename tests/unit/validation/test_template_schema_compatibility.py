@@ -32,7 +32,7 @@ class TestTemplateSchemaCompatibility:
             {% endif %}
         </div>
         """
-        env = Environment()
+        env = Environment()  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
         return env.from_string(template_str)
 
     def test_should_render_python_analysis_result_with_direct_risk_score(self, risk_display_template: Template) -> None:

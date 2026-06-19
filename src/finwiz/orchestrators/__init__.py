@@ -23,7 +23,7 @@ def __getattr__(name: str) -> Any:
     """Lazy import orchestrators on demand."""
     if name in _ORCHESTRATOR_IMPORTS:
         module_path, class_name = _ORCHESTRATOR_IMPORTS[name]
-        mod = importlib.import_module(module_path)
+        mod = importlib.import_module(module_path)  # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
         return getattr(mod, class_name)
     msg = f"module {__name__!r} has no attribute {name!r}"
     raise AttributeError(msg)

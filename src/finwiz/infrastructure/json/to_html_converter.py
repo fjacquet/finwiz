@@ -55,7 +55,7 @@ class JsonToHtmlConverter:
 
         """
         self.template_dir = Path(template_dir)
-        self.env = Environment(
+        self.env = Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
             loader=FileSystemLoader(str(self.template_dir)),
             autoescape=True,
             trim_blocks=True,

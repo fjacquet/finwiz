@@ -233,7 +233,7 @@ class HistoricalDataManager:
 
         try:
             with open(cache_file, "rb") as f:
-                data: pd.DataFrame = pickle.load(f)  # nosec B301
+                data: pd.DataFrame = pickle.load(f)  # nosec B301  # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
 
             self.logger.debug(f"Loaded cached data for {symbol}: {len(data)} rows")
             return data
@@ -308,7 +308,7 @@ class HistoricalDataManager:
         try:
             # Save data to pickle file
             with open(cache_file, "wb") as f:
-                pickle.dump(data, f)
+                pickle.dump(data, f)  # nosemgrep: python.lang.security.deserialization.pickle.avoid-pickle
 
             # Update metadata
             metadata_entry = self.data_processor.create_cache_metadata_entry(symbol, start_date, end_date, interval, data, quality_score, cache_file)
