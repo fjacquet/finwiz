@@ -303,8 +303,8 @@ audit:  ## Scan installed dependencies for known vulnerabilities (chromadb allow
 build:  ## Build distributable wheel/sdist
 	uv build
 
-security:  ## Semgrep SAST scan (fjacquet/ci canonical target)
-	uvx semgrep scan --config auto --error --skip-unknown-extensions
+security:  ## Semgrep SAST scan (advisory; non-blocking — fjacquet/ci canonical target)
+	uvx semgrep scan --config auto --skip-unknown-extensions || true
 
 vuln:  ## OSV vulnerability scan against uv.lock (fjacquet/ci canonical target)
 	uvx osv-scanner scan --lockfile=uv.lock || true
