@@ -219,7 +219,7 @@ def generate_individual_report_html(ticker: str, result: dict[str, Any]) -> str:
     env = _get_jinja_env()
     template = env.get_template("enriched_analysis_report.html")
     context = _prepare_enriched_context(ticker, result)
-    return template.render(**context)
+    return template.render(**context)  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
 
 
 # NOTE: generate_individual_deep_analysis_reports() REMOVED - DEAD CODE

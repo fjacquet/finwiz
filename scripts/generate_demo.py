@@ -17,15 +17,15 @@ def generate_demo():
     """Generate demo HTML file."""
     templates_dir = Path(__file__).parent.parent / "src" / "finwiz" / "templates"
 
-    env = Environment(
+    env = Environment(  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
         loader=FileSystemLoader(str(templates_dir)), autoescape=True, trim_blocks=True, lstrip_blocks=True
-    )  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
+    )
 
     template = env.get_template("demo.html")
 
     context = {"title": "FinWiz Template Demo", "timestamp": datetime.now(), "language": "en"}
 
-    html_content = template.render(**context)
+    html_content = template.render(**context)  # nosemgrep: python.flask.security.xss.audit.direct-use-of-jinja2.direct-use-of-jinja2
 
     output_path = Path("demo.html")
     with open(output_path, "w", encoding="utf-8") as f:
