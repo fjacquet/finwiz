@@ -287,6 +287,7 @@ markers = [
     "crew: marks tests as crew-specific tests",
     "flow: marks tests as flow orchestration tests",
     "regression: regression test guarding against a previously-shipped bug",
+    "property: marks property-based tests (e.g. Hypothesis-driven)",
 ]
 
 filterwarnings = [
@@ -464,7 +465,7 @@ dev = [
     "hypothesis>=6.148.1",
     "pre-commit>=4.5.1",
     "ruff>=0.4.8,<1.0.0",
-    "pytest>=8.4.1",
+    "pytest>=9.1.0",
     "pytest-socket>=0.8.0",
 ]
 
