@@ -114,8 +114,8 @@ coverage-check:
 
 # Code Quality
 lint:
-	ruff check --fix .
-	ruff format .
+	uv run ruff check --fix .
+	uv run ruff format .
 
 # Read-only lint + format check — for CI / `make all`. Does NOT auto-fix.
 lint-check:
@@ -125,8 +125,8 @@ lint-check:
 	@echo "✅ Lint checks pass"
 
 format:
-	ruff check --fix .
-	ruff format .
+	uv run ruff check --fix .
+	uv run ruff format .
 
 check: lint test check-unittest-mock check-file-size docs-validate check-stage-contract lint-complexity deadcode
 	@echo "✅ All quality checks passed"
