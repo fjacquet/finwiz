@@ -52,7 +52,7 @@ help:
 
 # Installation
 install:
-	uv sync
+	uv sync --all-extras --all-groups
 
 setup: install setup-hooks
 	@echo "✅ FinWiz development environment ready"
@@ -73,7 +73,7 @@ dev:
 
 # Testing
 test:
-	uv run pytest -m "not integration" -q -n auto --dist=loadscope
+	uv run pytest --cov --cov-report=xml --cov-report=term-missing -m "not integration" -q -n auto --dist=loadscope
 
 test-verbose:
 	uv run pytest -m "not integration" -v
@@ -137,8 +137,11 @@ all: lint-check test mypy check-unittest-mock check-file-size docs-build-strict 
 	@echo ""
 	@echo "✅✅✅ All quality checks AND builds passed — branch is PR-ready ✅✅✅"
 
-# Alias matching the CI workflow vocabulary
-ci: all
+# Canonical CI target: lint test build (fjacquet/ci standard)
+ci: lint test build
+
+# Full local validation alias (runs all gates including mypy, docs, complexity)
+ci-full: all
 
 # unittest.mock enforcement check
 check-unittest-mock:
@@ -287,12 +290,27 @@ check-duplication:
 	@uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=37 --score=no src/finwiz
 	@echo "✅ No duplication found (above the 37-line baseline)"
 
-.PHONY: sbom audit
+.PHONY: sbom audit build security vuln coverage-upload docs
 
-sbom:  ## Generate a CycloneDX SBOM to dist/finwiz.sbom.cdx.json
+sbom:  ## Generate a CycloneDX SBOM to dist/sbom.cdx.json (canonical path)
 	@mkdir -p dist
-	uv run cyclonedx-py environment --output-format JSON --output-file dist/finwiz.sbom.cdx.json
-	@echo "SBOM written to dist/finwiz.sbom.cdx.json"
+	uv run cyclonedx-py environment --output-format JSON --output-file dist/sbom.cdx.json
+	@echo "SBOM written to dist/sbom.cdx.json"
 
 audit:  ## Scan installed dependencies for known vulnerabilities (chromadb allowlisted)
 	uv run pip-audit --ignore-vuln GHSA-f4j7-r4q5-qw2c
+
+build:  ## Build distributable wheel/sdist
+	uv build
+
+security:  ## Semgrep SAST scan (fjacquet/ci canonical target)
+	uvx semgrep scan --config auto --error --skip-unknown-extensions
+
+vuln:  ## OSV vulnerability scan against uv.lock (fjacquet/ci canonical target)
+	uvx osv-scanner scan --lockfile=uv.lock || true
+
+coverage-upload:  ## Upload coverage.xml to Codecov (fjacquet/ci canonical target)
+	uvx --from codecov-cli codecov upload-process --file coverage.xml || true
+
+docs:  ## Build MkDocs documentation strict mode to site/ (fjacquet/ci canonical target)
+	uv run mkdocs build --strict --site-dir site
