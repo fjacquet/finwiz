@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.8.0] - 2026-06-30
+
+### Added
+
+- **Python 3.13 support** — migrated runtime, CI, and the Docker image
+  (`python:3.12-slim` → `python:3.13-slim`; all GitHub Actions workflows;
+  `pyproject.toml` `requires-python`/ruff/mypy targets). Python 3.12 is no
+  longer supported.
+- **A 7-day dependency cooldown** (`exclude-newer` in `[tool.uv]`) for
+  transitive packages, so a newly published — and potentially compromised or
+  unstable — release has time to be caught before it silently lands in the
+  lockfile. Direct dependencies are exempted, since their floors are already
+  bumped explicitly in reviewed commits.
+
+### Fixed
+
+- **crewai LLM calls crashing with `TypeError: Completions.parse() got an
+  unexpected keyword argument 'drop_params'`** on natively-routed models,
+  including `openrouter/*` (via `OpenAICompatibleCompletion`, which subclasses
+  crewai's native OpenAI provider without overriding its param-prep logic).
+  `drop_params=True` was forwarded straight into the OpenAI SDK call; removed
+  it from `get_configured_llm()` — it was also redundant on the litellm-routed
+  path, where crewai already forces `litellm.drop_params = True` globally.
+- **`FinwizFlow.__init__` silently discarding state** assigned before
+  `super().__init__()` — pydantic's `BaseModel.__init__` replaces
+  `self.__dict__` wholesale during validation, so the parent constructor must
+  run first.
+- **`RateLimiter` tests patching the wrong target** — `AsyncLimiter` uses
+  `__slots__`, so `acquire()` must be patched on the class, not a per-instance
+  attribute.
+- **mypy error in `data_validators.py`** (`numpy.signedinteger` vs `int`),
+  surfaced now that mypy resolves cleanly under the 3.13 interpreter.
+
+### Removed
+
+- **Unused `safety` dev dependency.** Never wired into any Makefile target or
+  CI workflow — CVE scanning is already covered by `pip-audit` (`make audit`)
+  and `osv-scanner` (`make vuln`, CI-gated), SAST by `semgrep`
+  (`make security`). Dropped 10 packages total (`nltk`, `safety`,
+  `safety-schemas`, `authlib`, `dparse`, `joserfc`, `marshmallow`,
+  `ruamel-yaml`, `tomlkit`, `truststore`) — this also closes the only
+  still-open Dependabot advisory with no upstream fix (path traversal in
+  `nltk.data.load()`).
+
+### Security
+
+- Routine dependency floor bumps via Dependabot (openai, hypothesis,
+  mkdocs-material, pre-commit, types-pyyaml, pytest-xdist, scipy-stubs,
+  actions/checkout, pandas-stubs, cyclonedx-bom, pytest-cov, beautifulsoup4)
+  plus two bulk lockfile re-resolutions.
+
 ## [5.7.0] - 2026-06-11
 
 The three-pass codebase simplification (Delete → Merge → Decompose), ~42,000

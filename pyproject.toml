@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "5.7.0"
+version = "5.8.0"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 requires-python = ">=3.13,<3.14"
