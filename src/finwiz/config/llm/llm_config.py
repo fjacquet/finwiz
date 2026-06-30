@@ -378,8 +378,12 @@ def get_configured_llm(
             # Disable parallel tool calls to avoid Instructor compatibility issues
             # See: https://github.com/BerriAI/litellm/issues/4235
             parallel_tool_calls=False if disable_parallel else None,
-            # Drop unsupported params for models that don't recognize parallel_tool_calls
-            drop_params=True,
+            # NOTE: do not pass drop_params=True here. crewai's litellm-backed LLM
+            # already forces litellm.drop_params = True globally on init, so it's
+            # redundant there — and for natively-routed providers (openai/, etc.)
+            # crewai forwards unrecognized kwargs straight into the SDK call params,
+            # so drop_params leaks into client.beta.chat.completions.parse(**params)
+            # and raises TypeError: unexpected keyword argument 'drop_params'.
             # Extra params for provider-specific features
             extra_body=extra_body if extra_body else None,
         )

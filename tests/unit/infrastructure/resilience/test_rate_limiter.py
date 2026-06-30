@@ -1,6 +1,7 @@
 """Unit tests for the refactored token-bucket RateLimiter."""
 
 import pytest
+from aiolimiter import AsyncLimiter
 
 from finwiz.infrastructure.resilience.rate_limiter import (
     APIProvider,
@@ -39,12 +40,15 @@ class TestAcquire:
 
     @pytest.mark.asyncio
     async def test_acquire_uses_token_bucket(self, mocker) -> None:
-        limiter = RateLimiter()
+        # Patched on the class, not the instance: AsyncLimiter uses __slots__
+        # (via contextlib.AbstractAsyncContextManager) and has no per-instance
+        # __dict__, so instance-level attribute patching isn't possible.
         mock_acquire = mocker.patch.object(
-            limiter._limiters[APIProvider.YAHOO_FINANCE],
+            AsyncLimiter,
             "acquire",
             new_callable=mocker.AsyncMock,
         )
+        limiter = RateLimiter()
         result = await limiter.acquire(APIProvider.YAHOO_FINANCE)
         assert result is True
         mock_acquire.assert_called_once()
@@ -58,12 +62,12 @@ class TestAcquire:
 
     @pytest.mark.asyncio
     async def test_acquire_records_request(self, mocker) -> None:
-        limiter = RateLimiter()
         mocker.patch.object(
-            limiter._limiters[APIProvider.YAHOO_FINANCE],
+            AsyncLimiter,
             "acquire",
             new_callable=mocker.AsyncMock,
         )
+        limiter = RateLimiter()
         await limiter.acquire(APIProvider.YAHOO_FINANCE, endpoint="/quote")
         history = limiter.request_history[APIProvider.YAHOO_FINANCE]
         assert len(history) == 1

@@ -330,7 +330,7 @@ class DataQualityValidator:
 
         # Check for duplicate timestamps
         if hasattr(data.index, "duplicated"):
-            duplicate_dates = data.index.duplicated().sum()
+            duplicate_dates = int(data.index.duplicated().sum())
             if duplicate_dates > 0:
                 suspicious_count += duplicate_dates
                 issues.append(

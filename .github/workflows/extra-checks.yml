@@ -19,7 +19,7 @@ jobs:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with: { fetch-depth: 0, persist-credentials: false }
       - uses: fjacquet/ci/actions/setup-uv@v1 # nosemgrep: github-actions.security.third-party-action-not-pinned-to-commit-sha
-        with: { python-version: "3.12" }
+        with: { python-version: "3.13" }
       - run: uv sync --all-extras --all-groups
       - run: uvx vulture src/finwiz --min-confidence 80
       - run: uvx pylint --disable=all --enable=duplicate-code --min-similarity-lines=37 --score=no src/finwiz

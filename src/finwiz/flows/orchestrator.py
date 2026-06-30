@@ -53,6 +53,12 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("Token monitoring enabled for all LLM calls")
         logger.info("Initializing FinwizFlow with orchestrator delegation")
 
+        # crewai's Flow.__init__ (pydantic BaseModel.__init__) replaces
+        # self.__dict__ wholesale during validation, so any instance
+        # attributes assigned before this call are silently discarded.
+        # Must run first.
+        super().__init__(*args, **kwargs)
+
         self.deps = self._initialize_dependencies()
         logger.info("Orchestrator dependencies initialized")
 
@@ -68,8 +74,6 @@ class FinwizFlow(Flow[FinwizState]):
             cache_metrics.register_cache("main", get_cache_manager())
         except Exception as e:
             logger.debug(f"Cache metrics registration skipped: {e}")
-
-        super().__init__(*args, **kwargs)
 
         if not hasattr(self, "state") or self.state is None:
             self.state = self.deps.state_manager.create_initial_state()  # type: ignore[misc]
