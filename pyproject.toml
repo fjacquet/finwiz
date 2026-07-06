@@ -441,7 +441,7 @@ package=true
 
 [dependency-groups]
 dev = [
-    "mypy>=1.17.1",
+    "mypy>=2.1.0",
     "bandit>=1.8.6",
     "cyclonedx-bom>=7.3.0",
     "pip-audit>=2.9.0",
