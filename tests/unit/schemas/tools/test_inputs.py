@@ -58,7 +58,6 @@ from finwiz.schemas.tools.inputs import (
     OptimizationInput,
     PerformanceTrackingInput,
     # Perplexity
-    PerplexitySearchInput,
     PerplexitySearchWrapperInput,
     PortfolioAnalysisInput,
     # Portfolio Rebalancing
@@ -1174,56 +1173,6 @@ class TestQuantitativeAnalysisInput:
 # ============================================================================
 # Perplexity Tool Tests
 # ============================================================================
-
-
-class TestPerplexitySearchInput:
-    """Tests for PerplexitySearchInput model."""
-
-    def test_required_query(self, fake):
-        """Test instantiation with required query."""
-        query = "best stocks to buy in 2025"
-        model = PerplexitySearchInput(query=query)
-
-        assert model.query == query
-
-    def test_default_values(self):
-        """Test default values."""
-        model = PerplexitySearchInput(query="test query")
-
-        assert model.model == "sonar-pro"
-        assert model.top_k == 5
-        assert model.search_recency is None
-
-    def test_custom_model(self):
-        """Test custom model value."""
-        model = PerplexitySearchInput(query="test", model="sonar")
-
-        assert model.model == "sonar"
-
-    def test_optional_top_k_value(self, fake):
-        """Test optional top_k with value."""
-        top_k = fake.random_int(min=1, max=10)
-        model = PerplexitySearchInput(query="test", top_k=top_k)
-
-        assert model.top_k == top_k
-
-    def test_optional_search_recency_none(self):
-        """Test search_recency can be None."""
-        model = PerplexitySearchInput(query="test", search_recency=None)
-
-        assert model.search_recency is None
-
-    def test_optional_search_recency_value(self):
-        """Test search_recency with value."""
-        model = PerplexitySearchInput(query="test", search_recency="week")
-
-        assert model.search_recency == "week"
-
-    def test_missing_required_query(self):
-        """Test ValidationError when query is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            PerplexitySearchInput()
-        assert "query" in str(exc_info.value)
 
 
 class TestPerplexitySearchWrapperInput:

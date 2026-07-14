@@ -41,7 +41,6 @@ from .inputs import (
     MyCustomToolInput,
     OptimizationInput,
     PerformanceTrackingInput,
-    PerplexitySearchInput,
     PerplexitySearchWrapperInput,
     PortfolioAnalysisInput,
     PortfolioRebalancingInput,
@@ -110,6 +109,5 @@ __all__ = [
     "PortfolioAnalysisInput",
     "RiskAssessmentInput",
     "QuantitativeAnalysisInput",
-    "PerplexitySearchInput",
     "PerplexitySearchWrapperInput",
 ]

@@ -236,21 +236,6 @@ class QuantitativeAnalysisInput(BaseModel):
 
 
 # Perplexity Tool Inputs
-class PerplexitySearchInput(BaseModel):
-    """Input schema for Perplexity Sonar search."""
-
-    query: str = Field(..., description="Natural language query to research with Perplexity Sonar.")
-    model: str = Field(
-        "sonar-pro",
-        description=("Perplexity model to use (e.g., sonar-pro). Use higher tiers only if your account has access."),
-    )
-    top_k: int | None = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
-    search_recency: str | None = Field(
-        None,
-        description="Recency filter such as 'day', 'week', or 'month'. Leave empty for default behaviour.",
-    )
-
-
 class PerplexitySearchWrapperInput(BaseModel):
     """Input schema for PerplexitySearchWrapper."""
 

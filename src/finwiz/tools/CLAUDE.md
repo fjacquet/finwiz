@@ -11,13 +11,12 @@ tools/
 ├── logger.py                        # get_logger() — project-wide logging
 │
 ├── # Data source tools
-├── (Yahoo Finance tools now come from crewai-custom-tools — see "Centralized tools" below)
+├── (Yahoo Finance and Perplexity tools now come from crewai-custom-tools — see "Centralized tools" below)
 ├── alpha_vantage_tool.py            # AlphaVantageTool
 ├── alpha_vantage_news_tool.py       # AV news feed
 ├── twelve_data_tool.py              # TwelveDataTool
 ├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
 ├── kraken_api_tool.py               # KrakenAPITool
-├── perplexity_search_tool.py        # PerplexitySearchTool (AI research)
 │
 ├── # Analysis tools
 ├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool

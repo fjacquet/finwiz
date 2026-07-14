@@ -21,9 +21,6 @@ class TestEndpointDefaults:
     def test_kraken_base(self):
         assert endpoints.KRAKEN_BASE == "https://api.kraken.com/0/public"
 
-    def test_perplexity_chat(self):
-        assert endpoints.PERPLEXITY_CHAT == "https://api.perplexity.ai/chat/completions"
-
     def test_perplexity_search(self):
         assert endpoints.PERPLEXITY_SEARCH == "https://api.perplexity.ai/search"
 

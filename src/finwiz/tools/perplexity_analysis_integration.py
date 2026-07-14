@@ -9,9 +9,11 @@ structured data parsing and error handling.
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from typing import Any, Literal, cast
+
+from crewai_custom_tools import PerplexitySearchTool
+from crewai_custom_tools.core.results import ToolResultError, ok, parse_tool_result
 
 from finwiz.config.endpoints import PERPLEXITY_SEARCH
 from finwiz.schemas.perplexity import (
@@ -31,7 +33,6 @@ from finwiz.tools.perplexity_logging import (
     PerplexityOperationLogger,
 )
 from finwiz.tools.perplexity_performance import PerplexityPerformanceMonitor
-from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
 
 logger = get_logger(__name__)
 
@@ -253,9 +254,10 @@ class PerplexityAnalysisIntegration:
                         }
                     )
 
-                # Create response in expected format
+                # Create response in the canonical ToolResult envelope, matching what
+                # _parse_perplexity_response now expects (parse_tool_result-compatible).
                 response_data = {"citations": citations, "results": search_data.get("results", [])}
-                response = json.dumps(response_data, indent=2, ensure_ascii=False, default=str)
+                response = ok(response_data)
 
                 if response.startswith("Error:"):
                     # Convert tool error to proper exception
@@ -386,18 +388,11 @@ class PerplexityAnalysisIntegration:
         raw_response_size = len(raw_response.encode("utf-8"))
 
         try:
-            # Parse JSON response
-            response_data = json.loads(raw_response)
+            data = parse_tool_result(raw_response)
 
-            # Extract citations from response
-            citations = response_data.get("citations", [])
-            if not citations:
-                # Try to extract from choices if citations not at root level
-                choices = response_data.get("choices", [])
-                if choices and "citations" in choices[0]:
-                    citations = choices[0]["citations"]
+            # Citations come straight from the envelope now.
+            citations = (data or {}).get("citations", [])
 
-            # Convert citations to SonarArticle objects
             for i, citation in enumerate(citations):
                 try:
                     article = self._create_sonar_article(citation, analysis_type, i)
@@ -407,18 +402,19 @@ class PerplexityAnalysisIntegration:
                     logger.warning(f"Failed to parse citation {i}: {e!s}")
                     continue
 
-            # If no citations found, try to extract from message content
+            # If no citations found, try to extract from the answer text via the
+            # legacy chat-completions shape the helper still understands.
             if not articles:
-                articles = self._extract_articles_from_content(response_data, analysis_type)
+                legacy_shaped = {"choices": [{"message": {"content": (data or {}).get("answer", "")}}]}
+                articles = self._extract_articles_from_content(legacy_shaped, analysis_type)
 
-            # Log parsing metrics with content redaction
             if ticker:
                 PerplexityOperationLogger.log_parsing_metrics(ticker, raw_response_size, len(articles))
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Perplexity JSON response: {e!s}")
+        except ToolResultError as e:
+            logger.error(f"Perplexity tool returned an error envelope: {e!s}")
             if ticker:
-                PerplexityOperationLogger.log_api_failure(ticker, f"JSON parsing error: {e!s}")
+                PerplexityOperationLogger.log_api_failure(ticker, f"Tool error: {e!s}")
         except Exception as e:
             logger.error(f"Unexpected error parsing Perplexity response: {e!s}")
             if ticker:
