@@ -113,3 +113,19 @@ Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`;
 - `finwiz.integration` — Data integration layer
 - `finwiz.schemas.tools.inputs` — Tool input schemas
 - `finwiz.crews` — Crews that use these tools
+
+## Centralized tools (crewai-custom-tools)
+
+Generic tools come from the `crewai-custom-tools` package, pinned to a git tag
+in `pyproject.toml`. To co-develop against the local checkout, add (do NOT
+commit this):
+
+```toml
+[tool.uv.sources]
+crewai-custom-tools = { path = "../crewai_custom_tools", editable = true }
+```
+
+then `uv sync`. Remove the override and re-run `uv lock && uv sync` before
+committing. Programmatic callers parse tool output with
+`crewai_custom_tools.core.results.parse_tool_result()` — central tools return
+the `{"success", "data", "error"}` JSON envelope, never bare dicts.
