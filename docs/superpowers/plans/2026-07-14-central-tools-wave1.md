@@ -32,10 +32,12 @@ Before Task 1: `git checkout -b wave1-finwiz-parity`
 ### Task 1: `parse_tool_result()` + `ToolResultError`
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/core/results.py` (append after `err()`)
 - Test: `tests/test_results.py` (append)
 
 **Interfaces:**
+
 - Consumes: existing `ok()`, `err()` in the same module.
 - Produces: `parse_tool_result(raw: str) -> Any` (returns the envelope's `data`; raises `ToolResultError` on `success=False` or malformed input) and `class ToolResultError(RuntimeError)` with `.data` attribute. Tasks 11–15 and all finwiz callers depend on these exact names.
 
@@ -128,10 +130,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 2: `require_api_key()` fail-fast helper
 
 **Files:**
+
 - Create: `src/crewai_custom_tools/core/keys.py`
 - Test: `tests/test_keys.py`
 
 **Interfaces:**
+
 - Produces: `require_api_key(*env_vars: str, tool_name: str) -> str` — returns the first non-empty env var value, raises `ValueError` naming the tool and variables otherwise. Task 5 and future waves use it in `model_post_init` so key-less construction raises immediately (finwiz's `_safe_init` skip pattern depends on `ValueError` here).
 
 - [ ] **Step 1: Write the failing tests** (create `tests/test_keys.py`)
@@ -212,11 +216,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 3: Provider-keyed synchronous rate limiter
 
 **Files:**
+
 - Create: `src/crewai_custom_tools/core/rate_limiter.py`
 - Test: `tests/test_rate_limiter.py`
 - Create: `tests/conftest.py` (rate-limit kill switch for the whole central suite)
 
 **Interfaces:**
+
 - Produces: `RateLimit(requests_per_minute: int, burst: int = 5)` frozen dataclass; `DEFAULT_RATE_LIMITS: dict[str, RateLimit]`; `get_rate_limiter() -> RateLimiterRegistry` (process-wide singleton) with `.acquire(provider: str) -> None` (blocks until a token is available; no-op for unknown providers or when `CREWAI_TOOLS_RATE_LIMIT_DISABLED` is `1`/`true`); `reset_rate_limiter() -> None` for tests. Task 4 calls `get_rate_limiter().acquire(provider)` inside `api_tool`.
 - Provider keys are the exact strings tools already pass to `@api_tool`: `"YahooFinance"`, `"Perplexity"`, `"AlphaVantage"`, `"TwelveData"`, `"ChartImg"`, `"CoinMarketCap"`, `"Kraken"`, `"SECEdgar"`, `"FRED"`, `"FearGreed"`. Limits ported from finwiz `infrastructure/resilience/rate_limiter_config.py`.
 
@@ -439,10 +445,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 4: Wire the rate limiter into `@api_tool`
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/core/decorators.py`
 - Test: `tests/test_decorators.py` (append)
 
 **Interfaces:**
+
 - Consumes: `get_rate_limiter()` from Task 3.
 - Produces: unchanged `api_tool(provider, endpoint, timeout=30.0)` signature; the wrapper now calls `get_rate_limiter().acquire(provider)` before the initial call AND before the 429 retry. All existing tool behavior otherwise unchanged.
 
@@ -509,10 +517,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 5: Reconcile `PerplexitySearchTool` (sanctioned break)
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/tools/web/perplexity.py` (replace file content)
 - Test: `tests/test_perplexity.py` (replace the `PerplexitySearchTool` tests; keep any `PerplexityStructuredTool` tests untouched)
 
 **Interfaces:**
+
 - Consumes: `api_tool` (Task 4), `ok`/`err`, `require_api_key` (Task 2).
 - Produces: `PerplexitySearchTool` with `_run(self, query: str, model: str = "sonar-pro", top_k: int | None = 5, search_recency: str | None = None, search_domain_filter: list[str] | None = None) -> str`. Construction raises `ValueError` when neither `PERPLEXITY_API_KEY` nor `PPLX_API_KEY` is set. Success envelope `data`: `{"answer": str, "citations": list, "source": "perplexity"}` (UNCHANGED from v0.3.1 — downstream consumers keep working). The old `focus`/`recency` params are REMOVED (the spec's sanctioned break). Fixes finwiz's silent bug: recency is sent as `search_recency_filter` (the API ignores `search_recency`).
 
@@ -708,11 +718,13 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 6: Port the `perplexity_structured()` async function
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/tools/web/perplexity_structured.py` (append function; keep `PerplexityStructuredTool` untouched)
 - Modify: `pyproject.toml` (add `pytest-asyncio` dev dep + asyncio mode)
 - Test: `tests/test_perplexity_structured_fn.py`
 
 **Interfaces:**
+
 - Consumes: `require_api_key` (Task 2). Uses `httpx` (already a central dependency).
 - Produces: `async def perplexity_structured(*, prompt: str, schema: type[T], system: str = ..., model: str = "sonar-pro", search_recency_filter: str | None = "month", timeout: float = 60.0, api_key: str | None = None) -> T | None` — identical signature and None-on-failure semantics as finwiz's `finwiz/tools/perplexity_structured.py`, so finwiz's `fact_pack_research.py` / `strategic_research.py` swap imports without other changes (Task 14).
 
@@ -892,10 +904,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 7: Reconcile `YahooFinanceTickerInfoTool` (batch mode + field parity)
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/tools/finance/yfinance_ticker.py`
 - Test: `tests/test_yfinance_ticker.py` (append; adjust existing assertions if they assert exact key sets)
 
 **Interfaces:**
+
 - Produces: `_run(self, ticker: str, prefetched_data: dict | None = None) -> str`. Envelope `data` gains finwiz's extra fields (`previous_close`, `return_on_equity`, `debt_to_equity`, `revenue_growth`, `profit_margins`, `total_assets`, `nav_price`, `expense_ratio`, `beta` falls back to `beta3Year`) plus `timestamp`, optional `market_time`, and `data_source` (`"prefetched"` or `"live_api"`). Keeps central's cache and err-on-no-data behavior. `prefetched_data` is NOT in the args schema (programmatic-only, agents never pass it).
 
 - [ ] **Step 1: Write the failing tests** (append to `tests/test_yfinance_ticker.py`)
@@ -1033,10 +1047,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 8: Reconcile `YahooFinanceHistoryTool` (batch mode + timestamps)
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/tools/finance/history_holdings.py` (only `YahooFinanceHistoryTool._run`; `YahooFinanceETFHoldingsTool` is already strictly better than finwiz's — finwiz's called nonexistent yfinance APIs — leave it untouched)
 - Test: `tests/test_finance_tools.py` (append)
 
 **Interfaces:**
+
 - Produces: `_run(self, ticker: str, period: str = "1y", interval: str = "1d", prefetched_data: dict | None = None) -> str`. Envelope `data` gains `timestamp` (now, UTC ISO), `data_time` (latest bar date as UTC ISO, when parseable) and `data_source`. Central's NaN guards and honest `price_change_percent` math stay.
 
 - [ ] **Step 1: Write the failing tests** (append to `tests/test_finance_tools.py`)
@@ -1131,10 +1147,12 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 9: Reconcile `YahooFinanceCompanyInfoTool` (calculated revenue growth)
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/tools/finance/company_info.py`
 - Test: `tests/test_finance_tools.py` (append)
 
 **Interfaces:**
+
 - Produces: same `_run(self, ticker: str) -> str` signature. Behavior gains finwiz's two fixes: `revenue_growth` is calculated from actual `ticker_data.financials` (falls back to `info["revenueGrowth"]`), and `debt_to_equity` converts yfinance's percentage to a ratio (152.41 → 1.52).
 
 - [ ] **Step 1: Write the failing tests** (append to `tests/test_finance_tools.py`)
@@ -1232,9 +1250,11 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 10: Exports, version 0.4.0, CHANGELOG, crewai floor, tag, push
 
 **Files:**
+
 - Modify: `src/crewai_custom_tools/__init__.py`, `pyproject.toml`, `CHANGELOG.md`
 
 **Interfaces:**
+
 - Produces: package-root exports `perplexity_structured`, `parse_tool_result`, `ToolResultError`, `require_api_key`, `get_rate_limiter` (Tasks 11–15 import these from `crewai_custom_tools` / `crewai_custom_tools.core.results`); git tag `v0.4.0` on `main`, pushed to GitHub (finwiz's and epic_news's pins resolve against it).
 
 - [ ] **Step 1: Update exports.** In `src/crewai_custom_tools/__init__.py`: change `__version__ = "0.3.1"` to `"0.4.0"`; add imports
@@ -1298,10 +1318,12 @@ Working directory: `/Users/fjacquet/Projects/crews/epic_news`
 ### Task 11: Bump pin to v0.4.0 and absorb the Perplexity break
 
 **Files:**
+
 - Modify: `pyproject.toml:12`
 - Modify: `tests/tools/test_web_tools.py` (and, only if the suite shows the same failure, `tests/tools/test_factory_wiring.py`, `tests/crews/test_composio_gmail_error_surfacing.py`)
 
 **Interfaces:**
+
 - Consumes: central v0.4.0 (`PerplexitySearchTool` now fail-fast; envelope shape unchanged).
 - Produces: epic_news green against v0.4.0 — the release gate finwiz needs before consuming the tag.
 
@@ -1360,10 +1382,12 @@ Working directory: `/Users/fjacquet/Projects/finwiz`, branch `spec/centralized-t
 ### Task 12: Add the crewai-custom-tools dependency
 
 **Files:**
+
 - Modify: `pyproject.toml` (insert before line 37, the `]` closing `dependencies`)
 - Modify: `src/finwiz/tools/CLAUDE.md` (document the co-development override)
 
 **Interfaces:**
+
 - Produces: `import crewai_custom_tools` works in finwiz's venv at v0.4.0. All later tasks depend on it.
 
 - [ ] **Step 1: Add the dependency.** In `pyproject.toml`, before the closing `]` at line 37:
@@ -1398,6 +1422,7 @@ then `uv sync`. Remove the override and re-run `uv lock && uv sync` before
 committing. Programmatic callers parse tool output with
 `crewai_custom_tools.core.results.parse_tool_result()` — central tools return
 the `{"success", "data", "error"}` JSON envelope, never bare dicts.
+
 ```
 
 - [ ] **Step 4: Commit**
@@ -1412,6 +1437,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 13: Swap the five Yahoo tools
 
 **Files:**
+
 - Modify: `src/finwiz/tools/finance_tools.py:30-34`
 - Modify: `src/finwiz/crews/portfolio_rebalancing_crew/portfolio_rebalancing_crew.py:34-35`
 - Modify: `src/finwiz/tools/portfolio_price_service.py:21` and the `_run` consumption at `:212-222`
@@ -1421,6 +1447,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Delete: `src/finwiz/tools/yahoo_finance_ticker_info_tool.py`, `yahoo_finance_history_tool.py`, `yahoo_finance_company_info_tool.py`, `yahoo_finance_news_tool.py`, `yahoo_finance_etf_holdings_tool.py`, `tests/unit/tools/test_batch_prefetch_tools.py` (its cases now live in central Tasks 7–8)
 
 **Interfaces:**
+
 - Consumes: central classes `YahooFinanceTickerInfoTool`, `YahooFinanceHistoryTool`, `YahooFinanceCompanyInfoTool`, `YahooFinanceNewsTool`, `YahooFinanceETFHoldingsTool` (all return envelope strings) and `parse_tool_result` / `ToolResultError`.
 - Produces: no module under `finwiz.tools` named `yahoo_finance_*`; factory bundles unchanged in shape (tool `.name` strings are identical between finwiz and central versions).
 
@@ -1564,12 +1591,14 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 14: Swap the Perplexity modules
 
 **Files:**
+
 - Modify: `src/finwiz/tools/perplexity_analysis_integration.py` (import at `:34`, instantiation at `:56`, `_parse_perplexity_response` at `:372-427`)
 - Modify: `src/finwiz/analysis/fact_pack_research.py:19`, `src/finwiz/analysis/strategic_research.py:25`
 - Delete: `src/finwiz/tools/perplexity_search_tool.py`, `src/finwiz/tools/perplexity_structured.py`
 - Test: existing `tests/unit/analysis/test_fact_pack_research.py` (should pass unchanged — it patches at the import site)
 
 **Interfaces:**
+
 - Consumes: central `PerplexitySearchTool` (envelope `data`: `{"answer", "citations", "source"}`), central `perplexity_structured` (same signature as the deleted finwiz function), `parse_tool_result`/`ToolResultError`.
 - Produces: no `finwiz.tools.perplexity_search_tool` / `finwiz.tools.perplexity_structured` modules. `PPLX_API_KEY` in `.env` keeps working (central reads it as fallback).
 
@@ -1672,9 +1701,11 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ### Task 15: Contract tests at the factory seam + final verification
 
 **Files:**
+
 - Create: `tests/unit/tools/test_central_tools_contract.py`
 
 **Interfaces:**
+
 - Consumes: everything swapped in Tasks 13–14.
 - Produces: the Wave-1 regression net — if a future central release changes tool names, envelope shape, or fail-fast behavior, these tests catch it inside finwiz.
 
