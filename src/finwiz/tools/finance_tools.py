@@ -6,6 +6,13 @@ financial data tools for use in FinWiz crews.
 """
 
 from crewai.tools import BaseTool
+from crewai_custom_tools import (
+    YahooFinanceCompanyInfoTool,
+    YahooFinanceETFHoldingsTool,
+    YahooFinanceHistoryTool,
+    YahooFinanceNewsTool,
+    YahooFinanceTickerInfoTool,
+)
 
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
@@ -27,11 +34,6 @@ from finwiz.tools.standardized_sentiment_tool import (
 )
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
-from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
-from finwiz.tools.yahoo_finance_etf_holdings_tool import YahooFinanceETFHoldingsTool
-from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
-from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
-from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
 _logger = get_logger(__name__)
 

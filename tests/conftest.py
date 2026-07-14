@@ -11,6 +11,7 @@ Makes test fixtures available to all test modules.
 import os
 
 os.environ.setdefault("FINWIZ_TEST_LOGS", "1")
+os.environ.setdefault("CREWAI_TOOLS_RATE_LIMIT_DISABLED", "1")
 
 from datetime import datetime
 from typing import Any

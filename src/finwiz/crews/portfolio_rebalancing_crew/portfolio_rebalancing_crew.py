@@ -11,6 +11,7 @@ from typing import Any
 from crewai import LLM, Agent, Crew, Process, Task
 from crewai.agents.agent_builder.base_agent import BaseAgent
 from crewai.project import CrewBase, agent, crew, output_pydantic, task
+from crewai_custom_tools import YahooFinanceHistoryTool, YahooFinanceTickerInfoTool
 from dotenv import load_dotenv
 
 from finwiz.infrastructure.decorators.agent_validators import final_reporter
@@ -31,8 +32,6 @@ from finwiz.tools.position_sizing_tool import PositionSizingTool
 from finwiz.tools.price_target_calculator import PriceTargetCalculator
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
 from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
-from finwiz.tools.yahoo_finance_history_tool import YahooFinanceHistoryTool
-from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
 # Get logger for this module
 logger = get_logger(__name__)

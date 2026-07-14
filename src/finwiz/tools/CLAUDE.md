@@ -11,11 +11,7 @@ tools/
 ├── logger.py                        # get_logger() — project-wide logging
 │
 ├── # Data source tools
-├── yahoo_finance_news_tool.py       # News feed
-├── yahoo_finance_ticker_info_tool.py # Ticker info
-├── yahoo_finance_company_info_tool.py # Company fundamentals
-├── yahoo_finance_etf_holdings_tool.py # ETF holdings data
-├── yahoo_finance_history_tool.py    # Price history
+├── (Yahoo Finance tools now come from crewai-custom-tools — see "Centralized tools" below)
 ├── alpha_vantage_tool.py            # AlphaVantageTool
 ├── alpha_vantage_news_tool.py       # AV news feed
 ├── twelve_data_tool.py              # TwelveDataTool
