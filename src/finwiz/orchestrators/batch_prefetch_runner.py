@@ -59,7 +59,6 @@ def run_batch_prefetch(
         prefetcher = BatchDataPreFetcher(
             session_id=state.session_id,
             enable_alpha_vantage=should_use_alpha_vantage(),
-            alpha_vantage_rate_limit=config.alpha_vantage_rate_limit,
         )
         prefetched_data = prefetcher.prefetch_all_data(tickers)
     except Exception:

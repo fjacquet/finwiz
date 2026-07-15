@@ -54,6 +54,12 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         assert orchestrator.enable_rate_limiting is True
         assert orchestrator.rate_limiter is not None
 
+    def test_should_initialize_without_rate_limiting_when_disabled(self, orchestrator_no_cache):
+        """Test that rate limiting is disabled when configured off."""
+        # Assert
+        assert orchestrator_no_cache.enable_rate_limiting is False
+        assert orchestrator_no_cache.rate_limiter is None
+
     def test_should_set_parallel_batch_size_when_configured(self, orchestrator):
         """Test that parallel batch size is set correctly."""
         # Assert
@@ -93,6 +99,36 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         # Assert
         assert len(results) == 25
         assert mock_analyze.call_count == 25
+
+    @pytest.mark.asyncio
+    async def test_should_not_acquire_rate_limiter_when_disabled(self, orchestrator_no_cache, mocker):
+        """Test that the batch-boundary throttle performs no acquire when rate limiting is disabled."""
+        # Arrange
+        mock_get_rate_limiter = mocker.patch("finwiz.tools.analysis.analysis_coordinator.get_rate_limiter")
+        holdings = [
+            {"ticker": f"TEST{i}", "asset_class": "stock", "currency": "USD", "name": f"Test {i}"}
+            for i in range(15)  # 15 holdings crosses the 10-item batch boundary
+        ]
+        mocker.patch.object(
+            orchestrator_no_cache,
+            "analyze_holding_async",
+            return_value=HoldingAnalysis(
+                ticker="TEST",
+                name="Test",
+                asset_class="stock",
+                currency="USD",
+                analysis_date=datetime.now(),
+                data_freshness="fresh",
+            ),
+        )
+
+        # Act
+        results = await orchestrator_no_cache.analyze_holdings_parallel(holdings)
+
+        # Assert
+        assert len(results) == 15
+        assert orchestrator_no_cache.rate_limiter is None
+        mock_get_rate_limiter.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_should_handle_exceptions_in_parallel_processing(self, orchestrator, mocker):

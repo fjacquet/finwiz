@@ -128,7 +128,8 @@ class HoldingAnalyzerOrchestrator:
 
             # Token-bucket throttle between batches instead of fixed sleep
             if batch_idx + self.parallel_batch_size < len(holdings):
-                await asyncio.to_thread(get_rate_limiter().acquire, "YahooFinance")
+                if self.rate_limiter is not None:
+                    await asyncio.to_thread(self.rate_limiter.acquire, "YahooFinance")
 
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(

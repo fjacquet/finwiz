@@ -77,7 +77,6 @@ class BatchDataPreFetcher:
         self,
         session_id: str,
         enable_alpha_vantage: bool = False,
-        alpha_vantage_rate_limit: int = 5,
     ) -> None:
         """
         Initialize batch data pre-fetcher.
@@ -86,15 +85,12 @@ class BatchDataPreFetcher:
             session_id: Unique session identifier for cache isolation
             enable_alpha_vantage: If True, fetch Alpha Vantage data (adds 13+ minutes for 66 tickers)
                                  Default False - Yahoo Finance provides all essential data
-            alpha_vantage_rate_limit: Alpha Vantage API rate limit in calls per minute (default: 5)
-                                     Free tier: 5, Premium tier: 75
 
         """
         self.session_id = session_id
         self.cache_dir = Path(f"cache/batch_data/{session_id}")
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.enable_alpha_vantage = enable_alpha_vantage
-        self.alpha_vantage_rate_limit = alpha_vantage_rate_limit
         self.alpha_vantage_key = os.getenv("ALPHA_VANTAGE_API_KEY") if enable_alpha_vantage else None
 
         # Configure yfinance with centralized settings (retry mechanism, etc.)
@@ -114,7 +110,6 @@ class BatchDataPreFetcher:
 
         if enable_alpha_vantage:
             logger.warning("⚠️  OPTIONAL SOURCE: Alpha Vantage (ENABLED)")
-            logger.warning(f"  - Rate limit: {alpha_vantage_rate_limit} calls/minute")
             logger.warning("  - Performance impact: Adds ~13 minutes for 66 tickers")
             logger.warning("  - Recommendation: Disable for optimal performance")
             logger.warning("  - Yahoo Finance already provides all essential data")

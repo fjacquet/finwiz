@@ -261,7 +261,6 @@ DEEP_ANALYSIS_AI_SUMMARY=true
 # Batch processing settings
 DEEP_ANALYSIS_BATCH_SIZE=5        # Concurrent analysis batch size
 BATCH_PREFETCH_ENABLED=true       # Enable batch data pre-fetching
-ALPHA_VANTAGE_RATE_LIMIT=5        # API rate limiting
 ```
 
 ## Usage Examples
