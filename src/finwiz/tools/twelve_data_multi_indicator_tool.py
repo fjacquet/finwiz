@@ -13,12 +13,12 @@ from typing import Any, Literal
 
 from crewai.tools import BaseTool
 from crewai_custom_tools import TwelveDataMultiIndicatorTool as CentralTwelveDataMultiIndicatorTool
+from crewai_custom_tools.core.keys import require_api_key
 from crewai_custom_tools.core.results import parse_tool_result
 from pydantic import BaseModel
 
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.tools import TwelveDataMultiIndicatorInput
-from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
@@ -44,7 +44,7 @@ class TwelveDataMultiIndicatorTool(BaseTool):
     def model_post_init(self, __context: object) -> None:
         """Validate API key at instantiation (fail-fast)."""
         super().model_post_init(__context)
-        self._api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
+        self._api_key = require_api_key("TWELVE_DATA_API_KEY", tool_name=self.__class__.__name__)
         self._central = CentralTwelveDataMultiIndicatorTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
