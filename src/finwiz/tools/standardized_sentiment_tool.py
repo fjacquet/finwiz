@@ -13,10 +13,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel
 
 # Import schemas from centralized location
-from finwiz.schemas.tools import (
-    CrossAssetSentimentComparatorInput,
-    StandardizedSentimentInput,
-)
+from finwiz.schemas.tools import StandardizedSentimentInput
 from finwiz.tools.logger import get_logger
 from finwiz.validation.url import get_url_validator
 
@@ -589,29 +586,6 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                 )
 
         return top_pos, top_neg
-
-
-class CrossAssetSentimentComparatorTool(BaseTool):
-    """
-    Tool for comparing sentiment across different asset classes.
-
-    Provides comparative sentiment analysis to identify
-    relative sentiment trends across stocks, ETFs, and cryptocurrencies.
-    """
-
-    name: str = "Cross-Asset Sentiment Comparator Tool"
-    description: str = "Compare sentiment analysis results across different asset classes to identify relative sentiment trends and market dynamics."
-    args_schema: type[BaseModel] = CrossAssetSentimentComparatorInput
-
-    def _run(self, symbols: list[str], asset_classes: list[str], **kwargs: Any) -> dict[str, Any]:
-        """Compare sentiment across asset classes."""
-        return {
-            "tool": "CrossAssetSentimentComparatorTool",
-            "symbols": symbols,
-            "asset_classes": asset_classes,
-            "message": "Use StandardizedSentimentAnalysisTool for individual asset analysis",
-            "methodology": "Cross-asset sentiment comparison with relative scoring",
-        }
 
 
 def get_standardized_sentiment_tool() -> StandardizedSentimentAnalysisTool:

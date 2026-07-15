@@ -17,10 +17,7 @@ from pydantic import BaseModel
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.common import RiskLevel
 from finwiz.schemas.perplexity import SonarArticle
-from finwiz.schemas.tools import (
-    EnhancedSECAnalysisInput,
-    StandardizedRiskScoringInput,
-)
+from finwiz.schemas.tools import EnhancedSECAnalysisInput
 from finwiz.tools._text_chunking import chunk_text
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
@@ -501,35 +498,6 @@ class EnhancedSECAnalysisTool(BaseTool):
         response += "combined with current market analysis and technical indicators for comprehensive investment decisions.\n"
 
         return response
-
-
-class StandardizedRiskScoringTool(BaseTool):
-    """
-    Standalone tool for standardized risk scoring across asset classes.
-
-    Provides consistent risk assessment methodology that can be used
-    by any crew for standardized risk evaluation.
-    """
-
-    name: str = "Standardized Risk Scoring Tool"
-    description: str = "Calculate standardized risk scores (0-5 scale) with consistent methodology across different asset classes and analysis contexts."
-    args_schema: type[BaseModel] = StandardizedRiskScoringInput
-
-    def _run(self, symbol: str, asset_class: str, risk_factors: list[str] | None = None, **kwargs: Any) -> dict[str, Any]:
-        """Calculate standardized risk score based on provided factors."""
-        if risk_factors is None:
-            risk_factors = []
-
-        # This is a placeholder implementation
-        # In practice, this would analyze various risk inputs
-        return {
-            "tool": "StandardizedRiskScoringTool",
-            "symbol": symbol,
-            "asset_class": asset_class,
-            "risk_factors": risk_factors,
-            "message": "Use EnhancedSECAnalysisTool for comprehensive risk assessment",
-            "methodology": "Standardized 0-5 scale with consistent factor weighting",
-        }
 
 
 logger = get_logger(__name__)

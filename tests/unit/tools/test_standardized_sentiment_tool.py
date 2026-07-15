@@ -12,7 +12,6 @@ from crewai_custom_tools.core.results import err, ok
 from pytest import approx
 
 from finwiz.tools.standardized_sentiment_tool import (
-    CrossAssetSentimentComparatorTool,
     StandardizedSentimentAnalysisTool,
     StandardizedSentimentInput,
 )
@@ -405,31 +404,6 @@ class TestYahooFinanceNewsBranch:
 
         # Assert
         assert articles == []
-
-
-class TestCrossAssetSentimentComparatorTool:
-    """Test the Cross-Asset Sentiment Comparator Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Cross-Asset Sentiment Comparator Tool."""
-        return CrossAssetSentimentComparatorTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Arrange
-        symbols = ["AAPL", "BTC-USD"]
-        asset_classes = ["stock", "crypto"]
-
-        # Act
-        result = tool._run(symbols=symbols, asset_classes=asset_classes)
-
-        # Assert
-        assert result["tool"] == "CrossAssetSentimentComparatorTool"
-        assert result["symbols"] == symbols
-        assert result["asset_classes"] == asset_classes
-        assert "methodology" in result
-        assert "cross-asset" in result["methodology"].lower()
 
 
 class TestIntegrationScenarios:

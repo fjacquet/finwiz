@@ -11,6 +11,7 @@ from crewai_custom_tools import (
     ChartImgTool,
     DeFiMetricsTool,
     KrakenTickerInfoTool,
+    StandardizedRiskScoringTool,
     TickerExistenceValidationTool,
     YahooFinanceCompanyInfoTool,
     YahooFinanceETFHoldingsTool,
@@ -24,15 +25,12 @@ from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.backtesting_tool import BacktestingTool
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
-from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
+from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 from finwiz.tools.regulatory_compliance_tool import RegulatoryComplianceTool
-from finwiz.tools.standardized_sentiment_tool import (
-    CrossAssetSentimentComparatorTool,
-    StandardizedSentimentAnalysisTool,
-)
+from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 _logger = get_logger(__name__)
@@ -65,7 +63,6 @@ def get_stock_research_tools() -> list[BaseTool]:
         EnhancedSECAnalysisTool(),
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
-        CrossAssetSentimentComparatorTool(),
         AlphaVantageNewsSentimentTool(),
         ChartImgTool(),
     ]
@@ -96,7 +93,6 @@ def get_crypto_research_tools() -> list[BaseTool]:
         RegulatoryComplianceTool(),
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
-        CrossAssetSentimentComparatorTool(),
         AlphaVantageNewsSentimentTool(),
         ChartImgTool(),
     ]
@@ -123,7 +119,6 @@ def get_etf_research_tools() -> list[BaseTool]:
         EnhancedETFAnalysisTool(),
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
-        CrossAssetSentimentComparatorTool(),
         AlphaVantageNewsSentimentTool(),
         ChartImgTool(),
     ]
@@ -148,7 +143,6 @@ def get_investment_discovery_tools() -> list[BaseTool]:
         TickerExistenceValidationTool(),
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
-        CrossAssetSentimentComparatorTool(),
     ]
 
 

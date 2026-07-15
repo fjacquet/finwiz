@@ -12,7 +12,6 @@ from .inputs import (
     CoinInfoInput,
     CompanyOverviewInput,
     CriteriaOptimizationInput,
-    CrossAssetSentimentComparatorInput,
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
@@ -43,7 +42,6 @@ from .inputs import (
     RegulatoryComplianceInput,
     RiskAssessmentInput,
     ScoringCriteria,
-    StandardizedRiskScoringInput,
     StandardizedSentimentInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
@@ -62,14 +60,12 @@ __all__ = [
     "TwelveDataMultiIndicatorInput",
     # Sentiment analysis inputs
     "StandardizedSentimentInput",
-    "CrossAssetSentimentComparatorInput",
     # Crypto analysis inputs
     "EnhancedCryptoAnalysisInput",
     # ETF analysis inputs
     "EnhancedETFAnalysisInput",
     # SEC analysis inputs
     "EnhancedSECAnalysisInput",
-    "StandardizedRiskScoringInput",
     # Yahoo Finance inputs
     "GetTickerHistoryInput",
     "GetETFHoldingsInput",

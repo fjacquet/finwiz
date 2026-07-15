@@ -91,13 +91,6 @@ class StandardizedSentimentInput(BaseModel):
     include_trending: bool = Field(default=True, description="Whether to extract trending topics")
 
 
-class CrossAssetSentimentComparatorInput(BaseModel):
-    """Input schema for Cross-Asset Sentiment Comparator Tool."""
-
-    symbols: list[str] = Field(..., description="List of asset symbols to compare")
-    asset_classes: list[str] = Field(..., description="List of asset classes corresponding to symbols")
-
-
 # Crypto Analysis Tool Inputs
 class EnhancedCryptoAnalysisInput(BaseModel):
     """Input schema for Enhanced Crypto Analysis Tool."""
@@ -131,14 +124,6 @@ class EnhancedSECAnalysisInput(BaseModel):
     )
     risk_assessment: bool = Field(default=True, description="Whether to perform standardized risk assessment")
     include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
-
-
-class StandardizedRiskScoringInput(BaseModel):
-    """Input schema for Standardized Risk Scoring Tool."""
-
-    symbol: str = Field(..., description="The asset symbol (stock ticker, ETF, or crypto)")
-    asset_class: str = Field(..., description="Type of asset being analyzed")
-    risk_factors: list[str] = Field(default=[], description="List of identified risk factors")
 
 
 # Yahoo Finance Tool Inputs

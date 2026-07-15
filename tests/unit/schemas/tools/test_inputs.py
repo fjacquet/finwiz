@@ -24,7 +24,6 @@ from finwiz.schemas.tools.inputs import (
     CoinInfoInput,
     CompanyOverviewInput,
     CriteriaOptimizationInput,
-    CrossAssetSentimentComparatorInput,
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
@@ -64,7 +63,6 @@ from finwiz.schemas.tools.inputs import (
     RiskAssessmentInput,
     # Scoring
     ScoringCriteria,
-    StandardizedRiskScoringInput,
     StandardizedSentimentInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
@@ -473,47 +471,6 @@ class TestStandardizedSentimentInput:
         assert "asset_class" in str(exc_info.value)
 
 
-class TestCrossAssetSentimentComparatorInput:
-    """Tests for CrossAssetSentimentComparatorInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbols = ["AAPL", "GOOGL", "MSFT"]
-        asset_classes = ["stock", "stock", "stock"]
-        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
-
-        assert model.symbols == symbols
-        assert model.asset_classes == asset_classes
-
-    def test_single_asset(self):
-        """Test with single asset."""
-        model = CrossAssetSentimentComparatorInput(symbols=["AAPL"], asset_classes=["stock"])
-
-        assert len(model.symbols) == 1
-        assert len(model.asset_classes) == 1
-
-    def test_multiple_asset_types(self):
-        """Test with multiple asset types."""
-        symbols = ["AAPL", "VTI", "BTC"]
-        asset_classes = ["stock", "etf", "crypto"]
-        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
-
-        assert model.symbols == symbols
-        assert model.asset_classes == asset_classes
-
-    def test_missing_required_symbols(self):
-        """Test ValidationError when symbols is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CrossAssetSentimentComparatorInput(asset_classes=["stock"])
-        assert "symbols" in str(exc_info.value)
-
-    def test_missing_required_asset_classes(self):
-        """Test ValidationError when asset_classes is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CrossAssetSentimentComparatorInput(symbols=["AAPL"])
-        assert "asset_classes" in str(exc_info.value)
-
-
 # ============================================================================
 # Crypto Analysis Tool Tests
 # ============================================================================
@@ -693,44 +650,6 @@ class TestEnhancedSECAnalysisInput:
         with pytest.raises(ValidationError) as exc_info:
             EnhancedSECAnalysisInput()
         assert "ticker" in str(exc_info.value)
-
-
-class TestStandardizedRiskScoringInput:
-    """Tests for StandardizedRiskScoringInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbol = "AAPL"
-        asset_class = "stock"
-        model = StandardizedRiskScoringInput(symbol=symbol, asset_class=asset_class)
-
-        assert model.symbol == symbol
-        assert model.asset_class == asset_class
-
-    def test_default_risk_factors(self):
-        """Test default risk_factors (empty list)."""
-        model = StandardizedRiskScoringInput(symbol="AAPL", asset_class="stock")
-
-        assert model.risk_factors == []
-
-    def test_custom_risk_factors(self):
-        """Test custom risk_factors."""
-        risk_factors = ["market_risk", "liquidity_risk", "regulatory_risk"]
-        model = StandardizedRiskScoringInput(symbol="AAPL", asset_class="stock", risk_factors=risk_factors)
-
-        assert model.risk_factors == risk_factors
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            StandardizedRiskScoringInput(asset_class="stock")
-        assert "symbol" in str(exc_info.value)
-
-    def test_missing_required_asset_class(self):
-        """Test ValidationError when asset_class is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            StandardizedRiskScoringInput(symbol="AAPL")
-        assert "asset_class" in str(exc_info.value)
 
 
 # ============================================================================
