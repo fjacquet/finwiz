@@ -103,11 +103,12 @@ def get_minimal_risk_tools(
         Minimal list of tools for risk assessment
 
     """
+    from crewai_custom_tools import TickerExistenceValidationTool
+
     from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
     from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
     from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
     from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-    from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
     tools: list[BaseTool] = []
 
@@ -119,11 +120,11 @@ def get_minimal_risk_tools(
 
     # Asset-specific tools (only essential ones)
     if asset_class == "stock":
-        tools.append(EnhancedSECAnalysisTool(prefetched_data=prefetched_data))
+        tools.append(EnhancedSECAnalysisTool())
     elif asset_class == "etf":
-        tools.append(EnhancedETFAnalysisTool(prefetched_data=prefetched_data))
+        tools.append(EnhancedETFAnalysisTool())
     elif asset_class == "crypto":
-        tools.append(EnhancedCryptoAnalysisTool(prefetched_data=prefetched_data))
+        tools.append(EnhancedCryptoAnalysisTool())
 
     # Apply robust wrapper
     tools = make_tools_robust(tools)

@@ -16,7 +16,7 @@ class ValidatedTicker(BaseModel):
     Strict, minimal contract for a validated symbol.
 
     Fields mirror `TickerExistenceValidationTool` output (see
-    `src/finwiz/tools/ticker_validation_tool.py`).
+    `crewai_custom_tools.tools.finance.enhanced.TickerExistenceValidationTool`).
     """
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)

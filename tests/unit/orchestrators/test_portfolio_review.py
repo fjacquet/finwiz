@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+from crewai_custom_tools.core.results import ok
 
 from finwiz.orchestrators.portfolio_review_orchestrator import (
     build_portfolio_review,
@@ -32,8 +33,8 @@ class TestPortfolioReview:
         # Mock validation to return success for known tickers
         def mock_validate(symbol, asset_class):
             if symbol in ["AAPL", "MSFT", "SPY", "QQQ", "BTC-USD"]:
-                return {"valid": True, "meta": {"source": "yahoo"}}
-            return {"valid": False, "reason": "Ticker not found"}
+                return ok({"valid": True, "meta": {"source": "yahoo"}})
+            return ok({"valid": False, "reason": "Ticker not found"})
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
@@ -61,8 +62,8 @@ class TestPortfolioReview:
 
         def mock_validate(symbol, asset_class):
             if symbol == "AAPL":
-                return {"valid": True, "meta": {"source": "yahoo"}}
-            return {"valid": False, "reason": "Not found"}
+                return ok({"valid": True, "meta": {"source": "yahoo"}})
+            return ok({"valid": False, "reason": "Not found"})
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
@@ -87,7 +88,7 @@ class TestPortfolioReview:
         stock_csv.write_text("Name,Ticker,Currency\nApple Inc.,AAPL,USD\nMicrosoft,MSFT,USD\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         # Act
         review, summary = await build_portfolio_review(stock_csv=stock_csv)
@@ -107,8 +108,8 @@ class TestPortfolioReview:
 
         def mock_validate(symbol, asset_class):
             if symbol == "AAPL":
-                return {"valid": True, "meta": {"source": "yahoo"}}
-            return {"valid": False, "reason": "Not found"}
+                return ok({"valid": True, "meta": {"source": "yahoo"}})
+            return ok({"valid": False, "reason": "Not found"})
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.side_effect = mock_validate
@@ -144,10 +145,12 @@ class TestPortfolioReview:
         stock_csv.write_text("Name,Ticker,Currency\nInvalid Stock,INVALID,USD\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {
-            "valid": False,
-            "reason": "Ticker not found",
-        }
+        mock_validator.return_value._run.return_value = ok(
+            {
+                "valid": False,
+                "reason": "Ticker not found",
+            }
+        )
 
         # Act
         review, summary = await build_portfolio_review(stock_csv=stock_csv)
@@ -198,7 +201,7 @@ class TestPortfolioReview:
         etf_csv.write_text("Name,Ticker,Currency\nS&P 500,SPY,USD\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         # Act
         review, summary = await build_portfolio_review(stock_csv=stock_csv, etf_csv=etf_csv)
@@ -228,7 +231,7 @@ class TestAllocationWiring:
         stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\nMicrosoft,MSFT,USD,true,10\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         from finwiz.schemas.rebalancing.core import PriceData
 
@@ -255,7 +258,7 @@ class TestAllocationWiring:
         stock_csv.write_text("Name,Ticker,Currency,Active\nApple,AAPL,USD,true\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
 
@@ -270,7 +273,7 @@ class TestAllocationWiring:
         stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
         price_service.return_value.get_current_prices = mocker.AsyncMock(side_effect=RuntimeError("boom"))
@@ -286,7 +289,7 @@ class TestAllocationWiring:
         stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\nMicrosoft,MSFT,USD,true,10\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
-        mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
+        mock_validator.return_value._run.return_value = ok({"valid": True, "meta": {"source": "yahoo"}})
 
         from finwiz.schemas.rebalancing.core import PriceData
 

@@ -6,6 +6,7 @@ grades when using shallow validation (deep analysis disabled).
 """
 
 import pytest
+from crewai_custom_tools.core.results import ok
 from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
@@ -33,11 +34,13 @@ class TestPortfolioHoldingsGrading:
         """Test that valid stocks receive D grade (60%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -60,11 +63,13 @@ class TestPortfolioHoldingsGrading:
         """Test that MSFT receives D grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -87,11 +92,13 @@ class TestPortfolioHoldingsGrading:
         """Test that ASML receives D grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -114,11 +121,13 @@ class TestPortfolioHoldingsGrading:
         """Test that valid ETFs receive B+ grade (80%) with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="etf",
@@ -141,11 +150,13 @@ class TestPortfolioHoldingsGrading:
         """Test that invalid tickers receive F grade with shallow validation."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": False,
-            "reason": "Ticker not found",
-            "meta": {},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": False,
+                "reason": "Ticker not found",
+                "meta": {},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -168,11 +179,13 @@ class TestPortfolioHoldingsGrading:
         """Test that rationale includes shallow validation warning."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -235,11 +248,13 @@ class TestPortfolioHoldingsGrading:
         """Test processing multiple high-quality stocks."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holdings = [
             RawHolding(
@@ -282,11 +297,13 @@ class TestPortfolioHoldingsGrading:
         """Test that valid holdings have 'fresh' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",
@@ -307,11 +324,13 @@ class TestPortfolioHoldingsGrading:
         """Test that invalid holdings have 'stale' data freshness."""
         # Arrange
         mock_validator = mocker.patch.object(processor, "validator")
-        mock_validator._run.return_value = {
-            "valid": False,
-            "reason": "Ticker not found",
-            "meta": {},
-        }
+        mock_validator._run.return_value = ok(
+            {
+                "valid": False,
+                "reason": "Ticker not found",
+                "meta": {},
+            }
+        )
 
         holding = RawHolding(
             asset_class="stock",

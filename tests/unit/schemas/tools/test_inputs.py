@@ -72,10 +72,6 @@ from finwiz.schemas.tools.inputs import (
     ScoringCriteria,
     StandardizedRiskScoringInput,
     StandardizedSentimentInput,
-    # Kraken API
-    TickerInfoInput,
-    # Validation
-    TickerValidationInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
 )
@@ -1193,47 +1189,6 @@ class TestPerplexitySearchWrapperInput:
 
 
 # ============================================================================
-# Validation Tool Tests
-# ============================================================================
-
-
-class TestTickerValidationInput:
-    """Tests for TickerValidationInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "AAPL"
-        model = TickerValidationInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_asset_class(self):
-        """Test default asset_class value."""
-        model = TickerValidationInput(symbol="AAPL")
-
-        assert model.asset_class == "auto"
-
-    def test_asset_class_options(self):
-        """Test various asset_class options."""
-        classes = ["stock", "etf", "crypto", "auto"]
-        for asset_class in classes:
-            model = TickerValidationInput(symbol="AAPL", asset_class=asset_class)
-            assert model.asset_class == asset_class
-
-    def test_asset_class_literal_constraint(self):
-        """Test asset_class literal constraint."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerValidationInput(symbol="AAPL", asset_class="invalid")
-        assert "asset_class" in str(exc_info.value)
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerValidationInput()
-        assert "symbol" in str(exc_info.value)
-
-
-# ============================================================================
 # Custom Tool Tests
 # ============================================================================
 
@@ -1253,35 +1208,6 @@ class TestMyCustomToolInput:
         with pytest.raises(ValidationError) as exc_info:
             MyCustomToolInput()
         assert "argument" in str(exc_info.value)
-
-
-# ============================================================================
-# Kraken API Tool Tests
-# ============================================================================
-
-
-class TestTickerInfoInput:
-    """Tests for TickerInfoInput (Kraken) model."""
-
-    def test_required_pair(self, fake):
-        """Test instantiation with required pair."""
-        pair = "XXBTZUSD"
-        model = TickerInfoInput(pair=pair)
-
-        assert model.pair == pair
-
-    def test_various_pairs(self):
-        """Test various cryptocurrency pairs."""
-        pairs = ["XXBTZUSD", "XETHZUSD", "XLTCZUSD"]
-        for pair in pairs:
-            model = TickerInfoInput(pair=pair)
-            assert model.pair == pair
-
-    def test_missing_required_pair(self):
-        """Test ValidationError when pair is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerInfoInput()
-        assert "pair" in str(exc_info.value)
 
 
 # ============================================================================

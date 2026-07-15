@@ -7,6 +7,8 @@ financial data tools for use in FinWiz crews.
 
 from crewai.tools import BaseTool
 from crewai_custom_tools import (
+    KrakenTickerInfoTool,
+    TickerExistenceValidationTool,
     YahooFinanceCompanyInfoTool,
     YahooFinanceETFHoldingsTool,
     YahooFinanceHistoryTool,
@@ -23,7 +25,6 @@ from finwiz.tools.defi_metrics_tool import DeFiMetricsTool
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
-from finwiz.tools.kraken_api_tool import KrakenTickerInfoTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
@@ -32,7 +33,6 @@ from finwiz.tools.standardized_sentiment_tool import (
     CrossAssetSentimentComparatorTool,
     StandardizedSentimentAnalysisTool,
 )
-from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
 _logger = get_logger(__name__)

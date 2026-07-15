@@ -242,32 +242,11 @@ class PerplexitySearchWrapperInput(BaseModel):
     query: str = Field(..., description="Search query for financial research")
 
 
-# Validation Tool Inputs
-class TickerValidationInput(BaseModel):
-    """Input schema for TickerExistenceValidationTool."""
-
-    symbol: str = Field(..., description="Ticker or symbol, e.g., 'AAPL', 'SPY', 'BTC'")
-    asset_class: Literal["stock", "etf", "crypto", "auto"] = Field(
-        default="auto",
-        description="Asset class: stock | etf | crypto | auto (auto-detect via Yahoo)",
-    )
-
-
 # Custom Tool Inputs
 class MyCustomToolInput(BaseModel):
     """Input schema for MyCustomTool."""
 
     argument: str = Field(..., description="Description of the argument.")
-
-
-# Kraken API Tool Inputs
-class TickerInfoInput(BaseModel):
-    """Input schema for the KrakenTickerInfoTool."""
-
-    pair: str = Field(
-        ...,
-        description="The cryptocurrency pair to get ticker information for (e.g., 'XXBTZUSD').",
-    )
 
 
 # DeFi Metrics Tool Inputs
