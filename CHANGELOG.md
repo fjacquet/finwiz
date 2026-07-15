@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.9.0] - 2026-07-15
+
+Tool centralization: all reusable tools now come from
+[crewai-custom-tools](https://github.com/fjacquet/crewai-custom-tools) v0.6.0
+(git-tag pin). Delivered as four waves (PRs #97, #98, #99); full acceptance
+`crewai flow kickoff` compared against the 5.8.0 baseline — structural parity,
+zero tool-related failures.
+
+### Changed
+
+- Yahoo Finance ×5, Perplexity ×2, AlphaVantage, TwelveData ×2, Kraken,
+  ChartImg, ticker validation, Enhanced ETF/Crypto/SEC, DeFi (now real
+  DeFiLlama), sentiment, risk scoring, file tools, valuation, ETF analysis,
+  compliance, position sizing, price targets, and the A+ grading/screening
+  cluster now delegate to the central package (thin wrappers where finwiz
+  enrichment is preserved).
+- Rate limiting now uses the central bounded token-bucket registry
+  (`asyncio.to_thread` at async call sites); API-key fail-fast uses central
+  `require_api_key`.
+- Crew task prose updated to real tool names and 0-5 risk scale notes.
+
+### Removed
+
+- Local rate-limiter stack, `api_decorators`, `api_key_validation`, the no-op
+  LLM retry chain (`crewai_retry_patch`, `llm_retry`), np.random placeholder
+  tools (Optimization, RiskAssessment), dead `chart_analyzer`/`charts/`,
+  `twelve_data/` chain, `freshness_validated_tool`, orphaned schemas/endpoints,
+  the dead `alpha_vantage_rate_limit` config chain, and `aiolimiter` —
+  roughly 7,000 lines net deleted across the waves.
+
+### Fixed
+
+- `composite_score` no longer collapses to 0.5 on the detailed scoring path
+  (fixed upstream in central with regression tests).
+- Perplexity `search_recency` filter is now actually applied upstream.
+- ETF holdings retrieval no longer calls nonexistent yfinance APIs.
+- `enable_rate_limiting=False` now genuinely disables batch throttling.
+- Crypto/AlphaVantage enrichment no longer renders literal "None" for
+  present-but-null fields.
+
+### Security
+
+- Dependency floors bumped (mypy 2.2.0, ruff 0.15.20, litellm 1.92.0,
+  grpcio, filelock and others) with lockfile refresh; harden-runner added to CI.
+
 ## [5.8.0] - 2026-06-30
 
 ### Added
