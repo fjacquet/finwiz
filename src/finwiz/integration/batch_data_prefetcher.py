@@ -31,11 +31,11 @@ from typing import Any
 import aiohttp
 import yfinance as yf  # yfinance has no official type stubs
 from aiohttp import ClientTimeout
+from crewai_custom_tools.core.rate_limiter import get_rate_limiter
 
 from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.config.yfinance_config import configure_yfinance
 from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider, get_rate_limiter
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -70,7 +70,6 @@ class BatchDataPreFetcher:
         cache_dir: Directory for storing pre-fetched data cache
         enable_alpha_vantage: If True, fetch Alpha Vantage data (default: False)
         alpha_vantage_key: Alpha Vantage API key from environment (if enabled)
-        rate_limiter: Rate limiter instance (if Alpha Vantage enabled)
 
     """
 
@@ -97,7 +96,6 @@ class BatchDataPreFetcher:
         self.enable_alpha_vantage = enable_alpha_vantage
         self.alpha_vantage_rate_limit = alpha_vantage_rate_limit
         self.alpha_vantage_key = os.getenv("ALPHA_VANTAGE_API_KEY") if enable_alpha_vantage else None
-        self.rate_limiter = get_rate_limiter() if enable_alpha_vantage else None
 
         # Configure yfinance with centralized settings (retry mechanism, etc.)
         configure_yfinance()
@@ -430,7 +428,7 @@ class BatchDataPreFetcher:
             for i, ticker in enumerate(tickers, 1):
                 try:
                     # Wait for rate limit availability
-                    await self.rate_limiter.wait_for_availability(APIProvider.ALPHA_VANTAGE, endpoint=f"OVERVIEW/{ticker}")
+                    await asyncio.to_thread(get_rate_limiter().acquire, "AlphaVantage")
 
                     url = f"{ALPHA_VANTAGE_BASE}?function=OVERVIEW&symbol={ticker}&apikey={self.alpha_vantage_key}"
 

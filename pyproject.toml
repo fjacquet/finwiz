@@ -18,7 +18,6 @@ dependencies = [
     "beautifulsoup4>=4.15.0",
     "nest-asyncio>=1.6.0",
     "empyrical-reloaded>=0.5.12",
-    "aiolimiter>=1.2.1",
     "finnhub-python>=2.4.20",
     "fredapi>=0.5.2",
     "vaderSentiment>=3.3.2",
@@ -189,7 +188,6 @@ max-complexity = 10
 "src/finwiz/discovery/market_data.py" = ["C901"]
 "src/finwiz/flow_state_utils.py" = ["C901"]
 "src/finwiz/flows/hybrid_analysis_synthesizer.py" = ["C901"]
-"src/finwiz/infrastructure/decorators/api_decorators.py" = ["C901"]
 "src/finwiz/infrastructure/health/monitoring.py" = ["C901"]
 "src/finwiz/infrastructure/json/repair.py" = ["C901"]
 "src/finwiz/infrastructure/monitoring/freshness_checker.py" = ["C901"]
@@ -488,7 +486,7 @@ docs = [
 # update commits), so the cooldown adds no protection there and only blocks
 # `uv sync` from resolving the floor we just deliberately set.
 exclude-newer = "7 days"
-exclude-newer-package = { crewai = "P0D", crewai-core = "P0D", crewai-cli = "P0D", crewai-tools = "P0D", langchain-core = "P0D", litellm = "P0D", python-dotenv = "P0D", yfinance = "P0D", ta-lib = "P0D", backtrader = "P0D", quantlib = "P0D", pyportfolioopt = "P0D", plotly = "P0D", numpy = "P0D", scipy = "P0D", pandas = "P0D", beautifulsoup4 = "P0D", nest-asyncio = "P0D", empyrical-reloaded = "P0D", aiolimiter = "P0D", finnhub-python = "P0D", fredapi = "P0D", vaderSentiment = "P0D", feedparser = "P0D", gnews = "P0D", fear-and-greed = "P0D", aiohttp = "P0D", httpx = "P0D", jinja2 = "P0D", psutil = "P0D", python-dateutil = "P0D", tenacity = "P0D" }
+exclude-newer-package = { crewai = "P0D", crewai-core = "P0D", crewai-cli = "P0D", crewai-tools = "P0D", langchain-core = "P0D", litellm = "P0D", python-dotenv = "P0D", yfinance = "P0D", ta-lib = "P0D", backtrader = "P0D", quantlib = "P0D", pyportfolioopt = "P0D", plotly = "P0D", numpy = "P0D", scipy = "P0D", pandas = "P0D", beautifulsoup4 = "P0D", nest-asyncio = "P0D", empyrical-reloaded = "P0D", finnhub-python = "P0D", fredapi = "P0D", vaderSentiment = "P0D", feedparser = "P0D", gnews = "P0D", fear-and-greed = "P0D", aiohttp = "P0D", httpx = "P0D", jinja2 = "P0D", psutil = "P0D", python-dateutil = "P0D", tenacity = "P0D" }
 
 # Security floors for transitive dependencies (Dependabot). These packages are
 # pulled in indirectly (mostly via crewai/langchain); constraint-dependencies

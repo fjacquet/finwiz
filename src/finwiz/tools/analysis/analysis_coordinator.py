@@ -5,8 +5,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from crewai_custom_tools.core.rate_limiter import RateLimiterRegistry, get_rate_limiter
+
 from finwiz.infrastructure.caching.manager import CacheConfig, CacheManager, cache_key
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider, RateLimiter, get_rate_limiter
 from finwiz.schemas.portfolio_review import AssetClass
 from finwiz.tools.analysis.holding_processors import HoldingAnalysis, HoldingProcessor
 from finwiz.tools.logger import get_logger
@@ -59,7 +60,7 @@ class HoldingAnalyzerOrchestrator:
             logger.info("Cache manager initialized for portfolio analysis")
 
         # Initialize rate limiter
-        self.rate_limiter: RateLimiter | None = None
+        self.rate_limiter: RateLimiterRegistry | None = None
         if self.enable_rate_limiting:
             self.rate_limiter = get_rate_limiter()
             logger.info("Rate limiter initialized")
@@ -127,7 +128,7 @@ class HoldingAnalyzerOrchestrator:
 
             # Token-bucket throttle between batches instead of fixed sleep
             if batch_idx + self.parallel_batch_size < len(holdings):
-                await get_rate_limiter().acquire(APIProvider.YAHOO_FINANCE)
+                await asyncio.to_thread(get_rate_limiter().acquire, "YahooFinance")
 
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(
