@@ -39,7 +39,7 @@ market_analysis_task:
     - Apply AI decision-making to select cryptocurrencies with optimal risk-return profiles
 
     Validation Requirement:
-    - For every proposed symbol, use the "Ticker Existence Validation Tool" (crypto path) to verify listing on Coinbase Products.
+    - For every proposed symbol, use the `ticker_existence_validation` tool (crypto path) to verify listing on Coinbase Products.
     - Auto-correct obvious symbol issues (case/typos); otherwise discard invalid ones.
 
     AI-Enhanced Sentiment Analysis:
@@ -87,7 +87,7 @@ technical_analysis_task:
       * Multi-indicator confluence detection and signal strength scoring
       * Crypto-specific volatility analysis and momentum indicators
       * Support and resistance level identification with price targets
-    - Generate charts with the "Chart-img Generator" tool and embed returned data URLs directly in the report.
+    - Use the `chart_img` tool to generate charts; its JSON result contains the chart's data URL — embed that URL in the report.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the CryptoTechnicalAnalysis object directly - do NOT wrap it in additional fields

@@ -277,7 +277,7 @@ risk_validation_task:
        - Stress testing and scenario analysis for adverse market conditions
        - Risk-adjusted performance projections and Sharpe ratio analysis
        - Correlation and beta analysis for the proposed portfolio composition
-    9. Generate risk assessment scores using standardized 1-10 risk scoring methodology.
+    9. Apply the "risk_scoring" tool to generate standardized risk scores. Note: the tool returns scores on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     10. Provide risk mitigation recommendations and alternative approaches if needed.
     11. Store risk validation results and compliance status in the knowledge base.
 

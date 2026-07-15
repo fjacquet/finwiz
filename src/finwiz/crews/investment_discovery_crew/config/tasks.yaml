@@ -160,7 +160,7 @@ crypto_discovery_task:
     - Suggest replacement strategies for underperforming crypto holdings
 
     Use Market Screening Tool for initial filtering, Enhanced Crypto Analysis Tool
-    for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
+    for comprehensive evaluation, `defi_metrics` tool for protocol analysis, and
     A+ Scoring Tool for final grading assessment.
 
     CRITICAL OUTPUT FORMAT:

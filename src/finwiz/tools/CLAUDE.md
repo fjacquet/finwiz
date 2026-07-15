@@ -66,12 +66,9 @@ tools/
 ├── reporting/                       # Report formatters
 │   ├── report_formatters.py         # HTMLReportFormatter
 │   └── report_sections.py
-├── scoring/                         # Scoring helpers
-│   ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
-│   └── scoring_algorithms.py
-└── twelve_data/                     # TwelveData helpers
-    ├── transformers.py
-    └── validators.py
+└── scoring/                         # Scoring helpers
+    ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
+    └── scoring_algorithms.py
 ```
 
 ## Entry Points
