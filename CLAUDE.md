@@ -121,7 +121,7 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 OPENAI_API_KEY=...              # Required
 SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
-# Feature flags: DEEP_ANALYSIS_ENABLED, PERPLEXITY_RESEARCH_ENABLED
+# Feature flags: DEEP_PORTFOLIO_ANALYSIS, FF_PERPLEXITY_RESEARCH (full registry: config/features/definitions.py)
 # Investment Discovery (Phase 4) runs unconditionally; the
 # INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
 # Validation: VALIDATION_STRICTNESS=off|warn|error
