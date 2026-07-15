@@ -8,16 +8,15 @@ Environment variable required: TWELVE_DATA_API_KEY
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any, Literal
 
-import requests
 from crewai.tools import BaseTool
+from crewai_custom_tools import TwelveDataMultiIndicatorTool as CentralTwelveDataMultiIndicatorTool
+from crewai_custom_tools.core.results import parse_tool_result
 from pydantic import BaseModel
 
-from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.config.features.flags import get_feature_flags
-from finwiz.infrastructure.decorators.api_decorators import api_tool
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.tools import TwelveDataMultiIndicatorInput
 from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
@@ -42,12 +41,11 @@ class TwelveDataMultiIndicatorTool(BaseTool):
     )
     args_schema: type[BaseModel] = TwelveDataMultiIndicatorInput
 
-    base_url: str = TWELVE_DATA_BASE
-
     def model_post_init(self, __context: object) -> None:
         """Validate API key at instantiation (fail-fast)."""
         super().model_post_init(__context)
         self._api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
+        self._central = CentralTwelveDataMultiIndicatorTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -68,12 +66,6 @@ class TwelveDataMultiIndicatorTool(BaseTool):
             logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
-    @api_tool(
-        provider=APIProvider.TWELVE_DATA,
-        endpoint="multi_technical_indicators",
-        timeout=30.0,
-        default_return="Error: Unable to fetch multi-indicator data",
-    )
     def _run(
         self,
         symbol: str,
@@ -155,75 +147,44 @@ class TwelveDataMultiIndicatorTool(BaseTool):
         bbands_stddev: int,
         outputsize: int,
     ) -> dict[str, Any]:
-        """Fetch all requested indicators from Twelve Data API."""
+        """Fetch all requested indicators via the centralized multi-indicator tool.
+
+        Delegates to `crewai_custom_tools`' `TwelveDataMultiIndicatorTool`, which
+        fetches every indicator in one call and isolates per-indicator failures
+        internally (a bad RSI fetch doesn't take down MACD/BBANDS — it surfaces
+        as that indicator's `{"error": ...}` entry inside a still-successful
+        envelope). Each successful indicator's parsed payload is re-serialized
+        to a JSON string, and each failed indicator's `{"error": ...}` dict is
+        passed through as-is, to match the shape
+        `_format_multi_indicator_response` has always consumed. A top-level
+        envelope failure (e.g. missing API key) propagates to `_run`'s
+        catch-all, same as before.
+        """
+        data = parse_tool_result(
+            self._central._run(
+                symbol=symbol,
+                interval=interval,
+                indicators=indicators,
+                rsi_period=rsi_period,
+                macd_fast=macd_fast,
+                macd_slow=macd_slow,
+                macd_signal=macd_signal,
+                bbands_period=bbands_period,
+                bbands_stddev=bbands_stddev,
+                outputsize=outputsize,
+            )
+        )
+
+        raw_results = data.get("indicators", {}) if isinstance(data, dict) else {}
+
         results: dict[str, str | dict[str, str]] = {}
-
-        # Fetch RSI
-        if "rsi" in indicators:
-            try:
-                results["rsi"] = self._fetch_indicator(
-                    symbol=symbol,
-                    interval=interval,
-                    indicator="rsi",
-                    api_key=self._api_key,
-                    params={"time_period": rsi_period, "outputsize": outputsize},
-                )
-            except Exception as e:
-                logger.error(f"Error fetching RSI: {e}")
-                results["rsi"] = {"error": str(e)}
-
-        # Fetch MACD
-        if "macd" in indicators:
-            try:
-                results["macd"] = self._fetch_indicator(
-                    symbol=symbol,
-                    interval=interval,
-                    indicator="macd",
-                    api_key=self._api_key,
-                    params={
-                        "fast": macd_fast,
-                        "slow": macd_slow,
-                        "signal": macd_signal,
-                        "outputsize": outputsize,
-                    },
-                )
-            except Exception as e:
-                logger.error(f"Error fetching MACD: {e}")
-                results["macd"] = {"error": str(e)}
-
-        # Fetch Bollinger Bands
-        if "bbands" in indicators:
-            try:
-                results["bbands"] = self._fetch_indicator(
-                    symbol=symbol,
-                    interval=interval,
-                    indicator="bbands",
-                    api_key=self._api_key,
-                    params={
-                        "time_period": bbands_period,
-                        "sd": bbands_stddev,
-                        "outputsize": outputsize,
-                    },
-                )
-            except Exception as e:
-                logger.error(f"Error fetching Bollinger Bands: {e}")
-                results["bbands"] = {"error": str(e)}
+        for indicator, value in raw_results.items():
+            if isinstance(value, dict) and "error" in value:
+                results[indicator] = value
+            else:
+                results[indicator] = json.dumps(value, default=str)
 
         return results
-
-    def _fetch_indicator(self, symbol: str, interval: str, indicator: str, api_key: str, params: dict[str, Any]) -> str:
-        """Fetch a single indicator from Twelve Data API."""
-        endpoint = f"{self.base_url}/{indicator}"
-        request_params: dict[str, str | int] = {
-            "symbol": symbol,
-            "interval": interval,
-            "apikey": api_key,
-            **params,
-        }
-
-        resp = requests.get(endpoint, params=request_params, timeout=15)
-        resp.raise_for_status()
-        return resp.text
 
     async def _get_perplexity_technical_insights(self, symbol: str) -> list[Any]:
         """Get technical analysis insights from Perplexity Sonar."""
