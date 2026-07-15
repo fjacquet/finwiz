@@ -67,6 +67,7 @@ Tests: adapt coordinator/prefetcher tests (patch central's `get_rate_limiter` at
 - `pyproject.toml`: remove stale ruff per-file-ignores (etf_analysis_tool, screening_ranking, scoring/scoring_algorithms, scoring/scoring_criteria — confirm each file MISSING first) and the `perplexity_search_tool.py` coverage-omit.
 - `src/finwiz/tools/CLAUDE.md`: refresh the Directory Structure tree to the actual post-W3/W4 file list (recon §10 has the full inventory; also fix `sec_tool.py`→`enhanced_sec_tool.py`, drop deleted entries, add missing present ones like `etf/etf_analyzers.py`); update the Infrastructure section (no more retry patch/base_tools/tool_result).
 - Extend `tests/unit/tools/test_central_tools_contract.py`: central `require_api_key` importable; central rate-limiter registry has "YahooFinance"/"AlphaVantage" entries (pins Task 1's dependency).
+- W3 final-review follow-ups (all finwiz-side, triage-confirmed): delete `CriteriaOptimizationInput` schema + its test (verify orphan with fresh grep — no production consumer as of ef43643); fix `docs/schemas/ValidatedTicker.schema.json:3` stale path (module migrated to central); consolidate the `quantitative/price_targets.py` fork — point `quantitative/tactical_pricing.py:24` at central's byte-identical `calculate_support_resistance_targets` and delete the local module IF the swap is clean, else document the fork as deliberate in the module docstring.
 - Gates: `make check && make coverage` (≥65%).
 
 ### Task 5: Deferred acceptance — baseline `crewai flow kickoff` comparison (USER-GATED)
