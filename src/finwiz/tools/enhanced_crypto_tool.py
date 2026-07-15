@@ -10,13 +10,11 @@ import asyncio
 from datetime import datetime
 from typing import Any
 
-import requests
 from crewai.tools import BaseTool
 from crewai_custom_tools import EnhancedCryptoAnalysisTool as CentralEnhancedCryptoAnalysisTool
 from crewai_custom_tools.core.results import parse_tool_result
 from pydantic import BaseModel
 
-from finwiz.config.endpoints import COINGECKO_BASE
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
@@ -26,20 +24,6 @@ from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
 
 logger = get_logger(__name__)
-
-# Symbol -> CoinGecko coin id, for the minimal supplemental volume fetch
-# (kept in sync with the mapping crewai_custom_tools' EnhancedCryptoAnalysisTool
-# uses internally, since central does not expose the resolved coin id).
-_COINGECKO_SYMBOL_MAP = {
-    "BTC": "bitcoin",
-    "ETH": "ethereum",
-    "ADA": "cardano",
-    "DOT": "polkadot",
-    "SOL": "solana",
-    "AVAX": "avalanche-2",
-    "MATIC": "matic-network",
-    "LINK": "chainlink",
-}
 
 
 class EnhancedCryptoAnalysisTool(BaseTool):
@@ -166,6 +150,19 @@ class EnhancedCryptoAnalysisTool(BaseTool):
 
         return self._map_central_crypto_data(symbol, central_crypto_data)
 
+    def _mapped(self, central_crypto_data: dict[str, Any], key: str, default: Any) -> Any:
+        """None-safe lookup for central's crypto_data payload.
+
+        Central ALWAYS includes each mapped key, sometimes with an explicit
+        `None` (sparse CoinGecko data — e.g. `market_data.total_supply` missing
+        for a coin). `.get(key, default)` alone does NOT catch this, since the
+        key is present; only the value is `None`. `value or default` would
+        catch it but also clobbers legitimate `0` values (e.g. `0` price
+        change). An explicit `is None` check is required.
+        """
+        value = central_crypto_data.get(key)
+        return default if value is None else value
+
     def _map_central_crypto_data(self, symbol: str, central_crypto_data: dict[str, Any]) -> dict[str, Any]:
         """Map central's crypto_data payload onto the shape expected downstream.
 
@@ -175,58 +172,40 @@ class EnhancedCryptoAnalysisTool(BaseTool):
         Key-mapping table (full version in the task report):
           - current_price_usd -> current_price
           - market_cap_usd    -> market_cap
-          - circulating_supply, total_supply, max_supply, market_cap_rank,
-            price_change_24h/7d/30d, categories: same names, passed through.
-          - total_volume / volume_24h: NOT present in central's payload at all;
-            backfilled via `_fetch_volume_24h`, a minimal direct CoinGecko call
-            (the one field central's EnhancedCryptoAnalysisTool does not fetch).
+          - volume_24h -> total_volume / volume_24h (v0.5.1: sourced directly
+            from central's payload; no more supplemental CoinGecko call).
+          - circulating_supply, total_supply, market_cap_rank,
+            price_change_24h/7d/30d: same names, None-coalesced to numeric
+            defaults (see `_mapped`) since a present-but-None value here
+            previously crashed deep_analysis_data_collector's
+            `market_cap_raw > 0` comparison downstream.
+          - max_supply: passed through as-is (including `None`) — "no max
+            supply" is a legitimate signal the thesis/risk generators use
+            (see `_generate_investment_thesis`/`_perform_crypto_risk_assessment`).
           - description, homepage, ath, atl: NOT present in central's payload;
             left absent. finwiz's thesis/risk generators already `.get(key, default)`
             these, so they degrade gracefully (fewer text-based thesis/risk
             matches) rather than crashing — see report for the behavior note.
         """
-        volume_24h = self._fetch_volume_24h(symbol)
+        volume_24h = self._mapped(central_crypto_data, "volume_24h", 0.0)
 
         return {
             "symbol": central_crypto_data.get("symbol", symbol),
             "name": central_crypto_data.get("name", symbol),
-            "current_price": central_crypto_data.get("current_price_usd", 0),
-            "market_cap": central_crypto_data.get("market_cap_usd", 0),
-            "market_cap_rank": central_crypto_data.get("market_cap_rank", 999),
+            "current_price": self._mapped(central_crypto_data, "current_price_usd", 0),
+            "market_cap": self._mapped(central_crypto_data, "market_cap_usd", 0),
+            "market_cap_rank": self._mapped(central_crypto_data, "market_cap_rank", 999),
             "total_volume": volume_24h,
             "volume_24h": volume_24h,
-            "price_change_24h": central_crypto_data.get("price_change_24h", 0),
-            "price_change_7d": central_crypto_data.get("price_change_7d", 0),
-            "price_change_30d": central_crypto_data.get("price_change_30d", 0),
-            "circulating_supply": central_crypto_data.get("circulating_supply", 0),
-            "total_supply": central_crypto_data.get("total_supply", 0),
+            "price_change_24h": self._mapped(central_crypto_data, "price_change_24h", 0),
+            "price_change_7d": self._mapped(central_crypto_data, "price_change_7d", 0),
+            "price_change_30d": self._mapped(central_crypto_data, "price_change_30d", 0),
+            "circulating_supply": self._mapped(central_crypto_data, "circulating_supply", 0),
+            "total_supply": self._mapped(central_crypto_data, "total_supply", 0),
             "max_supply": central_crypto_data.get("max_supply"),
             "categories": central_crypto_data.get("categories", []),
             "sources": ["CoinGecko (via crewai_custom_tools)"],
         }
-
-    def _fetch_volume_24h(self, symbol: str) -> float:
-        """Minimal direct CoinGecko call for 24h trading volume.
-
-        This is the one field required by downstream consumers
-        (`total_volume`/`volume_24h`) that central's `EnhancedCryptoAnalysisTool`
-        payload does not provide. Failures here degrade to 0.0 rather than
-        discarding the otherwise-successful central data.
-        """
-        try:
-            coin_id = _COINGECKO_SYMBOL_MAP.get(symbol, symbol.lower())
-            url = f"{COINGECKO_BASE}/coins/{coin_id}"
-            response = requests.get(url, headers={"Accept": "application/json"}, timeout=15)
-
-            if response.status_code != 200:
-                return 0.0
-
-            market_data = response.json().get("market_data", {})
-            return market_data.get("total_volume", {}).get("usd", 0.0) or 0.0
-
-        except Exception as e:
-            logger.warning(f"Supplemental CoinGecko volume fetch failed for {symbol}: {e}")
-            return 0.0
 
     def _create_fallback_crypto_data(self, symbol: str) -> dict[str, Any]:
         """Create fallback crypto data structure."""

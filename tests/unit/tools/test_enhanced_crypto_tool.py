@@ -77,7 +77,8 @@ class TestEnhancedCryptoAnalysisTool:
 
     def test_should_get_crypto_data_from_central_successfully(self, tool, mocker):
         """Central's crypto_data payload is remapped onto the keys this tool's
-        thesis/risk generators and downstream consumers expect."""
+        thesis/risk generators and downstream consumers expect. volume_24h
+        (v0.5.1) is read straight from the payload — no supplemental call."""
         # Arrange
         mock_central_run = mocker.patch(
             _CENTRAL_RUN_PATH,
@@ -90,6 +91,7 @@ class TestEnhancedCryptoAnalysisTool:
                         "current_price_usd": 45000,
                         "market_cap_usd": 850000000000,
                         "market_cap_rank": 1,
+                        "volume_24h": 25000000000.0,
                         "price_change_24h": 2.5,
                         "price_change_7d": 8.2,
                         "price_change_30d": 15.7,
@@ -104,7 +106,6 @@ class TestEnhancedCryptoAnalysisTool:
                 }
             ),
         )
-        mocker.patch.object(tool, "_fetch_volume_24h", return_value=25000000000.0)
 
         # Act
         result = tool._get_crypto_data("BTC")
@@ -138,32 +139,116 @@ class TestEnhancedCryptoAnalysisTool:
         assert "error" not in result
         assert result["sources"] == ["Fallback Data"]
 
-    def test_should_fetch_volume_24h_directly_from_coingecko(self, tool, mocker):
-        """total_volume/volume_24h is not in central's payload, so it is
-        backfilled via a minimal direct CoinGecko call."""
-        # Arrange
-        mock_response = mocker.Mock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"market_data": {"total_volume": {"usd": 25000000000}}}
-        mocker.patch("requests.get", return_value=mock_response)
+    def test_should_map_sparse_central_payload_without_none_leaks(self, tool, mocker):
+        """Regression: central ALWAYS includes numeric keys, sometimes with an
+        explicit None (sparse CoinGecko data). `.get(key, default)` alone does
+        NOT catch this since the key is present — only the value is None. A
+        naive mapping leaks None into `market_cap`, which previously crashed
+        deep_analysis_data_collector's `market_cap_raw > 0` comparison with a
+        TypeError. Every mapped numeric field must fall back to its default
+        instead of leaking None."""
+        # Arrange — every numeric field explicit None, matching sparse CoinGecko data
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "symbol": "OBSCURE",
+                    "crypto_data": {
+                        "symbol": "OBSCURE",
+                        "name": "Obscure Coin",
+                        "current_price_usd": None,
+                        "market_cap_usd": None,
+                        "market_cap_rank": None,
+                        "volume_24h": None,
+                        "price_change_24h": None,
+                        "price_change_7d": None,
+                        "price_change_30d": None,
+                        "circulating_supply": None,
+                        "total_supply": None,
+                        "max_supply": None,
+                        "categories": [],
+                    },
+                    "source": "CoinGecko",
+                }
+            ),
+        )
 
         # Act
-        volume = tool._fetch_volume_24h("BTC")
+        result = tool._get_crypto_data("OBSCURE")
 
-        # Assert
-        assert volume == 25000000000
+        # Assert — the collector-killing case: market_cap must be a number, never None
+        assert isinstance(result["market_cap"], (int, float))
+        assert result["market_cap"] == 0
+        assert result["market_cap"] > -1  # would raise TypeError if None
 
-    def test_should_default_volume_to_zero_on_supplemental_fetch_error(self, tool, mocker):
-        """A failure in the supplemental volume fetch degrades to 0.0 rather
-        than discarding the otherwise-successful central data."""
+        # Assert — no other mapped numeric field leaks None either
+        assert result["current_price"] == 0
+        assert result["market_cap_rank"] == 999
+        assert result["total_volume"] == 0.0
+        assert result["volume_24h"] == 0.0
+        assert result["price_change_24h"] == 0
+        assert result["price_change_7d"] == 0
+        assert result["price_change_30d"] == 0
+        assert result["circulating_supply"] == 0
+        assert result["total_supply"] == 0
+        # max_supply legitimately stays None — "no max supply" is a real signal
+        assert result["max_supply"] is None
+
+    def test_should_read_volume_24h_from_central_payload(self, tool, mocker):
+        """v0.5.1: volume_24h ships in central's crypto_data payload directly —
+        no supplemental CoinGecko call is made to obtain it."""
         # Arrange
-        mocker.patch("requests.get", side_effect=Exception("Network down"))
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "symbol": "BTC",
+                    "crypto_data": {
+                        "symbol": "BTC",
+                        "name": "Bitcoin",
+                        "current_price_usd": 45000,
+                        "market_cap_usd": 850000000000,
+                        "volume_24h": 25000000000,
+                    },
+                    "source": "CoinGecko",
+                }
+            ),
+        )
 
         # Act
-        volume = tool._fetch_volume_24h("BTC")
+        result = tool._get_crypto_data("BTC")
 
         # Assert
-        assert volume == 0.0
+        assert result["total_volume"] == 25000000000
+        assert result["volume_24h"] == 25000000000
+
+    def test_should_default_volume_to_zero_when_central_volume_is_none(self, tool, mocker):
+        """Sparse CoinGecko data: central includes the volume_24h key with an
+        explicit None. The mapping must degrade to 0.0, not leak None."""
+        # Arrange
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "symbol": "BTC",
+                    "crypto_data": {
+                        "symbol": "BTC",
+                        "name": "Bitcoin",
+                        "current_price_usd": 45000,
+                        "market_cap_usd": 850000000000,
+                        "volume_24h": None,
+                    },
+                    "source": "CoinGecko",
+                }
+            ),
+        )
+
+        # Act
+        result = tool._get_crypto_data("BTC")
+
+        # Assert
+        assert result["total_volume"] == 0.0
+        assert result["volume_24h"] == 0.0
 
     def test_should_create_fallback_crypto_data(self, tool):
         """Test fallback crypto data creation."""

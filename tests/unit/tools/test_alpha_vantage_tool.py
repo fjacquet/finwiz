@@ -84,6 +84,75 @@ class TestAlphaVantageCompanyOverviewTool:
         assert "**Market Cap**: N/A" in out
         assert "**EPS**: N/A" in out
 
+    def test_run_formats_markdown_with_v051_overview_fields(self, mocker):
+        """v0.5.1: central fetches Sector, Industry, MarketCapitalization, EPS,
+        RevenueTTM, and Description — the renderer must surface them instead
+        of falling back to "N/A"."""
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "symbol": "AAPL",
+                    "name": "Apple Inc",
+                    "pe_ratio": 30.2,
+                    "profit_margin": 0.25,
+                    "dividend_yield": 0.005,
+                    "sector": "Technology",
+                    "industry": "Consumer Electronics",
+                    "market_cap": 2800000000000,
+                    "eps": 6.13,
+                    "revenue_ttm": 383285000000,
+                    "description": "Apple Inc designs, manufactures, and markets smartphones.",
+                }
+            ),
+        )
+        mocker.patch.object(self.tool, "_get_perplexity_integration", return_value=None)
+
+        out = self.tool._run(ticker="AAPL", include_perplexity=False)
+
+        assert "**Sector**: Technology" in out
+        assert "**Industry**: Consumer Electronics" in out
+        assert "**Market Cap**: 2800000000000" in out
+        assert "**EPS**: 6.13" in out
+        assert "**Revenue (TTM)**: 383285000000" in out
+        assert "**Description**: Apple Inc designs" in out
+
+    def test_run_formats_markdown_handles_sparse_payload_without_literal_none(self, mocker):
+        """Sparse AV data (central returns explicit None for nullable fields, not
+        the raw "None"/"-" sentinel). The renderer must coalesce every mapped
+        nullable field to "N/A" and never render the literal substring "None"."""
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "symbol": "SPARSE",
+                    "name": "Sparse Corp",
+                    "pe_ratio": None,
+                    "profit_margin": None,
+                    "dividend_yield": None,
+                    "sector": None,
+                    "industry": None,
+                    "market_cap": None,
+                    "eps": None,
+                    "revenue_ttm": None,
+                    "description": None,
+                }
+            ),
+        )
+        mocker.patch.object(self.tool, "_get_perplexity_integration", return_value=None)
+
+        out = self.tool._run(ticker="SPARSE", include_perplexity=False)
+
+        assert "**P/E Ratio**: N/A" in out
+        assert "**Profit Margin**: N/A" in out
+        assert "**Dividend Yield**: N/A" in out
+        assert "**Sector**: N/A" in out
+        assert "**Industry**: N/A" in out
+        assert "**Market Cap**: N/A" in out
+        assert "**EPS**: N/A" in out
+        assert "**Revenue (TTM)**: N/A" in out
+        assert "None" not in out
+
     def test_run_surfaces_central_failure_via_outer_catch_all(self, mocker):
         """Central envelope failure surfaces via the existing outer catch-all,
         matching the TwelveData wrapper's established error-propagation pattern."""

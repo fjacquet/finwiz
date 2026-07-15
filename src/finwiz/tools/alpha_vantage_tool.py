@@ -9,7 +9,7 @@ and more. Enhanced with optional Perplexity Sonar integration.
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 from crewai.tools import BaseTool
 from crewai_custom_tools import AlphaVantageOverviewTool as CentralAlphaVantageOverviewTool
@@ -129,10 +129,11 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         smaller, lowercase key set than the raw Alpha Vantage OVERVIEW response
         this method previously returned, so it is remapped onto the PascalCase
         keys `_format_enhanced_overview_response` reads (Symbol, Name, PERatio,
-        ProfitMargin, DividendYield). Central does not fetch Sector, Industry,
-        MarketCapitalization, EPS, RevenueTTM, or Description, so those fields
-        render as "N/A" (or are simply omitted) in the markdown output — see the
-        key-mapping table and cache-behavior note in the task report.
+        ProfitMargin, DividendYield, Sector, Industry, MarketCapitalization, EPS,
+        RevenueTTM, Description). As of v0.5.1, central fetches all of these —
+        each key is always present in `data`, though the value may be an explicit
+        `None` for sparse tickers; the renderer coalesces those to "N/A" rather
+        than this method (see `_format_enhanced_overview_response`).
 
         Note: this path no longer goes through finwiz's local 30-minute cache
         (`finwiz.infrastructure.caching`) — central provides its own rate
@@ -150,6 +151,12 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             "ReturnOnEquityTTM": data.get("return_on_equity_ttm"),
             "DebtToEquityRatio": data.get("debt_to_equity_ratio"),
             "QuarterlyRevenueGrowthYOY": data.get("quarterly_revenue_growth_yoy"),
+            "Sector": data.get("sector"),
+            "Industry": data.get("industry"),
+            "MarketCapitalization": data.get("market_cap"),
+            "EPS": data.get("eps"),
+            "RevenueTTM": data.get("revenue_ttm"),
+            "Description": data.get("description"),
             "timestamp": datetime.now(UTC).isoformat(),
         }
 
@@ -198,19 +205,30 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         try:
             av_data = json.loads(alpha_vantage_data)
             if isinstance(av_data, dict) and "Symbol" in av_data:
-                # Format key metrics nicely
-                response += f"**Company**: {av_data.get('Name', 'N/A')}\n"
-                response += f"**Sector**: {av_data.get('Sector', 'N/A')}\n"
-                response += f"**Industry**: {av_data.get('Industry', 'N/A')}\n"
-                response += f"**Market Cap**: {av_data.get('MarketCapitalization', 'N/A')}\n"
-                response += f"**P/E Ratio**: {av_data.get('PERatio', 'N/A')}\n"
-                response += f"**EPS**: {av_data.get('EPS', 'N/A')}\n"
-                response += f"**Revenue (TTM)**: {av_data.get('RevenueTTM', 'N/A')}\n"
-                response += f"**Profit Margin**: {av_data.get('ProfitMargin', 'N/A')}\n"
-                response += f"**Dividend Yield**: {av_data.get('DividendYield', 'N/A')}\n\n"
 
-                if av_data.get("Description"):
-                    response += f"**Description**: {av_data['Description'][:300]}{'...' if len(av_data['Description']) > 300 else ''}\n\n"
+                def _na(value: Any) -> Any:
+                    """Coalesce an explicit None to 'N/A'.
+
+                    Central may return present-but-null AV fields (sparse data).
+                    `.get(key, 'N/A')` alone does not fire here since the key is
+                    present with value None.
+                    """
+                    return value if value is not None else "N/A"
+
+                # Format key metrics nicely
+                response += f"**Company**: {_na(av_data.get('Name'))}\n"
+                response += f"**Sector**: {_na(av_data.get('Sector'))}\n"
+                response += f"**Industry**: {_na(av_data.get('Industry'))}\n"
+                response += f"**Market Cap**: {_na(av_data.get('MarketCapitalization'))}\n"
+                response += f"**P/E Ratio**: {_na(av_data.get('PERatio'))}\n"
+                response += f"**EPS**: {_na(av_data.get('EPS'))}\n"
+                response += f"**Revenue (TTM)**: {_na(av_data.get('RevenueTTM'))}\n"
+                response += f"**Profit Margin**: {_na(av_data.get('ProfitMargin'))}\n"
+                response += f"**Dividend Yield**: {_na(av_data.get('DividendYield'))}\n\n"
+
+                description = av_data.get("Description")
+                if description:
+                    response += f"**Description**: {description[:300]}{'...' if len(description) > 300 else ''}\n\n"
             else:
                 response += f"{alpha_vantage_data}\n\n"
         except (json.JSONDecodeError, KeyError):
