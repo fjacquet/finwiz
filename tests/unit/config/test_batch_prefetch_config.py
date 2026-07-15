@@ -30,33 +30,19 @@ class TestBatchPrefetchConfig:
         config = BatchPrefetchConfig()
 
         assert config.enabled is True
-        assert config.alpha_vantage_rate_limit == 5
         assert config.min_holdings_for_batch == 10
 
     def test_should_initialize_with_custom_values(self, fake):
         """Test initialization with custom values."""
-        rate_limit = fake.random_int(min=1, max=100)
         min_holdings = fake.random_int(min=1, max=50)
 
         config = BatchPrefetchConfig(
             enabled=False,
-            alpha_vantage_rate_limit=rate_limit,
             min_holdings_for_batch=min_holdings,
         )
 
         assert config.enabled is False
-        assert config.alpha_vantage_rate_limit == rate_limit
         assert config.min_holdings_for_batch == min_holdings
-
-    def test_should_raise_for_zero_rate_limit(self):
-        """Test validation fails for zero rate limit."""
-        with pytest.raises(ValueError, match="alpha_vantage_rate_limit must be >= 1"):
-            BatchPrefetchConfig(alpha_vantage_rate_limit=0)
-
-    def test_should_raise_for_negative_rate_limit(self):
-        """Test validation fails for negative rate limit."""
-        with pytest.raises(ValueError, match="alpha_vantage_rate_limit must be >= 1"):
-            BatchPrefetchConfig(alpha_vantage_rate_limit=-1)
 
     def test_should_raise_for_zero_min_holdings(self):
         """Test validation fails for zero min holdings."""
@@ -67,14 +53,6 @@ class TestBatchPrefetchConfig:
         """Test validation fails for negative min holdings."""
         with pytest.raises(ValueError, match="min_holdings_for_batch must be >= 1"):
             BatchPrefetchConfig(min_holdings_for_batch=-5)
-
-    def test_should_warn_for_high_rate_limit(self, mocker):
-        """Test warning is logged for high rate limit."""
-        mock_logger = mocker.patch("finwiz.config.batch_prefetch_config.logger")
-
-        BatchPrefetchConfig(alpha_vantage_rate_limit=150)
-
-        mock_logger.warning.assert_called()
 
     def test_should_log_configuration(self, mocker):
         """Test log_configuration logs config details."""
@@ -103,7 +81,6 @@ class TestLoadBatchPrefetchConfig:
         config = load_batch_prefetch_config()
 
         assert config.enabled is True
-        assert config.alpha_vantage_rate_limit == 5
         assert config.min_holdings_for_batch == 10
 
     def test_should_load_enabled_true(self, mocker):
@@ -145,22 +122,6 @@ class TestLoadBatchPrefetchConfig:
         config = load_batch_prefetch_config()
 
         assert config.enabled is False
-
-    def test_should_load_rate_limit_from_env(self, mocker):
-        """Test loading rate limit from env."""
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "75"})
-
-        config = load_batch_prefetch_config()
-
-        assert config.alpha_vantage_rate_limit == 75
-
-    def test_should_use_default_for_invalid_rate_limit(self, mocker):
-        """Test default rate limit for invalid env value."""
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "invalid"})
-
-        config = load_batch_prefetch_config()
-
-        assert config.alpha_vantage_rate_limit == 5
 
     def test_should_load_min_holdings_from_env(self, mocker):
         """Test loading min holdings from env."""
@@ -282,17 +243,17 @@ class TestGetCachedBatchPrefetchConfig:
 
     def test_should_cache_config(self, mocker):
         """Test config is cached after first call."""
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "50"})
+        mocker.patch.dict("os.environ", {"BATCH_PREFETCH_MIN_HOLDINGS": "50"})
 
         config1 = get_cached_batch_prefetch_config()
 
         # Change env var
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "100"})
+        mocker.patch.dict("os.environ", {"BATCH_PREFETCH_MIN_HOLDINGS": "100"})
 
         config2 = get_cached_batch_prefetch_config()
 
         # Should still be original cached value
-        assert config2.alpha_vantage_rate_limit == 50
+        assert config2.min_holdings_for_batch == 50
 
 
 class TestResetConfigCache:
@@ -300,13 +261,13 @@ class TestResetConfigCache:
 
     def test_should_reset_cache(self, mocker):
         """Test cache is reset."""
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "50"})
+        mocker.patch.dict("os.environ", {"BATCH_PREFETCH_MIN_HOLDINGS": "50"})
 
         config1 = get_cached_batch_prefetch_config()
-        assert config1.alpha_vantage_rate_limit == 50
+        assert config1.min_holdings_for_batch == 50
 
         # Change env var
-        mocker.patch.dict("os.environ", {"ALPHA_VANTAGE_RATE_LIMIT": "100"})
+        mocker.patch.dict("os.environ", {"BATCH_PREFETCH_MIN_HOLDINGS": "100"})
 
         # Reset cache
         reset_config_cache()
@@ -314,4 +275,4 @@ class TestResetConfigCache:
         config2 = get_cached_batch_prefetch_config()
 
         # Should be new value
-        assert config2.alpha_vantage_rate_limit == 100
+        assert config2.min_holdings_for_batch == 100

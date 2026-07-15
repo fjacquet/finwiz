@@ -80,3 +80,31 @@ def test_file_tools_come_from_central_package():
 
     assert FileReadTool().name
     assert DirectoryReadTool().name
+
+
+def test_central_require_api_key_raises_on_missing_env(monkeypatch):
+    """Pins Task 2's key-validation dependency: require_api_key is importable
+    and fails fast with ValueError when none of its env vars are set."""
+    from crewai_custom_tools.core.keys import require_api_key
+
+    monkeypatch.delenv("SOME_MISSING_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="SOME_MISSING_API_KEY"):
+        require_api_key("SOME_MISSING_API_KEY", tool_name="TestTool")
+
+
+def test_central_require_api_key_returns_first_set_value(monkeypatch):
+    from crewai_custom_tools.core.keys import require_api_key
+
+    monkeypatch.setenv("SOME_TEST_API_KEY", "secret-value")
+    assert require_api_key("SOME_TEST_API_KEY", tool_name="TestTool") == "secret-value"
+
+
+def test_central_rate_limiter_registry_has_yahoo_and_alpha_vantage():
+    """Pins Task 1's rate-limiter dependency: the central registry knows about
+    the providers finwiz relies on for throttling."""
+    from crewai_custom_tools.core.rate_limiter import DEFAULT_RATE_LIMITS
+
+    assert "YahooFinance" in DEFAULT_RATE_LIMITS
+    assert "AlphaVantage" in DEFAULT_RATE_LIMITS
+    assert DEFAULT_RATE_LIMITS["YahooFinance"].requests_per_minute > 0
+    assert DEFAULT_RATE_LIMITS["AlphaVantage"].requests_per_minute > 0

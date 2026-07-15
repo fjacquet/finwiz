@@ -62,7 +62,7 @@ class TestRunBatchPrefetch:
         """Prefetch populates state fields when enabled."""
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.load_batch_prefetch_config",
-            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=5, alpha_vantage_rate_limit=5),
+            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=5),
         )
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.should_use_alpha_vantage",
@@ -88,7 +88,7 @@ class TestRunBatchPrefetch:
         """Returns empty dict when batch prefetch is disabled."""
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.load_batch_prefetch_config",
-            return_value=SimpleNamespace(enabled=False, min_holdings_for_batch=5, alpha_vantage_rate_limit=5),
+            return_value=SimpleNamespace(enabled=False, min_holdings_for_batch=5),
         )
 
         import logging
@@ -103,7 +103,7 @@ class TestRunBatchPrefetch:
         """Returns empty dict when holdings count is below threshold."""
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.load_batch_prefetch_config",
-            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=10, alpha_vantage_rate_limit=5),
+            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=10),
         )
 
         small_holdings = [{"ticker": "AAPL", "asset_class": "stock"}]
@@ -119,7 +119,7 @@ class TestRunBatchPrefetch:
         """Returns empty dict and does not crash on prefetch failure."""
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.load_batch_prefetch_config",
-            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=5, alpha_vantage_rate_limit=5),
+            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=5),
         )
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.should_use_alpha_vantage",
@@ -142,7 +142,7 @@ class TestRunBatchPrefetch:
         """Returns empty dict when no valid tickers in holdings."""
         mocker.patch(
             "finwiz.orchestrators.batch_prefetch_runner.load_batch_prefetch_config",
-            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=1, alpha_vantage_rate_limit=5),
+            return_value=SimpleNamespace(enabled=True, min_holdings_for_batch=1),
         )
 
         empty_holdings = [{"asset_class": "stock"}, {"ticker": "", "asset_class": "stock"}]

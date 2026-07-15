@@ -20,7 +20,6 @@ from finwiz.schemas.tools.inputs import (
     # CoinMarketCap
     CoinInfoInput,
     CompanyOverviewInput,
-    CriteriaOptimizationInput,
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
@@ -1222,49 +1221,6 @@ class TestPerformanceTrackingInput:
                 grade_maintained=True,
             )
         assert "holding_period_days" in str(exc_info.value)
-
-
-class TestCriteriaOptimizationInput:
-    """Tests for CriteriaOptimizationInput model."""
-
-    def test_required_current_criteria(self, fake):
-        """Test instantiation with required current_criteria."""
-        criteria = {"min_roe": 0.20, "max_debt": 0.3}
-        model = CriteriaOptimizationInput(current_criteria=criteria)
-
-        assert model.current_criteria == criteria
-
-    def test_default_values(self):
-        """Test default values."""
-        criteria = {"min_roe": 0.20}
-        model = CriteriaOptimizationInput(current_criteria=criteria)
-
-        assert model.analysis_period_days == 90
-        assert model.force_adjustment is False
-
-    def test_custom_analysis_period(self, fake):
-        """Test custom analysis_period_days."""
-        period = fake.random_int(min=1, max=365)
-        criteria = {"min_roe": 0.20}
-        model = CriteriaOptimizationInput(current_criteria=criteria, analysis_period_days=period)
-
-        assert model.analysis_period_days == period
-
-    def test_force_adjustment_boolean(self):
-        """Test force_adjustment boolean field."""
-        criteria = {"min_roe": 0.20}
-
-        model_true = CriteriaOptimizationInput(current_criteria=criteria, force_adjustment=True)
-        assert model_true.force_adjustment is True
-
-        model_false = CriteriaOptimizationInput(current_criteria=criteria, force_adjustment=False)
-        assert model_false.force_adjustment is False
-
-    def test_missing_required_current_criteria(self):
-        """Test ValidationError when current_criteria is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CriteriaOptimizationInput()
-        assert "current_criteria" in str(exc_info.value)
 
 
 # ============================================================================

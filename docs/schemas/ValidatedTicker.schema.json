@@ -1,6 +1,6 @@
 {
   "additionalProperties": false,
-  "description": "Strict, minimal contract for a validated symbol.\n\nFields mirror `TickerExistenceValidationTool` output (see\n`src/finwiz/tools/ticker_validation_tool.py`).",
+  "description": "Strict, minimal contract for a validated symbol.\n\nFields mirror `TickerExistenceValidationTool` output (from\n`crewai_custom_tools`, see `crewai_custom_tools.tools.finance.enhanced`).",
   "properties": {
     "symbol": {
       "maxLength": 15,

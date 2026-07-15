@@ -311,7 +311,6 @@ CACHE_COMPRESSION=true         # Enable cache compression
 ```bash
 # API rate limiting
 CREW_MAX_RPM=20               # CrewAI rate limit
-ALPHA_VANTAGE_RATE_LIMIT=5    # Alpha Vantage calls per minute
 YAHOO_FINANCE_RATE_LIMIT=60   # Yahoo Finance calls per minute
 ```
 

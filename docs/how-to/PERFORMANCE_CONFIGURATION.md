@@ -242,7 +242,6 @@ print(f"Total cost savings: ${summary.total_cost_savings:.2f}")
 | Variable                      | Default | Description                           | Performance Impact                   |
 | ----------------------------- | ------- | ------------------------------------- | ------------------------------------ |
 | `BATCH_PREFETCH_ENABLED`      | `true`  | Enable batch data pre-fetching        | 10-20x speedup                       |
-| `ALPHA_VANTAGE_RATE_LIMIT`    | `5`     | Alpha Vantage calls per minute        | Controls secondary data speed        |
 | `BATCH_PREFETCH_MIN_HOLDINGS` | `10`    | Min holdings to trigger batch mode    | Avoids overhead for small portfolios |
 | `DEEP_ANALYSIS_BATCH_SIZE`    | `5`     | Concurrent crew execution batch size  | Balances speed vs memory             |
 | `ENABLE_ALPHA_VANTAGE`        | `false` | Use Alpha Vantage as secondary source | Adds ~13 min for 66 tickers          |
@@ -612,7 +611,7 @@ for reason in fallback_reasons[-5:]:  # Last 5 fallbacks
 # Common solutions:
 # 1. Network issues: Check internet connection
 # 2. Memory issues: Reduce DEEP_ANALYSIS_BATCH_SIZE
-# 3. API rate limits: Reduce ALPHA_VANTAGE_RATE_LIMIT or disable Alpha Vantage
+# 3. API rate limits: Disable Alpha Vantage
 os.environ["ENABLE_ALPHA_VANTAGE"] = "false"
 os.environ["DEEP_ANALYSIS_BATCH_SIZE"] = "3"
 ```

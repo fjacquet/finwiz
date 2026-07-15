@@ -9,8 +9,6 @@ from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
 
-from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
-
 if TYPE_CHECKING:
     pass
 
@@ -51,10 +49,7 @@ def initialize_configuration() -> None:
 
 
 def initialize_environment() -> None:
-    """Initialize environment variables and retry mechanism."""
+    """Initialize environment variables."""
     logger.info("Loading environment variables")
     load_dotenv()
-
-    logger.info("Initializing LLM retry mechanism with extended timeout")
-    initialize_retry_mechanism(max_retries=5, timeout=300)  # 5 minute timeout
     logger.debug("Environment variables loaded")

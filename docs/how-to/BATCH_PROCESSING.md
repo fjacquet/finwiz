@@ -111,7 +111,6 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 | Variable | Default | Description | Impact |
 |----------|---------|-------------|---------|
 | `BATCH_PREFETCH_ENABLED` | `true` | Enable/disable batch processing | 10-20x performance improvement |
-| `ALPHA_VANTAGE_RATE_LIMIT` | `5` | Alpha Vantage API calls per minute | Controls secondary data source speed |
 | `BATCH_PREFETCH_MIN_HOLDINGS` | `10` | Minimum holdings to trigger batch mode | Avoids overhead for small portfolios |
 | `DEEP_ANALYSIS_BATCH_SIZE` | `5` | Concurrent crew execution batch size | Balances speed vs memory usage |
 | `ENABLE_ALPHA_VANTAGE` | `false` | Use Alpha Vantage as secondary source | Adds ~13 minutes for 66 tickers |
@@ -125,7 +124,6 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=5
 ENABLE_ALPHA_VANTAGE=false
-ALPHA_VANTAGE_RATE_LIMIT=5
 BATCH_PREFETCH_MIN_HOLDINGS=10
 ```
 
@@ -136,7 +134,6 @@ BATCH_PREFETCH_MIN_HOLDINGS=10
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=8
 ENABLE_ALPHA_VANTAGE=true
-ALPHA_VANTAGE_RATE_LIMIT=75  # Premium tier
 BATCH_PREFETCH_MIN_HOLDINGS=5
 ```
 
@@ -169,12 +166,10 @@ from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 config = get_batch_prefetch_config(log_config=True)
 
 # Configuration is automatically validated:
-# - Rate limits must be >= 1 and <= 100
 # - Minimum holdings must be >= 1
 # - Boolean values accept multiple formats (true/false, 1/0, yes/no, on/off)
 
 print(f"Batch mode enabled: {config.enabled}")
-print(f"Alpha Vantage rate limit: {config.alpha_vantage_rate_limit}")
 print(f"Minimum holdings for batch: {config.min_holdings_for_batch}")
 ```
 
@@ -556,7 +551,6 @@ Detailed metrics are saved to JSON for analysis:
        if has_premium_alpha_vantage:
            return {
                "ENABLE_ALPHA_VANTAGE": "true",
-               "ALPHA_VANTAGE_RATE_LIMIT": "75",
                "DEEP_ANALYSIS_BATCH_SIZE": "8"
            }
        else:
@@ -600,7 +594,7 @@ grep "Falling back to sequential mode" logs/finwiz.log
 
 # Common causes and solutions:
 # 1. Network issues: Check internet connection
-# 2. API rate limits: Reduce ALPHA_VANTAGE_RATE_LIMIT
+# 2. API rate limits: Disable Alpha Vantage (ENABLE_ALPHA_VANTAGE=false)
 # 3. Memory issues: Reduce DEEP_ANALYSIS_BATCH_SIZE
 ```
 

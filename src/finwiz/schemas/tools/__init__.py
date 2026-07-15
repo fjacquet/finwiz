@@ -9,7 +9,6 @@ from .inputs import (
     # CoinMarketCap inputs
     CoinInfoInput,
     CompanyOverviewInput,
-    CriteriaOptimizationInput,
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
@@ -65,7 +64,6 @@ __all__ = [
     "PortfolioRebalancingInput",
     "FeedbackCollectionInput",
     "PerformanceTrackingInput",
-    "CriteriaOptimizationInput",
     "GetCompanyInfoInput",
     "GetTickerInfoInput",
     "GetTickerNewsInput",

@@ -39,7 +39,6 @@ class TestDeepAnalysisOrchestrator:
         config = mocker.Mock()
         config.enabled = True
         config.min_holdings_for_batch = 3
-        config.alpha_vantage_rate_limit = 5
         return config
 
     @pytest.fixture

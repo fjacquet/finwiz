@@ -12,9 +12,6 @@ class TestEndpointDefaults:
     def test_twelve_data_base(self):
         assert endpoints.TWELVE_DATA_BASE == "https://api.twelvedata.com"
 
-    def test_coingecko_base(self):
-        assert endpoints.COINGECKO_BASE == "https://api.coingecko.com/api/v3"
-
     def test_perplexity_search(self):
         assert endpoints.PERPLEXITY_SEARCH == "https://api.perplexity.ai/search"
 
@@ -29,9 +26,6 @@ class TestEndpointDefaults:
 
     def test_sec_data_base(self):
         assert endpoints.SEC_DATA_BASE == "https://data.sec.gov"
-
-    def test_chart_img_base(self):
-        assert endpoints.CHART_IMG_BASE == "https://api.chart-img.com/v1/stock"
 
     def test_yahoo_finance_web(self):
         assert endpoints.YAHOO_FINANCE_WEB == "https://finance.yahoo.com"

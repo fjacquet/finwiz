@@ -22,13 +22,11 @@ class BatchPrefetchConfig:
 
     Attributes:
         enabled: Whether batch pre-fetching is enabled (default: True)
-        alpha_vantage_rate_limit: Alpha Vantage API rate limit in calls per minute (default: 5)
         min_holdings_for_batch: Minimum number of holdings to trigger batch mode (default: 10)
 
     """
 
     enabled: bool = True
-    alpha_vantage_rate_limit: int = 5
     min_holdings_for_batch: int = 10
 
     def __post_init__(self) -> None:
@@ -43,12 +41,6 @@ class BatchPrefetchConfig:
             ValueError: If configuration values are invalid
 
         """
-        if self.alpha_vantage_rate_limit < 1:
-            raise ValueError(f"alpha_vantage_rate_limit must be >= 1, got {self.alpha_vantage_rate_limit}")
-
-        if self.alpha_vantage_rate_limit > 100:
-            logger.warning(f"alpha_vantage_rate_limit is very high ({self.alpha_vantage_rate_limit}). Ensure you have a premium API key to avoid rate limit errors.")
-
         if self.min_holdings_for_batch < 1:
             raise ValueError(f"min_holdings_for_batch must be >= 1, got {self.min_holdings_for_batch}")
 
@@ -71,7 +63,6 @@ class BatchPrefetchConfig:
         alpha_vantage_enabled = should_use_alpha_vantage()
         if alpha_vantage_enabled:
             logger.warning("    2. Alpha Vantage: ENABLED (Optional)")
-            logger.warning(f"       - Rate limit: {self.alpha_vantage_rate_limit} calls/minute")
             logger.warning("       - Performance: ~13 minutes for 66 tickers")
             logger.warning("       - ⚠️  Adds significant overhead")
             logger.warning("       - ⚠️  Yahoo Finance already provides all essential data")
@@ -98,10 +89,6 @@ def load_batch_prefetch_config() -> BatchPrefetchConfig:
         BATCH_PREFETCH_ENABLED: Enable/disable batch pre-fetching (default: true)
             Accepted values: true, false, 1, 0, yes, no, on, off
 
-        ALPHA_VANTAGE_RATE_LIMIT: Alpha Vantage API rate limit in calls per minute (default: 5)
-            Free tier: 5 calls/minute
-            Premium tier: 75 calls/minute
-
         BATCH_PREFETCH_MIN_HOLDINGS: Minimum holdings to trigger batch mode (default: 10)
 
     Returns:
@@ -117,14 +104,6 @@ def load_batch_prefetch_config() -> BatchPrefetchConfig:
     enabled_str = os.getenv("BATCH_PREFETCH_ENABLED", "true").lower().strip()
     enabled = enabled_str in {"true", "1", "yes", "on"}
 
-    # Load ALPHA_VANTAGE_RATE_LIMIT (default: 5)
-    rate_limit_str = os.getenv("ALPHA_VANTAGE_RATE_LIMIT", "5").strip()
-    try:
-        alpha_vantage_rate_limit = int(rate_limit_str)
-    except ValueError:
-        logger.warning(f"Invalid ALPHA_VANTAGE_RATE_LIMIT value: '{rate_limit_str}'. Using default: 5")
-        alpha_vantage_rate_limit = 5
-
     # Load BATCH_PREFETCH_MIN_HOLDINGS (default: 10)
     min_holdings_str = os.getenv("BATCH_PREFETCH_MIN_HOLDINGS", "10").strip()
     try:
@@ -136,7 +115,6 @@ def load_batch_prefetch_config() -> BatchPrefetchConfig:
     # Create and validate configuration
     config = BatchPrefetchConfig(
         enabled=enabled,
-        alpha_vantage_rate_limit=alpha_vantage_rate_limit,
         min_holdings_for_batch=min_holdings_for_batch,
     )
 
