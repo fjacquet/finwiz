@@ -178,7 +178,6 @@ max-complexity = 10
 "src/finwiz/tools/perplexity_analysis_integration.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/portfolio_holdings_html_generator.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/rebalancing_formatters.py" = ["C901", "PLR0915"]
-"src/finwiz/tools/twelve_data/validators.py" = ["C901", "PLR0915"]
 # Files with ONLY C901 (cyclomatic complexity):
 "src/finwiz/analysis/fact_pack_research.py" = ["C901"]
 "src/finwiz/analysis/stages/qualify.py" = ["C901"]
@@ -205,7 +204,6 @@ max-complexity = 10
 "src/finwiz/orchestrators/reporting/data_loading.py" = ["C901"]
 "src/finwiz/quantitative/constraint_handlers.py" = ["C901"]
 "src/finwiz/quantitative/cost_calculators.py" = ["C901"]
-"src/finwiz/quantitative/etf/etf_metrics.py" = ["C901"]
 "src/finwiz/quantitative/performance_benchmarks.py" = ["C901"]
 "src/finwiz/quantitative/portfolio_analyzer.py" = ["C901"]
 "src/finwiz/quantitative/tactical_pricing.py" = ["C901"]
@@ -220,14 +218,9 @@ max-complexity = 10
 "src/finwiz/scoring/technical_fallback.py" = ["C901"]
 "src/finwiz/tools/alternative_finder_tool.py" = ["C901"]
 "src/finwiz/tools/backtesting_tool.py" = ["C901"]
-"src/finwiz/tools/charts/chart_analysis.py" = ["C901"]
 "src/finwiz/tools/enhanced_crypto_tool.py" = ["C901"]
-"src/finwiz/tools/etf_analysis_tool.py" = ["C901"]
 "src/finwiz/tools/portfolio_price_service.py" = ["C901"]
 "src/finwiz/tools/robust_tool_wrapper.py" = ["C901"]
-"src/finwiz/tools/scoring/scoring_algorithms.py" = ["C901"]
-"src/finwiz/tools/scoring/scoring_criteria.py" = ["C901"]
-"src/finwiz/tools/screening_ranking.py" = ["C901"]
 "src/finwiz/tools/standardized_sentiment_tool.py" = ["C901"]
 "src/finwiz/validation/consolidation.py" = ["C901"]
 "src/finwiz/validation/quality_metrics.py" = ["C901"]
@@ -421,7 +414,6 @@ omit = [
     "src/finwiz/config/llm/*",
     "src/finwiz/config/llm/**/*",
     # Perplexity LLM-backed search / analysis wrappers.
-    "src/finwiz/tools/perplexity_search_tool.py",
     "src/finwiz/tools/perplexity_analysis_integration.py",
     "src/finwiz/tools/perplexity_errors.py",
     "src/finwiz/tools/perplexity_feature_utils.py",

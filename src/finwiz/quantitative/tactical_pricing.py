@@ -20,8 +20,8 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
+from crewai_custom_tools.tools.analytics.price_targets import calculate_support_resistance_targets
 
-from finwiz.quantitative.price_targets import calculate_support_resistance_targets
 from finwiz.schemas.portfolio_review import PriceTargets
 
 logger = logging.getLogger(__name__)

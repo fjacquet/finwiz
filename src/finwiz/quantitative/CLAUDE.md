@@ -38,7 +38,8 @@ quantitative/
 ├── performance_metrics.py           # PerformanceMetrics
 ├── screening_criteria.py            # Screening criteria
 ├── screening_filters.py             # Screening filters
-├── price_targets.py                 # Price target calculation
+├── tactical_pricing.py              # Tactical price targets (uses central's
+│                                     #  calculate_support_resistance_targets)
 │
 ├── # Config
 ├── config.py                        # Module config entry point

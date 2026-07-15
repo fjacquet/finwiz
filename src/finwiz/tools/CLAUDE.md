@@ -7,20 +7,30 @@ Custom CrewAI tools for financial data retrieval, analysis, and processing. Tool
 ```
 tools/
 ├── tool_factories.py                # MAIN: get_stock/etf/crypto/discovery_crew_tools()
-├── finance_tools.py                 # Core research tool bundles
+├── finance_tools.py                 # Core research tool bundles (get_*_research_tools())
 ├── logger.py                        # get_logger() — project-wide logging
 │
-├── # Data source tools
-├── (Yahoo Finance, Perplexity, ticker validation, Kraken, AlphaVantage news sentiment, ChartImg, and DeFi metrics tools now come from crewai-custom-tools — see "Centralized tools" below)
-├── alpha_vantage_tool.py            # AlphaVantageTool (company overview; still local)
-├── twelve_data_tool.py              # TwelveDataTool
-├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
+├── # Data source tools (still local)
+├── alpha_vantage_tool.py            # AlphaVantageTool (company overview)
+├── twelve_data_tool.py              # TwelveDataIndicatorTool
+├── twelve_data_multi_indicator_tool.py # TwelveDataMultiIndicatorTool
+├── (Yahoo Finance, Perplexity search, ticker validation, Kraken, AlphaVantage
+├──  news sentiment, ChartImg, and DeFi metrics tools come from
+├──  crewai-custom-tools — see "Centralized tools" below)
 │
 ├── # Analysis tools
-├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
-├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
-├── backtesting_tool.py              # BacktestingTool
+├── quantitative_analysis_tool.py       # QuantitativeAnalysisTool (crew-facing wrapper)
+├── quantitative_backtesting_analyzer.py    # perform_backtesting()
+├── quantitative_comprehensive_analyzer.py  # perform_comprehensive_analysis()
+├── quantitative_performance_analyzer.py    # perform_performance_analysis()
+├── quantitative_technical_analyzer.py      # perform_technical_analysis()
+├── backtesting_tool.py              # BacktestingResult/MarketRegime models
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
+├── portfolio_price_service.py       # Price lookups, PriceServiceError hierarchy
+├── portfolio_cache_service.py       # PortfolioCacheService
+├── portfolio_rebalancing_tool.py    # PortfolioRebalancingTool
+├── standardized_sentiment_tool.py   # StandardizedSentimentAnalysisTool
+├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 │
 ├── # Enhanced tools (per-asset specialization)
 ├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
@@ -29,16 +39,27 @@ tools/
 ├── (A+ scoring/screening tools — APlusScoringTool, APlusScreeningTool — and their
 ├──  screening_criteria/screening_utils/screening_ranking modules now come from
 ├──  crewai-custom-tools — see "Centralized tools" below)
-├── regulatory_compliance_tool.py    # Compliance checking
 ├── alternative_finder_tool.py       # Alternative investments
-├── price_target_calculator.py       # Price targets
-├── position_sizing_tool.py          # Position sizing
+├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
-├── # Infrastructure
-├── tool_result.py                   # ToolResult class
+├── # Rebalancing report subsystem
+├── rebalancing_calculations.py      # RebalancingCalculations
+├── rebalancing_formatters.py        # RebalancingFormatters
+├── rebalancing_report_generator.py  # RebalancingReportGenerator(HTMLReportGenerator)
+├── rebalancing_sections.py          # RebalancingSections
+├── rebalancing_templates.py         # RebalancingTemplates
+│
+├── # Scenario report subsystem
+├── scenario_comparison_report_generator.py # ScenarioComparisonReportGenerator
+├── scenario_report_renderer.py      # render_scenario_report_template()
+├── scenario_report_sections.py      # create_summary_sections()/create_comparison_tables()
+│
+├── # Reporting infrastructure
+├── html_report_generator.py         # HTMLReportGenerator base class
+├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
 ├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
-├── robust_tool_wrapper.py           # Error wrapping
-├── base_tools.py                    # AsyncFeedbackTool base
+├── robust_tool_wrapper.py           # RobustToolWrapper / make_tools_robust()
+├── _text_chunking.py                # TextChunk / chunk_text()
 │
 ├── # Perplexity subsystem
 ├── perplexity_logging.py
@@ -46,16 +67,18 @@ tools/
 ├── perplexity_analysis_integration.py
 ├── perplexity_feature_utils.py
 ├── perplexity_performance.py
+├── perplexity_performance_benchmark.py
 │
 ├── # Subdirectories
 ├── analysis/                        # Analysis coordination
 │   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
 │   └── holding_processors.py        # HoldingProcessor
-├── etf/                             # ETF data fetchers
+├── etf/                             # ETF data fetchers/analyzers
+│   ├── etf_analyzers.py             # ETFAnalyzer
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
 └── reporting/                       # Report formatters
     ├── report_formatters.py         # HTMLReportFormatter
-    └── report_sections.py
+    └── report_sections.py           # ReportSectionBuilder
 ```
 
 ## Entry Points
@@ -80,6 +103,13 @@ tools = get_stock_crew_tools(include_quantitative=True)
 ```
 
 Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`; adopt opportunistically when touching older tools.
+
+Rate limiting and fail-fast API key validation are no longer local infrastructure —
+`crewai_custom_tools.core.rate_limiter` (provider-keyed token buckets, e.g.
+`"YahooFinance"`, `"AlphaVantage"`) and `crewai_custom_tools.core.keys.require_api_key()`
+cover both concerns for every central tool. The old local retry-patch chain,
+`base_tools.py` (`AsyncFeedbackTool`), and `tool_result.py` (`ToolResult`) were
+removed in Wave 4 once their only remaining consumers were their own tests.
 
 ## Related Modules
 

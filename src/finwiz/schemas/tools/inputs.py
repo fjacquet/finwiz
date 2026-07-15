@@ -240,11 +240,3 @@ class PerformanceTrackingInput(BaseModel):
     benchmark_return: float = Field(..., description="Benchmark return")
     current_grade: str = Field(..., description="Current grade")
     grade_maintained: bool = Field(..., description="Whether A+ grade maintained")
-
-
-class CriteriaOptimizationInput(BaseModel):
-    """Input for optimizing A+ criteria based on feedback."""
-
-    current_criteria: dict[str, Any] = Field(..., description="Current A+ criteria")
-    analysis_period_days: int = Field(default=90, description="Days to analyze")
-    force_adjustment: bool = Field(default=False, description="Force adjustment regardless of timing")
