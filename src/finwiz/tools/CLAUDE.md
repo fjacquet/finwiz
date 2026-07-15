@@ -11,9 +11,8 @@ tools/
 ├── logger.py                        # get_logger() — project-wide logging
 │
 ├── # Data source tools
-├── (Yahoo Finance, Perplexity, ticker validation, and Kraken tools now come from crewai-custom-tools — see "Centralized tools" below)
-├── alpha_vantage_tool.py            # AlphaVantageTool
-├── alpha_vantage_news_tool.py       # AV news feed
+├── (Yahoo Finance, Perplexity, ticker validation, Kraken, AlphaVantage news sentiment, ChartImg, and DeFi metrics tools now come from crewai-custom-tools — see "Centralized tools" below)
+├── alpha_vantage_tool.py            # AlphaVantageTool (company overview; still local)
 ├── twelve_data_tool.py              # TwelveDataTool
 ├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
 │
@@ -32,7 +31,6 @@ tools/
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
 ├── a_plus_scoring_tool.py           # A+ scoring
-├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking
 ├── alternative_finder_tool.py       # Alternative investments
 ├── price_target_calculator.py       # Price targets

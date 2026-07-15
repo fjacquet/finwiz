@@ -15,15 +15,11 @@ from faker import Faker
 from pydantic import ValidationError
 
 from finwiz.schemas.tools.inputs import (
-    # Alpha Vantage
-    AlphaVantageNewsInput,
     APlusScore,
     # A+ Scoring
     APlusScoringInput,
     # Backtesting
     BacktestingInput,
-    # Chart Generation
-    ChartImgInput,
     # CoinMarketCap
     CoinInfoInput,
     CompanyOverviewInput,
@@ -32,8 +28,6 @@ from finwiz.schemas.tools.inputs import (
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    # DeFi Metrics
-    DeFiMetricsInput,
     # Crypto Analysis
     EnhancedCryptoAnalysisInput,
     # ETF Analysis
@@ -212,137 +206,8 @@ class TestCryptocurrencyNewsInput:
 
 
 # ============================================================================
-# Chart Generation Tool Tests
-# ============================================================================
-
-
-class TestChartImgInput:
-    """Tests for ChartImgInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "AAPL"
-        model = ChartImgInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_values(self):
-        """Test all default values."""
-        model = ChartImgInput(symbol="SPY")
-
-        assert model.interval == "1day"
-        assert model.range == "6mo"
-        assert model.width == 900
-        assert model.height == 500
-        assert model.theme == "light"
-
-    def test_custom_interval(self):
-        """Test custom interval values."""
-        intervals = ["1min", "5min", "1h", "1day"]
-        for interval in intervals:
-            model = ChartImgInput(symbol="AAPL", interval=interval)
-            assert model.interval == interval
-
-    def test_custom_range(self):
-        """Test custom range values."""
-        ranges = ["1mo", "3mo", "6mo", "1y", "5y", "max"]
-        for range_val in ranges:
-            model = ChartImgInput(symbol="AAPL", range=range_val)
-            assert model.range == range_val
-
-    def test_custom_dimensions(self, fake):
-        """Test custom width and height."""
-        width = fake.random_int(min=300, max=2000)
-        height = fake.random_int(min=200, max=1500)
-        model = ChartImgInput(symbol="AAPL", width=width, height=height)
-
-        assert model.width == width
-        assert model.height == height
-
-    def test_theme_literal_constraint(self):
-        """Test theme field literal constraint."""
-        # Valid values
-        model_light = ChartImgInput(symbol="AAPL", theme="light")
-        assert model_light.theme == "light"
-
-        model_dark = ChartImgInput(symbol="AAPL", theme="dark")
-        assert model_dark.theme == "dark"
-
-        # Invalid value
-        with pytest.raises(ValidationError) as exc_info:
-            ChartImgInput(symbol="AAPL", theme="invalid")
-        assert "theme" in str(exc_info.value)
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            ChartImgInput()
-        assert "symbol" in str(exc_info.value)
-
-
-# ============================================================================
 # Alpha Vantage Tool Tests
 # ============================================================================
-
-
-class TestAlphaVantageNewsInput:
-    """Tests for AlphaVantageNewsInput model."""
-
-    def test_required_tickers(self, fake):
-        """Test instantiation with required tickers."""
-        tickers = "AAPL,GOOGL,MSFT"
-        model = AlphaVantageNewsInput(tickers=tickers)
-
-        assert model.tickers == tickers
-
-    def test_default_values(self):
-        """Test default values."""
-        model = AlphaVantageNewsInput(tickers="AAPL")
-
-        assert model.sort == "LATEST"
-        assert model.time_from is None
-        assert model.time_to is None
-        assert model.limit == 50
-        assert model.topics is None
-
-    def test_optional_time_from_none(self):
-        """Test time_from can be None."""
-        model = AlphaVantageNewsInput(tickers="AAPL", time_from=None)
-
-        assert model.time_from is None
-
-    def test_optional_time_from_value(self):
-        """Test time_from with ISO8601 value."""
-        time_from = "20250101T0930"
-        model = AlphaVantageNewsInput(tickers="AAPL", time_from=time_from)
-
-        assert model.time_from == time_from
-
-    def test_optional_topics_none(self):
-        """Test topics can be None."""
-        model = AlphaVantageNewsInput(tickers="AAPL", topics=None)
-
-        assert model.topics is None
-
-    def test_optional_topics_value(self):
-        """Test topics with comma-separated values."""
-        topics = "technology,financial_markets"
-        model = AlphaVantageNewsInput(tickers="AAPL", topics=topics)
-
-        assert model.topics == topics
-
-    def test_sort_options(self):
-        """Test various sort options."""
-        sorts = ["LATEST", "EARLIEST", "RELEVANCE"]
-        for sort in sorts:
-            model = AlphaVantageNewsInput(tickers="AAPL", sort=sort)
-            assert model.sort == sort
-
-    def test_missing_required_tickers(self):
-        """Test ValidationError when tickers is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            AlphaVantageNewsInput()
-        assert "tickers" in str(exc_info.value)
 
 
 class TestCompanyOverviewInput:
@@ -1211,49 +1076,6 @@ class TestMyCustomToolInput:
 
 
 # ============================================================================
-# DeFi Metrics Tool Tests
-# ============================================================================
-
-
-class TestDeFiMetricsInput:
-    """Tests for DeFiMetricsInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "UNI"
-        model = DeFiMetricsInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_values(self):
-        """Test default values."""
-        model = DeFiMetricsInput(symbol="UNI")
-
-        assert model.include_tvl_analysis is True
-        assert model.include_yield_metrics is True
-        assert model.include_governance_analysis is True
-
-    def test_boolean_fields(self):
-        """Test boolean fields."""
-        model = DeFiMetricsInput(
-            symbol="AAVE",
-            include_tvl_analysis=False,
-            include_yield_metrics=False,
-            include_governance_analysis=False,
-        )
-
-        assert model.include_tvl_analysis is False
-        assert model.include_yield_metrics is False
-        assert model.include_governance_analysis is False
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            DeFiMetricsInput()
-        assert "symbol" in str(exc_info.value)
-
-
-# ============================================================================
 # Backtesting Tool Tests
 # ============================================================================
 
@@ -1994,7 +1816,7 @@ class TestToolInputsIntegration:
         """Test creating multiple tool inputs in sequence."""
         inputs = [
             CoinInfoInput(symbol="BTC"),
-            ChartImgInput(symbol="AAPL"),
+            CompanyOverviewInput(ticker="AAPL"),
             GetTickerHistoryInput(ticker="MSFT"),
             RiskAssessmentInput(assets=["AAPL", "GOOGL"]),
             BacktestingInput(symbol="SPY"),

@@ -330,11 +330,14 @@ class ChartAnalyzer:
         interval: str = "1day",
         width: int = 900,
         height: int = 500,
-        theme: str = "light",
+        _theme: str = "light",
     ) -> str:
         """
         Generate a chart image URL for embedding.
 
         This is a convenience method that just generates the chart without analysis.
+
+        Note: `_theme` is accepted for call-signature compatibility but is not
+        forwarded — the underlying ChartGenerator uses its own fixed default theme.
         """
         return self._generate_chart(symbol, timeframe, interval, width, height)

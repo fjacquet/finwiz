@@ -7,6 +7,9 @@ financial data tools for use in FinWiz crews.
 
 from crewai.tools import BaseTool
 from crewai_custom_tools import (
+    AlphaVantageNewsSentimentTool,
+    ChartImgTool,
+    DeFiMetricsTool,
     KrakenTickerInfoTool,
     TickerExistenceValidationTool,
     YahooFinanceCompanyInfoTool,
@@ -17,11 +20,8 @@ from crewai_custom_tools import (
 )
 
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
-from finwiz.tools.alpha_vantage_news_tool import AlphaVantageNewsSentimentTool
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.backtesting_tool import BacktestingTool
-from finwiz.tools.chart_img_tool import ChartImgTool
-from finwiz.tools.defi_metrics_tool import DeFiMetricsTool
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool, StandardizedRiskScoringTool
@@ -55,7 +55,7 @@ def get_stock_research_tools() -> list[BaseTool]:
         list[BaseTool]: A list of tools focused on stock analysis.
 
     """
-    # Public API tools (no key required)
+    # Public API tools (no key required) + central tools that check keys lazily in _run
     tools: list[BaseTool] = [
         YahooFinanceTickerInfoTool(),
         YahooFinanceHistoryTool(),
@@ -66,9 +66,11 @@ def get_stock_research_tools() -> list[BaseTool]:
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
+        AlphaVantageNewsSentimentTool(),
+        ChartImgTool(),
     ]
-    # API-key-gated tools (skip if key missing)
-    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
+    # API-key-gated tools (skip if key missing; these still fail fast at construction)
+    for cls in (AlphaVantageCompanyOverviewTool, TwelveDataIndicatorTool):
         t = _safe_init(cls)
         if t:
             tools.append(t)
@@ -95,11 +97,12 @@ def get_crypto_research_tools() -> list[BaseTool]:
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
+        AlphaVantageNewsSentimentTool(),
+        ChartImgTool(),
     ]
-    for cls in (AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
-        t = _safe_init(cls)
-        if t:
-            tools.append(t)
+    t = _safe_init(TwelveDataIndicatorTool)
+    if t:
+        tools.append(t)
     return tools
 
 
@@ -121,11 +124,12 @@ def get_etf_research_tools() -> list[BaseTool]:
         StandardizedRiskScoringTool(),
         StandardizedSentimentAnalysisTool(),
         CrossAssetSentimentComparatorTool(),
+        AlphaVantageNewsSentimentTool(),
+        ChartImgTool(),
     ]
-    for cls in (AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool, ChartImgTool):
-        t = _safe_init(cls)
-        if t:
-            tools.append(t)
+    t = _safe_init(TwelveDataIndicatorTool)
+    if t:
+        tools.append(t)
     return tools
 
 
@@ -177,9 +181,10 @@ def get_stock_discovery_tools() -> list[BaseTool]:
         YahooFinanceHistoryTool(),  # Price history for trend analysis
         # News and sentiment
         YahooFinanceNewsTool(),  # Company news analysis
+        AlphaVantageNewsSentimentTool(),  # Central tool: checks key lazily in _run, always included
     ]
-    # API-key-gated tools (skip if key missing)
-    for cls in (AlphaVantageCompanyOverviewTool, AlphaVantageNewsSentimentTool, TwelveDataIndicatorTool):
+    # API-key-gated tools (skip if key missing; these still fail fast at construction)
+    for cls in (AlphaVantageCompanyOverviewTool, TwelveDataIndicatorTool):
         t = _safe_init(cls)
         if t:
             tools.append(t)

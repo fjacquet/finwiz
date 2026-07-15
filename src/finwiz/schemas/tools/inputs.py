@@ -44,30 +44,7 @@ class CryptocurrencyNewsInput(BaseModel):
     limit: int = Field(10, description="Number of news articles to return (default: 10, max: 100)")
 
 
-# Chart Generation Tool Inputs
-class ChartImgInput(BaseModel):
-    """Input schema for chart image generation."""
-
-    symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, SPY, BTCUSD")
-    interval: str = Field("1day", description="Bar interval, e.g., 1min, 5min, 1h, 1day")
-    range: str = Field("6mo", description="Time range, e.g., 1mo, 3mo, 6mo, 1y, 5y, max")
-    width: int = Field(900, description="Image width in pixels")
-    height: int = Field(500, description="Image height in pixels")
-    theme: Literal["light", "dark"] = Field("light", description="Chart theme")
-
-
 # Alpha Vantage Tool Inputs
-class AlphaVantageNewsInput(BaseModel):
-    """Input schema for Alpha Vantage News Sentiment tool."""
-
-    tickers: str = Field(..., description="Comma-separated ticker symbols")
-    sort: str = Field("LATEST", description="Sort order: LATEST, EARLIEST, RELEVANCE")
-    time_from: str | None = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
-    time_to: str | None = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
-    limit: int | None = Field(50, description="Max number of items to return")
-    topics: str | None = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
-
-
 class CompanyOverviewInput(BaseModel):
     """Input schema for the AlphaVantageCompanyOverviewTool."""
 
@@ -247,16 +224,6 @@ class MyCustomToolInput(BaseModel):
     """Input schema for MyCustomTool."""
 
     argument: str = Field(..., description="Description of the argument.")
-
-
-# DeFi Metrics Tool Inputs
-class DeFiMetricsInput(BaseModel):
-    """Input schema for DeFi Metrics Tool."""
-
-    symbol: str = Field(..., description="The DeFi token symbol, e.g., UNI, AAVE, COMP")
-    include_tvl_analysis: bool = Field(default=True, description="Include Total Value Locked analysis")
-    include_yield_metrics: bool = Field(default=True, description="Include yield farming metrics")
-    include_governance_analysis: bool = Field(default=True, description="Include governance token analysis")
 
 
 # Backtesting Tool Inputs

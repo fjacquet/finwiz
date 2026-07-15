@@ -72,7 +72,7 @@ class ChartGenerator:
         interval: str = "1day",
         width: int = 900,
         height: int = 500,
-        theme: str = "light",
+        _theme: str = "light",
     ) -> str:
         """
         Generate a chart image URL for embedding.
@@ -85,7 +85,9 @@ class ChartGenerator:
             interval: Bar interval
             width: Chart width in pixels
             height: Chart height in pixels
-            theme: Chart theme (light or dark)
+            _theme: Chart theme (light or dark) — accepted for call-signature
+                compatibility but not forwarded; this generator always uses
+                `self.default_theme`.
 
         Returns:
             Data URL of the generated chart

@@ -5,13 +5,9 @@ This module contains Pydantic models for tool inputs and configurations.
 """
 
 from .inputs import (
-    # Alpha Vantage inputs
-    AlphaVantageNewsInput,
     APlusScore,
     APlusScoringInput,
     BacktestingInput,
-    # Chart generation inputs
-    ChartImgInput,
     # CoinMarketCap inputs
     CoinInfoInput,
     CompanyOverviewInput,
@@ -20,7 +16,6 @@ from .inputs import (
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    DeFiMetricsInput,
     # Crypto analysis inputs
     EnhancedCryptoAnalysisInput,
     # ETF analysis inputs
@@ -60,10 +55,7 @@ __all__ = [
     "CryptocurrencyListInput",
     "CryptocurrencyHistoricalInput",
     "CryptocurrencyNewsInput",
-    # Chart generation inputs
-    "ChartImgInput",
     # Alpha Vantage inputs
-    "AlphaVantageNewsInput",
     "CompanyOverviewInput",
     # Technical analysis inputs
     "TwelveDataIndicatorInput",
@@ -83,7 +75,6 @@ __all__ = [
     "GetETFHoldingsInput",
     # Other tool inputs
     "MyCustomToolInput",
-    "DeFiMetricsInput",
     "BacktestingInput",
     "MarketScreeningInput",
     "MarketScreeningResult",
