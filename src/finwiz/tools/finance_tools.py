@@ -19,16 +19,16 @@ from crewai_custom_tools import (
     YahooFinanceNewsTool,
     YahooFinanceTickerInfoTool,
 )
+from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
+from crewai_custom_tools.tools.analytics.aplus_screening import APlusScreeningTool
 from crewai_custom_tools.tools.analytics.regulatory_compliance import RegulatoryComplianceTool
 
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
 from finwiz.tools.backtesting_tool import BacktestingTool
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 from finwiz.tools.logger import get_logger
-from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
@@ -138,7 +138,7 @@ def get_investment_discovery_tools() -> list[BaseTool]:
     """
     return [
         APlusScoringTool(),
-        MarketScreeningTool(),
+        APlusScreeningTool(),
         BacktestingTool(),
         TickerExistenceValidationTool(),
         StandardizedRiskScoringTool(),
@@ -160,7 +160,7 @@ def get_stock_discovery_tools() -> list[BaseTool]:
     # Public API tools (no key required)
     tools: list[BaseTool] = [
         # Core discovery tools
-        MarketScreeningTool(),  # Provides stock_screening_tool functionality
+        APlusScreeningTool(),  # Provides stock_screening_tool functionality
         APlusScoringTool(),  # Provides a_plus_scoring_tool functionality
         # Fundamental analysis tools (provides fundamental_analysis_tool functionality)
         EnhancedSECAnalysisTool(),  # 10-K/10-Q analysis for fundamental insights
@@ -199,10 +199,10 @@ def fundamental_analysis_tool() -> BaseTool:
 
 def stock_screening_tool() -> BaseTool:
     """
-    Alias for Market Screening Tool configured for stocks.
+    Alias for the central A+ Screening Tool configured for stocks.
 
     Returns:
-        BaseTool: Market Screening Tool for stock screening.
+        BaseTool: APlusScreeningTool (``aplus_screening``) for stock screening.
 
     """
-    return MarketScreeningTool()
+    return APlusScreeningTool()

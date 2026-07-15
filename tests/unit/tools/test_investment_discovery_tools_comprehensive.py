@@ -11,11 +11,12 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
+from crewai_custom_tools.core.results import parse_tool_result
+from crewai_custom_tools.models.analytics_models import MarketRegime
+from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
+from crewai_custom_tools.tools.analytics.aplus_screening import APlusScreeningTool
 
-from finwiz.schemas.tools import MarketRegime
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.backtesting_tool import BacktestingTool
-from finwiz.tools.market_screening_tool import MarketScreeningTool
 
 
 class TestAPlusScoringToolComprehensive:
@@ -34,11 +35,13 @@ class TestAPlusScoringToolComprehensive:
             "rate_change_6m": 5.0,  # Massive rate hikes
         }
 
-        result = self.tool._run(
-            symbol="TEST",
-            asset_type="stock",
-            fundamental_data={"roe": 0.30, "revenue_growth": 0.20},
-            market_context=extreme_bear_context,
+        result = parse_tool_result(
+            self.tool._run(
+                symbol="TEST",
+                asset_type="stock",
+                fundamental_data={"roe": 0.30, "revenue_growth": 0.20},
+                market_context=extreme_bear_context,
+            )
         )
 
         assert result["symbol"] == "TEST"
@@ -56,7 +59,7 @@ class TestAPlusScoringToolComprehensive:
             "history_years": 3,  # Exactly at minimum
         }
 
-        result = self.tool._run(symbol="THRESHOLD", asset_type="etf", fundamental_data=threshold_etf_data)
+        result = parse_tool_result(self.tool._run(symbol="THRESHOLD", asset_type="etf", fundamental_data=threshold_etf_data))
 
         assert result["symbol"] == "THRESHOLD"
         assert 0.0 <= result["analysis_summary"]["composite_score"] <= 1.0
@@ -65,7 +68,7 @@ class TestAPlusScoringToolComprehensive:
         """Test handling when optional fields are missing."""
         minimal_data = {"symbol": "MINIMAL"}  # Only required field
 
-        result = self.tool._run(symbol="MINIMAL", asset_type="crypto", fundamental_data=minimal_data)
+        result = parse_tool_result(self.tool._run(symbol="MINIMAL", asset_type="crypto", fundamental_data=minimal_data))
 
         assert result["symbol"] == "MINIMAL"
         assert "analysis_summary" in result
@@ -73,7 +76,7 @@ class TestAPlusScoringToolComprehensive:
 
     def test_should_calculate_confidence_with_various_data_completeness_levels(self):
         """Test confidence calculation with different data completeness."""
-        from finwiz.tools.scoring import calculate_confidence_level
+        from crewai_custom_tools.tools.analytics.scoring_criteria import calculate_confidence_level
 
         # High completeness
         complete_data = {f"metric_{i}": 0.5 for i in range(20)}
@@ -97,10 +100,12 @@ class TestAPlusScoringToolComprehensive:
 
         def score_asset(symbol, asset_type):
             try:
-                result = self.tool._run(
-                    symbol=symbol,
-                    asset_type=asset_type,
-                    fundamental_data={"roe": 0.25} if asset_type == "stock" else {"expense_ratio": 0.05},
+                result = parse_tool_result(
+                    self.tool._run(
+                        symbol=symbol,
+                        asset_type=asset_type,
+                        fundamental_data={"roe": 0.25} if asset_type == "stock" else {"expense_ratio": 0.05},
+                    )
                 )
                 results.append(result)
             except Exception as e:
@@ -124,12 +129,12 @@ class TestAPlusScoringToolComprehensive:
             assert "analysis_summary" in result
 
 
-class TestMarketScreeningToolComprehensive:
-    """Comprehensive tests for Market Screening Tool."""
+class TestAPlusScreeningToolComprehensive:
+    """Comprehensive tests for the A+ Screening Tool (central ``aplus_screening``)."""
 
     def setup_method(self):
         """Set up test fixtures."""
-        self.tool = MarketScreeningTool()
+        self.tool = APlusScreeningTool()
 
     def test_should_handle_large_screening_universe_efficiently(self, mocker):
         """Test performance with large screening universe."""
@@ -153,7 +158,7 @@ class TestMarketScreeningToolComprehensive:
             "asset_type": "etf",
         }
 
-        result = self.tool._run(asset_type="etf", max_candidates=10)
+        result = parse_tool_result(self.tool._run(asset_type="etf", max_candidates=10))
 
         assert "screening_result" in result
         assert result["summary"]["total_screened"] == 1000
@@ -185,7 +190,7 @@ class TestMarketScreeningToolComprehensive:
             },
         )
 
-        result = self.tool._run(asset_type="etf")
+        result = parse_tool_result(self.tool._run(asset_type="etf"))
 
         # Should handle failures gracefully and return successful ones
         assert "screening_result" in result
@@ -200,7 +205,7 @@ class TestMarketScreeningToolComprehensive:
             "min_roe": 0.0,
         }
 
-        result = self.tool._run(asset_type="stock", screening_criteria=zero_criteria)
+        result = parse_tool_result(self.tool._run(asset_type="stock", screening_criteria=zero_criteria))
         assert "screening_result" in result
 
         # Very high values
@@ -209,14 +214,14 @@ class TestMarketScreeningToolComprehensive:
             "min_revenue_growth": 5.0,  # 500% growth (impossible)
         }
 
-        result = self.tool._run(asset_type="stock", screening_criteria=high_criteria)
+        result = parse_tool_result(self.tool._run(asset_type="stock", screening_criteria=high_criteria))
         assert result["summary"]["candidates_found"] >= 0  # Likely 0 due to impossible criteria
 
     def test_should_handle_empty_market_data_responses(self, mocker):
         """Test handling of empty market data responses."""
         mock_data = mocker.patch.object(self.tool._utils, "get_basic_market_data", return_value={})
 
-        result = self.tool._run(asset_type="etf", max_candidates=5)
+        result = parse_tool_result(self.tool._run(asset_type="etf", max_candidates=5))
 
         assert "screening_result" in result
         # Should handle empty data gracefully
@@ -239,7 +244,7 @@ class TestMarketScreeningToolComprehensive:
 
     def test_should_handle_invalid_market_regions(self):
         """Test handling of invalid market regions."""
-        result = self.tool._run(asset_type="stock", market_region="invalid_region")
+        result = parse_tool_result(self.tool._run(asset_type="stock", market_region="invalid_region"))
 
         # Should fallback to default region
         assert "screening_result" in result
@@ -257,10 +262,15 @@ class TestMarketScreeningToolComprehensive:
         """Test handling of invalid criteria values."""
         invalid_criteria = {criteria_key: criteria_value}
 
-        result = self.tool._run(asset_type=asset_type, screening_criteria=invalid_criteria)
+        payload = json.loads(self.tool._run(asset_type=asset_type, screening_criteria=invalid_criteria))
 
-        # Should handle invalid criteria gracefully
-        assert "screening_result" in result or "error" in result
+        # Should handle invalid criteria gracefully: either a successful
+        # envelope with a screening_result, or a reported failure.
+        assert "success" in payload
+        if payload["success"]:
+            assert "screening_result" in payload["data"]
+        else:
+            assert payload["error"]
 
 
 class TestBacktestingToolComprehensive:
@@ -429,24 +439,30 @@ class TestToolsIntegration:
     def setup_method(self):
         """Set up test fixtures."""
         self.a_plus_tool = APlusScoringTool()
-        self.screening_tool = MarketScreeningTool()
+        self.screening_tool = APlusScreeningTool()
         self.backtesting_tool = BacktestingTool()
 
     def test_should_integrate_screening_with_a_plus_scoring(self, mocker):
         """Test integration between screening and A+ scoring."""
-        # Mock the A+ scorer in screening tool - now in _ranking component
+        # Mock the A+ scorer in screening tool - now in _ranking component.
+        # The mocked _run must return an ok()-style envelope string, since
+        # ScreeningRanking.score_candidates parses it with parse_tool_result.
+        from crewai_custom_tools.core.results import ok
+
         mock_scorer = mocker.patch.object(
             self.screening_tool._ranking._a_plus_scorer,
             "_run",
-            return_value={
-                "composite_score": 0.92,
-                "is_a_plus_candidate": True,
-                "grade": "A+",
-                "analysis_summary": {"confidence": 0.85},
-            },
+            return_value=ok(
+                {
+                    "composite_score": 0.92,
+                    "is_a_plus_candidate": True,
+                    "grade": "A+",
+                    "analysis_summary": {"confidence": 0.85},
+                }
+            ),
         )
 
-        result = self.screening_tool._run(asset_type="etf", max_candidates=5, include_detailed_analysis=True, min_a_plus_score=0.90)
+        result = parse_tool_result(self.screening_tool._run(asset_type="etf", max_candidates=5, include_detailed_analysis=True, min_a_plus_score=0.90))
 
         # Should have integrated with A+ scorer
         assert "screening_result" in result
@@ -456,10 +472,15 @@ class TestToolsIntegration:
         # Simulate error in A+ scoring during screening - now in _ranking component
         mock_scorer = mocker.patch.object(self.screening_tool._ranking._a_plus_scorer, "_run", side_effect=Exception("A+ scoring failed"))
 
-        result = self.screening_tool._run(asset_type="stock", include_detailed_analysis=True)
+        payload = json.loads(self.screening_tool._run(asset_type="stock", include_detailed_analysis=True))
 
-        # Should handle A+ scoring errors gracefully
-        assert "screening_result" in result or "error" in result
+        # Should handle A+ scoring errors gracefully: either a successful
+        # envelope with a screening_result, or a reported failure.
+        assert "success" in payload
+        if payload["success"]:
+            assert "screening_result" in payload["data"]
+        else:
+            assert payload["error"]
 
     def test_should_maintain_data_consistency_across_tools(self, mocker):
         """Test data consistency when using multiple tools."""
@@ -473,7 +494,7 @@ class TestToolsIntegration:
         }
 
         # Score with A+ tool
-        a_plus_result = self.a_plus_tool._run(symbol=symbol, asset_type="stock", fundamental_data=fundamental_data)
+        a_plus_result = parse_tool_result(self.a_plus_tool._run(symbol=symbol, asset_type="stock", fundamental_data=fundamental_data))
 
         # The symbol should be consistent
         assert a_plus_result["symbol"] == symbol
@@ -521,14 +542,14 @@ class TestToolsIntegration:
 
         def run_a_plus():
             try:
-                result = self.a_plus_tool._run(symbol="TEST1", asset_type="stock", fundamental_data={"roe": 0.25})
+                result = parse_tool_result(self.a_plus_tool._run(symbol="TEST1", asset_type="stock", fundamental_data={"roe": 0.25}))
                 results["a_plus"].append(result)
             except Exception as e:
                 results["errors"].append(e)
 
         def run_screening():
             try:
-                result = self.screening_tool._run(asset_type="etf", max_candidates=5)
+                result = parse_tool_result(self.screening_tool._run(asset_type="etf", max_candidates=5))
                 results["screening"].append(result)
             except Exception as e:
                 results["errors"].append(e)

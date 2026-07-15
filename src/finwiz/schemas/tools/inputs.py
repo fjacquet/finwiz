@@ -224,30 +224,6 @@ class BacktestingInput(BaseModel):
     strategy_params: dict[str, Any] = Field(default_factory=dict, description="Custom strategy parameters")
 
 
-# Market Screening Tool Inputs
-class MarketScreeningInput(BaseModel):
-    """Input schema for Market Screening Tool."""
-
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of assets to screen")
-    screening_criteria: dict[str, Any] = Field(default_factory=dict, description="Custom screening criteria (overrides defaults)")
-    market_region: str = Field(default="global", description="Market region to screen (global, us, eu, etc.)")
-    max_candidates: int = Field(default=50, ge=1, le=500, description="Maximum number of candidates to return")
-    min_a_plus_score: float = Field(default=0.85, ge=0.0, le=1.0, description="Minimum A+ score threshold")
-    include_detailed_analysis: bool = Field(default=False, description="Whether to include detailed A+ analysis for each candidate")
-
-
-class MarketScreeningResult(BaseModel):
-    """Result from market screening operation."""
-
-    asset_type: Literal["etf", "stock", "crypto"]
-    screening_criteria: dict[str, Any]
-    market_region: str
-    total_screened: int
-    candidates_found: int
-    a_plus_candidates: int
-    candidates: list[Any]  # Will be ScreeningCandidate when imported
-
-
 # Optimization Tool Inputs
 class OptimizationInput(BaseModel):
     """Input model for portfolio optimization tool."""
@@ -271,74 +247,6 @@ class PortfolioRebalancingInput(BaseModel):
     tolerance_bands: dict[str, float] | None = Field(default=None, description="Tolerance bands for each position")
     available_capital: float = Field(default=0.0, description="Available capital for rebalancing")
     global_tolerance: float = Field(default=0.05, description="Default tolerance band (5% = ±5%)")
-
-
-# A+ Scoring Tool Inputs
-class APlusScoringInput(BaseModel):
-    """Input schema for A+ Investment Scoring Tool."""
-
-    symbol: str = Field(..., description="Investment symbol (e.g., AAPL, SPY, BTC-USD)")
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset to score")
-    fundamental_data: dict[str, Any] = Field(default_factory=dict, description="Fundamental data for the investment")
-    market_context: dict[str, Any] = Field(default_factory=dict, description="Current market context and conditions")
-    custom_criteria: dict[str, float] = Field(default_factory=dict, description="Custom scoring criteria weights")
-
-
-class MarketRegime(BaseModel):
-    """Current market regime assessment."""
-
-    regime_type: Literal["bull", "bear", "sideways", "volatile"] = "sideways"
-    vix_level: float = Field(default=20.0, ge=0.0, le=100.0)
-    inflation_rate: float = Field(default=3.0, ge=-5.0, le=20.0)
-    interest_rate_trend: Literal["rising", "falling", "stable"] = "stable"
-    market_stress_level: Literal["low", "medium", "high"] = "medium"
-
-
-class ScoringCriteria(BaseModel):
-    """Dynamic scoring criteria that adapt to market conditions."""
-
-    # ETF Criteria
-    etf_max_expense_ratio: float = Field(default=0.15, ge=0.0, le=2.0)
-    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12)
-    etf_max_tracking_error: float = Field(default=0.002, ge=0.0, le=0.1)
-    etf_min_history_years: int = Field(default=3, ge=1, le=20)
-
-    # Stock Criteria
-    stock_min_roe: float = Field(default=0.20, ge=0.0, le=1.0)
-    stock_min_revenue_growth: float = Field(default=0.15, ge=-0.5, le=2.0)
-    stock_max_debt_to_equity: float = Field(default=0.3, ge=0.0, le=5.0)
-    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13)
-
-    # Crypto Criteria
-    crypto_min_market_cap: float = Field(default=10e9, ge=1e6, le=1e13)
-    crypto_min_daily_volume: float = Field(default=500e6, ge=1e6, le=1e12)
-    crypto_min_age_months: int = Field(default=36, ge=1, le=200)
-
-
-class APlusScore(BaseModel):
-    """Comprehensive A+ score with detailed breakdown."""
-
-    symbol: str
-    asset_type: Literal["etf", "stock", "crypto"]
-    composite_score: float = Field(ge=0.0, le=1.0)
-    grade_info: Any  # GradeInfo type - will need proper import
-
-    # Component scores
-    fundamental_score: float = Field(ge=0.0, le=1.0)
-    technical_score: float = Field(ge=0.0, le=1.0)
-    quality_score: float = Field(ge=0.0, le=1.0)
-    risk_score: float = Field(ge=0.0, le=1.0)
-
-    # Analysis details
-    strengths: list[str] = Field(default_factory=list)
-    weaknesses: list[str] = Field(default_factory=list)
-    a_plus_rationale: str = ""
-    confidence_level: float = Field(default=0.5, ge=0.0, le=1.0)
-
-    # Context
-    market_regime: MarketRegime
-    scoring_criteria: ScoringCriteria
-    analysis_timestamp: Any  # datetime
 
 
 # Feedback Integration Tool Inputs

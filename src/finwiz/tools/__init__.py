@@ -16,7 +16,7 @@ from .optimization_tool import OptimizationTool
 from .portfolio_analysis_tool import PortfolioAnalysisTool
 from .risk_assessment_tool import RiskAssessmentTool
 
-__all__ = ["APlusScoringTool", "BacktestingTool", "OptimizationTool", "PortfolioAnalysisTool", "RiskAssessmentTool"]
+__all__ = ["BacktestingTool", "OptimizationTool", "PortfolioAnalysisTool", "RiskAssessmentTool"]
 
 
 def __getattr__(name: str) -> type:
@@ -25,8 +25,4 @@ def __getattr__(name: str) -> type:
         from .backtesting_tool import BacktestingTool
 
         return BacktestingTool
-    if name == "APlusScoringTool":
-        from .a_plus_scoring_tool import APlusScoringTool
-
-        return APlusScoringTool
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -2,78 +2,22 @@
 
 ## Overview
 
-This document provides a comprehensive overview of the unit test suite for the Investment Discovery Tools, specifically covering the A+ Scoring Tool, Market Screening Tool, and Backtesting Tool.
+This document provides a comprehensive overview of the unit test suite for the Investment Discovery Tools: the A+ Scoring Tool, the A+ Screening Tool, and the Backtesting Tool.
 
-## Test Coverage Summary
-
-### Total Tests: 99
-
-- **A+ Scoring Tool**: 23 tests
-- **Market Screening Tool**: 49 tests
-- **Backtesting Tool**: 17 tests
-- **Comprehensive Integration Tests**: 27 tests
+**Wave 3 Task 10 note:** `APlusScoringTool` and the renamed `APlusScreeningTool`
+(finwiz's old `MarketScreeningTool`, tool name now `aplus_screening`) moved to
+the central `crewai_custom_tools` package. Their dedicated unit test files
+(`test_a_plus_scoring_tool.py`, `test_market_screening_tool.py`) moved with
+them — see `crewai_custom_tools`' `tests/test_analytics_aplus_scoring.py` and
+`tests/test_analytics_aplus_screening.py`. Only `test_backtesting_tool.py`
+(local tool, unaffected by the swap) and
+`test_investment_discovery_tools_comprehensive.py` (integration tests across
+all three tools, now parsing the central tools' `ok()`/`err()` JSON envelopes
+with `parse_tool_result()`) remain in this directory.
 
 ## Test Files
 
-### 1. `test_a_plus_scoring_tool.py`
-
-Comprehensive tests for the A+ Investment Scoring Tool covering:
-
-#### Core Functionality Tests
-
-- Tool initialization and configuration
-- ETF, stock, and crypto scoring with various data quality levels
-- Dynamic criteria adjustment based on market conditions
-- Market regime assessment and caching
-- Scoring weight adjustment for different market stress levels
-
-#### Edge Cases and Error Handling
-
-- Missing or incomplete fundamental data
-- Invalid asset types and input validation
-- Custom criteria override functionality
-- Concurrent scoring requests
-- Exception handling and error recovery
-
-#### Scoring Algorithm Tests
-
-- Fundamental score calculations for each asset type
-- Technical score calculations with market regime adjustments
-- Quality score assessments
-- Risk score calculations with volatility penalties
-- Composite score generation and grade assignment
-
-### 2. `test_market_screening_tool.py`
-
-Extensive tests for the Market Screening Tool covering:
-
-#### Universe Management Tests
-
-- ETF, stock, and crypto universe retrieval
-- Market region handling (US, EU, Global)
-- Symbol universe validation and error handling
-
-#### Screening Logic Tests
-
-- Default screening criteria for each asset type
-- Custom criteria override and validation
-- Market data retrieval and caching
-- Screening filter application (ETF, stock, crypto specific)
-
-#### Performance and Scalability Tests
-
-- Large screening universe handling
-- API failure graceful degradation
-- Caching efficiency validation
-- Candidate sorting and limiting
-
-#### Integration Tests
-
-- A+ Scoring Tool integration for detailed analysis
-- Pydantic model validation for inputs and outputs
-- Error handling across the screening pipeline
-
-### 3. `test_backtesting_tool.py`
+### 1. `test_backtesting_tool.py`
 
 Comprehensive tests for the Backtesting Tool covering:
 
@@ -103,7 +47,7 @@ Comprehensive tests for the Backtesting Tool covering:
 - Empty or corrupted benchmark data
 - Insufficient historical data scenarios
 
-### 4. `test_investment_discovery_tools_comprehensive.py`
+### 2. `test_investment_discovery_tools_comprehensive.py`
 
 Advanced integration and edge case tests covering:
 
@@ -115,7 +59,7 @@ Advanced integration and edge case tests covering:
 - Concurrent scoring request handling
 - Thread safety validation
 
-#### Market Screening Tool Advanced Tests
+#### A+ Screening Tool Advanced Tests
 
 - Large screening universe efficiency (1000+ symbols)
 - API failure graceful handling during screening
@@ -223,11 +167,13 @@ Comprehensive error handling validation:
 ### Test Execution
 
 ```bash
-# Run all investment discovery tool tests
-uv run pytest tests/unit/tools/test_a_plus_scoring_tool.py \
-              tests/unit/tools/test_market_screening_tool.py \
-              tests/unit/tools/test_backtesting_tool.py \
+# Run the investment discovery tool tests that remain local to finwiz
+uv run pytest tests/unit/tools/test_backtesting_tool.py \
               tests/unit/tools/test_investment_discovery_tools_comprehensive.py -v
+
+# A+ Scoring / A+ Screening tool tests now live in crewai-custom-tools:
+# uv run pytest tests/test_analytics_aplus_scoring.py tests/test_analytics_aplus_screening.py
+# (run from a checkout of that package)
 
 # Run with coverage
 uv run pytest tests/unit/tools/test_*_tool.py --cov=src/finwiz/tools

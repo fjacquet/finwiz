@@ -15,9 +15,6 @@ from faker import Faker
 from pydantic import ValidationError
 
 from finwiz.schemas.tools.inputs import (
-    APlusScore,
-    # A+ Scoring
-    APlusScoringInput,
     # Backtesting
     BacktestingInput,
     # CoinMarketCap
@@ -41,10 +38,6 @@ from finwiz.schemas.tools.inputs import (
     GetTickerHistoryInput,
     GetTickerInfoInput,
     GetTickerNewsInput,
-    # Market Regime
-    MarketRegime,
-    # Market Screening
-    MarketScreeningInput,
     # Custom Tool
     MyCustomToolInput,
     # Optimization
@@ -59,8 +52,6 @@ from finwiz.schemas.tools.inputs import (
     QuantitativeAnalysisInput,
     # Risk Assessment
     RiskAssessmentInput,
-    # Scoring
-    ScoringCriteria,
     StandardizedSentimentInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
@@ -1072,95 +1063,6 @@ class TestBacktestingInput:
 # ============================================================================
 
 
-class TestMarketScreeningInput:
-    """Tests for MarketScreeningInput model."""
-
-    def test_required_asset_type(self, fake):
-        """Test instantiation with required asset_type."""
-        asset_type = "stock"
-        model = MarketScreeningInput(asset_type=asset_type)
-
-        assert model.asset_type == asset_type
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        types = ["etf", "stock", "crypto"]
-        for asset_type in types:
-            model = MarketScreeningInput(asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="invalid")
-        assert "asset_type" in str(exc_info.value)
-
-    def test_default_values(self):
-        """Test default values."""
-        model = MarketScreeningInput(asset_type="stock")
-
-        assert model.screening_criteria == {}
-        assert model.market_region == "global"
-        assert model.max_candidates == 50
-        assert model.min_a_plus_score == 0.85
-        assert model.include_detailed_analysis is False
-
-    def test_max_candidates_constraint(self):
-        """Test max_candidates ge/le constraints (1-500)."""
-        # Valid: 1
-        model_min = MarketScreeningInput(asset_type="stock", max_candidates=1)
-        assert model_min.max_candidates == 1
-
-        # Valid: 500
-        model_max = MarketScreeningInput(asset_type="stock", max_candidates=500)
-        assert model_max.max_candidates == 500
-
-        # Invalid: below 1
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", max_candidates=0)
-        assert "max_candidates" in str(exc_info.value)
-
-        # Invalid: above 500
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", max_candidates=1000)
-        assert "max_candidates" in str(exc_info.value)
-
-    def test_min_a_plus_score_constraint(self):
-        """Test min_a_plus_score ge/le constraints (0.0-1.0)."""
-        # Valid: 0.0
-        model_min = MarketScreeningInput(asset_type="stock", min_a_plus_score=0.0)
-        assert model_min.min_a_plus_score == 0.0
-
-        # Valid: 1.0
-        model_max = MarketScreeningInput(asset_type="stock", min_a_plus_score=1.0)
-        assert model_max.min_a_plus_score == 1.0
-
-        # Valid: 0.5
-        model_mid = MarketScreeningInput(asset_type="stock", min_a_plus_score=0.5)
-        assert model_mid.min_a_plus_score == 0.5
-
-        # Invalid: below 0.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", min_a_plus_score=-0.1)
-        assert "min_a_plus_score" in str(exc_info.value)
-
-        # Invalid: above 1.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", min_a_plus_score=1.1)
-        assert "min_a_plus_score" in str(exc_info.value)
-
-    def test_custom_screening_criteria(self):
-        """Test custom screening_criteria."""
-        criteria = {"min_market_cap": 1e9, "max_pe_ratio": 30}
-        model = MarketScreeningInput(asset_type="stock", screening_criteria=criteria)
-
-        assert model.screening_criteria == criteria
-
-    def test_missing_required_asset_type(self):
-        """Test ValidationError when asset_type is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput()
-        assert "asset_type" in str(exc_info.value)
-
-
 # ============================================================================
 # Optimization Tool Tests
 # ============================================================================
@@ -1312,136 +1214,6 @@ class TestPortfolioRebalancingInput:
         with pytest.raises(ValidationError) as exc_info:
             PortfolioRebalancingInput(holdings=[{"symbol": "AAPL", "shares": 100}])
         assert "target_weights" in str(exc_info.value)
-
-
-# ============================================================================
-# A+ Scoring Tool Tests
-# ============================================================================
-
-
-class TestAPlusScoringInput:
-    """Tests for APlusScoringInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbol = "AAPL"
-        asset_type = "stock"
-        model = APlusScoringInput(symbol=symbol, asset_type=asset_type)
-
-        assert model.symbol == symbol
-        assert model.asset_type == asset_type
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        types = ["etf", "stock", "crypto"]
-        for asset_type in types:
-            model = APlusScoringInput(symbol="AAPL", asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(symbol="AAPL", asset_type="invalid")
-        assert "asset_type" in str(exc_info.value)
-
-    def test_default_values(self):
-        """Test default values (empty dicts)."""
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock")
-
-        assert model.fundamental_data == {}
-        assert model.market_context == {}
-        assert model.custom_criteria == {}
-
-    def test_custom_fundamental_data(self):
-        """Test custom fundamental_data."""
-        data = {"roe": 0.25, "debt_to_equity": 0.3}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", fundamental_data=data)
-
-        assert model.fundamental_data == data
-
-    def test_custom_market_context(self):
-        """Test custom market_context."""
-        context = {"vix": 15.0, "interest_rate": 0.05}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", market_context=context)
-
-        assert model.market_context == context
-
-    def test_custom_criteria(self):
-        """Test custom_criteria."""
-        criteria = {"quality": 0.3, "momentum": 0.2}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", custom_criteria=criteria)
-
-        assert model.custom_criteria == criteria
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(asset_type="stock")
-        assert "symbol" in str(exc_info.value)
-
-    def test_missing_required_asset_type(self):
-        """Test ValidationError when asset_type is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(symbol="AAPL")
-        assert "asset_type" in str(exc_info.value)
-
-
-class TestAPlusScore:
-    """Tests for APlusScore model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        # Note: APlusScore has complex nested fields, testing minimal required
-        score = APlusScore(
-            symbol="AAPL",
-            asset_type="stock",
-            composite_score=0.85,
-            grade_info={},
-            fundamental_score=0.8,
-            technical_score=0.85,
-            quality_score=0.9,
-            risk_score=0.7,
-            market_regime=MarketRegime(),
-            scoring_criteria=ScoringCriteria(),
-            analysis_timestamp=None,
-        )
-
-        assert score.symbol == "AAPL"
-        assert score.asset_type == "stock"
-
-    def test_score_constraints(self):
-        """Test score constraints (0.0-1.0)."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScore(
-                symbol="AAPL",
-                asset_type="stock",
-                composite_score=1.5,  # Invalid: > 1.0
-                grade_info={},
-                fundamental_score=0.8,
-                technical_score=0.85,
-                quality_score=0.9,
-                risk_score=0.7,
-                market_regime=MarketRegime(),
-                scoring_criteria=ScoringCriteria(),
-                analysis_timestamp=None,
-            )
-        assert "composite_score" in str(exc_info.value)
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        score = APlusScore(
-            symbol="BTC",
-            asset_type="crypto",
-            composite_score=0.75,
-            grade_info={},
-            fundamental_score=0.7,
-            technical_score=0.8,
-            quality_score=0.7,
-            risk_score=0.75,
-            market_regime=MarketRegime(),
-            scoring_criteria=ScoringCriteria(),
-            analysis_timestamp=None,
-        )
-
-        assert score.asset_type == "crypto"
 
 
 # ============================================================================
