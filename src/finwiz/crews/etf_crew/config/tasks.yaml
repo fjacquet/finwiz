@@ -159,7 +159,7 @@ etf_risk_assessment_task:
     4. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
     5. Evaluate counterparty and structural risks based on replication methods and issuer stability.
     6. Review regulatory and tax considerations relevant for {current_year}.
-    7. Apply the "Standardized Risk Scoring Tool" methodology for consistent 0-5 risk scores across all ETFs.
+    7. Apply the "risk_scoring" tool to obtain standardized risk scores. Note: the tool returns scores on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     8. Quantitative risk assessment: Use the "Quantitative Analysis Tool" with analysis_type="performance"
        to calculate ETF-specific risk metrics including:
        - Tracking error and correlation analysis with benchmark indices
