@@ -39,8 +39,6 @@ tools/
 ├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # Error wrapping
 ├── base_tools.py                    # AsyncFeedbackTool base
-├── crewai_retry_patch.py            # Retry patch
-├── llm_retry.py                     # LLM retry logic
 │
 ├── # Perplexity subsystem
 ├── perplexity_logging.py

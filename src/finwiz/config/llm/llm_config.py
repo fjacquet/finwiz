@@ -43,10 +43,10 @@ logger = get_logger(__name__)
 # "incomplete chunked read") and APIError 502/503/504 with built-in
 # exponential backoff. Tunable via LLM_NUM_RETRIES (default: 3).
 #
-# Note: tools/crewai_retry_patch.py (initialize_retry_mechanism) is a no-op
-# in current CrewAI — its `Agent._get_llm` patch target no longer exists,
-# and the langchain BaseLLM isinstance gate would fail on crewai.LLM (litellm
-# wrapper) anyway. So this module-level setting is the only active retry layer.
+# This module-level setting is the only retry layer: the former
+# tools/crewai_retry_patch.py (initialize_retry_mechanism) was a documented
+# no-op — its `Agent._get_llm` patch target no longer exists in installed
+# CrewAI — and was deleted along with tools/llm_retry.py.
 _DEFAULT_LLM_NUM_RETRIES = 3
 
 

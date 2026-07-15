@@ -13,7 +13,6 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 from finwiz.crews.stock_crew.stock_crew import StockCrew
-from finwiz.tools.crewai_retry_patch import initialize_retry_mechanism
 from finwiz.tools.logger import get_logger, setup_logging
 
 # Setup logging configuration
@@ -27,10 +26,6 @@ warnings.filterwarnings("ignore", message="No path_separator found in configurat
 
 logger.info("Loading environment variables for test run.")
 load_dotenv()
-
-# Initialize LLM retry mechanism
-logger.info("Initializing LLM retry mechanism.")
-initialize_retry_mechanism(max_retries=5, timeout=300)
 
 
 def run_test():

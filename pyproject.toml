@@ -221,7 +221,6 @@ max-complexity = 10
 "src/finwiz/tools/alternative_finder_tool.py" = ["C901"]
 "src/finwiz/tools/backtesting_tool.py" = ["C901"]
 "src/finwiz/tools/charts/chart_analysis.py" = ["C901"]
-"src/finwiz/tools/crewai_retry_patch.py" = ["C901"]
 "src/finwiz/tools/enhanced_crypto_tool.py" = ["C901"]
 "src/finwiz/tools/etf_analysis_tool.py" = ["C901"]
 "src/finwiz/tools/portfolio_price_service.py" = ["C901"]
@@ -429,8 +428,7 @@ omit = [
     "src/finwiz/tools/perplexity_logging.py",
     "src/finwiz/tools/perplexity_performance.py",
     "src/finwiz/tools/perplexity_performance_benchmark.py",
-    # LLM retry / litellm telemetry — both LLM-specific, not deterministic.
-    "src/finwiz/tools/llm_retry.py",
+    # litellm telemetry — LLM-specific, not deterministic.
     "src/finwiz/infrastructure/monitoring/litellm_callback.py",
 ]
 
