@@ -76,6 +76,8 @@ tools/
 ├── etf/                             # ETF data fetchers/analyzers
 │   ├── etf_analyzers.py             # ETFAnalyzer
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
+├── rebalancing/                     # Re-export shim for finwiz.reporting.rebalancing
+│   └── __init__.py                  # TemplateBuilder / TemplateRenderer
 └── reporting/                       # Report formatters
     ├── report_formatters.py         # HTMLReportFormatter
     └── report_sections.py           # ReportSectionBuilder
