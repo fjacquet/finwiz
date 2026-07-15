@@ -49,7 +49,7 @@ def kickoff() -> None:
         # Step 2: Initialize and validate configuration
         initialize_configuration()
 
-        # Step 3: Initialize environment and retry mechanism
+        # Step 3: Initialize environment
         initialize_environment()
 
         # Step 4: Create and start the flow

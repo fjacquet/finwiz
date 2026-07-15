@@ -22,7 +22,7 @@ core/
 
 1. Validate template variables at startup
 2. Initialize configuration (settings, env)
-3. Initialize environment and retry mechanism
+3. Initialize environment
 4. Create `FinwizState` instance
 5. Create `FinwizFlow` instance
 6. Execute the flow (`flow.kickoff()`)

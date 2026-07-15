@@ -16,7 +16,7 @@ cli/
 |------|----------|---------|
 | `argument_parser.py` | `parse_arguments()` | Parse command-line arguments |
 | `argument_parser.py` | `initialize_configuration()` | Load and validate configuration |
-| `argument_parser.py` | `initialize_environment()` | Set up environment and retry mechanism |
+| `argument_parser.py` | `initialize_environment()` | Set up environment |
 | `argument_parser.py` | `initialize_flow()` | Create and configure FinwizFlow instance |
 
 ## Usage
