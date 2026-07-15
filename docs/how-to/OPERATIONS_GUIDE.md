@@ -412,7 +412,7 @@ USE_MINIMAL_RISK_TOOLS=false
 **Minimal Tool Set Includes:**
 
 - `QuantitativeAnalysisTool` (core risk metrics)
-- `TickerValidationTool` (ticker validation)
+- `TickerExistenceValidationTool` (ticker validation)
 - Asset-specific tool (`EnhancedSECAnalysisTool`, `EnhancedETFAnalysisTool`, or `EnhancedCryptoAnalysisTool`)
 
 **When to disable:**

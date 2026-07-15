@@ -12,8 +12,6 @@ TWELVE_DATA_BASE: str = os.getenv("TD_BASE_URL", "https://api.twelvedata.com")
 
 # --- Crypto ---
 COINGECKO_BASE: str = os.getenv("CG_BASE_URL", "https://api.coingecko.com/api/v3")
-COINBASE_BASE: str = os.getenv("CB_BASE_URL", "https://api.exchange.coinbase.com")
-KRAKEN_BASE: str = os.getenv("KRAKEN_BASE_URL", "https://api.kraken.com/0/public")
 
 # --- AI / Search ---
 # Perplexity's chat-completions endpoint (PPLX_BASE_URL) is now read directly by

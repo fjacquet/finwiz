@@ -27,11 +27,9 @@ from finwiz.tools.finance_tools import (
     get_investment_discovery_tools,
     get_stock_discovery_tools,
 )
-from finwiz.tools.optimization_tool import get_optimization_tool
 from finwiz.tools.portfolio_analysis_tool import get_portfolio_analysis_tool
 from finwiz.tools.portfolio_rebalancing_tool import get_portfolio_rebalancing_tool
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.risk_assessment_tool import get_risk_assessment_tool
 
 load_dotenv()
 
@@ -84,8 +82,6 @@ def _get_portfolio_tools() -> list:
     if "portfolio" not in _tool_cache:
         portfolio_optimization_tools = [
             get_portfolio_analysis_tool(),
-            get_optimization_tool(),
-            get_risk_assessment_tool(),
             get_portfolio_rebalancing_tool(),
         ]
         _tool_cache["portfolio"] = _get_common_tools() + portfolio_optimization_tools
@@ -196,7 +192,6 @@ class InvestmentDiscoveryCrew:
 
         validation_tools = [
             get_backtesting_tool(),
-            get_risk_assessment_tool(),
             StandardizedRiskScoringTool(),
             get_quantitative_analysis_tool(),
         ]

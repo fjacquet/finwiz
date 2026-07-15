@@ -233,22 +233,22 @@ print(f"MACD: {indicators['macd']}")
 
 Tools for evaluating investment risks and calculating risk metrics.
 
-#### RiskAssessmentTool
+#### StandardizedRiskScoringTool
 
-Comprehensive risk analysis for investments.
+Comprehensive risk analysis for investments (central `crewai_custom_tools` package, tool name `risk_scoring`).
 
 **Purpose**: Evaluate investment risks across multiple dimensions
 
 **Input**: Asset data and market context
 
-**Output**: Standardized risk assessment
+**Output**: Standardized risk assessment (0-10 risk score with factors)
 
 **Example**:
 
 ```python
-from finwiz.tools.risk_assessment_tool import RiskAssessmentTool
+from crewai_custom_tools import StandardizedRiskScoringTool
 
-tool = RiskAssessmentTool()
+tool = StandardizedRiskScoringTool()
 risk = tool.run({
     "ticker": "AAPL",
     "asset_class": "stock",
@@ -258,17 +258,6 @@ risk = tool.run({
 print(f"Risk Score: {risk['risk_score']}")
 print(f"Risk Factors: {risk['risk_factors']}")
 ```
-
-**Output Schema**: `RiskAssessmentStandardized`
-
-**Output Fields**:
-
-- `risk_score`: Overall risk score (1-10 scale)
-- `systematic_risk`: Market/sector risk component
-- `idiosyncratic_risk`: Asset-specific risk
-- `risk_factors`: List of identified risk factors
-- `risk_category`: Risk category classification
-- `confidence_level`: Assessment confidence
 
 #### VolatilityAnalysisTool
 
@@ -361,9 +350,9 @@ print(f"Key Headlines: {news['key_headlines']}")
 
 Tools for data validation and quality assurance.
 
-#### TickerValidationTool
+#### TickerExistenceValidationTool
 
-Validates ticker symbols and ensures data availability.
+Validates ticker symbols and ensures data availability (central `crewai_custom_tools` package).
 
 **Purpose**: Verify ticker symbols are valid and tradeable
 
@@ -374,9 +363,9 @@ Validates ticker symbols and ensures data availability.
 **Example**:
 
 ```python
-from finwiz.tools.ticker_validation_tool import TickerValidationTool
+from crewai_custom_tools import TickerExistenceValidationTool
 
-tool = TickerValidationTool()
+tool = TickerExistenceValidationTool()
 validation = tool.run("AAPL")
 
 print(f"Valid: {validation['is_valid']}")
@@ -563,7 +552,7 @@ Some tools support batch processing:
 
 ```python
 # Batch ticker validation
-tool = TickerValidationTool()
+tool = TickerExistenceValidationTool()
 results = tool.run_batch(["AAPL", "MSFT", "GOOGL"])
 ```
 
@@ -593,7 +582,7 @@ Choose appropriate tools for your analysis needs:
 - **Basic company info**: `YahooFinanceTickerInfoTool`
 - **Fundamental analysis**: `EnhancedSECAnalysisTool`
 - **Technical analysis**: `QuantitativeAnalysisTool` + `TechnicalIndicatorsTool`
-- **Risk assessment**: `RiskAssessmentTool` + `VolatilityAnalysisTool`
+- **Risk assessment**: `StandardizedRiskScoringTool` + `VolatilityAnalysisTool`
 - **Market sentiment**: `StandardizedSentimentTool`
 
 ### Input Validation
@@ -661,7 +650,7 @@ def analyst(self) -> Agent:
         tools=[
             YahooFinanceTickerInfoTool(),
             QuantitativeAnalysisTool(asset_class="stock"),
-            RiskAssessmentTool()
+            StandardizedRiskScoringTool()
         ]
     )
 ```
@@ -719,7 +708,7 @@ time.sleep(1)  # Add delay between requests
 
 ```python
 # Solution: Validate ticker before tool execution
-validation_tool = TickerValidationTool()
+validation_tool = TickerExistenceValidationTool()
 if validation_tool.run(ticker)['is_valid']:
     result = analysis_tool.run(ticker)
 ```

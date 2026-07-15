@@ -17,7 +17,6 @@ integration/
 ├── availability.py                   # DataAvailabilityTracker, SourceStatus
 ├── middleware.py                     # CrewIntegrationMiddleware (pre/post execution)
 ├── transformation.py                 # Data consolidation & serialization helpers
-├── freshness_validated_tool.py       # FreshnessValidatedTool decorator
 ├── batch_data_prefetcher.py          # BatchDataPreFetcher (bulk data loading)
 ├── backtesting_pipeline_connector.py # connect_backtesting_to_discovery_results()
 └── cli.py                            # CLI commands: health, validate, status, analyze
@@ -32,7 +31,6 @@ integration/
 | `extractor.py` | `CrewDataExtractor` | Parse and extract crew output |
 | `config.py` | `get_integration_config()` | Get integration settings |
 | `middleware.py` | `CrewIntegrationMiddleware` | Pre/post crew execution hooks |
-| `freshness_validated_tool.py` | `FreshnessValidatedTool` | Wrap tools with freshness checks |
 | `batch_data_prefetcher.py` | `BatchDataPreFetcher` | Prefetch data in bulk before crew execution |
 | `cli.py` | `main()` | CLI entry (`cmd_health`, `cmd_validate`, `cmd_status`) |
 

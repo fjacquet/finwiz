@@ -20,10 +20,7 @@ tools/
 ├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
 ├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 ├── backtesting_tool.py              # BacktestingTool
-├── optimization_tool.py             # OptimizationTool
-├── risk_assessment_tool.py          # RiskAssessmentTool
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
-├── chart_analyzer.py                # Chart analysis
 │
 ├── # Enhanced tools (per-asset specialization)
 ├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
@@ -56,7 +53,6 @@ tools/
 ├── analysis/                        # Analysis coordination
 │   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
 │   └── holding_processors.py        # HoldingProcessor
-├── charts/                          # Chart generation
 ├── etf/                             # ETF data fetchers
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
 └── reporting/                       # Report formatters

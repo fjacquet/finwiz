@@ -174,32 +174,6 @@ class TestPerplexityIntegrationWrapper:
         assert articles[0].analysis_type == "sentiment"
         assert articles[1].publisher == "Reuters"
 
-    def test_should_extract_articles_from_answer_when_no_citations(self):
-        """Test fallback extraction from the envelope's answer text when citations are empty.
-
-        Citations nested under ``choices`` (the raw chat-completions shape) are no
-        longer a thing the central tool returns; the envelope's `answer` text is the
-        fallback source instead.
-        """
-        # Arrange
-        integration = PerplexityAnalysisIntegration(self.config)
-
-        raw_response = ok(
-            {
-                "answer": "See the SEC filing at https://sec.gov/filing-123 for details.",
-                "citations": [],
-                "source": "perplexity",
-            }
-        )
-
-        # Act
-        articles = integration._parse_perplexity_response(raw_response, "fundamental", "AAPL")
-
-        # Assert
-        assert len(articles) == 1
-        assert str(articles[0].url) == "https://sec.gov/filing-123"
-        assert articles[0].analysis_type == "fundamental"
-
     def test_should_handle_invalid_json_response(self):
         """Test handling of invalid JSON responses."""
         # Arrange

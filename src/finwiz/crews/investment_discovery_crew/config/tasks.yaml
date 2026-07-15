@@ -281,9 +281,10 @@ optimization_task:
     - Provide specific action items with clear next steps
     - Include monitoring and rebalancing recommendations
 
-    Use Portfolio Analysis Tool for current portfolio assessment, Optimization Tool
-    for allocation calculations, Risk Assessment Tool for impact analysis, and
-    integration with existing grading system for grade improvement calculations.
+    Use Portfolio Analysis Tool for current portfolio assessment, the Portfolio
+    Rebalancing Tool for allocation adjustments, the "risk_scoring" tool for impact
+    analysis, and integration with existing grading system for grade improvement
+    calculations.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the OptimizationResult object directly - do NOT wrap it in additional fields

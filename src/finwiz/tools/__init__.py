@@ -12,11 +12,9 @@ specific data retrieval, analysis, or other specialized tasks.
 # Lazy imports to avoid circular dependencies
 # Import directly from the modules when needed
 
-from .optimization_tool import OptimizationTool
 from .portfolio_analysis_tool import PortfolioAnalysisTool
-from .risk_assessment_tool import RiskAssessmentTool
 
-__all__ = ["BacktestingTool", "OptimizationTool", "PortfolioAnalysisTool", "RiskAssessmentTool"]
+__all__ = ["BacktestingTool", "PortfolioAnalysisTool"]
 
 
 def __getattr__(name: str) -> type:

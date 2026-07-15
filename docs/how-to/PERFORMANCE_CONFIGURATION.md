@@ -402,7 +402,7 @@ def get_tools_for_mode(mode: OptimizationMode, asset_class: str) -> List[BaseToo
     if mode == OptimizationMode.MAXIMUM_SPEED:
         # Minimal tool set for speed
         return [
-            TickerValidationTool(),
+            TickerExistenceValidationTool(),
             QuantitativeAnalysisTool(asset_class=asset_class),
             # Skip expensive tools like detailed sentiment analysis
         ]
@@ -410,7 +410,7 @@ def get_tools_for_mode(mode: OptimizationMode, asset_class: str) -> List[BaseToo
     elif mode == OptimizationMode.BALANCED:
         # Balanced tool set
         return [
-            TickerValidationTool(),
+            TickerExistenceValidationTool(),
             QuantitativeAnalysisTool(asset_class=asset_class),
             StandardizedSentimentTool(),
             # Include key tools but skip expensive ones

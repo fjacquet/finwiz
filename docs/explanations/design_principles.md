@@ -51,12 +51,12 @@ Each component has a single, well-defined responsibility:
 
 ```python
 # ✅ Good: Single responsibility
-class TickerValidationTool:
+class TickerExistenceValidationTool:
     """Validates ticker symbols only."""
     def validate(self, ticker: str) -> ValidationResult:
         pass
 
-class RiskAssessmentTool:
+class StandardizedRiskScoringTool:
     """Calculates risk metrics only."""
     def assess_risk(self, data: dict) -> RiskAssessment:
         pass
@@ -76,9 +76,9 @@ Make dependencies clear and manageable:
 # ✅ Good: Explicit dependencies
 class StockAnalyzer:
     def __init__(self,
-                 validator: TickerValidationTool,
+                 validator: TickerExistenceValidationTool,
                  data_source: YahooFinanceTool,
-                 risk_assessor: RiskAssessmentTool):
+                 risk_assessor: StandardizedRiskScoringTool):
         self.validator = validator
         self.data_source = data_source
         self.risk_assessor = risk_assessor

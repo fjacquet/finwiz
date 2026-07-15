@@ -173,19 +173,6 @@ class PortfolioAnalysisInput(BaseModel):
     include_diversification: bool = Field(default=True, description="Include diversification analysis")
 
 
-# Risk Assessment Tool Inputs
-class RiskAssessmentInput(BaseModel):
-    """Input model for risk assessment tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to assess")
-    portfolio_weights: dict[str, float] | None = Field(None, description="Portfolio weights for each asset (if assessing portfolio risk)")
-    assessment_type: str = Field(default="comprehensive", description="Type of assessment: 'individual', 'portfolio', or 'comprehensive'")
-    risk_horizon: str = Field(default="1y", description="Risk assessment horizon (1m, 3m, 6m, 1y, 2y)")
-    confidence_level: float = Field(default=0.95, description="Confidence level for VaR calculations")
-    include_stress_testing: bool = Field(default=True, description="Include stress testing scenarios")
-    market_regime: str = Field(default="normal", description="Market regime: 'bull', 'bear', 'normal', 'volatile'")
-
-
 # Quantitative Analysis Tool Inputs
 class QuantitativeAnalysisInput(BaseModel):
     """Input schema for quantitative analysis tool."""
@@ -195,13 +182,6 @@ class QuantitativeAnalysisInput(BaseModel):
     analysis_type: str = Field(default="comprehensive", description="Type of analysis: 'technical', 'backtest', 'performance', or 'comprehensive'")
     timeframe: str = Field(default="1y", description="Analysis timeframe (e.g., '1y', '2y', '5y')")
     strategy: str = Field(default="sma_crossover", description="Strategy for backtesting")
-
-
-# Perplexity Tool Inputs
-class PerplexitySearchWrapperInput(BaseModel):
-    """Input schema for PerplexitySearchWrapper."""
-
-    query: str = Field(..., description="Search query for financial research")
 
 
 # Custom Tool Inputs
@@ -222,20 +202,6 @@ class BacktestingInput(BaseModel):
     initial_capital: float = Field(default=100000.0, gt=0, description="Initial capital for backtesting")
     include_regime_analysis: bool = Field(default=True, description="Include multi-regime analysis (bull, bear, sideways)")
     strategy_params: dict[str, Any] = Field(default_factory=dict, description="Custom strategy parameters")
-
-
-# Optimization Tool Inputs
-class OptimizationInput(BaseModel):
-    """Input model for portfolio optimization tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to optimize")
-    expected_returns: dict[str, float] | None = Field(None, description="Expected returns for each asset (optional)")
-    risk_tolerance: float = Field(default=0.5, description="Risk tolerance (0.0 = risk averse, 1.0 = risk seeking)")
-    optimization_method: str = Field(default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'")
-    constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
-    target_return: float | None = Field(None, description="Target return for optimization")
-    max_weight: float = Field(default=0.4, ge=0.0, le=1.0, description="Maximum weight per asset (0.0-1.0)")
-    min_weight: float = Field(default=0.0, ge=0.0, le=1.0, description="Minimum weight per asset (0.0-1.0)")
 
 
 # Portfolio Rebalancing Tool Inputs

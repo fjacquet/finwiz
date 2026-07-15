@@ -369,12 +369,6 @@ class PerplexityAnalysisIntegration:
                     logger.warning(f"Failed to parse citation {i}: {e!s}")
                     continue
 
-            # If no citations found, try to extract from the answer text via the
-            # legacy chat-completions shape the helper still understands.
-            if not articles:
-                legacy_shaped = {"choices": [{"message": {"content": (data or {}).get("answer", "")}}]}
-                articles = self._extract_articles_from_content(legacy_shaped, analysis_type)
-
             if ticker:
                 PerplexityOperationLogger.log_parsing_metrics(ticker, raw_response_size, len(articles))
 
@@ -506,53 +500,6 @@ class PerplexityAnalysisIntegration:
             return "analysis"
         else:
             return "news"
-
-    def _extract_articles_from_content(self, response_data: dict[str, Any], analysis_type: AnalysisType) -> list[SonarArticle]:
-        """Extract articles from response content when citations are not available."""
-        articles = []
-
-        try:
-            # Try to extract from choices content
-            choices = response_data.get("choices", [])
-            if not choices:
-                return articles
-
-            content = choices[0].get("message", {}).get("content", "")
-
-            # Look for URL patterns in content
-            import re
-
-            url_pattern = r'https?://[^\s<>"{}|\\^`\[\]]+'
-            urls = re.findall(url_pattern, content)
-
-            # Create basic articles from found URLs
-            for i, url in enumerate(urls[:10]):  # Limit to 10 URLs
-                try:
-                    # Extract domain for title/publisher
-                    from urllib.parse import urlparse
-
-                    domain = urlparse(url).netloc
-
-                    article = SonarArticle(
-                        title=f"Article from {domain}",
-                        url=url,
-                        summary="",
-                        publisher=self._extract_publisher({}, url),
-                        published_date=None,
-                        relevance_score=max(0.1, 1.0 - (i * 0.1)),
-                        content_type="news",
-                        analysis_type=analysis_type,
-                    )
-                    articles.append(article)
-
-                except Exception as e:
-                    logger.warning(f"Failed to create article from URL {url}: {e!s}")
-                    continue
-
-        except Exception as e:
-            logger.error(f"Failed to extract articles from content: {e!s}")
-
-        return articles
 
     # Convenience methods for specific analysis types
 

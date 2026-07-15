@@ -28,13 +28,10 @@ from .inputs import (
     GetTickerNewsInput,
     # Other tool inputs
     MyCustomToolInput,
-    OptimizationInput,
     PerformanceTrackingInput,
-    PerplexitySearchWrapperInput,
     PortfolioAnalysisInput,
     PortfolioRebalancingInput,
     QuantitativeAnalysisInput,
-    RiskAssessmentInput,
     StandardizedSentimentInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
@@ -65,7 +62,6 @@ __all__ = [
     # Other tool inputs
     "MyCustomToolInput",
     "BacktestingInput",
-    "OptimizationInput",
     "PortfolioRebalancingInput",
     "FeedbackCollectionInput",
     "PerformanceTrackingInput",
@@ -74,7 +70,5 @@ __all__ = [
     "GetTickerInfoInput",
     "GetTickerNewsInput",
     "PortfolioAnalysisInput",
-    "RiskAssessmentInput",
     "QuantitativeAnalysisInput",
-    "PerplexitySearchWrapperInput",
 ]
