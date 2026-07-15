@@ -4,12 +4,22 @@ import re
 from datetime import datetime
 from typing import Any, Literal
 
+from crewai_custom_tools.models.analytics_models import (
+    AssetClass,
+    PositionSizeRecommendation,
+    PriceTargets,
+)
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .common import RiskAssessmentStandardized
 
 Decision = Literal["KEEP", "SELL"]
-AssetClass = Literal["stock", "etf", "crypto"]  # Added crypto support for A+ discoveries
+# AssetClass, PositionSizeRecommendation, and PriceTargets are re-exported from
+# crewai_custom_tools.models.analytics_models (Wave-3 Task 9 schema shim) — the
+# central package owns the canonical definitions now. finwiz keeps re-exporting
+# them here so every existing `from finwiz.schemas.portfolio_review import
+# AssetClass` (etc.) import path keeps working; because these are the same
+# class/type objects, isinstance checks and Pydantic validation stay coherent.
 
 # Ticker validation: matches Yahoo / Kraken formats — uppercase alnum plus
 # `.` (BRK.B), `-` (BTC-USD), `:` (exchange:symbol), `^` (^GSPC), `=` (futures).
@@ -79,56 +89,6 @@ class APlusImprovementSuggestion(BaseModel):
     risk_impact_description: str = Field(..., description="Description of risk impact")
     cost_analysis: dict[str, float] = Field(default_factory=dict, description="Transaction costs and fees")
     implementation_notes: list[str] = Field(default_factory=list, description="Implementation considerations")
-
-
-class PriceTargets(BaseModel):
-    """Price targets for buy/sell decisions."""
-
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    current_price: float
-    currency: str
-    fair_value_estimate: float | None = None
-
-    # Buy targets
-    buy_target_primary: float | None = None
-    buy_target_secondary: float | None = None
-    buy_rationale: str = ""
-
-    # Sell targets
-    sell_target_primary: float | None = None
-    sell_target_secondary: float | None = None
-    stop_loss_level: float | None = None
-    sell_rationale: str = ""
-
-    # Technical levels
-    support_levels: list[float] = Field(default_factory=list)
-    resistance_levels: list[float] = Field(default_factory=list)
-
-    # Metadata
-    calculation_method: str = ""
-    confidence_level: float = Field(ge=0.0, le=1.0, default=0.5)
-    data_as_of: datetime
-    data_sources: list[str] = Field(default_factory=list)
-
-
-class PositionSizeRecommendation(BaseModel):
-    """Position sizing recommendation."""
-
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
-
-    current_size_pct: float = Field(ge=0.0, le=100.0)
-    recommended_size_pct: float = Field(ge=0.0, le=100.0)
-    sizing_action: Literal["add", "trim", "hold", "exit"]
-
-    # Rationale
-    sizing_rationale: str
-    risk_contribution: float = Field(ge=0.0, le=100.0, default=0.0)
-    correlation_with_portfolio: float = Field(ge=-1.0, le=1.0, default=0.0)
-
-    # Constraints applied
-    concentration_limits_applied: bool = False
-    risk_limits_applied: bool = False
 
 
 class HoldingDecision(BaseModel):

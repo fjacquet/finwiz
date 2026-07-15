@@ -57,8 +57,6 @@ from finwiz.schemas.tools.inputs import (
     PortfolioRebalancingInput,
     # Quantitative Analysis
     QuantitativeAnalysisInput,
-    # Regulatory Compliance
-    RegulatoryComplianceInput,
     # Risk Assessment
     RiskAssessmentInput,
     # Scoring
@@ -1444,59 +1442,6 @@ class TestAPlusScore:
         )
 
         assert score.asset_type == "crypto"
-
-
-# ============================================================================
-# Regulatory Compliance Tool Tests
-# ============================================================================
-
-
-class TestRegulatoryComplianceInput:
-    """Tests for RegulatoryComplianceInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "BTC"
-        model = RegulatoryComplianceInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_jurisdictions(self):
-        """Test default jurisdictions list."""
-        model = RegulatoryComplianceInput(symbol="BTC")
-
-        assert model.jurisdictions == ["US", "EU", "Switzerland", "UK", "Singapore"]
-
-    def test_custom_jurisdictions(self):
-        """Test custom jurisdictions."""
-        jurisdictions = ["US", "Japan"]
-        model = RegulatoryComplianceInput(symbol="BTC", jurisdictions=jurisdictions)
-
-        assert model.jurisdictions == jurisdictions
-
-    def test_default_boolean_fields(self):
-        """Test default boolean fields."""
-        model = RegulatoryComplianceInput(symbol="BTC")
-
-        assert model.include_risk_assessment is True
-        assert model.include_compliance_status is True
-
-    def test_custom_boolean_fields(self):
-        """Test custom boolean fields."""
-        model = RegulatoryComplianceInput(
-            symbol="BTC",
-            include_risk_assessment=False,
-            include_compliance_status=False,
-        )
-
-        assert model.include_risk_assessment is False
-        assert model.include_compliance_status is False
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegulatoryComplianceInput()
-        assert "symbol" in str(exc_info.value)
 
 
 # ============================================================================

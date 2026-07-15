@@ -341,19 +341,6 @@ class APlusScore(BaseModel):
     analysis_timestamp: Any  # datetime
 
 
-# Regulatory Compliance Tool Inputs
-class RegulatoryComplianceInput(BaseModel):
-    """Input schema for Regulatory Compliance Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-    jurisdictions: list[str] = Field(
-        default=["US", "EU", "Switzerland", "UK", "Singapore"],
-        description="List of jurisdictions to analyze",
-    )
-    include_risk_assessment: bool = Field(default=True, description="Include regulatory risk assessment")
-    include_compliance_status: bool = Field(default=True, description="Include compliance status analysis")
-
-
 # Feedback Integration Tool Inputs
 class FeedbackCollectionInput(BaseModel):
     """Input for collecting user feedback on recommendations."""

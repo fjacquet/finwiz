@@ -443,3 +443,33 @@ class TestAllocationFields:
         review = PortfolioReview(as_of=datetime.now(UTC))
 
         assert review.total_value_eur is None
+
+
+class TestPortfolioReviewSchemaReexportShim:
+    """Wave-3 Task 9: AssetClass/PositionSizeRecommendation/PriceTargets must be
+    the SAME objects as crewai_custom_tools.models.analytics_models — finwiz
+    re-exports rather than redefines them, so isinstance/validation stay coherent.
+    """
+
+    def test_asset_class_is_central_object(self):
+        from crewai_custom_tools.models.analytics_models import AssetClass as CentralAssetClass
+
+        import finwiz.schemas.portfolio_review as finwiz_portfolio_review
+
+        assert finwiz_portfolio_review.AssetClass is CentralAssetClass
+
+    def test_position_size_recommendation_is_central_class(self):
+        from crewai_custom_tools.models.analytics_models import (
+            PositionSizeRecommendation as CentralPositionSizeRecommendation,
+        )
+
+        import finwiz.schemas.portfolio_review as finwiz_portfolio_review
+
+        assert finwiz_portfolio_review.PositionSizeRecommendation is CentralPositionSizeRecommendation
+
+    def test_price_targets_is_central_class(self):
+        from crewai_custom_tools.models.analytics_models import PriceTargets as CentralPriceTargets
+
+        import finwiz.schemas.portfolio_review as finwiz_portfolio_review
+
+        assert finwiz_portfolio_review.PriceTargets is CentralPriceTargets

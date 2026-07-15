@@ -19,6 +19,7 @@ from crewai_custom_tools import (
     YahooFinanceNewsTool,
     YahooFinanceTickerInfoTool,
 )
+from crewai_custom_tools.tools.analytics.regulatory_compliance import RegulatoryComplianceTool
 
 from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
@@ -29,7 +30,6 @@ from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.market_screening_tool import MarketScreeningTool
 from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
-from finwiz.tools.regulatory_compliance_tool import RegulatoryComplianceTool
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
