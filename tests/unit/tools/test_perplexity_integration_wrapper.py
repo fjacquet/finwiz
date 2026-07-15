@@ -65,8 +65,9 @@ class TestPerplexityIntegrationWrapper:
 
     def test_should_create_default_config_when_none_provided(self, mocker):
         """Test default configuration creation."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
+        # Arrange — clear() isolates from an ambient PERPLEXITY_API_KEY (e.g. local
+        # .env) so this exercises the PPLX_API_KEY fallback path deterministically.
+        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"}, clear=True)
 
         # Act
         integration = PerplexityAnalysisIntegration()
