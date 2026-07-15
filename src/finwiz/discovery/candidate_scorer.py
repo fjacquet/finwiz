@@ -10,11 +10,12 @@ from __future__ import annotations
 
 from typing import Any, Final
 
+from crewai_custom_tools.tools.analytics.screening_criteria import ScreeningCriteria
+from crewai_custom_tools.tools.analytics.screening_ranking import ScreeningRanking
+
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate
 from finwiz.scoring.grading_system import score_to_grade
 from finwiz.tools.logger import get_logger
-from finwiz.tools.screening_criteria import ScreeningCriteria
-from finwiz.tools.screening_ranking import ScreeningRanking
 
 # Sources that emit a self-contained [0,1] composite from their own signals
 # (momentum/volume/breakout). For these, the source composite IS the right

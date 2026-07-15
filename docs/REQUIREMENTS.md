@@ -59,7 +59,7 @@ The main execution flow shall be re-architected to follow the logical business s
 - **4.1.1. Data Consolidation Fix:** The data consolidation system shall be fixed to correctly retrieve all successfully stored crew outputs, ensuring that downstream processes receive actual analysis data, not empty placeholders.
 - **4.1.2. Strict Schema Contracts:** All data passed between crews and to the reporter shall be validated against strict Pydantic models (`extra='forbid'`). The reporter must only accept a validated `ReporterInput` schema.
 - **4.1.3. Data Freshness Guarantee:** All market data used for analysis must be no older than 24 hours. The system must validate timestamps and attempt to refresh stale data. Analysis based on stale data must be flagged with warnings and reduced confidence scores. Accuracy is prioritized over caching for time-sensitive data like market prices.
-- **4.1.4. Ticker Validation:** All crews must use a standardized `TickerValidationTool` to verify symbols against authoritative sources before analysis.
+- **4.1.4. Ticker Validation:** All crews must use a standardized `TickerExistenceValidationTool` (from `crewai_custom_tools`) to verify symbols against authoritative sources before analysis.
 
 ### Requirement 4.2: Analysis Capabilities & Tool Usage
 

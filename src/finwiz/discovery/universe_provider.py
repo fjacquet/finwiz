@@ -10,9 +10,9 @@ from __future__ import annotations
 from typing import Any, ClassVar
 
 import yfinance as yf
+from crewai_custom_tools.tools.analytics.screening_utils import ScreeningUtils
 
 from finwiz.tools.logger import get_logger
-from finwiz.tools.screening_utils import ScreeningUtils
 
 
 class DynamicUniverseProvider:

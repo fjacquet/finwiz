@@ -63,7 +63,7 @@ print(f"Grade: {result.grade}")
 - `EnhancedSECAnalysisTool`
 - `QuantitativeAnalysisTool`
 - `StandardizedSentimentTool`
-- `TickerValidationTool`
+- `TickerExistenceValidationTool`
 
 ### ETF Crew
 
@@ -107,7 +107,7 @@ print(f"Tracking Error: {result.tracking_error}")
 - `YahooFinanceTickerInfoTool`
 - `EnhancedETFAnalysisTool`
 - `QuantitativeAnalysisTool`
-- `TickerValidationTool`
+- `TickerExistenceValidationTool`
 
 ### Crypto Crew
 
@@ -151,7 +151,7 @@ print(f"Technology Score: {result.technology_score}")
 - `CoinMarketCapTool`
 - `EnhancedCryptoAnalysisTool`
 - `QuantitativeAnalysisTool`
-- `TickerValidationTool`
+- `TickerExistenceValidationTool`
 
 ### Deep Analysis Crew
 
@@ -312,7 +312,7 @@ Use minimal tool sets for specific use cases:
 # Minimal tools for risk assessment
 tools = [
     QuantitativeAnalysisTool(asset_class=asset_class),
-    TickerValidationTool(),
+    TickerExistenceValidationTool(),
     asset_specific_tool
 ]
 ```

@@ -173,19 +173,6 @@ class PortfolioAnalysisInput(BaseModel):
     include_diversification: bool = Field(default=True, description="Include diversification analysis")
 
 
-# Risk Assessment Tool Inputs
-class RiskAssessmentInput(BaseModel):
-    """Input model for risk assessment tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to assess")
-    portfolio_weights: dict[str, float] | None = Field(None, description="Portfolio weights for each asset (if assessing portfolio risk)")
-    assessment_type: str = Field(default="comprehensive", description="Type of assessment: 'individual', 'portfolio', or 'comprehensive'")
-    risk_horizon: str = Field(default="1y", description="Risk assessment horizon (1m, 3m, 6m, 1y, 2y)")
-    confidence_level: float = Field(default=0.95, description="Confidence level for VaR calculations")
-    include_stress_testing: bool = Field(default=True, description="Include stress testing scenarios")
-    market_regime: str = Field(default="normal", description="Market regime: 'bull', 'bear', 'normal', 'volatile'")
-
-
 # Quantitative Analysis Tool Inputs
 class QuantitativeAnalysisInput(BaseModel):
     """Input schema for quantitative analysis tool."""
@@ -195,13 +182,6 @@ class QuantitativeAnalysisInput(BaseModel):
     analysis_type: str = Field(default="comprehensive", description="Type of analysis: 'technical', 'backtest', 'performance', or 'comprehensive'")
     timeframe: str = Field(default="1y", description="Analysis timeframe (e.g., '1y', '2y', '5y')")
     strategy: str = Field(default="sma_crossover", description="Strategy for backtesting")
-
-
-# Perplexity Tool Inputs
-class PerplexitySearchWrapperInput(BaseModel):
-    """Input schema for PerplexitySearchWrapper."""
-
-    query: str = Field(..., description="Search query for financial research")
 
 
 # Custom Tool Inputs
@@ -224,44 +204,6 @@ class BacktestingInput(BaseModel):
     strategy_params: dict[str, Any] = Field(default_factory=dict, description="Custom strategy parameters")
 
 
-# Market Screening Tool Inputs
-class MarketScreeningInput(BaseModel):
-    """Input schema for Market Screening Tool."""
-
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of assets to screen")
-    screening_criteria: dict[str, Any] = Field(default_factory=dict, description="Custom screening criteria (overrides defaults)")
-    market_region: str = Field(default="global", description="Market region to screen (global, us, eu, etc.)")
-    max_candidates: int = Field(default=50, ge=1, le=500, description="Maximum number of candidates to return")
-    min_a_plus_score: float = Field(default=0.85, ge=0.0, le=1.0, description="Minimum A+ score threshold")
-    include_detailed_analysis: bool = Field(default=False, description="Whether to include detailed A+ analysis for each candidate")
-
-
-class MarketScreeningResult(BaseModel):
-    """Result from market screening operation."""
-
-    asset_type: Literal["etf", "stock", "crypto"]
-    screening_criteria: dict[str, Any]
-    market_region: str
-    total_screened: int
-    candidates_found: int
-    a_plus_candidates: int
-    candidates: list[Any]  # Will be ScreeningCandidate when imported
-
-
-# Optimization Tool Inputs
-class OptimizationInput(BaseModel):
-    """Input model for portfolio optimization tool."""
-
-    assets: list[str] = Field(..., description="List of asset symbols to optimize")
-    expected_returns: dict[str, float] | None = Field(None, description="Expected returns for each asset (optional)")
-    risk_tolerance: float = Field(default=0.5, description="Risk tolerance (0.0 = risk averse, 1.0 = risk seeking)")
-    optimization_method: str = Field(default="mean_variance", description="Optimization method: 'mean_variance', 'risk_parity', 'equal_weight'")
-    constraints: dict[str, Any] | None = Field(None, description="Additional constraints")
-    target_return: float | None = Field(None, description="Target return for optimization")
-    max_weight: float = Field(default=0.4, ge=0.0, le=1.0, description="Maximum weight per asset (0.0-1.0)")
-    min_weight: float = Field(default=0.0, ge=0.0, le=1.0, description="Minimum weight per asset (0.0-1.0)")
-
-
 # Portfolio Rebalancing Tool Inputs
 class PortfolioRebalancingInput(BaseModel):
     """Input model for portfolio rebalancing tool."""
@@ -271,87 +213,6 @@ class PortfolioRebalancingInput(BaseModel):
     tolerance_bands: dict[str, float] | None = Field(default=None, description="Tolerance bands for each position")
     available_capital: float = Field(default=0.0, description="Available capital for rebalancing")
     global_tolerance: float = Field(default=0.05, description="Default tolerance band (5% = ±5%)")
-
-
-# A+ Scoring Tool Inputs
-class APlusScoringInput(BaseModel):
-    """Input schema for A+ Investment Scoring Tool."""
-
-    symbol: str = Field(..., description="Investment symbol (e.g., AAPL, SPY, BTC-USD)")
-    asset_type: Literal["etf", "stock", "crypto"] = Field(..., description="Type of asset to score")
-    fundamental_data: dict[str, Any] = Field(default_factory=dict, description="Fundamental data for the investment")
-    market_context: dict[str, Any] = Field(default_factory=dict, description="Current market context and conditions")
-    custom_criteria: dict[str, float] = Field(default_factory=dict, description="Custom scoring criteria weights")
-
-
-class MarketRegime(BaseModel):
-    """Current market regime assessment."""
-
-    regime_type: Literal["bull", "bear", "sideways", "volatile"] = "sideways"
-    vix_level: float = Field(default=20.0, ge=0.0, le=100.0)
-    inflation_rate: float = Field(default=3.0, ge=-5.0, le=20.0)
-    interest_rate_trend: Literal["rising", "falling", "stable"] = "stable"
-    market_stress_level: Literal["low", "medium", "high"] = "medium"
-
-
-class ScoringCriteria(BaseModel):
-    """Dynamic scoring criteria that adapt to market conditions."""
-
-    # ETF Criteria
-    etf_max_expense_ratio: float = Field(default=0.15, ge=0.0, le=2.0)
-    etf_min_aum: float = Field(default=1e9, ge=1e6, le=1e12)
-    etf_max_tracking_error: float = Field(default=0.002, ge=0.0, le=0.1)
-    etf_min_history_years: int = Field(default=3, ge=1, le=20)
-
-    # Stock Criteria
-    stock_min_roe: float = Field(default=0.20, ge=0.0, le=1.0)
-    stock_min_revenue_growth: float = Field(default=0.15, ge=-0.5, le=2.0)
-    stock_max_debt_to_equity: float = Field(default=0.3, ge=0.0, le=5.0)
-    stock_min_market_cap: float = Field(default=1e9, ge=1e6, le=1e13)
-
-    # Crypto Criteria
-    crypto_min_market_cap: float = Field(default=10e9, ge=1e6, le=1e13)
-    crypto_min_daily_volume: float = Field(default=500e6, ge=1e6, le=1e12)
-    crypto_min_age_months: int = Field(default=36, ge=1, le=200)
-
-
-class APlusScore(BaseModel):
-    """Comprehensive A+ score with detailed breakdown."""
-
-    symbol: str
-    asset_type: Literal["etf", "stock", "crypto"]
-    composite_score: float = Field(ge=0.0, le=1.0)
-    grade_info: Any  # GradeInfo type - will need proper import
-
-    # Component scores
-    fundamental_score: float = Field(ge=0.0, le=1.0)
-    technical_score: float = Field(ge=0.0, le=1.0)
-    quality_score: float = Field(ge=0.0, le=1.0)
-    risk_score: float = Field(ge=0.0, le=1.0)
-
-    # Analysis details
-    strengths: list[str] = Field(default_factory=list)
-    weaknesses: list[str] = Field(default_factory=list)
-    a_plus_rationale: str = ""
-    confidence_level: float = Field(default=0.5, ge=0.0, le=1.0)
-
-    # Context
-    market_regime: MarketRegime
-    scoring_criteria: ScoringCriteria
-    analysis_timestamp: Any  # datetime
-
-
-# Regulatory Compliance Tool Inputs
-class RegulatoryComplianceInput(BaseModel):
-    """Input schema for Regulatory Compliance Tool."""
-
-    symbol: str = Field(..., description="The crypto symbol, e.g., BTC, ETH")
-    jurisdictions: list[str] = Field(
-        default=["US", "EU", "Switzerland", "UK", "Singapore"],
-        description="List of jurisdictions to analyze",
-    )
-    include_risk_assessment: bool = Field(default=True, description="Include regulatory risk assessment")
-    include_compliance_status: bool = Field(default=True, description="Include compliance status analysis")
 
 
 # Feedback Integration Tool Inputs

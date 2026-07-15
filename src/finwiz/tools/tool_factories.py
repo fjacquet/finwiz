@@ -7,16 +7,24 @@ ensuring uniform tool configuration.
 """
 
 from crewai.tools import BaseTool
+from crewai_custom_tools import DirectoryReadTool, ETFAnalysisTool, FileReadTool, ValuationTool
 
-from finwiz.tools.etf_analysis_tool import get_etf_analysis_tool
-from finwiz.tools.file_tools import DirectoryReadTool, FileReadTool
 from finwiz.tools.finance_tools import (
     get_crypto_research_tools,
     get_etf_research_tools,
     get_stock_research_tools,
 )
 from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-from finwiz.tools.valuation_tool import get_valuation_tool
+
+
+def get_valuation_tool() -> BaseTool:
+    """Get central ValuationTool instance for use in crew tool lists."""
+    return ValuationTool()
+
+
+def get_etf_analysis_tool() -> BaseTool:
+    """Get central ETFAnalysisTool instance for use in crew tool lists."""
+    return ETFAnalysisTool()
 
 
 def get_stock_crew_tools(

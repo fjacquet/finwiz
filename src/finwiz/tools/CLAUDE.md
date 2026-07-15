@@ -18,28 +18,21 @@ tools/
 │
 ├── # Analysis tools
 ├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
-├── valuation_tool.py                # ValuationTool (DCF, P/E)
+├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 ├── backtesting_tool.py              # BacktestingTool
-├── optimization_tool.py             # OptimizationTool
-├── risk_assessment_tool.py          # RiskAssessmentTool
 ├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
-├── market_screening_tool.py         # MarketScreeningTool
-├── chart_analyzer.py                # Chart analysis
 │
 ├── # Enhanced tools (per-asset specialization)
 ├── enhanced_crypto_tool.py          # EnhancedCryptoAnalysisTool
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
-├── a_plus_scoring_tool.py           # A+ scoring
+├── (A+ scoring/screening tools — APlusScoringTool, APlusScreeningTool — and their
+├──  screening_criteria/screening_utils/screening_ranking modules now come from
+├──  crewai-custom-tools — see "Centralized tools" below)
 ├── regulatory_compliance_tool.py    # Compliance checking
 ├── alternative_finder_tool.py       # Alternative investments
 ├── price_target_calculator.py       # Price targets
 ├── position_sizing_tool.py          # Position sizing
-│
-├── # Screening
-├── screening_criteria.py            # ScreeningCriteria (A+ thresholds)
-├── screening_utils.py               # Screening utilities
-├── screening_ranking.py             # Ranking logic
 │
 ├── # Infrastructure
 ├── tool_result.py                   # ToolResult class
@@ -60,15 +53,11 @@ tools/
 ├── analysis/                        # Analysis coordination
 │   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
 │   └── holding_processors.py        # HoldingProcessor
-├── charts/                          # Chart generation
 ├── etf/                             # ETF data fetchers
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
-├── reporting/                       # Report formatters
-│   ├── report_formatters.py         # HTMLReportFormatter
-│   └── report_sections.py
-└── scoring/                         # Scoring helpers
-    ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
-    └── scoring_algorithms.py
+└── reporting/                       # Report formatters
+    ├── report_formatters.py         # HTMLReportFormatter
+    └── report_sections.py
 ```
 
 ## Entry Points
@@ -81,7 +70,6 @@ tools/
 | `tool_factories.py` | `get_discovery_crew_tools()` | Discovery crew tool set |
 | `tool_factories.py` | `get_deep_analysis_tools()` | Deep analysis tool set |
 | `logger.py` | `get_logger()` | Project-wide logger |
-| `screening_criteria.py` | `ScreeningCriteria` | A+ thresholds for screening |
 
 ## Usage
 
@@ -117,3 +105,25 @@ then `uv sync`. Remove the override and re-run `uv lock && uv sync` before
 committing. Programmatic callers parse tool output with
 `crewai_custom_tools.core.results.parse_tool_result()` — central tools return
 the `{"success", "data", "error"}` JSON envelope, never bare dicts.
+
+`ValuationTool` and `ETFAnalysisTool` also come from `crewai_custom_tools`
+(both agent-facing only — no finwiz code parses their output). `tool_factories.py`
+keeps thin `get_valuation_tool()`/`get_etf_analysis_tool()` shims that just
+construct the central classes, preserving the factory seam that
+`crews/deep_analysis/tool_routing.py` and the unit tests patch against.
+
+The A+ grading cluster also comes from `crewai_custom_tools`:
+`APlusScoringTool` (`crewai_custom_tools.tools.analytics.a_plus_scoring`,
+`.name = "A+ Investment Scoring Tool"`) and `APlusScreeningTool`
+(`crewai_custom_tools.tools.analytics.aplus_screening`, `.name =
+"aplus_screening"` — renamed from finwiz's `MarketScreeningTool` to avoid
+colliding with the package's own live-data `market_screening` tool).
+`finwiz.discovery.candidate_scorer` and `finwiz.discovery.universe_provider`
+import the supporting `ScreeningCriteria`/`ScreeningRanking`/`ScreeningUtils`
+classes directly from `crewai_custom_tools.tools.analytics.*` (verbatim
+ports of finwiz's former `tools/screening_criteria.py`,
+`tools/screening_ranking.py`, `tools/screening_utils.py`). Unlike
+`ValuationTool`/`ETFAnalysisTool`, `APlusScoringTool._run` output IS parsed
+programmatically (by `ScreeningRanking.score_candidates`'s
+detailed-analysis path, internal to the central package) — always go
+through `parse_tool_result()`, never index the raw JSON string.

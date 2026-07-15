@@ -48,4 +48,4 @@ scored = scorer.score_and_grade(candidates)
 - `finwiz.schemas.newcomer_discovery` — Pydantic models (NewcomerCandidate, EnrichmentResult, NewcomerDiscoveryResult)
 - `finwiz.scoring.discovery.pipeline` — NewcomerDiscoveryPipeline orchestrating these components
 - `finwiz.scoring.grading_system` — `score_to_grade()` used by CandidateScorer
-- `finwiz.tools.screening_ranking` — ScreeningRanking used for preliminary scoring
+- `crewai_custom_tools.tools.analytics.screening_ranking` — `ScreeningRanking` used for preliminary scoring (central; `finwiz.tools.screening_ranking` was ported there in Wave 3)

@@ -896,7 +896,7 @@ class TestMacroOverlay:
 
     def test_assess_market_regime_uses_real_vix(self):
         """MACRO-01: assess_market_regime uses real VIX from macro_snapshot."""
-        from finwiz.tools.scoring.scoring_criteria import assess_market_regime
+        from crewai_custom_tools.tools.analytics.scoring_criteria import assess_market_regime
 
         # High VIX -> volatile regime
         regime_high = assess_market_regime({"macro_snapshot": {"vix": 35.0, "cpi_yoy": 2.0}})
@@ -908,7 +908,7 @@ class TestMacroOverlay:
 
     def test_assess_market_regime_fallback(self):
         """MACRO-01: assess_market_regime falls back to defaults without macro_snapshot."""
-        from finwiz.tools.scoring.scoring_criteria import assess_market_regime
+        from crewai_custom_tools.tools.analytics.scoring_criteria import assess_market_regime
 
         # No macro_snapshot -> falls back to vix=20.0 default -> sideways
         regime = assess_market_regime({})

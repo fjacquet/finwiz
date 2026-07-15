@@ -15,9 +15,6 @@ from faker import Faker
 from pydantic import ValidationError
 
 from finwiz.schemas.tools.inputs import (
-    APlusScore,
-    # A+ Scoring
-    APlusScoringInput,
     # Backtesting
     BacktestingInput,
     # CoinMarketCap
@@ -41,28 +38,14 @@ from finwiz.schemas.tools.inputs import (
     GetTickerHistoryInput,
     GetTickerInfoInput,
     GetTickerNewsInput,
-    # Market Regime
-    MarketRegime,
-    # Market Screening
-    MarketScreeningInput,
     # Custom Tool
     MyCustomToolInput,
-    # Optimization
-    OptimizationInput,
     PerformanceTrackingInput,
-    # Perplexity
-    PerplexitySearchWrapperInput,
     PortfolioAnalysisInput,
     # Portfolio Rebalancing
     PortfolioRebalancingInput,
     # Quantitative Analysis
     QuantitativeAnalysisInput,
-    # Regulatory Compliance
-    RegulatoryComplianceInput,
-    # Risk Assessment
-    RiskAssessmentInput,
-    # Scoring
-    ScoringCriteria,
     StandardizedSentimentInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
@@ -840,66 +823,6 @@ class TestPortfolioAnalysisInput:
 
 
 # ============================================================================
-# RAG Tool Tests
-# ============================================================================
-
-
-class TestRiskAssessmentInput:
-    """Tests for RiskAssessmentInput model."""
-
-    def test_required_assets(self, fake):
-        """Test instantiation with required assets."""
-        assets = ["AAPL", "GOOGL", "MSFT"]
-        model = RiskAssessmentInput(assets=assets)
-
-        assert model.assets == assets
-
-    def test_default_values(self):
-        """Test default values."""
-        model = RiskAssessmentInput(assets=["AAPL"])
-
-        assert model.portfolio_weights is None
-        assert model.assessment_type == "comprehensive"
-        assert model.risk_horizon == "1y"
-        assert model.confidence_level == 0.95
-        assert model.include_stress_testing is True
-        assert model.market_regime == "normal"
-
-    def test_optional_portfolio_weights_none(self):
-        """Test portfolio_weights can be None."""
-        model = RiskAssessmentInput(assets=["AAPL"], portfolio_weights=None)
-
-        assert model.portfolio_weights is None
-
-    def test_optional_portfolio_weights_dict(self):
-        """Test portfolio_weights with dictionary."""
-        weights = {"AAPL": 0.5, "GOOGL": 0.3, "MSFT": 0.2}
-        model = RiskAssessmentInput(assets=["AAPL", "GOOGL", "MSFT"], portfolio_weights=weights)
-
-        assert model.portfolio_weights == weights
-
-    def test_custom_assessment_type(self):
-        """Test custom assessment_type."""
-        types = ["individual", "portfolio", "comprehensive"]
-        for assessment_type in types:
-            model = RiskAssessmentInput(assets=["AAPL"], assessment_type=assessment_type)
-            assert model.assessment_type == assessment_type
-
-    def test_custom_confidence_level(self, fake):
-        """Test custom confidence_level."""
-        confidence = fake.pyfloat(min_value=0.0, max_value=1.0)
-        model = RiskAssessmentInput(assets=["AAPL"], confidence_level=confidence)
-
-        assert model.confidence_level == confidence
-
-    def test_missing_required_assets(self):
-        """Test ValidationError when assets is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            RiskAssessmentInput()
-        assert "assets" in str(exc_info.value)
-
-
-# ============================================================================
 # Quantitative Analysis Tool Tests
 # ============================================================================
 
@@ -948,28 +871,6 @@ class TestQuantitativeAnalysisInput:
         with pytest.raises(ValidationError) as exc_info:
             QuantitativeAnalysisInput(symbol="AAPL")
         assert "asset_class" in str(exc_info.value)
-
-
-# ============================================================================
-# Perplexity Tool Tests
-# ============================================================================
-
-
-class TestPerplexitySearchWrapperInput:
-    """Tests for PerplexitySearchWrapperInput model."""
-
-    def test_required_query(self, fake):
-        """Test instantiation with required query."""
-        query = "financial market analysis"
-        model = PerplexitySearchWrapperInput(query=query)
-
-        assert model.query == query
-
-    def test_missing_required_query(self):
-        """Test ValidationError when query is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            PerplexitySearchWrapperInput()
-        assert "query" in str(exc_info.value)
 
 
 # ============================================================================
@@ -1070,180 +971,6 @@ class TestBacktestingInput:
 
 
 # ============================================================================
-# Market Screening Tool Tests
-# ============================================================================
-
-
-class TestMarketScreeningInput:
-    """Tests for MarketScreeningInput model."""
-
-    def test_required_asset_type(self, fake):
-        """Test instantiation with required asset_type."""
-        asset_type = "stock"
-        model = MarketScreeningInput(asset_type=asset_type)
-
-        assert model.asset_type == asset_type
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        types = ["etf", "stock", "crypto"]
-        for asset_type in types:
-            model = MarketScreeningInput(asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="invalid")
-        assert "asset_type" in str(exc_info.value)
-
-    def test_default_values(self):
-        """Test default values."""
-        model = MarketScreeningInput(asset_type="stock")
-
-        assert model.screening_criteria == {}
-        assert model.market_region == "global"
-        assert model.max_candidates == 50
-        assert model.min_a_plus_score == 0.85
-        assert model.include_detailed_analysis is False
-
-    def test_max_candidates_constraint(self):
-        """Test max_candidates ge/le constraints (1-500)."""
-        # Valid: 1
-        model_min = MarketScreeningInput(asset_type="stock", max_candidates=1)
-        assert model_min.max_candidates == 1
-
-        # Valid: 500
-        model_max = MarketScreeningInput(asset_type="stock", max_candidates=500)
-        assert model_max.max_candidates == 500
-
-        # Invalid: below 1
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", max_candidates=0)
-        assert "max_candidates" in str(exc_info.value)
-
-        # Invalid: above 500
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", max_candidates=1000)
-        assert "max_candidates" in str(exc_info.value)
-
-    def test_min_a_plus_score_constraint(self):
-        """Test min_a_plus_score ge/le constraints (0.0-1.0)."""
-        # Valid: 0.0
-        model_min = MarketScreeningInput(asset_type="stock", min_a_plus_score=0.0)
-        assert model_min.min_a_plus_score == 0.0
-
-        # Valid: 1.0
-        model_max = MarketScreeningInput(asset_type="stock", min_a_plus_score=1.0)
-        assert model_max.min_a_plus_score == 1.0
-
-        # Valid: 0.5
-        model_mid = MarketScreeningInput(asset_type="stock", min_a_plus_score=0.5)
-        assert model_mid.min_a_plus_score == 0.5
-
-        # Invalid: below 0.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", min_a_plus_score=-0.1)
-        assert "min_a_plus_score" in str(exc_info.value)
-
-        # Invalid: above 1.0
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput(asset_type="stock", min_a_plus_score=1.1)
-        assert "min_a_plus_score" in str(exc_info.value)
-
-    def test_custom_screening_criteria(self):
-        """Test custom screening_criteria."""
-        criteria = {"min_market_cap": 1e9, "max_pe_ratio": 30}
-        model = MarketScreeningInput(asset_type="stock", screening_criteria=criteria)
-
-        assert model.screening_criteria == criteria
-
-    def test_missing_required_asset_type(self):
-        """Test ValidationError when asset_type is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            MarketScreeningInput()
-        assert "asset_type" in str(exc_info.value)
-
-
-# ============================================================================
-# Optimization Tool Tests
-# ============================================================================
-
-
-class TestOptimizationInput:
-    """Tests for OptimizationInput model."""
-
-    def test_required_assets(self, fake):
-        """Test instantiation with required assets."""
-        assets = ["AAPL", "GOOGL", "MSFT"]
-        model = OptimizationInput(assets=assets)
-
-        assert model.assets == assets
-
-    def test_default_values(self):
-        """Test default values."""
-        model = OptimizationInput(assets=["AAPL"])
-
-        assert model.expected_returns is None
-        assert model.risk_tolerance == 0.5
-        assert model.optimization_method == "mean_variance"
-        assert model.constraints is None
-        assert model.target_return is None
-        assert model.max_weight == 0.4
-        assert model.min_weight == 0.0
-
-    def test_optional_expected_returns_dict(self):
-        """Test optional expected_returns with dictionary."""
-        returns = {"AAPL": 0.15, "GOOGL": 0.18}
-        model = OptimizationInput(assets=["AAPL", "GOOGL"], expected_returns=returns)
-
-        assert model.expected_returns == returns
-
-    def test_optional_expected_returns_none(self):
-        """Test optional expected_returns as None."""
-        model = OptimizationInput(assets=["AAPL"], expected_returns=None)
-
-        assert model.expected_returns is None
-
-    def test_risk_tolerance_range(self, fake):
-        """Test risk_tolerance value."""
-        tolerance = fake.pyfloat(min_value=0.0, max_value=1.0)
-        model = OptimizationInput(assets=["AAPL"], risk_tolerance=tolerance)
-
-        assert model.risk_tolerance == tolerance
-
-    def test_weight_constraints(self):
-        """Test max_weight and min_weight constraints (0.0-1.0)."""
-        # Valid: min_weight < max_weight
-        model = OptimizationInput(assets=["AAPL"], min_weight=0.1, max_weight=0.5)
-        assert model.min_weight == 0.1
-        assert model.max_weight == 0.5
-
-        # Valid: boundary values
-        model_boundary = OptimizationInput(assets=["AAPL"], min_weight=0.0, max_weight=1.0)
-        assert model_boundary.min_weight == 0.0
-        assert model_boundary.max_weight == 1.0
-
-    def test_optional_target_return(self, fake):
-        """Test optional target_return."""
-        target = fake.pyfloat(min_value=0.05, max_value=0.3)
-        model = OptimizationInput(assets=["AAPL"], target_return=target)
-
-        assert model.target_return == target
-
-    def test_optional_constraints(self):
-        """Test optional constraints."""
-        constraints = {"sector_max": 0.3, "country_max": 0.4}
-        model = OptimizationInput(assets=["AAPL"], constraints=constraints)
-
-        assert model.constraints == constraints
-
-    def test_missing_required_assets(self):
-        """Test ValidationError when assets is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            OptimizationInput()
-        assert "assets" in str(exc_info.value)
-
-
-# ============================================================================
 # Portfolio Rebalancing Tool Tests
 # ============================================================================
 
@@ -1314,189 +1041,6 @@ class TestPortfolioRebalancingInput:
         with pytest.raises(ValidationError) as exc_info:
             PortfolioRebalancingInput(holdings=[{"symbol": "AAPL", "shares": 100}])
         assert "target_weights" in str(exc_info.value)
-
-
-# ============================================================================
-# A+ Scoring Tool Tests
-# ============================================================================
-
-
-class TestAPlusScoringInput:
-    """Tests for APlusScoringInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbol = "AAPL"
-        asset_type = "stock"
-        model = APlusScoringInput(symbol=symbol, asset_type=asset_type)
-
-        assert model.symbol == symbol
-        assert model.asset_type == asset_type
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        types = ["etf", "stock", "crypto"]
-        for asset_type in types:
-            model = APlusScoringInput(symbol="AAPL", asset_type=asset_type)
-            assert model.asset_type == asset_type
-
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(symbol="AAPL", asset_type="invalid")
-        assert "asset_type" in str(exc_info.value)
-
-    def test_default_values(self):
-        """Test default values (empty dicts)."""
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock")
-
-        assert model.fundamental_data == {}
-        assert model.market_context == {}
-        assert model.custom_criteria == {}
-
-    def test_custom_fundamental_data(self):
-        """Test custom fundamental_data."""
-        data = {"roe": 0.25, "debt_to_equity": 0.3}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", fundamental_data=data)
-
-        assert model.fundamental_data == data
-
-    def test_custom_market_context(self):
-        """Test custom market_context."""
-        context = {"vix": 15.0, "interest_rate": 0.05}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", market_context=context)
-
-        assert model.market_context == context
-
-    def test_custom_criteria(self):
-        """Test custom_criteria."""
-        criteria = {"quality": 0.3, "momentum": 0.2}
-        model = APlusScoringInput(symbol="AAPL", asset_type="stock", custom_criteria=criteria)
-
-        assert model.custom_criteria == criteria
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(asset_type="stock")
-        assert "symbol" in str(exc_info.value)
-
-    def test_missing_required_asset_type(self):
-        """Test ValidationError when asset_type is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScoringInput(symbol="AAPL")
-        assert "asset_type" in str(exc_info.value)
-
-
-class TestAPlusScore:
-    """Tests for APlusScore model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        # Note: APlusScore has complex nested fields, testing minimal required
-        score = APlusScore(
-            symbol="AAPL",
-            asset_type="stock",
-            composite_score=0.85,
-            grade_info={},
-            fundamental_score=0.8,
-            technical_score=0.85,
-            quality_score=0.9,
-            risk_score=0.7,
-            market_regime=MarketRegime(),
-            scoring_criteria=ScoringCriteria(),
-            analysis_timestamp=None,
-        )
-
-        assert score.symbol == "AAPL"
-        assert score.asset_type == "stock"
-
-    def test_score_constraints(self):
-        """Test score constraints (0.0-1.0)."""
-        with pytest.raises(ValidationError) as exc_info:
-            APlusScore(
-                symbol="AAPL",
-                asset_type="stock",
-                composite_score=1.5,  # Invalid: > 1.0
-                grade_info={},
-                fundamental_score=0.8,
-                technical_score=0.85,
-                quality_score=0.9,
-                risk_score=0.7,
-                market_regime=MarketRegime(),
-                scoring_criteria=ScoringCriteria(),
-                analysis_timestamp=None,
-            )
-        assert "composite_score" in str(exc_info.value)
-
-    def test_asset_type_literal(self):
-        """Test asset_type literal constraint."""
-        score = APlusScore(
-            symbol="BTC",
-            asset_type="crypto",
-            composite_score=0.75,
-            grade_info={},
-            fundamental_score=0.7,
-            technical_score=0.8,
-            quality_score=0.7,
-            risk_score=0.75,
-            market_regime=MarketRegime(),
-            scoring_criteria=ScoringCriteria(),
-            analysis_timestamp=None,
-        )
-
-        assert score.asset_type == "crypto"
-
-
-# ============================================================================
-# Regulatory Compliance Tool Tests
-# ============================================================================
-
-
-class TestRegulatoryComplianceInput:
-    """Tests for RegulatoryComplianceInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "BTC"
-        model = RegulatoryComplianceInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_jurisdictions(self):
-        """Test default jurisdictions list."""
-        model = RegulatoryComplianceInput(symbol="BTC")
-
-        assert model.jurisdictions == ["US", "EU", "Switzerland", "UK", "Singapore"]
-
-    def test_custom_jurisdictions(self):
-        """Test custom jurisdictions."""
-        jurisdictions = ["US", "Japan"]
-        model = RegulatoryComplianceInput(symbol="BTC", jurisdictions=jurisdictions)
-
-        assert model.jurisdictions == jurisdictions
-
-    def test_default_boolean_fields(self):
-        """Test default boolean fields."""
-        model = RegulatoryComplianceInput(symbol="BTC")
-
-        assert model.include_risk_assessment is True
-        assert model.include_compliance_status is True
-
-    def test_custom_boolean_fields(self):
-        """Test custom boolean fields."""
-        model = RegulatoryComplianceInput(
-            symbol="BTC",
-            include_risk_assessment=False,
-            include_compliance_status=False,
-        )
-
-        assert model.include_risk_assessment is False
-        assert model.include_compliance_status is False
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            RegulatoryComplianceInput()
-        assert "symbol" in str(exc_info.value)
 
 
 # ============================================================================
@@ -1737,11 +1281,10 @@ class TestToolInputsIntegration:
             CoinInfoInput(symbol="BTC"),
             CompanyOverviewInput(ticker="AAPL"),
             GetTickerHistoryInput(ticker="MSFT"),
-            RiskAssessmentInput(assets=["AAPL", "GOOGL"]),
             BacktestingInput(symbol="SPY"),
         ]
 
-        assert len(inputs) == 5
+        assert len(inputs) == 4
         assert all(hasattr(inp, "__class__") for inp in inputs)
 
     def test_validation_error_messages(self):

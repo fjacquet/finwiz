@@ -118,7 +118,7 @@ The risk assessor uses a minimal, focused tool set instead of the full tool set 
 The minimal tool set includes only essential tools for risk assessment:
 
 1. **QuantitativeAnalysisTool** - Core risk metrics (VaR, CVaR, volatility, Sharpe ratio)
-2. **TickerValidationTool** - Ticker validation
+2. **TickerExistenceValidationTool** - Ticker validation
 3. **Asset-Specific Tool** - One of:
    - `EnhancedSECAnalysisTool` (for stocks)
    - `EnhancedETFAnalysisTool` (for ETFs)
@@ -136,7 +136,7 @@ def _get_minimal_risk_tools(self, asset_class: str) -> list:
     tools.append(QuantitativeAnalysisTool(asset_class=asset_class))
 
     # Ticker validation
-    tools.append(TickerValidationTool())
+    tools.append(TickerExistenceValidationTool())
 
     # Asset-specific tool
     if asset_class == "stock":

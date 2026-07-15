@@ -28,9 +28,9 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 2. Verify ticker symbols are valid:
 
    ```python
-   from finwiz.tools.ticker_validation_tool import TickerValidationTool
+   from crewai_custom_tools import TickerExistenceValidationTool
 
-   validator = TickerValidationTool()
+   validator = TickerExistenceValidationTool()
    result = validator._run(ticker="AAPL")
    print(result)
    ```

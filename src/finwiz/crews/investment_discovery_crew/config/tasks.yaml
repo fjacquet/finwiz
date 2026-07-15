@@ -13,9 +13,9 @@ etf_discovery_task:
     - Regulatory domicile analysis (Ireland, Luxembourg, etc.)
     - Cross-border investment eligibility assessment
 
-    Use the Market Screening Tool to identify candidates, then apply A+ Scoring Tool
-    for detailed evaluation. Validate all tickers and perform comprehensive analysis
-    using Enhanced ETF Analysis Tool.
+    Use the "aplus_screening" tool to identify candidates, then apply the "A+ Investment
+    Scoring Tool" for detailed evaluation. Validate all tickers and perform comprehensive
+    analysis using Enhanced ETF Analysis Tool.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
@@ -78,9 +78,9 @@ stock_discovery_task:
     - Calculate optimal allocation recommendations
     - Consider implementation timing and market conditions
 
-    Use Market Screening Tool for initial filtering based on fundamental criteria,
-    A+ Scoring Tool for comprehensive evaluation, Enhanced SEC Analysis Tool for
-    10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
+    Use the "aplus_screening" tool for initial filtering based on fundamental criteria,
+    the "A+ Investment Scoring Tool" for comprehensive evaluation, Enhanced SEC Analysis
+    Tool for 10-K/10-Q fundamental analysis, and Portfolio Analysis Tool for correlation
     and allocation optimization.
 
     CRITICAL OUTPUT FORMAT:
@@ -161,9 +161,9 @@ crypto_discovery_task:
     - Optimize allocation weights within the 5% constraint
     - Suggest replacement strategies for underperforming crypto holdings
 
-    Use Market Screening Tool for initial filtering, Enhanced Crypto Analysis Tool
-    for comprehensive evaluation, `defi_metrics` tool for protocol analysis, and
-    A+ Scoring Tool for final grading assessment.
+    Use the "aplus_screening" tool for initial filtering, Enhanced Crypto Analysis Tool
+    for comprehensive evaluation, `defi_metrics` tool for protocol analysis, and the
+    "A+ Investment Scoring Tool" for final grading assessment.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the APlusDiscoveryResult object directly - do NOT wrap it in additional fields
@@ -281,9 +281,10 @@ optimization_task:
     - Provide specific action items with clear next steps
     - Include monitoring and rebalancing recommendations
 
-    Use Portfolio Analysis Tool for current portfolio assessment, Optimization Tool
-    for allocation calculations, Risk Assessment Tool for impact analysis, and
-    integration with existing grading system for grade improvement calculations.
+    Use Portfolio Analysis Tool for current portfolio assessment, the Portfolio
+    Rebalancing Tool for allocation adjustments, the "risk_scoring" tool for impact
+    analysis, and integration with existing grading system for grade improvement
+    calculations.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the OptimizationResult object directly - do NOT wrap it in additional fields

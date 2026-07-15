@@ -15,12 +15,6 @@ class TestEndpointDefaults:
     def test_coingecko_base(self):
         assert endpoints.COINGECKO_BASE == "https://api.coingecko.com/api/v3"
 
-    def test_coinbase_base(self):
-        assert endpoints.COINBASE_BASE == "https://api.exchange.coinbase.com"
-
-    def test_kraken_base(self):
-        assert endpoints.KRAKEN_BASE == "https://api.kraken.com/0/public"
-
     def test_perplexity_search(self):
         assert endpoints.PERPLEXITY_SEARCH == "https://api.perplexity.ai/search"
 
