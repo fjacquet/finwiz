@@ -18,7 +18,7 @@ tools/
 │
 ├── # Analysis tools
 ├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
-├── valuation_tool.py                # ValuationTool (DCF, P/E)
+├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 ├── backtesting_tool.py              # BacktestingTool
 ├── optimization_tool.py             # OptimizationTool
 ├── risk_assessment_tool.py          # RiskAssessmentTool
@@ -117,3 +117,9 @@ then `uv sync`. Remove the override and re-run `uv lock && uv sync` before
 committing. Programmatic callers parse tool output with
 `crewai_custom_tools.core.results.parse_tool_result()` — central tools return
 the `{"success", "data", "error"}` JSON envelope, never bare dicts.
+
+`ValuationTool` and `ETFAnalysisTool` also come from `crewai_custom_tools`
+(both agent-facing only — no finwiz code parses their output). `tool_factories.py`
+keeps thin `get_valuation_tool()`/`get_etf_analysis_tool()` shims that just
+construct the central classes, preserving the factory seam that
+`crews/deep_analysis/tool_routing.py` and the unit tests patch against.

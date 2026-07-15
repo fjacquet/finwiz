@@ -90,7 +90,7 @@ def _get_lean_analysis_tools(
         get_stock_research_tools,
     )
     from finwiz.tools.quantitative_analysis_tool import get_quantitative_analysis_tool
-    from finwiz.tools.valuation_tool import get_valuation_tool
+    from finwiz.tools.tool_factories import get_valuation_tool
 
     tools: list[Any] = []
 

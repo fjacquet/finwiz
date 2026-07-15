@@ -54,8 +54,7 @@ quantitative/
 │   └── models.py                    # Indicator models
 │
 ├── etf/                             # ETF-specific metrics
-│   ├── etf_metrics.py               # calculate_tracking_error(), calculate_etf_efficiency_score()
-│   └── etf_expense_fallback.py
+│   └── etf_expense_fallback.py      # (etf_metrics.py moved to crewai-custom-tools; ETFAnalysisTool is agent-facing only)
 │
 └── risk/                            # Risk metrics
     └── risk_metrics.py              # calculate_var(), calculate_cvar(), calculate_sharpe_ratio()
