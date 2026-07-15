@@ -11,16 +11,13 @@ import json
 from datetime import UTC, datetime
 from typing import Literal, cast
 
-import requests
 from crewai.tools import BaseTool
+from crewai_custom_tools import AlphaVantageOverviewTool as CentralAlphaVantageOverviewTool
+from crewai_custom_tools.core.results import parse_tool_result
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.config.features.flags import get_feature_flags
-from finwiz.infrastructure.caching.manager import cache_key, cached
-from finwiz.infrastructure.decorators.api_decorators import api_tool
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import CompanyOverviewInput
 from finwiz.tools.api_key_validation import validate_api_key
@@ -55,6 +52,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         """Validate API key at instantiation (fail-fast)."""
         super().model_post_init(__context)
         self._api_key = validate_api_key("ALPHA_VANTAGE_API_KEY", self.__class__.__name__)
+        self._central = CentralAlphaVantageOverviewTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -103,7 +101,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             else:
                 # Fall back to live API call
                 logger.info(f"Fetching Alpha Vantage company overview for {ticker} with optional Perplexity enhancement")
-                alpha_vantage_data = asyncio.run(self._fetch_company_overview(ticker))
+                alpha_vantage_data = self._fetch_company_overview(ticker)
 
             # Optionally get Perplexity fundamental insights
             perplexity_insights = []
@@ -123,42 +121,41 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             logger.error(f"Error in enhanced Alpha Vantage analysis for {ticker}: {e!s}")
             return f"Error performing enhanced company overview analysis for {ticker}: {e!s}"
 
-    @api_tool(
-        provider=APIProvider.ALPHA_VANTAGE,
-        endpoint="company_overview",
-        timeout=15.0,
-        default_return="Error: Unable to fetch company overview data",
-    )
-    async def _fetch_company_overview(self, ticker: str) -> str:
-        """Fetch company overview data with caching."""
-        cache_key_str = cache_key("alpha_vantage", "overview", ticker.upper())
+    def _fetch_company_overview(self, ticker: str) -> str:
+        """Fetch company overview data via the centralized Alpha Vantage tool.
 
-        async def fetch_from_api() -> str:
-            url = f"{ALPHA_VANTAGE_BASE}?function=OVERVIEW&symbol={ticker}&apikey={self._api_key}"
+        Delegates the HTTP fetch to `crewai_custom_tools`' `AlphaVantageOverviewTool`,
+        which provides its own rate limiting. Central's overview envelope uses a
+        smaller, lowercase key set than the raw Alpha Vantage OVERVIEW response
+        this method previously returned, so it is remapped onto the PascalCase
+        keys `_format_enhanced_overview_response` reads (Symbol, Name, PERatio,
+        ProfitMargin, DividendYield). Central does not fetch Sector, Industry,
+        MarketCapitalization, EPS, RevenueTTM, or Description, so those fields
+        render as "N/A" (or are simply omitted) in the markdown output — see the
+        key-mapping table and cache-behavior note in the task report.
 
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        Note: this path no longer goes through finwiz's local 30-minute cache
+        (`finwiz.infrastructure.caching`) — central provides its own rate
+        limiting instead. Every live call now hits the Alpha Vantage API
+        directly (see task report for the cache-behavior-change note).
+        """
+        data = parse_tool_result(self._central._run(ticker=ticker))
 
-            if not data or "Note" in data:
-                return f"No data found for ticker {ticker}. It might be an invalid symbol."
+        overview = {
+            "Symbol": data.get("symbol"),
+            "Name": data.get("name"),
+            "PERatio": data.get("pe_ratio"),
+            "ProfitMargin": data.get("profit_margin"),
+            "DividendYield": data.get("dividend_yield"),
+            "ReturnOnEquityTTM": data.get("return_on_equity_ttm"),
+            "DebtToEquityRatio": data.get("debt_to_equity_ratio"),
+            "QuarterlyRevenueGrowthYOY": data.get("quarterly_revenue_growth_yoy"),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
 
-            # Add timestamp for freshness validation
-            data["timestamp"] = datetime.now(UTC).isoformat()
+        logger.debug(f"Retrieved Alpha Vantage data for {ticker} via central tool")
 
-            # Log data retrieval for debugging
-            logger.debug(f"Retrieved Alpha Vantage data for {ticker}")
-
-            return json.dumps(data, indent=2, default=str)
-
-        # Use caching with 30-minute TTL for company overview data
-        result: str = await cached(
-            cache_key_str,
-            fetch_from_api,
-            ttl=1800,  # 30 minutes
-            tags={"alpha_vantage", "company_overview", ticker.upper()},
-        )
-        return result
+        return json.dumps(overview, indent=2, default=str)
 
     async def _get_perplexity_fundamental_insights(self, ticker: str) -> list[SonarArticle]:
         """Get fundamental analysis insights from Perplexity Sonar."""
