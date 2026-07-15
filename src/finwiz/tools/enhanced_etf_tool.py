@@ -7,12 +7,15 @@ Enhanced with optional Perplexity Sonar integration for recent ETF performance u
 """
 
 import asyncio
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 
 from crewai.tools import BaseTool
+from crewai_custom_tools import EnhancedETFAnalysisTool as CentralEnhancedETFAnalysisTool
+from crewai_custom_tools.core.results import parse_tool_result
 from pydantic import BaseModel
 
+from finwiz.config.endpoints import YAHOO_FINANCE_WEB
 from finwiz.config.features.flags import get_feature_flags
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import (
@@ -45,6 +48,11 @@ class EnhancedETFAnalysisTool(BaseTool):
         "Optionally enhanced with Perplexity Sonar for recent ETF performance updates and holdings changes."
     )
     args_schema: type[BaseModel] = EnhancedETFAnalysisInput
+
+    def model_post_init(self, __context: object) -> None:
+        """Wire up the centralized ETF analysis tool used for the holdings fetch."""
+        super().model_post_init(__context)
+        self._central = CentralEnhancedETFAnalysisTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -132,8 +140,72 @@ class EnhancedETFAnalysisTool(BaseTool):
         return ETFDataFetcher.extract_factsheet_data(ticker)
 
     def _extract_top_holdings(self, ticker: str, max_holdings: int) -> list[dict[str, Any]]:
-        """Extract top holdings for the ETF."""
-        return ETFDataFetcher.extract_top_holdings(ticker, max_holdings)
+        """Extract top holdings for the ETF via the centralized EnhancedETFAnalysisTool.
+
+        Delegates the primary fetch to `crewai_custom_tools`' `EnhancedETFAnalysisTool`,
+        which sources real yfinance funds_data holdings (symbol/name/weight-in-percent)
+        instead of the legacy Yahoo Finance HTML scraping path. On any failure (bad
+        ticker, no funds_data available, network error) or an empty holdings list,
+        this falls back to `ETFDataFetcher.extract_top_holdings`, matching the tool's
+        prior behavior of never surfacing a bare fetch error from this method.
+        """
+        try:
+            central_result = parse_tool_result(self._central._run(ticker=ticker, max_holdings=max_holdings))
+        except Exception as e:
+            logger.warning(f"Central ETF holdings fetch failed for {ticker}: {e}")
+            return ETFDataFetcher.extract_top_holdings(ticker, max_holdings)
+
+        central_holdings = central_result.get("top_holdings") if isinstance(central_result, dict) else None
+        if not central_holdings:
+            return ETFDataFetcher.extract_top_holdings(ticker, max_holdings)
+
+        return self._map_central_holdings(ticker, central_holdings)
+
+    def _mapped(self, holding: dict[str, Any], key: str, default: Any) -> Any:
+        """None-safe lookup for central's per-holding payload.
+
+        Central ALWAYS includes `weight` on each holding, sometimes with an
+        explicit `None` (yfinance funds_data reports a non-numeric holding
+        percent for a row). `.get(key, default)` alone does NOT catch this,
+        since the key is present; only the value is `None`. An explicit
+        `is None` check is required so the default is used instead of leaking
+        `None` into `weight_pct`, which `ETFAnalyzer.perform_etf_risk_assessment`
+        sums via `max([h.get("weight_pct", 0) ...])`.
+        """
+        value = holding.get(key)
+        return default if value is None else value
+
+    def _map_central_holdings(self, ticker: str, central_holdings: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Map central's `top_holdings` payload onto the shape ETFAnalyzer consumes.
+
+        Consumers are `ETFAnalyzer.perform_etf_risk_assessment` (reads
+        `weight_pct` for concentration scoring) and
+        `ETFAnalyzer.construct_etf_factsheet` (requires all four keys below;
+        a holding missing any of them is silently dropped there via a
+        `KeyError` catch).
+
+        Key-mapping table:
+          - symbol -> ticker
+          - weight -> weight_pct (None-coalesced to 0.0 via `_mapped`; already
+            normalized to a percent value, e.g. 7.2, by central)
+          - source_url: synthesized — central doesn't carry a per-holding
+            source URL — as the Yahoo Finance holdings page for the ticker,
+            matching the legacy scraping path's source_url shape
+          - as_of: synthesized as today's date — central doesn't carry one
+          - name (central-only field) is intentionally dropped: no downstream
+            consumer of this list reads it
+        """
+        source_url = f"{YAHOO_FINANCE_WEB}/quote/{ticker}/holdings"
+        today = date.today()
+        return [
+            {
+                "ticker": holding.get("symbol", ticker),
+                "weight_pct": self._mapped(holding, "weight", 0.0),
+                "source_url": source_url,
+                "as_of": today,
+            }
+            for holding in central_holdings
+        ]
 
     def _perform_etf_risk_assessment(self, ticker: str, factsheet_data: dict[str, Any], holdings_data: list[dict[str, Any]]) -> dict[str, Any]:
         """Perform standardized risk assessment for ETF."""

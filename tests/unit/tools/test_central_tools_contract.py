@@ -40,3 +40,20 @@ def test_safe_init_skips_keyless_tools(monkeypatch):
     monkeypatch.delenv("PERPLEXITY_API_KEY", raising=False)
     monkeypatch.delenv("PPLX_API_KEY", raising=False)
     assert _safe_init(PerplexitySearchTool) is None
+
+
+def test_crypto_bundle_has_real_defi_tool():
+    from finwiz.tools.finance_tools import get_crypto_research_tools
+
+    # Central's DeFiMetricsTool.name is the lowercase "defi_metrics" (v0.5.1);
+    # matched case-insensitively so this doesn't pin to that exact casing.
+    names = {tool.name for tool in get_crypto_research_tools()}
+    assert any("defi" in name.lower() for name in names)
+
+
+def test_risk_scoring_is_central():
+    from crewai_custom_tools import StandardizedRiskScoringTool
+
+    from finwiz.tools.finance_tools import get_stock_research_tools
+
+    assert any(isinstance(tool, StandardizedRiskScoringTool) for tool in get_stock_research_tools())

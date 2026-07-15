@@ -9,11 +9,14 @@ from datetime import date
 
 import pytest
 from bs4 import BeautifulSoup
+from crewai_custom_tools.core.results import err, ok
 from pytest import approx
 
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisInput, EnhancedETFAnalysisTool
 from finwiz.tools.etf.etf_analyzers import ETFAnalyzer
 from finwiz.tools.etf.etf_data_fetchers import ETFDataFetcher
+
+_CENTRAL_RUN_PATH = "crewai_custom_tools.tools.finance.enhanced.EnhancedETFAnalysisTool._run"
 
 
 class TestEnhancedETFAnalysisInput:
@@ -231,6 +234,101 @@ class TestEnhancedETFAnalysisTool:
             assert "weight_pct" in holding
             assert "source_url" in holding
             assert "as_of" in holding
+
+    def test_should_get_top_holdings_from_central_successfully(self, tool, mocker):
+        """Central's top_holdings payload (symbol/name/weight) is remapped onto
+        the ticker/weight_pct/source_url/as_of shape ETFAnalyzer consumes."""
+        # Arrange
+        mock_central_run = mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "ticker": "SPY",
+                    "name": "SPDR S&P 500 ETF Trust",
+                    "category": "Large Blend",
+                    "expense_ratio": 0.0945,
+                    "aum": 400000000000,
+                    "top_holdings": [
+                        {"symbol": "AAPL", "name": "Apple Inc", "weight": 7.2},
+                        {"symbol": "MSFT", "name": "Microsoft Corp", "weight": 6.8},
+                    ],
+                    "sector_weightings": {"Technology": 30.1},
+                    "concentration": {"top_n_weight_pct": 14.0, "hhi": 100.0, "risk_level": "low"},
+                }
+            ),
+        )
+
+        # Act
+        holdings = tool._extract_top_holdings("SPY", max_holdings=5)
+
+        # Assert
+        assert len(holdings) == 2
+        assert holdings[0]["ticker"] == "AAPL"
+        assert holdings[0]["weight_pct"] == approx(7.2)
+        assert holdings[0]["source_url"].endswith("/quote/SPY/holdings")
+        assert holdings[0]["as_of"] == date.today()
+        assert holdings[1]["ticker"] == "MSFT"
+        assert holdings[1]["weight_pct"] == approx(6.8)
+
+        _, kwargs = mock_central_run.call_args
+        assert kwargs["ticker"] == "SPY"
+        assert kwargs["max_holdings"] == 5
+
+    def test_should_fallback_to_scraping_when_central_reports_failure(self, tool, mocker):
+        """A central envelope failure (bad ticker, no funds_data, network error)
+        degrades to the legacy Yahoo Finance scraping path rather than surfacing
+        a bare error, matching the tool's prior behavior."""
+        # Arrange
+        mocker.patch(_CENTRAL_RUN_PATH, return_value=err("No ETF data available for INVALID"))
+        mock_fallback = mocker.patch.object(
+            ETFDataFetcher, "extract_top_holdings", return_value=[{"ticker": "SAMPLE1", "weight_pct": 5.0, "source_url": "https://test.com", "as_of": date.today()}]
+        )
+
+        # Act
+        holdings = tool._extract_top_holdings("INVALID", max_holdings=5)
+
+        # Assert
+        assert holdings == [{"ticker": "SAMPLE1", "weight_pct": 5.0, "source_url": "https://test.com", "as_of": date.today()}]
+        mock_fallback.assert_called_once_with("INVALID", 5)
+
+    def test_should_fallback_to_scraping_when_central_returns_no_holdings(self, tool, mocker):
+        """A central success envelope with an empty top_holdings list (no
+        funds_data for this ticker) still falls back to scraping."""
+        # Arrange
+        mocker.patch(_CENTRAL_RUN_PATH, return_value=ok({"ticker": "XYZ", "top_holdings": []}))
+        mock_fallback = mocker.patch.object(ETFDataFetcher, "extract_top_holdings", return_value=[])
+
+        # Act
+        holdings = tool._extract_top_holdings("XYZ", max_holdings=5)
+
+        # Assert
+        assert holdings == []
+        mock_fallback.assert_called_once_with("XYZ", 5)
+
+    def test_should_default_weight_to_zero_when_central_weight_is_none(self, tool, mocker):
+        """Regression: central always includes `weight` per holding, sometimes
+        with an explicit None (non-numeric holding percent from funds_data).
+        `.get(key, default)` alone would NOT catch this since the key is
+        present — only the value is None. The mapping must degrade to 0.0
+        instead of leaking None into weight_pct, which
+        ETFAnalyzer.perform_etf_risk_assessment maxes over via `h.get("weight_pct", 0)`."""
+        # Arrange
+        mocker.patch(
+            _CENTRAL_RUN_PATH,
+            return_value=ok(
+                {
+                    "ticker": "SPY",
+                    "top_holdings": [{"symbol": "AAPL", "name": "Apple Inc", "weight": None}],
+                }
+            ),
+        )
+
+        # Act
+        holdings = tool._extract_top_holdings("SPY", max_holdings=5)
+
+        # Assert — the concentration-scoring-killing case: weight_pct must be numeric, never None
+        assert holdings[0]["weight_pct"] == 0.0
+        assert holdings[0]["weight_pct"] > -1  # would raise TypeError if None
 
     def test_should_perform_etf_risk_assessment(self, tool):
         """Test ETF risk assessment functionality."""
