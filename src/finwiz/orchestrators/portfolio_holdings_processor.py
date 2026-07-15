@@ -22,6 +22,9 @@ from operator import itemgetter
 from pathlib import Path
 from typing import Any, cast
 
+from crewai_custom_tools import TickerExistenceValidationTool
+from crewai_custom_tools.core.results import ToolResultError, parse_tool_result
+
 from finwiz.orchestrators.portfolio_review.decisions import (
     assess_risk,
     build_citations,
@@ -37,7 +40,6 @@ from finwiz.schemas.portfolio_processing import (
 )
 from finwiz.schemas.portfolio_review import HoldingDecision
 from finwiz.scoring.grading_system import score_to_grade
-from finwiz.tools.ticker_validation_tool import TickerExistenceValidationTool
 
 logger = logging.getLogger(__name__)
 
@@ -388,6 +390,10 @@ class PortfolioHoldingsProcessor:
         """
         Validate a holding using the ticker validation tool.
 
+        The central tool returns a canonical `{"success", "data", "error"}`
+        envelope; on a reported failure we degrade to a minimal invalid result
+        rather than propagating the exception.
+
         Args:
             holding: Raw holding to validate
 
@@ -395,17 +401,16 @@ class PortfolioHoldingsProcessor:
             Validation result dictionary
 
         """
+        logger.debug(f"Validating {holding.ticker} as {holding.asset_class}")
         try:
-            logger.debug(f"Validating {holding.ticker} as {holding.asset_class}")
-            result = self.validator._run(symbol=holding.ticker, asset_class=holding.asset_class)
+            result = parse_tool_result(self.validator._run(symbol=holding.ticker, asset_class=holding.asset_class))
             logger.debug(f"Validation result for {holding.ticker}: {result}")
             return result
-        except Exception as e:
-            logger.warning(f"Validation failed for {holding.ticker}: {e}")
+        except ToolResultError as exc:
+            logger.warning(f"Validation failed for {holding.ticker}: {exc}")
             return {
                 "valid": False,
-                "reason": f"Validation error: {e!s}",
-                "meta": {},
+                "reason": str(exc),
             }
 
     def get_processing_summary(self) -> ProcessingSummary:

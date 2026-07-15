@@ -13,6 +13,7 @@ Uses pytest-mock for all external dependencies.
 import json
 
 import pytest
+from crewai_custom_tools.core.results import ok
 from faker import Faker
 from pytest import approx
 
@@ -98,7 +99,7 @@ class TestBetaExtraction:
         orchestrator = DeepAnalysisOrchestrator(state=mock_state)
 
         # Mock tool calls (patch _run method directly on tool classes)
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run", return_value=ok(sample_ticker_result))
 
         # Mock DataSourceOrchestrator to return fundamental data from sample_company_result
         from datetime import datetime
@@ -255,9 +256,9 @@ class TestBetaExtraction:
         orchestrator = DeepAnalysisOrchestrator(state=mock_state)
 
         # Mock all tools (patch _run method directly on tool classes)
-        mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run", return_value=sample_ticker_result)
+        mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run", return_value=ok(sample_ticker_result))
 
-        mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run", return_value=sample_company_result)
+        mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run", return_value=ok(sample_company_result))
 
         mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run", return_value=json.dumps(sample_quantitative_result))
 

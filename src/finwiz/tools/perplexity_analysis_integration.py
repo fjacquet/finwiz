@@ -9,9 +9,11 @@ structured data parsing and error handling.
 from __future__ import annotations
 
 import asyncio
-import json
 import os
 from typing import Any, Literal, cast
+
+from crewai_custom_tools import PerplexitySearchTool
+from crewai_custom_tools.core.results import ToolResultError, ok, parse_tool_result
 
 from finwiz.config.endpoints import PERPLEXITY_SEARCH
 from finwiz.schemas.perplexity import (
@@ -22,16 +24,12 @@ from finwiz.schemas.perplexity import (
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_errors import (
     PerplexityAPIError,
-    PerplexityConnectionError,
     PerplexityFallbackManager,
-    PerplexityRateLimitError,
-    PerplexityTimeoutError,
 )
 from finwiz.tools.perplexity_logging import (
     PerplexityOperationLogger,
 )
 from finwiz.tools.perplexity_performance import PerplexityPerformanceMonitor
-from finwiz.tools.perplexity_search_tool import PerplexitySearchTool
 
 logger = get_logger(__name__)
 
@@ -54,22 +52,22 @@ class PerplexityAnalysisIntegration:
         """Initialize the integration wrapper."""
         try:
             self.perplexity_tool = PerplexitySearchTool()
-        except (ValueError, Exception):
+        except ValueError:
             self.perplexity_tool = None  # type: ignore[assignment]
 
         self.config = config or self._create_default_config()
 
-        # Validate API key availability
-        api_key = os.getenv("PPLX_API_KEY")
-        if not api_key or self.perplexity_tool is None:
-            logger.warning("PPLX_API_KEY not found, Perplexity integration will be disabled")
+        # Availability derives from successful tool construction, which already
+        # validates PERPLEXITY_API_KEY (primary) or PPLX_API_KEY (fallback).
+        if self.perplexity_tool is None:
+            logger.warning("PERPLEXITY_API_KEY/PPLX_API_KEY not found, Perplexity integration will be disabled")
             self._api_available = False
         else:
             self._api_available = True
 
     def _create_default_config(self) -> PerplexityConfig:
         """Create default configuration."""
-        api_key = os.getenv("PPLX_API_KEY", "")
+        api_key = os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY") or ""
         return PerplexityConfig(api_key=api_key, timeout_seconds=30.0, max_retries=3, backoff_factor=2.0, rate_limit_buffer=5, default_max_results=10)
 
     @property
@@ -213,9 +211,9 @@ class PerplexityAnalysisIntegration:
 
                 import requests
 
-                api_key = os.getenv("PPLX_API_KEY")
+                api_key = os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY")
                 if not api_key:
-                    raise PerplexityAPIError(401, "PPLX_API_KEY not set")
+                    raise PerplexityAPIError(401, "PERPLEXITY_API_KEY/PPLX_API_KEY not set")
 
                 headers = {
                     "Authorization": f"Bearer {api_key}",
@@ -253,26 +251,10 @@ class PerplexityAnalysisIntegration:
                         }
                     )
 
-                # Create response in expected format
+                # Create response in the canonical ToolResult envelope, matching what
+                # _parse_perplexity_response now expects (parse_tool_result-compatible).
                 response_data = {"citations": citations, "results": search_data.get("results", [])}
-                response = json.dumps(response_data, indent=2, ensure_ascii=False, default=str)
-
-                if response.startswith("Error:"):
-                    # Convert tool error to proper exception
-                    error_msg = response[6:].strip()  # Remove "Error:" prefix
-
-                    # Classify the error type
-                    if "api key" in error_msg.lower():
-                        raise PerplexityAPIError(401, error_msg)
-                    elif "rate limit" in error_msg.lower() or "429" in error_msg:
-                        retry_after = self._extract_retry_after_from_message(error_msg)
-                        raise PerplexityRateLimitError(retry_after, error_msg)
-                    elif "timeout" in error_msg.lower():
-                        raise PerplexityTimeoutError(error_msg)
-                    elif "connection" in error_msg.lower():
-                        raise PerplexityConnectionError(error_msg)
-                    else:
-                        raise PerplexityAPIError(None, error_msg)
+                response = ok(response_data)
 
                 return response, attempt
 
@@ -309,19 +291,6 @@ class PerplexityAnalysisIntegration:
             PerplexityOperationLogger.log_api_failure(ticker, str(last_exception), self.config.max_retries + 1)
 
         raise last_exception or Exception("Max retries exceeded for Perplexity search")
-
-    def _extract_retry_after_from_message(self, message: str) -> int | None:
-        """Extract retry-after value from error message."""
-        import re
-
-        retry_match = re.search(r"retry[_\s]*after[:\s]*(\d+)", message, re.IGNORECASE)
-        if retry_match:
-            try:
-                return int(retry_match.group(1))
-            except ValueError:
-                pass
-
-        return None
 
     def _extract_ticker_from_query(self, query: str) -> str | None:
         """Extract ticker symbol from query for logging context."""
@@ -386,18 +355,11 @@ class PerplexityAnalysisIntegration:
         raw_response_size = len(raw_response.encode("utf-8"))
 
         try:
-            # Parse JSON response
-            response_data = json.loads(raw_response)
+            data = parse_tool_result(raw_response)
 
-            # Extract citations from response
-            citations = response_data.get("citations", [])
-            if not citations:
-                # Try to extract from choices if citations not at root level
-                choices = response_data.get("choices", [])
-                if choices and "citations" in choices[0]:
-                    citations = choices[0]["citations"]
+            # Citations come straight from the envelope now.
+            citations = (data or {}).get("citations", [])
 
-            # Convert citations to SonarArticle objects
             for i, citation in enumerate(citations):
                 try:
                     article = self._create_sonar_article(citation, analysis_type, i)
@@ -407,18 +369,19 @@ class PerplexityAnalysisIntegration:
                     logger.warning(f"Failed to parse citation {i}: {e!s}")
                     continue
 
-            # If no citations found, try to extract from message content
+            # If no citations found, try to extract from the answer text via the
+            # legacy chat-completions shape the helper still understands.
             if not articles:
-                articles = self._extract_articles_from_content(response_data, analysis_type)
+                legacy_shaped = {"choices": [{"message": {"content": (data or {}).get("answer", "")}}]}
+                articles = self._extract_articles_from_content(legacy_shaped, analysis_type)
 
-            # Log parsing metrics with content redaction
             if ticker:
                 PerplexityOperationLogger.log_parsing_metrics(ticker, raw_response_size, len(articles))
 
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse Perplexity JSON response: {e!s}")
+        except ToolResultError as e:
+            logger.error(f"Perplexity tool returned an error envelope: {e!s}")
             if ticker:
-                PerplexityOperationLogger.log_api_failure(ticker, f"JSON parsing error: {e!s}")
+                PerplexityOperationLogger.log_api_failure(ticker, f"Tool error: {e!s}")
         except Exception as e:
             logger.error(f"Unexpected error parsing Perplexity response: {e!s}")
             if ticker:

@@ -118,12 +118,13 @@ class DeepAnalysisDataCollector:
                 collected_data["ticker_info"]["data_source"] = "prefetched"
                 return collected_data
 
-        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+        from crewai_custom_tools import YahooFinanceTickerInfoTool
+        from crewai_custom_tools.core.results import parse_tool_result
 
         try:
             self.logger.info(f"🐍 Calling YahooFinanceTickerInfoTool for {ticker}")
             ticker_tool = YahooFinanceTickerInfoTool()
-            ticker_result = ticker_tool._run(ticker=ticker)
+            ticker_result = parse_tool_result(ticker_tool._run(ticker=ticker))
 
             if "current_price" in ticker_result:
                 collected_data["current_price"] = ticker_result["current_price"]
@@ -214,7 +215,8 @@ class DeepAnalysisDataCollector:
         """Collect stock-specific fundamental data using DataSourceOrchestrator."""
         import asyncio
 
-        from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
+        from crewai_custom_tools import YahooFinanceCompanyInfoTool
+        from crewai_custom_tools.core.results import parse_tool_result
 
         self.logger.info(f"🐍 Using DataSourceOrchestrator for {ticker} fundamental data")
 
@@ -244,7 +246,7 @@ class DeepAnalysisDataCollector:
             self.logger.error(f"❌ DataSourceOrchestrator failed: {orch_error}", exc_info=True)
             # Fallback to Yahoo Finance
             company_tool = YahooFinanceCompanyInfoTool()
-            company_result = company_tool._run(ticker=ticker)
+            company_result = parse_tool_result(company_tool._run(ticker=ticker))
 
             if "financial_metrics" in company_result:
                 metrics = company_result["financial_metrics"]

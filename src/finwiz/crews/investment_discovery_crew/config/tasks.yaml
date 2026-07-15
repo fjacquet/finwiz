@@ -30,6 +30,7 @@ etf_discovery_task:
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
     - score: MUST be a float between 0.0 and 5.0 (e.g., 1.0, 1.5, 2.0)
+    - To produce the score, apply the "risk_scoring" tool. Note: the tool returns risk_score on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
@@ -98,6 +99,7 @@ stock_discovery_task:
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
     - score: MUST be a float between 0.0 and 5.0 (e.g., 1.75, 2.0, 2.25)
+    - To produce the score, apply the "risk_scoring" tool. Note: the tool returns risk_score on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
@@ -160,7 +162,7 @@ crypto_discovery_task:
     - Suggest replacement strategies for underperforming crypto holdings
 
     Use Market Screening Tool for initial filtering, Enhanced Crypto Analysis Tool
-    for comprehensive evaluation, DeFi Metrics Tool for protocol analysis, and
+    for comprehensive evaluation, `defi_metrics` tool for protocol analysis, and
     A+ Scoring Tool for final grading assessment.
 
     CRITICAL OUTPUT FORMAT:
@@ -178,6 +180,7 @@ crypto_discovery_task:
     For risk_assessment field in InvestmentCandidate, use RiskAssessmentStandardized schema:
     - scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
     - score: MUST be a float between 0.0 and 5.0 (e.g., 2.0, 2.5, 3.0)
+    - To produce the score, apply the "risk_scoring" tool. Note: the tool returns risk_score on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     - level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
     - risk_factors: MUST be a list of strings (up to 10 concise risk descriptions)
     - DO NOT use fields like: systemic_risk, business_risk, liquidity_risk, governance_risk, overall_risk_score, notes
@@ -289,6 +292,7 @@ optimization_task:
 
     REQUIRED ENUM VALUES (use EXACTLY these values):
     - risk_assessment.scale: MUST be "0_5" (for 0-5 scale, no other values allowed)
+    - risk_assessment.score: apply the "risk_scoring" tool to produce it. Note: the tool returns risk_score on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     - risk_assessment.level: MUST be one of: "Low", "Medium", "High", "Very High" (capitalized, no other values allowed)
 
     OUTPUT: Return a structured JSON output conforming to the OptimizationResult schema.

@@ -15,6 +15,8 @@ import asyncio
 import logging
 from typing import Any
 
+from crewai_custom_tools import perplexity_structured
+
 from finwiz.schemas.hybrid_analysis.strategic import (
     FiveForcesAnalysis,
     PestelAnalysis,
@@ -22,7 +24,6 @@ from finwiz.schemas.hybrid_analysis.strategic import (
     StrategicAnalysis,
     SwotAnalysis,
 )
-from finwiz.tools.perplexity_structured import perplexity_structured
 
 logger = logging.getLogger(__name__)
 

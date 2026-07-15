@@ -1,6 +1,7 @@
 """Unit tests for TwelveDataMultiIndicatorTool."""
 
 import pytest
+from crewai_custom_tools.core.results import ok
 
 from finwiz.tools.twelve_data_multi_indicator_tool import TwelveDataMultiIndicatorTool
 
@@ -39,35 +40,51 @@ class TestTwelveDataMultiIndicatorTool:
         assert tool._determine_asset_type("MSFT") == "stock"
         assert tool._determine_asset_type("GOOGL") == "stock"
 
-    def test_should_fetch_indicator_with_correct_params(self, tool, mocker):
-        """Test that indicator fetching uses correct parameters."""
-        mock_get = mocker.patch("requests.get")
-        mock_response = mocker.Mock()
-        mock_response.text = '{"status": "ok"}'
-        mock_get.return_value = mock_response
-
-        result = tool._fetch_indicator(
-            symbol="AAPL",
-            interval="1day",
-            indicator="rsi",
-            api_key="test_key",
-            params={"time_period": 14, "outputsize": 100},
+    def test_should_delegate_fetch_with_correct_params(self, tool, mocker):
+        """Test that the multi-indicator fetch delegates to the central tool with correct kwargs."""
+        mock_central_run = mocker.patch(
+            "crewai_custom_tools.tools.finance.indicators.TwelveDataMultiIndicatorTool._run",
+            return_value=ok({"symbol": "AAPL", "interval": "1day", "indicators": {"rsi": {"status": "ok"}}}),
         )
 
-        # Verify API call
-        mock_get.assert_called_once()
-        call_args = mock_get.call_args
-        assert call_args[0][0] == "https://api.twelvedata.com/rsi"
-        assert call_args[1]["params"]["symbol"] == "AAPL"
-        assert call_args[1]["params"]["interval"] == "1day"
-        assert call_args[1]["params"]["time_period"] == 14
-        assert result == '{"status": "ok"}'
+        result = tool._fetch_all_indicators(
+            symbol="AAPL",
+            interval="1day",
+            indicators=["rsi"],
+            rsi_period=14,
+            macd_fast=12,
+            macd_slow=26,
+            macd_signal=9,
+            bbands_period=20,
+            bbands_stddev=2,
+            outputsize=100,
+        )
+
+        mock_central_run.assert_called_once()
+        _, kwargs = mock_central_run.call_args
+        assert kwargs["symbol"] == "AAPL"
+        assert kwargs["interval"] == "1day"
+        assert kwargs["indicators"] == ["rsi"]
+        assert kwargs["rsi_period"] == 14
+        assert "rsi" in result
+        assert '"status": "ok"' in result["rsi"]
 
     def test_should_fetch_all_indicators_when_requested(self, tool, mocker):
-        """Test fetching all indicators in one call."""
-        mocker.patch.dict("os.environ", {"TWELVE_DATA_API_KEY": "test_key"})
-        mock_fetch = mocker.patch.object(tool, "_fetch_indicator")
-        mock_fetch.return_value = '{"status": "ok"}'
+        """Test fetching all indicators in one call, including a per-indicator failure."""
+        mocker.patch(
+            "crewai_custom_tools.tools.finance.indicators.TwelveDataMultiIndicatorTool._run",
+            return_value=ok(
+                {
+                    "symbol": "AAPL",
+                    "interval": "1day",
+                    "indicators": {
+                        "rsi": {"values": [{"datetime": "2025-01-01", "rsi": 65.5}]},
+                        "macd": {"values": [{"datetime": "2025-01-01", "macd": 1.2}]},
+                        "bbands": {"error": "Network down"},
+                    },
+                }
+            ),
+        )
 
         results = tool._fetch_all_indicators(
             symbol="AAPL",
@@ -82,11 +99,13 @@ class TestTwelveDataMultiIndicatorTool:
             outputsize=100,
         )
 
-        # Verify all indicators were fetched
+        # Verify all indicators were fetched, isolating the bbands failure
         assert "rsi" in results
         assert "macd" in results
         assert "bbands" in results
-        assert mock_fetch.call_count == 3
+        assert isinstance(results["rsi"], str)
+        assert isinstance(results["macd"], str)
+        assert results["bbands"] == {"error": "Network down"}
 
     def test_should_handle_missing_api_key(self, mocker):
         """Test fail-fast when API key is missing."""

@@ -15,6 +15,7 @@ import json
 from datetime import datetime
 
 import pytest
+from crewai_custom_tools.core.results import ok
 from pytest import approx
 
 from finwiz.flow_state import FinwizState
@@ -132,7 +133,7 @@ class TestPythonDataCollection:
     ):
         """Test successful data collection from all tools."""
         # Setup mocks
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
 
         # Mock DataSourceOrchestrator for stock fundamental data
         from datetime import datetime
@@ -159,7 +160,7 @@ class TestPythonDataCollection:
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         # Configure mocks
-        mock_ticker.return_value = mock_yahoo_ticker_data
+        mock_ticker.return_value = ok(mock_yahoo_ticker_data)
         mock_quant.return_value = mock_quantitative_data
         mock_sentiment.return_value = mock_sentiment_data
         mock_sec.return_value = mock_sec_data
@@ -214,13 +215,13 @@ class TestPythonDataCollection:
     def test_collect_data_handles_tool_failures(self, mocker, orchestrator):
         """Test graceful handling when individual tools fail."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_company = mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
 
         # Configure one tool to succeed, others to fail
-        mock_ticker.return_value = {"current_price": 150.0}
+        mock_ticker.return_value = ok({"current_price": 150.0})
         mock_company.side_effect = Exception("API rate limit")
         mock_quant.side_effect = Exception("Connection timeout")
         mock_sentiment.return_value = {
@@ -254,13 +255,13 @@ class TestPythonDataCollection:
     def test_collect_data_etf_skips_sec_analysis(self, mocker, orchestrator):
         """Test that ETF assets skip SEC analysis (stock-only feature)."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_company = mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
-        mock_ticker.return_value = {"current_price": 420.0}
+        mock_ticker.return_value = ok({"current_price": 420.0})
         mock_quant.return_value = json.dumps({"technical_indicators": {"rsi": 55}})
         mock_sentiment.return_value = {
             "symbol": "SPY",
@@ -329,11 +330,11 @@ class TestPythonDataCollection:
         }
 
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_company = mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run")
 
-        mock_ticker.return_value = {"current_price": edge_case_data["current_price"]}
-        mock_company.return_value = {"financial_metrics": edge_case_data["financial_metrics"]}
+        mock_ticker.return_value = ok({"current_price": edge_case_data["current_price"]})
+        mock_company.return_value = ok({"financial_metrics": edge_case_data["financial_metrics"]})
 
         # Should handle edge cases without crashing
         result = orchestrator.data_collector.collect_data("PENNY", "stock", batch_enabled=False)
@@ -345,15 +346,15 @@ class TestPythonDataCollection:
     def test_json_parsing_robustness(self, mocker, orchestrator):
         """Test robust JSON parsing from tool outputs."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_company = mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mock_sentiment = mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
         mock_sec = mocker.patch("finwiz.tools.enhanced_sec_tool.EnhancedSECAnalysisTool._run")
 
         # Mock minimal responses for other tools
-        mock_ticker.return_value = {"current_price": 100.0}
-        mock_company.return_value = {}
+        mock_ticker.return_value = ok({"current_price": 100.0})
+        mock_company.return_value = ok({})
         mock_sentiment.return_value = {
             "symbol": "TEST",
             "asset_class": "stock",
@@ -386,13 +387,13 @@ class TestPythonDataCollection:
     def test_scorer_integration(self, mocker, orchestrator, mock_yahoo_ticker_data, mock_yahoo_company_data, mock_quantitative_data):
         """Test that collected data integrates correctly with Python scorer."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_company = mocker.patch("finwiz.tools.yahoo_finance_company_info_tool.YahooFinanceCompanyInfoTool._run")
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_company = mocker.patch("crewai_custom_tools.tools.finance.company_info.YahooFinanceCompanyInfoTool._run")
         mock_quant = mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
         mocker.patch("finwiz.tools.standardized_sentiment_tool.StandardizedSentimentAnalysisTool._run")
 
-        mock_ticker.return_value = mock_yahoo_ticker_data
-        mock_company.return_value = mock_yahoo_company_data
+        mock_ticker.return_value = ok(mock_yahoo_ticker_data)
+        mock_company.return_value = ok(mock_yahoo_company_data)
         mock_quant.return_value = mock_quantitative_data
 
         # Test the full flow including scorer
@@ -415,12 +416,12 @@ class TestPythonDataCollection:
     def test_import_stability(self):
         """Test that all required imports work without errors."""
         # These imports should not raise any exceptions
+        from crewai_custom_tools import YahooFinanceCompanyInfoTool, YahooFinanceTickerInfoTool
+
         from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
         from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
         from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
         from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
-        from finwiz.tools.yahoo_finance_company_info_tool import YahooFinanceCompanyInfoTool
-        from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
         # Verify classes can be instantiated
         assert QuantitativeAnalysisTool is not None
@@ -434,8 +435,8 @@ class TestPythonDataCollection:
     def test_batch_mode_parameter_propagation(self, mocker, orchestrator):
         """Test that batch_enabled parameter is properly used."""
         # ✅ CORRECT pytest-mock pattern: NO context managers
-        mock_ticker = mocker.patch("finwiz.tools.yahoo_finance_ticker_info_tool.YahooFinanceTickerInfoTool._run")
-        mock_ticker.return_value = {"current_price": 100.0}
+        mock_ticker = mocker.patch("crewai_custom_tools.tools.finance.yfinance_ticker.YahooFinanceTickerInfoTool._run")
+        mock_ticker.return_value = ok({"current_price": 100.0})
 
         # Test with batch_enabled=True
         result = orchestrator.data_collector.collect_data("BATCH1", "stock", batch_enabled=True)

@@ -8,6 +8,7 @@ caching functionality, fallback mechanisms, and error handling.
 from datetime import datetime, timedelta
 
 import pytest
+from crewai_custom_tools.core.results import err, ok
 from pydantic import ValidationError
 from pytest import approx
 
@@ -134,7 +135,7 @@ class TestPortfolioPriceService:
         mock_portfolio_cache.get_price_data.return_value = cached_price_data
 
         # Mock Yahoo Finance tool to return fresh data
-        price_service.yahoo_tool._run.return_value = {"current_price": 155.0, "currency": "USD"}
+        price_service.yahoo_tool._run.return_value = ok({"current_price": 155.0, "currency": "USD"})
 
         # Act
         result = await price_service.get_current_price("AAPL")
@@ -149,7 +150,7 @@ class TestPortfolioPriceService:
         """Test getting stock price from Yahoo Finance on cache miss."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"current_price": 150.0, "currency": "USD", "symbol": "AAPL"}
+        price_service.yahoo_tool._run.return_value = ok({"current_price": 150.0, "currency": "USD", "symbol": "AAPL"})
 
         # Act
         result = await price_service.get_current_price("AAPL")
@@ -177,7 +178,7 @@ class TestPortfolioPriceService:
         mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock Yahoo Finance to fail for crypto
-        price_service.yahoo_tool._run.return_value = {"error": "Not found"}
+        price_service.yahoo_tool._run.return_value = err("Not found")
 
         # Mock yfinance direct calls to fail
         mock_ticker = mocker.MagicMock()
@@ -203,7 +204,7 @@ class TestPortfolioPriceService:
         """Test fallback mechanism when Yahoo Finance tool fails."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"error": "API error"}
+        price_service.yahoo_tool._run.return_value = err("API error")
 
         # Mock yfinance direct call
         mock_ticker = mocker.MagicMock()
@@ -223,7 +224,7 @@ class TestPortfolioPriceService:
         """Test using history data as fallback when direct yfinance fails."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"error": "API error"}
+        price_service.yahoo_tool._run.return_value = err("API error")
 
         # Mock yfinance ticker with failing info but working history
         mock_ticker = mocker.MagicMock()
@@ -250,7 +251,7 @@ class TestPortfolioPriceService:
         """Test returning None when all price sources fail."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"error": "API error"}
+        price_service.yahoo_tool._run.return_value = err("API error")
 
         # Mock yfinance to fail
         mock_ticker = mocker.MagicMock()
@@ -272,7 +273,7 @@ class TestPortfolioPriceService:
 
         def mock_yahoo_response(symbol):
             prices = {"AAPL": 150.0, "MSFT": 300.0, "GOOGL": 2500.0}
-            return {"current_price": prices.get(symbol, 100.0), "currency": "USD"}
+            return ok({"current_price": prices.get(symbol, 100.0), "currency": "USD"})
 
         price_service.yahoo_tool._run.side_effect = mock_yahoo_response
 
@@ -296,8 +297,8 @@ class TestPortfolioPriceService:
 
         def mock_yahoo_response(symbol):
             if symbol == "INVALID":
-                return {"error": "Symbol not found"}
-            return {"current_price": 150.0, "currency": "USD"}
+                return err("Symbol not found")
+            return ok({"current_price": 150.0, "currency": "USD"})
 
         price_service.yahoo_tool._run.side_effect = mock_yahoo_response
 
@@ -315,7 +316,7 @@ class TestPortfolioPriceService:
         """Test exception raising when get_price_with_fallback fails."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"error": "API error"}
+        price_service.yahoo_tool._run.return_value = err("API error")
 
         # Mock all fallbacks to fail
         mock_ticker = mocker.MagicMock()
@@ -339,8 +340,8 @@ class TestPortfolioPriceService:
         def mock_yahoo_response(symbol):
             valid_symbols = {"AAPL", "MSFT"}
             if symbol in valid_symbols:
-                return {"current_price": 150.0, "currency": "USD"}
-            return {"error": "Symbol not found"}
+                return ok({"current_price": 150.0, "currency": "USD"})
+            return err("Symbol not found")
 
         price_service.yahoo_tool._run.side_effect = mock_yahoo_response
 
@@ -385,7 +386,7 @@ class TestPortfolioPriceService:
         """Test cache warming functionality."""
         # Arrange
         mock_portfolio_cache.get_price_data.return_value = None
-        price_service.yahoo_tool._run.return_value = {"current_price": 150.0, "currency": "USD"}
+        price_service.yahoo_tool._run.return_value = ok({"current_price": 150.0, "currency": "USD"})
 
         # Act
         result = await price_service.warm_cache(["AAPL", "MSFT"])
@@ -425,7 +426,7 @@ class TestPortfolioPriceService:
             call_count += 1
             if call_count == 1:
                 raise TimeoutError()
-            return {"current_price": 150.0, "currency": "USD"}
+            return ok({"current_price": 150.0, "currency": "USD"})
 
         mocker.patch("asyncio.wait_for", side_effect=mock_wait_for)
 
@@ -450,7 +451,7 @@ class TestPortfolioPriceService:
         mocker.patch("yfinance.Ticker", return_value=mock_ticker)
 
         # Create a mock response that succeeds
-        price_service.yahoo_tool._run.return_value = {"current_price": 150.0, "currency": "USD"}
+        price_service.yahoo_tool._run.return_value = ok({"current_price": 150.0, "currency": "USD"})
 
         # Act - Request symbols (test that semaphore works)
         symbols = ["AAPL", "MSFT", "GOOGL", "TSLA", "AMZN"]  # 5 symbols = limit
@@ -493,7 +494,7 @@ class TestPortfolioPriceService:
         mock_portfolio_cache.get_price_data.return_value = None
 
         # Mock Yahoo Finance to fail for crypto
-        price_service.yahoo_tool._run.return_value = {"error": "Not found"}
+        price_service.yahoo_tool._run.return_value = err("Not found")
 
         # Mock yfinance direct calls to fail
         mock_ticker = mocker.MagicMock()

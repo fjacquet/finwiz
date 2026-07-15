@@ -10,6 +10,7 @@ import json
 import os
 
 import pytest
+from crewai_custom_tools.core.results import ok
 from pydantic import ValidationError
 from pytest import approx
 
@@ -64,8 +65,9 @@ class TestPerplexityIntegrationWrapper:
 
     def test_should_create_default_config_when_none_provided(self, mocker):
         """Test default configuration creation."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
+        # Arrange — clear() isolates from an ambient PERPLEXITY_API_KEY (e.g. local
+        # .env) so this exercises the PPLX_API_KEY fallback path deterministically.
+        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"}, clear=True)
 
         # Act
         integration = PerplexityAnalysisIntegration()
@@ -136,12 +138,13 @@ class TestPerplexityIntegrationWrapper:
         assert len(result.results) == 0
 
     def test_should_parse_perplexity_response_with_citations(self):
-        """Test JSON response parsing with citations."""
+        """Test envelope parsing with citations in the tool's `data`."""
         # Arrange
         integration = PerplexityAnalysisIntegration(self.config)
 
-        raw_response = json.dumps(
+        raw_response = ok(
             {
+                "answer": "Apple stock analysis summary",
                 "citations": [
                     {
                         "title": "Apple Stock Analysis",
@@ -155,7 +158,8 @@ class TestPerplexityIntegrationWrapper:
                         "text": "Market shows positive sentiment",
                         "source": "Reuters",
                     },
-                ]
+                ],
+                "source": "perplexity",
             }
         )
 
@@ -170,24 +174,21 @@ class TestPerplexityIntegrationWrapper:
         assert articles[0].analysis_type == "sentiment"
         assert articles[1].publisher == "Reuters"
 
-    def test_should_parse_response_with_choices_citations(self):
-        """Test parsing response where citations are nested in choices."""
+    def test_should_extract_articles_from_answer_when_no_citations(self):
+        """Test fallback extraction from the envelope's answer text when citations are empty.
+
+        Citations nested under ``choices`` (the raw chat-completions shape) are no
+        longer a thing the central tool returns; the envelope's `answer` text is the
+        fallback source instead.
+        """
         # Arrange
         integration = PerplexityAnalysisIntegration(self.config)
 
-        raw_response = json.dumps(
+        raw_response = ok(
             {
-                "choices": [
-                    {
-                        "citations": [
-                            {
-                                "title": "SEC Filing Analysis",
-                                "url": "https://sec.gov/filing-123",
-                                "snippet": "Company reports strong fundamentals",
-                            }
-                        ]
-                    }
-                ]
+                "answer": "See the SEC filing at https://sec.gov/filing-123 for details.",
+                "citations": [],
+                "source": "perplexity",
             }
         )
 
@@ -196,7 +197,7 @@ class TestPerplexityIntegrationWrapper:
 
         # Assert
         assert len(articles) == 1
-        assert articles[0].title == "SEC Filing Analysis"
+        assert str(articles[0].url) == "https://sec.gov/filing-123"
         assert articles[0].analysis_type == "fundamental"
 
     def test_should_handle_invalid_json_response(self):

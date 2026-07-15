@@ -9,18 +9,15 @@ and more. Enhanced with optional Perplexity Sonar integration.
 import asyncio
 import json
 from datetime import UTC, datetime
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
-import requests
 from crewai.tools import BaseTool
+from crewai_custom_tools import AlphaVantageOverviewTool as CentralAlphaVantageOverviewTool
+from crewai_custom_tools.core.results import parse_tool_result
 from dotenv import load_dotenv
 from pydantic import BaseModel
 
-from finwiz.config.endpoints import ALPHA_VANTAGE_BASE
 from finwiz.config.features.flags import get_feature_flags
-from finwiz.infrastructure.caching.manager import cache_key, cached
-from finwiz.infrastructure.decorators.api_decorators import api_tool
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.perplexity import SonarArticle
 from finwiz.schemas.tools import CompanyOverviewInput
 from finwiz.tools.api_key_validation import validate_api_key
@@ -55,6 +52,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         """Validate API key at instantiation (fail-fast)."""
         super().model_post_init(__context)
         self._api_key = validate_api_key("ALPHA_VANTAGE_API_KEY", self.__class__.__name__)
+        self._central = CentralAlphaVantageOverviewTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -103,7 +101,7 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             else:
                 # Fall back to live API call
                 logger.info(f"Fetching Alpha Vantage company overview for {ticker} with optional Perplexity enhancement")
-                alpha_vantage_data = asyncio.run(self._fetch_company_overview(ticker))
+                alpha_vantage_data = self._fetch_company_overview(ticker)
 
             # Optionally get Perplexity fundamental insights
             perplexity_insights = []
@@ -123,42 +121,48 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
             logger.error(f"Error in enhanced Alpha Vantage analysis for {ticker}: {e!s}")
             return f"Error performing enhanced company overview analysis for {ticker}: {e!s}"
 
-    @api_tool(
-        provider=APIProvider.ALPHA_VANTAGE,
-        endpoint="company_overview",
-        timeout=15.0,
-        default_return="Error: Unable to fetch company overview data",
-    )
-    async def _fetch_company_overview(self, ticker: str) -> str:
-        """Fetch company overview data with caching."""
-        cache_key_str = cache_key("alpha_vantage", "overview", ticker.upper())
+    def _fetch_company_overview(self, ticker: str) -> str:
+        """Fetch company overview data via the centralized Alpha Vantage tool.
 
-        async def fetch_from_api() -> str:
-            url = f"{ALPHA_VANTAGE_BASE}?function=OVERVIEW&symbol={ticker}&apikey={self._api_key}"
+        Delegates the HTTP fetch to `crewai_custom_tools`' `AlphaVantageOverviewTool`,
+        which provides its own rate limiting. Central's overview envelope uses a
+        smaller, lowercase key set than the raw Alpha Vantage OVERVIEW response
+        this method previously returned, so it is remapped onto the PascalCase
+        keys `_format_enhanced_overview_response` reads (Symbol, Name, PERatio,
+        ProfitMargin, DividendYield, Sector, Industry, MarketCapitalization, EPS,
+        RevenueTTM, Description). As of v0.5.1, central fetches all of these —
+        each key is always present in `data`, though the value may be an explicit
+        `None` for sparse tickers; the renderer coalesces those to "N/A" rather
+        than this method (see `_format_enhanced_overview_response`).
 
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+        Note: this path no longer goes through finwiz's local 30-minute cache
+        (`finwiz.infrastructure.caching`) — central provides its own rate
+        limiting instead. Every live call now hits the Alpha Vantage API
+        directly (see task report for the cache-behavior-change note).
+        """
+        data = parse_tool_result(self._central._run(ticker=ticker))
 
-            if not data or "Note" in data:
-                return f"No data found for ticker {ticker}. It might be an invalid symbol."
+        overview = {
+            "Symbol": data.get("symbol"),
+            "Name": data.get("name"),
+            "PERatio": data.get("pe_ratio"),
+            "ProfitMargin": data.get("profit_margin"),
+            "DividendYield": data.get("dividend_yield"),
+            "ReturnOnEquityTTM": data.get("return_on_equity_ttm"),
+            "DebtToEquityRatio": data.get("debt_to_equity_ratio"),
+            "QuarterlyRevenueGrowthYOY": data.get("quarterly_revenue_growth_yoy"),
+            "Sector": data.get("sector"),
+            "Industry": data.get("industry"),
+            "MarketCapitalization": data.get("market_cap"),
+            "EPS": data.get("eps"),
+            "RevenueTTM": data.get("revenue_ttm"),
+            "Description": data.get("description"),
+            "timestamp": datetime.now(UTC).isoformat(),
+        }
 
-            # Add timestamp for freshness validation
-            data["timestamp"] = datetime.now(UTC).isoformat()
+        logger.debug(f"Retrieved Alpha Vantage data for {ticker} via central tool")
 
-            # Log data retrieval for debugging
-            logger.debug(f"Retrieved Alpha Vantage data for {ticker}")
-
-            return json.dumps(data, indent=2, default=str)
-
-        # Use caching with 30-minute TTL for company overview data
-        result: str = await cached(
-            cache_key_str,
-            fetch_from_api,
-            ttl=1800,  # 30 minutes
-            tags={"alpha_vantage", "company_overview", ticker.upper()},
-        )
-        return result
+        return json.dumps(overview, indent=2, default=str)
 
     async def _get_perplexity_fundamental_insights(self, ticker: str) -> list[SonarArticle]:
         """Get fundamental analysis insights from Perplexity Sonar."""
@@ -201,19 +205,30 @@ class AlphaVantageCompanyOverviewTool(BaseTool):
         try:
             av_data = json.loads(alpha_vantage_data)
             if isinstance(av_data, dict) and "Symbol" in av_data:
-                # Format key metrics nicely
-                response += f"**Company**: {av_data.get('Name', 'N/A')}\n"
-                response += f"**Sector**: {av_data.get('Sector', 'N/A')}\n"
-                response += f"**Industry**: {av_data.get('Industry', 'N/A')}\n"
-                response += f"**Market Cap**: {av_data.get('MarketCapitalization', 'N/A')}\n"
-                response += f"**P/E Ratio**: {av_data.get('PERatio', 'N/A')}\n"
-                response += f"**EPS**: {av_data.get('EPS', 'N/A')}\n"
-                response += f"**Revenue (TTM)**: {av_data.get('RevenueTTM', 'N/A')}\n"
-                response += f"**Profit Margin**: {av_data.get('ProfitMargin', 'N/A')}\n"
-                response += f"**Dividend Yield**: {av_data.get('DividendYield', 'N/A')}\n\n"
 
-                if av_data.get("Description"):
-                    response += f"**Description**: {av_data['Description'][:300]}{'...' if len(av_data['Description']) > 300 else ''}\n\n"
+                def _na(value: Any) -> Any:
+                    """Coalesce an explicit None to 'N/A'.
+
+                    Central may return present-but-null AV fields (sparse data).
+                    `.get(key, 'N/A')` alone does not fire here since the key is
+                    present with value None.
+                    """
+                    return value if value is not None else "N/A"
+
+                # Format key metrics nicely
+                response += f"**Company**: {_na(av_data.get('Name'))}\n"
+                response += f"**Sector**: {_na(av_data.get('Sector'))}\n"
+                response += f"**Industry**: {_na(av_data.get('Industry'))}\n"
+                response += f"**Market Cap**: {_na(av_data.get('MarketCapitalization'))}\n"
+                response += f"**P/E Ratio**: {_na(av_data.get('PERatio'))}\n"
+                response += f"**EPS**: {_na(av_data.get('EPS'))}\n"
+                response += f"**Revenue (TTM)**: {_na(av_data.get('RevenueTTM'))}\n"
+                response += f"**Profit Margin**: {_na(av_data.get('ProfitMargin'))}\n"
+                response += f"**Dividend Yield**: {_na(av_data.get('DividendYield'))}\n\n"
+
+                description = av_data.get("Description")
+                if description:
+                    response += f"**Description**: {description[:300]}{'...' if len(description) > 300 else ''}\n\n"
             else:
                 response += f"{alpha_vantage_data}\n\n"
         except (json.JSONDecodeError, KeyError):

@@ -11,7 +11,6 @@ import pytest
 from finwiz.tools.enhanced_sec_tool import (
     EnhancedSECAnalysisInput,
     EnhancedSECAnalysisTool,
-    StandardizedRiskScoringTool,
 )
 
 
@@ -227,27 +226,6 @@ class TestEnhancedSECAnalysisTool:
         assert risk_assessment["level"] in ["Low", "Medium", "High", "Very High"]
         assert len(risk_assessment["risk_factors"]) <= 10
         assert risk_assessment["filing_source"] == mock_filing_data["filing_url"]
-
-
-class TestStandardizedRiskScoringTool:
-    """Test the Standardized Risk Scoring Tool."""
-
-    @pytest.fixture
-    def tool(self):
-        """Create an instance of the Standardized Risk Scoring Tool."""
-        return StandardizedRiskScoringTool()
-
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
-        # Act
-        result = tool._run(symbol="AAPL", asset_class="stock")
-
-        # Assert
-        assert result["tool"] == "StandardizedRiskScoringTool"
-        assert result["symbol"] == "AAPL"
-        assert result["asset_class"] == "stock"
-        assert "methodology" in result
-        assert "0-5 scale" in result["methodology"]
 
 
 class TestIntegrationScenarios:

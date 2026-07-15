@@ -8,17 +8,16 @@ Environment variable required: TWELVE_DATA_API_KEY
 from __future__ import annotations
 
 import asyncio
+import json
 from typing import Any, Literal, cast
 
-import requests
 from crewai.tools import BaseTool
+from crewai_custom_tools import TwelveDataIndicatorTool as CentralTwelveDataIndicatorTool
+from crewai_custom_tools.core.results import parse_tool_result
 from pydantic import BaseModel
 
 # Import schema from centralized location
-from finwiz.config.endpoints import TWELVE_DATA_BASE
 from finwiz.config.features.flags import get_feature_flags
-from finwiz.infrastructure.decorators.api_decorators import api_tool
-from finwiz.infrastructure.resilience.rate_limiter import APIProvider
 from finwiz.schemas.tools import TwelveDataIndicatorInput
 from finwiz.tools.api_key_validation import validate_api_key
 from finwiz.tools.logger import get_logger
@@ -43,12 +42,11 @@ class TwelveDataIndicatorTool(BaseTool):
     )
     args_schema: type[BaseModel] = TwelveDataIndicatorInput
 
-    base_url: str = TWELVE_DATA_BASE
-
     def model_post_init(self, __context: object) -> None:
         """Validate API key at instantiation (fail-fast)."""
         super().model_post_init(__context)
         self._api_key = validate_api_key("TWELVE_DATA_API_KEY", self.__class__.__name__)
+        self._central = CentralTwelveDataIndicatorTool()
 
     def _get_perplexity_integration(self) -> PerplexityAnalysisIntegration | None:
         """Get Perplexity integration instance if enabled."""
@@ -69,12 +67,6 @@ class TwelveDataIndicatorTool(BaseTool):
             logger.error(f"Failed to initialize Perplexity integration: {e!s}")
             return None
 
-    @api_tool(
-        provider=APIProvider.TWELVE_DATA,
-        endpoint="technical_indicators",
-        timeout=20.0,
-        default_return="Error: Unable to fetch technical indicator data",
-    )
     def _run(
         self,
         symbol: str,
@@ -118,30 +110,27 @@ class TwelveDataIndicatorTool(BaseTool):
         signal_period: int | None,
         outputsize: int | None,
     ) -> str:
-        """Get technical indicator data from Twelve Data API."""
-        endpoint = f"{self.base_url}/{indicator}"
-        params: dict[str, str | int] = {
-            "symbol": symbol,
-            "interval": interval,
-            "apikey": self._api_key,
-        }
-        if outputsize is not None:
-            params["outputsize"] = outputsize
-        if indicator == "rsi" and length is not None:
-            params["time_period"] = length
-        if indicator == "bbands" and length is not None:
-            params["time_period"] = length
-        if indicator == "macd":
-            if fast_period is not None:
-                params["fast"] = fast_period
-            if slow_period is not None:
-                params["slow"] = slow_period
-            if signal_period is not None:
-                params["signal"] = signal_period
+        """Get technical indicator data via the centralized Twelve Data tool.
 
-        resp = requests.get(endpoint, params=params, timeout=15)
-        resp.raise_for_status()
-        return resp.text
+        Delegates the HTTP fetch to `crewai_custom_tools`' `TwelveDataIndicatorTool`,
+        which provides its own timeout/rate-limiting/retry. The envelope's `data`
+        payload (a parsed dict) is re-serialized to a JSON string so downstream
+        markdown formatting — which historically embedded the raw API response
+        text — keeps working unchanged.
+        """
+        data = parse_tool_result(
+            self._central._run(
+                symbol=symbol,
+                indicator=indicator,
+                interval=interval,
+                length=length,
+                fast_period=fast_period,
+                slow_period=slow_period,
+                signal_period=signal_period,
+                outputsize=outputsize,
+            )
+        )
+        return json.dumps(data, default=str)
 
     async def _get_perplexity_technical_insights(self, symbol: str, indicator: str) -> list[Any]:
         """Get technical analysis insights from Perplexity Sonar."""

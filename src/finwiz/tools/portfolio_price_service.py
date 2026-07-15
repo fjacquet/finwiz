@@ -11,6 +11,8 @@ from datetime import datetime
 from typing import Any
 
 import yfinance as yf  # yfinance has no official type stubs
+from crewai_custom_tools import YahooFinanceTickerInfoTool
+from crewai_custom_tools.core.results import ToolResultError, parse_tool_result
 from pydantic import BaseModel, Field
 
 from finwiz.infrastructure.caching.manager import CacheManager, get_cache_manager
@@ -18,7 +20,6 @@ from finwiz.schemas.portfolio_rebalancing import PriceData
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.logger import get_logger
 from finwiz.tools.portfolio_cache_service import get_portfolio_cache_service
-from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
 
 logger = get_logger(__name__)
 
@@ -209,9 +210,14 @@ class PortfolioPriceService:
         for attempt in range(self.config.retry_attempts):
             try:
                 # Primary: Use Yahoo Finance ticker info tool
-                result = await asyncio.wait_for(asyncio.to_thread(self.yahoo_tool._run, symbol), timeout=self.config.request_timeout)
+                raw = await asyncio.wait_for(asyncio.to_thread(self.yahoo_tool._run, symbol), timeout=self.config.request_timeout)
+                try:
+                    result = parse_tool_result(raw)
+                except ToolResultError as exc:
+                    logger.debug(f"Yahoo price fetch failed for {symbol}: {exc}")
+                    result = None
 
-                if isinstance(result, dict) and "error" not in result:
+                if isinstance(result, dict):
                     current_price = result.get("current_price")
                     if current_price and current_price != "N/A":
                         return PriceData(

@@ -11,17 +11,10 @@ tools/
 ├── logger.py                        # get_logger() — project-wide logging
 │
 ├── # Data source tools
-├── yahoo_finance_news_tool.py       # News feed
-├── yahoo_finance_ticker_info_tool.py # Ticker info
-├── yahoo_finance_company_info_tool.py # Company fundamentals
-├── yahoo_finance_etf_holdings_tool.py # ETF holdings data
-├── yahoo_finance_history_tool.py    # Price history
-├── alpha_vantage_tool.py            # AlphaVantageTool
-├── alpha_vantage_news_tool.py       # AV news feed
+├── (Yahoo Finance, Perplexity, ticker validation, Kraken, AlphaVantage news sentiment, ChartImg, and DeFi metrics tools now come from crewai-custom-tools — see "Centralized tools" below)
+├── alpha_vantage_tool.py            # AlphaVantageTool (company overview; still local)
 ├── twelve_data_tool.py              # TwelveDataTool
 ├── sec_tool.py                      # SECTool (10-K, 10-Q filings)
-├── kraken_api_tool.py               # KrakenAPITool
-├── perplexity_search_tool.py        # PerplexitySearchTool (AI research)
 │
 ├── # Analysis tools
 ├── quantitative_analysis_tool.py    # QuantitativeAnalysisTool
@@ -38,10 +31,8 @@ tools/
 ├── enhanced_etf_tool.py             # Enhanced ETF analysis
 ├── enhanced_sec_tool.py             # Enhanced SEC filing analysis
 ├── a_plus_scoring_tool.py           # A+ scoring
-├── defi_metrics_tool.py             # DeFi metrics
 ├── regulatory_compliance_tool.py    # Compliance checking
 ├── alternative_finder_tool.py       # Alternative investments
-├── ticker_validation_tool.py        # Ticker validation
 ├── price_target_calculator.py       # Price targets
 ├── position_sizing_tool.py          # Position sizing
 │
@@ -75,12 +66,9 @@ tools/
 ├── reporting/                       # Report formatters
 │   ├── report_formatters.py         # HTMLReportFormatter
 │   └── report_sections.py
-├── scoring/                         # Scoring helpers
-│   ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
-│   └── scoring_algorithms.py
-└── twelve_data/                     # TwelveData helpers
-    ├── transformers.py
-    └── validators.py
+└── scoring/                         # Scoring helpers
+    ├── scoring_criteria.py          # assess_market_regime(), get_dynamic_criteria()
+    └── scoring_algorithms.py
 ```
 
 ## Entry Points
@@ -113,3 +101,19 @@ Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`;
 - `finwiz.integration` — Data integration layer
 - `finwiz.schemas.tools.inputs` — Tool input schemas
 - `finwiz.crews` — Crews that use these tools
+
+## Centralized tools (crewai-custom-tools)
+
+Generic tools come from the `crewai-custom-tools` package, pinned to a git tag
+in `pyproject.toml`. To co-develop against the local checkout, add (do NOT
+commit this):
+
+```toml
+[tool.uv.sources]
+crewai-custom-tools = { path = "../crewai_custom_tools", editable = true }
+```
+
+then `uv sync`. Remove the override and re-run `uv lock && uv sync` before
+committing. Programmatic callers parse tool output with
+`crewai_custom_tools.core.results.parse_tool_result()` — central tools return
+the `{"success", "data", "error"}` JSON envelope, never bare dicts.

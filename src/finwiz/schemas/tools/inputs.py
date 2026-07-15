@@ -44,30 +44,7 @@ class CryptocurrencyNewsInput(BaseModel):
     limit: int = Field(10, description="Number of news articles to return (default: 10, max: 100)")
 
 
-# Chart Generation Tool Inputs
-class ChartImgInput(BaseModel):
-    """Input schema for chart image generation."""
-
-    symbol: str = Field(..., description="Ticker symbol, e.g., AAPL, SPY, BTCUSD")
-    interval: str = Field("1day", description="Bar interval, e.g., 1min, 5min, 1h, 1day")
-    range: str = Field("6mo", description="Time range, e.g., 1mo, 3mo, 6mo, 1y, 5y, max")
-    width: int = Field(900, description="Image width in pixels")
-    height: int = Field(500, description="Image height in pixels")
-    theme: Literal["light", "dark"] = Field("light", description="Chart theme")
-
-
 # Alpha Vantage Tool Inputs
-class AlphaVantageNewsInput(BaseModel):
-    """Input schema for Alpha Vantage News Sentiment tool."""
-
-    tickers: str = Field(..., description="Comma-separated ticker symbols")
-    sort: str = Field("LATEST", description="Sort order: LATEST, EARLIEST, RELEVANCE")
-    time_from: str | None = Field(None, description="ISO8601 start time (YYYYMMDDTHHMM)")
-    time_to: str | None = Field(None, description="ISO8601 end time (YYYYMMDDTHHMM)")
-    limit: int | None = Field(50, description="Max number of items to return")
-    topics: str | None = Field(None, description="Comma-separated topics filter (e.g., technology,financial_markets)")
-
-
 class CompanyOverviewInput(BaseModel):
     """Input schema for the AlphaVantageCompanyOverviewTool."""
 
@@ -114,13 +91,6 @@ class StandardizedSentimentInput(BaseModel):
     include_trending: bool = Field(default=True, description="Whether to extract trending topics")
 
 
-class CrossAssetSentimentComparatorInput(BaseModel):
-    """Input schema for Cross-Asset Sentiment Comparator Tool."""
-
-    symbols: list[str] = Field(..., description="List of asset symbols to compare")
-    asset_classes: list[str] = Field(..., description="List of asset classes corresponding to symbols")
-
-
 # Crypto Analysis Tool Inputs
 class EnhancedCryptoAnalysisInput(BaseModel):
     """Input schema for Enhanced Crypto Analysis Tool."""
@@ -154,14 +124,6 @@ class EnhancedSECAnalysisInput(BaseModel):
     )
     risk_assessment: bool = Field(default=True, description="Whether to perform standardized risk assessment")
     include_perplexity: bool = Field(default=True, description="Whether to include Perplexity Sonar insights")
-
-
-class StandardizedRiskScoringInput(BaseModel):
-    """Input schema for Standardized Risk Scoring Tool."""
-
-    symbol: str = Field(..., description="The asset symbol (stock ticker, ETF, or crypto)")
-    asset_class: str = Field(..., description="Type of asset being analyzed")
-    risk_factors: list[str] = Field(default=[], description="List of identified risk factors")
 
 
 # Yahoo Finance Tool Inputs
@@ -236,36 +198,10 @@ class QuantitativeAnalysisInput(BaseModel):
 
 
 # Perplexity Tool Inputs
-class PerplexitySearchInput(BaseModel):
-    """Input schema for Perplexity Sonar search."""
-
-    query: str = Field(..., description="Natural language query to research with Perplexity Sonar.")
-    model: str = Field(
-        "sonar-pro",
-        description=("Perplexity model to use (e.g., sonar-pro). Use higher tiers only if your account has access."),
-    )
-    top_k: int | None = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
-    search_recency: str | None = Field(
-        None,
-        description="Recency filter such as 'day', 'week', or 'month'. Leave empty for default behaviour.",
-    )
-
-
 class PerplexitySearchWrapperInput(BaseModel):
     """Input schema for PerplexitySearchWrapper."""
 
     query: str = Field(..., description="Search query for financial research")
-
-
-# Validation Tool Inputs
-class TickerValidationInput(BaseModel):
-    """Input schema for TickerExistenceValidationTool."""
-
-    symbol: str = Field(..., description="Ticker or symbol, e.g., 'AAPL', 'SPY', 'BTC'")
-    asset_class: Literal["stock", "etf", "crypto", "auto"] = Field(
-        default="auto",
-        description="Asset class: stock | etf | crypto | auto (auto-detect via Yahoo)",
-    )
 
 
 # Custom Tool Inputs
@@ -273,26 +209,6 @@ class MyCustomToolInput(BaseModel):
     """Input schema for MyCustomTool."""
 
     argument: str = Field(..., description="Description of the argument.")
-
-
-# Kraken API Tool Inputs
-class TickerInfoInput(BaseModel):
-    """Input schema for the KrakenTickerInfoTool."""
-
-    pair: str = Field(
-        ...,
-        description="The cryptocurrency pair to get ticker information for (e.g., 'XXBTZUSD').",
-    )
-
-
-# DeFi Metrics Tool Inputs
-class DeFiMetricsInput(BaseModel):
-    """Input schema for DeFi Metrics Tool."""
-
-    symbol: str = Field(..., description="The DeFi token symbol, e.g., UNI, AAVE, COMP")
-    include_tvl_analysis: bool = Field(default=True, description="Include Total Value Locked analysis")
-    include_yield_metrics: bool = Field(default=True, description="Include yield farming metrics")
-    include_governance_analysis: bool = Field(default=True, description="Include governance token analysis")
 
 
 # Backtesting Tool Inputs

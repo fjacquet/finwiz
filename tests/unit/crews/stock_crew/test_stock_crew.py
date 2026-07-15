@@ -30,7 +30,7 @@ class TestStockCrew:
         Create mock Yahoo Finance data.
 
         Note: yfinance returns debtToEquity as percentage (173.0 = 173%),
-        which gets converted to ratio (1.73) by yahoo_finance_company_info_tool.
+        which gets converted to ratio (1.73) by the Yahoo Finance company info tool.
         """
         return {
             "symbol": "AAPL",

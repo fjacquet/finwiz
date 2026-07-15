@@ -190,8 +190,9 @@ class InvestmentDiscoveryCrew:
     def validation_agent(self) -> Agent:
         """Create validation agent for rigorous backtesting and risk analysis."""
         # Validation-specific tools
+        from crewai_custom_tools import StandardizedRiskScoringTool
+
         from finwiz.tools.backtesting_tool import get_backtesting_tool
-        from finwiz.tools.enhanced_sec_tool import StandardizedRiskScoringTool
 
         validation_tools = [
             get_backtesting_tool(),

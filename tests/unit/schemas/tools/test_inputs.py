@@ -15,25 +15,18 @@ from faker import Faker
 from pydantic import ValidationError
 
 from finwiz.schemas.tools.inputs import (
-    # Alpha Vantage
-    AlphaVantageNewsInput,
     APlusScore,
     # A+ Scoring
     APlusScoringInput,
     # Backtesting
     BacktestingInput,
-    # Chart Generation
-    ChartImgInput,
     # CoinMarketCap
     CoinInfoInput,
     CompanyOverviewInput,
     CriteriaOptimizationInput,
-    CrossAssetSentimentComparatorInput,
     CryptocurrencyHistoricalInput,
     CryptocurrencyListInput,
     CryptocurrencyNewsInput,
-    # DeFi Metrics
-    DeFiMetricsInput,
     # Crypto Analysis
     EnhancedCryptoAnalysisInput,
     # ETF Analysis
@@ -58,7 +51,6 @@ from finwiz.schemas.tools.inputs import (
     OptimizationInput,
     PerformanceTrackingInput,
     # Perplexity
-    PerplexitySearchInput,
     PerplexitySearchWrapperInput,
     PortfolioAnalysisInput,
     # Portfolio Rebalancing
@@ -71,12 +63,7 @@ from finwiz.schemas.tools.inputs import (
     RiskAssessmentInput,
     # Scoring
     ScoringCriteria,
-    StandardizedRiskScoringInput,
     StandardizedSentimentInput,
-    # Kraken API
-    TickerInfoInput,
-    # Validation
-    TickerValidationInput,
     TwelveDataIndicatorInput,
     TwelveDataMultiIndicatorInput,
 )
@@ -217,137 +204,8 @@ class TestCryptocurrencyNewsInput:
 
 
 # ============================================================================
-# Chart Generation Tool Tests
-# ============================================================================
-
-
-class TestChartImgInput:
-    """Tests for ChartImgInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "AAPL"
-        model = ChartImgInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_values(self):
-        """Test all default values."""
-        model = ChartImgInput(symbol="SPY")
-
-        assert model.interval == "1day"
-        assert model.range == "6mo"
-        assert model.width == 900
-        assert model.height == 500
-        assert model.theme == "light"
-
-    def test_custom_interval(self):
-        """Test custom interval values."""
-        intervals = ["1min", "5min", "1h", "1day"]
-        for interval in intervals:
-            model = ChartImgInput(symbol="AAPL", interval=interval)
-            assert model.interval == interval
-
-    def test_custom_range(self):
-        """Test custom range values."""
-        ranges = ["1mo", "3mo", "6mo", "1y", "5y", "max"]
-        for range_val in ranges:
-            model = ChartImgInput(symbol="AAPL", range=range_val)
-            assert model.range == range_val
-
-    def test_custom_dimensions(self, fake):
-        """Test custom width and height."""
-        width = fake.random_int(min=300, max=2000)
-        height = fake.random_int(min=200, max=1500)
-        model = ChartImgInput(symbol="AAPL", width=width, height=height)
-
-        assert model.width == width
-        assert model.height == height
-
-    def test_theme_literal_constraint(self):
-        """Test theme field literal constraint."""
-        # Valid values
-        model_light = ChartImgInput(symbol="AAPL", theme="light")
-        assert model_light.theme == "light"
-
-        model_dark = ChartImgInput(symbol="AAPL", theme="dark")
-        assert model_dark.theme == "dark"
-
-        # Invalid value
-        with pytest.raises(ValidationError) as exc_info:
-            ChartImgInput(symbol="AAPL", theme="invalid")
-        assert "theme" in str(exc_info.value)
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            ChartImgInput()
-        assert "symbol" in str(exc_info.value)
-
-
-# ============================================================================
 # Alpha Vantage Tool Tests
 # ============================================================================
-
-
-class TestAlphaVantageNewsInput:
-    """Tests for AlphaVantageNewsInput model."""
-
-    def test_required_tickers(self, fake):
-        """Test instantiation with required tickers."""
-        tickers = "AAPL,GOOGL,MSFT"
-        model = AlphaVantageNewsInput(tickers=tickers)
-
-        assert model.tickers == tickers
-
-    def test_default_values(self):
-        """Test default values."""
-        model = AlphaVantageNewsInput(tickers="AAPL")
-
-        assert model.sort == "LATEST"
-        assert model.time_from is None
-        assert model.time_to is None
-        assert model.limit == 50
-        assert model.topics is None
-
-    def test_optional_time_from_none(self):
-        """Test time_from can be None."""
-        model = AlphaVantageNewsInput(tickers="AAPL", time_from=None)
-
-        assert model.time_from is None
-
-    def test_optional_time_from_value(self):
-        """Test time_from with ISO8601 value."""
-        time_from = "20250101T0930"
-        model = AlphaVantageNewsInput(tickers="AAPL", time_from=time_from)
-
-        assert model.time_from == time_from
-
-    def test_optional_topics_none(self):
-        """Test topics can be None."""
-        model = AlphaVantageNewsInput(tickers="AAPL", topics=None)
-
-        assert model.topics is None
-
-    def test_optional_topics_value(self):
-        """Test topics with comma-separated values."""
-        topics = "technology,financial_markets"
-        model = AlphaVantageNewsInput(tickers="AAPL", topics=topics)
-
-        assert model.topics == topics
-
-    def test_sort_options(self):
-        """Test various sort options."""
-        sorts = ["LATEST", "EARLIEST", "RELEVANCE"]
-        for sort in sorts:
-            model = AlphaVantageNewsInput(tickers="AAPL", sort=sort)
-            assert model.sort == sort
-
-    def test_missing_required_tickers(self):
-        """Test ValidationError when tickers is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            AlphaVantageNewsInput()
-        assert "tickers" in str(exc_info.value)
 
 
 class TestCompanyOverviewInput:
@@ -613,47 +471,6 @@ class TestStandardizedSentimentInput:
         assert "asset_class" in str(exc_info.value)
 
 
-class TestCrossAssetSentimentComparatorInput:
-    """Tests for CrossAssetSentimentComparatorInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbols = ["AAPL", "GOOGL", "MSFT"]
-        asset_classes = ["stock", "stock", "stock"]
-        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
-
-        assert model.symbols == symbols
-        assert model.asset_classes == asset_classes
-
-    def test_single_asset(self):
-        """Test with single asset."""
-        model = CrossAssetSentimentComparatorInput(symbols=["AAPL"], asset_classes=["stock"])
-
-        assert len(model.symbols) == 1
-        assert len(model.asset_classes) == 1
-
-    def test_multiple_asset_types(self):
-        """Test with multiple asset types."""
-        symbols = ["AAPL", "VTI", "BTC"]
-        asset_classes = ["stock", "etf", "crypto"]
-        model = CrossAssetSentimentComparatorInput(symbols=symbols, asset_classes=asset_classes)
-
-        assert model.symbols == symbols
-        assert model.asset_classes == asset_classes
-
-    def test_missing_required_symbols(self):
-        """Test ValidationError when symbols is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CrossAssetSentimentComparatorInput(asset_classes=["stock"])
-        assert "symbols" in str(exc_info.value)
-
-    def test_missing_required_asset_classes(self):
-        """Test ValidationError when asset_classes is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            CrossAssetSentimentComparatorInput(symbols=["AAPL"])
-        assert "asset_classes" in str(exc_info.value)
-
-
 # ============================================================================
 # Crypto Analysis Tool Tests
 # ============================================================================
@@ -833,44 +650,6 @@ class TestEnhancedSECAnalysisInput:
         with pytest.raises(ValidationError) as exc_info:
             EnhancedSECAnalysisInput()
         assert "ticker" in str(exc_info.value)
-
-
-class TestStandardizedRiskScoringInput:
-    """Tests for StandardizedRiskScoringInput model."""
-
-    def test_required_fields(self, fake):
-        """Test instantiation with required fields."""
-        symbol = "AAPL"
-        asset_class = "stock"
-        model = StandardizedRiskScoringInput(symbol=symbol, asset_class=asset_class)
-
-        assert model.symbol == symbol
-        assert model.asset_class == asset_class
-
-    def test_default_risk_factors(self):
-        """Test default risk_factors (empty list)."""
-        model = StandardizedRiskScoringInput(symbol="AAPL", asset_class="stock")
-
-        assert model.risk_factors == []
-
-    def test_custom_risk_factors(self):
-        """Test custom risk_factors."""
-        risk_factors = ["market_risk", "liquidity_risk", "regulatory_risk"]
-        model = StandardizedRiskScoringInput(symbol="AAPL", asset_class="stock", risk_factors=risk_factors)
-
-        assert model.risk_factors == risk_factors
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            StandardizedRiskScoringInput(asset_class="stock")
-        assert "symbol" in str(exc_info.value)
-
-    def test_missing_required_asset_class(self):
-        """Test ValidationError when asset_class is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            StandardizedRiskScoringInput(symbol="AAPL")
-        assert "asset_class" in str(exc_info.value)
 
 
 # ============================================================================
@@ -1176,56 +955,6 @@ class TestQuantitativeAnalysisInput:
 # ============================================================================
 
 
-class TestPerplexitySearchInput:
-    """Tests for PerplexitySearchInput model."""
-
-    def test_required_query(self, fake):
-        """Test instantiation with required query."""
-        query = "best stocks to buy in 2025"
-        model = PerplexitySearchInput(query=query)
-
-        assert model.query == query
-
-    def test_default_values(self):
-        """Test default values."""
-        model = PerplexitySearchInput(query="test query")
-
-        assert model.model == "sonar-pro"
-        assert model.top_k == 5
-        assert model.search_recency is None
-
-    def test_custom_model(self):
-        """Test custom model value."""
-        model = PerplexitySearchInput(query="test", model="sonar")
-
-        assert model.model == "sonar"
-
-    def test_optional_top_k_value(self, fake):
-        """Test optional top_k with value."""
-        top_k = fake.random_int(min=1, max=10)
-        model = PerplexitySearchInput(query="test", top_k=top_k)
-
-        assert model.top_k == top_k
-
-    def test_optional_search_recency_none(self):
-        """Test search_recency can be None."""
-        model = PerplexitySearchInput(query="test", search_recency=None)
-
-        assert model.search_recency is None
-
-    def test_optional_search_recency_value(self):
-        """Test search_recency with value."""
-        model = PerplexitySearchInput(query="test", search_recency="week")
-
-        assert model.search_recency == "week"
-
-    def test_missing_required_query(self):
-        """Test ValidationError when query is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            PerplexitySearchInput()
-        assert "query" in str(exc_info.value)
-
-
 class TestPerplexitySearchWrapperInput:
     """Tests for PerplexitySearchWrapperInput model."""
 
@@ -1241,47 +970,6 @@ class TestPerplexitySearchWrapperInput:
         with pytest.raises(ValidationError) as exc_info:
             PerplexitySearchWrapperInput()
         assert "query" in str(exc_info.value)
-
-
-# ============================================================================
-# Validation Tool Tests
-# ============================================================================
-
-
-class TestTickerValidationInput:
-    """Tests for TickerValidationInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "AAPL"
-        model = TickerValidationInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_asset_class(self):
-        """Test default asset_class value."""
-        model = TickerValidationInput(symbol="AAPL")
-
-        assert model.asset_class == "auto"
-
-    def test_asset_class_options(self):
-        """Test various asset_class options."""
-        classes = ["stock", "etf", "crypto", "auto"]
-        for asset_class in classes:
-            model = TickerValidationInput(symbol="AAPL", asset_class=asset_class)
-            assert model.asset_class == asset_class
-
-    def test_asset_class_literal_constraint(self):
-        """Test asset_class literal constraint."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerValidationInput(symbol="AAPL", asset_class="invalid")
-        assert "asset_class" in str(exc_info.value)
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerValidationInput()
-        assert "symbol" in str(exc_info.value)
 
 
 # ============================================================================
@@ -1304,78 +992,6 @@ class TestMyCustomToolInput:
         with pytest.raises(ValidationError) as exc_info:
             MyCustomToolInput()
         assert "argument" in str(exc_info.value)
-
-
-# ============================================================================
-# Kraken API Tool Tests
-# ============================================================================
-
-
-class TestTickerInfoInput:
-    """Tests for TickerInfoInput (Kraken) model."""
-
-    def test_required_pair(self, fake):
-        """Test instantiation with required pair."""
-        pair = "XXBTZUSD"
-        model = TickerInfoInput(pair=pair)
-
-        assert model.pair == pair
-
-    def test_various_pairs(self):
-        """Test various cryptocurrency pairs."""
-        pairs = ["XXBTZUSD", "XETHZUSD", "XLTCZUSD"]
-        for pair in pairs:
-            model = TickerInfoInput(pair=pair)
-            assert model.pair == pair
-
-    def test_missing_required_pair(self):
-        """Test ValidationError when pair is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            TickerInfoInput()
-        assert "pair" in str(exc_info.value)
-
-
-# ============================================================================
-# DeFi Metrics Tool Tests
-# ============================================================================
-
-
-class TestDeFiMetricsInput:
-    """Tests for DeFiMetricsInput model."""
-
-    def test_required_symbol(self, fake):
-        """Test instantiation with required symbol."""
-        symbol = "UNI"
-        model = DeFiMetricsInput(symbol=symbol)
-
-        assert model.symbol == symbol
-
-    def test_default_values(self):
-        """Test default values."""
-        model = DeFiMetricsInput(symbol="UNI")
-
-        assert model.include_tvl_analysis is True
-        assert model.include_yield_metrics is True
-        assert model.include_governance_analysis is True
-
-    def test_boolean_fields(self):
-        """Test boolean fields."""
-        model = DeFiMetricsInput(
-            symbol="AAVE",
-            include_tvl_analysis=False,
-            include_yield_metrics=False,
-            include_governance_analysis=False,
-        )
-
-        assert model.include_tvl_analysis is False
-        assert model.include_yield_metrics is False
-        assert model.include_governance_analysis is False
-
-    def test_missing_required_symbol(self):
-        """Test ValidationError when symbol is missing."""
-        with pytest.raises(ValidationError) as exc_info:
-            DeFiMetricsInput()
-        assert "symbol" in str(exc_info.value)
 
 
 # ============================================================================
@@ -2119,7 +1735,7 @@ class TestToolInputsIntegration:
         """Test creating multiple tool inputs in sequence."""
         inputs = [
             CoinInfoInput(symbol="BTC"),
-            ChartImgInput(symbol="AAPL"),
+            CompanyOverviewInput(ticker="AAPL"),
             GetTickerHistoryInput(ticker="MSFT"),
             RiskAssessmentInput(assets=["AAPL", "GOOGL"]),
             BacktestingInput(symbol="SPY"),

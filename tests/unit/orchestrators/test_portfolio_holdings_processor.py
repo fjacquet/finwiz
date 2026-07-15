@@ -8,6 +8,7 @@ processing all holdings including failed validations, and generating processing 
 import csv
 
 import pytest
+from crewai_custom_tools.core.results import err, ok
 from pytest import approx
 
 from finwiz.orchestrators.portfolio_holdings_processor import (
@@ -209,11 +210,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "Ticker exists",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "Ticker exists",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act - Pass lower threshold to get KEEP (stock score is 0.6)
         decisions = await processor.process_holdings(holdings, keep_threshold=0.55)
@@ -240,11 +243,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": False,
-            "reason": "Ticker not found",
-            "meta": {},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": False,
+                "reason": "Ticker not found",
+                "meta": {},
+            }
+        )
 
         # Act
         decisions = await processor.process_holdings(holdings)
@@ -282,8 +287,8 @@ class TestPortfolioHoldingsProcessor:
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
         mock_validator.side_effect = [
-            {"valid": True, "reason": "OK", "meta": {"source": "yahoo"}},
-            Exception("Validation error"),
+            ok({"valid": True, "reason": "OK", "meta": {"source": "yahoo"}}),
+            err("Validation error"),
         ]
 
         # Act
@@ -320,11 +325,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "OK",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "OK",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act
         await processor.process_holdings(holdings)
@@ -353,11 +360,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": False,
-            "reason": "Ticker not found",
-            "meta": {},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": False,
+                "reason": "Ticker not found",
+                "meta": {},
+            }
+        )
 
         # Act
         await processor.process_holdings(holdings)
@@ -384,7 +393,7 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.side_effect = Exception("Processing error")
+        mock_validator.return_value = err("Processing error")
 
         # Act
         await processor.process_holdings(holdings)
@@ -412,11 +421,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "OK",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "OK",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act - with high threshold
         decisions = await processor.process_holdings(holdings, keep_threshold=0.9)
@@ -439,11 +450,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "OK",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "OK",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act
         decisions = await processor.process_holdings(holdings, base_currency="EUR")
@@ -472,11 +485,13 @@ class TestPortfolioHoldingsProcessor:
         )
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "OK",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "OK",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act
         stock_decisions = await processor.process_holdings([stock_holding])
@@ -500,11 +515,13 @@ class TestPortfolioHoldingsProcessor:
         ]
 
         mock_validator = mocker.patch.object(processor.validator, "_run")
-        mock_validator.return_value = {
-            "valid": True,
-            "reason": "OK",
-            "meta": {"source": "yahoo"},
-        }
+        mock_validator.return_value = ok(
+            {
+                "valid": True,
+                "reason": "OK",
+                "meta": {"source": "yahoo"},
+            }
+        )
 
         # Act
         decisions = await processor.process_holdings(holdings)

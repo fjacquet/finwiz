@@ -13,10 +13,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel
 
 # Import schemas from centralized location
-from finwiz.schemas.tools import (
-    CrossAssetSentimentComparatorInput,
-    StandardizedSentimentInput,
-)
+from finwiz.schemas.tools import StandardizedSentimentInput
 from finwiz.tools.logger import get_logger
 from finwiz.validation.url import get_url_validator
 
@@ -180,27 +177,29 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
             # Try Yahoo Finance news tool
             try:
-                from finwiz.tools.yahoo_finance_news_tool import YahooFinanceNewsTool
+                from crewai_custom_tools import YahooFinanceNewsTool
+                from crewai_custom_tools.core.results import ToolResultError, parse_tool_result
 
                 yahoo_tool = YahooFinanceNewsTool()
-                yahoo_result = yahoo_tool._run(f"{symbol} news")
+                try:
+                    news_data = parse_tool_result(yahoo_tool._run(ticker=symbol, limit=max_count))
+                except ToolResultError:
+                    news_data = {}
 
-                if yahoo_result and isinstance(yahoo_result, list):
-                    for item in yahoo_result[:max_count]:
-                        if isinstance(item, dict) and "title" in item:
-                            articles.append(
-                                {
-                                    "headline": item.get("title", ""),
-                                    "url": item.get("link", ""),
-                                    "date": datetime.now() - timedelta(days=1),  # Yahoo tool doesn't provide dates
-                                    "source": "Yahoo Finance",
-                                    "content": item.get("summary", ""),
-                                }
-                            )
+                for item in (news_data or {}).get("news", [])[:max_count]:
+                    articles.append(
+                        {
+                            "headline": item.get("title", ""),
+                            "url": item.get("link", ""),
+                            "date": datetime.now() - timedelta(days=1),  # Yahoo item dates are unreliable
+                            "source": "Yahoo Finance",
+                            "content": "",
+                        }
+                    )
 
-                    if articles:
-                        logger.info(f"Retrieved {len(articles)} real articles from Yahoo Finance for {symbol}")
-                        return articles[:max_count]
+                if articles:
+                    logger.info(f"Retrieved {len(articles)} real articles from Yahoo Finance for {symbol}")
+                    return articles[:max_count]
             except Exception as e:
                 logger.warning(f"Yahoo Finance news failed for {symbol}: {e!s}")
 
@@ -587,29 +586,6 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                 )
 
         return top_pos, top_neg
-
-
-class CrossAssetSentimentComparatorTool(BaseTool):
-    """
-    Tool for comparing sentiment across different asset classes.
-
-    Provides comparative sentiment analysis to identify
-    relative sentiment trends across stocks, ETFs, and cryptocurrencies.
-    """
-
-    name: str = "Cross-Asset Sentiment Comparator Tool"
-    description: str = "Compare sentiment analysis results across different asset classes to identify relative sentiment trends and market dynamics."
-    args_schema: type[BaseModel] = CrossAssetSentimentComparatorInput
-
-    def _run(self, symbols: list[str], asset_classes: list[str], **kwargs: Any) -> dict[str, Any]:
-        """Compare sentiment across asset classes."""
-        return {
-            "tool": "CrossAssetSentimentComparatorTool",
-            "symbols": symbols,
-            "asset_classes": asset_classes,
-            "message": "Use StandardizedSentimentAnalysisTool for individual asset analysis",
-            "methodology": "Cross-asset sentiment comparison with relative scoring",
-        }
 
 
 def get_standardized_sentiment_tool() -> StandardizedSentimentAnalysisTool:

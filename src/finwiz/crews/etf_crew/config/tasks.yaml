@@ -21,7 +21,7 @@ etf_market_trends_task:
     2. Analyze global economic factors impacting ETF categories
     3. Examine liquidity and volume trends across ETF segments
     4. Research regulatory developments affecting ETF structures
-    5. Prefer the "Alpha Vantage News Sentiment" tool to summarize structured news/sentiment for
+    5. Prefer the `alpha_vantage_news_sentiment` tool to summarize structured news/sentiment for
        key ETFs and sectors; complement with `YahooFinanceNewsTool` when needed.
 
     Today is {full_date}. Ensure your analysis reflects current market conditions.
@@ -66,7 +66,7 @@ etf_screening_task:
     4. Select optimal ETFs:
        - Balance multiple factors and investor objectives
        - Consider portfolio fit and strategic allocation
-    5. Validate each proposed ETF ticker using the "Ticker Existence Validation Tool":
+    5. Validate each proposed ETF ticker using the `ticker_existence_validation` tool:
        - Pass ONLY the ticker symbol and asset_class to the tool
        - Example input: {"symbol": "VOO", "asset_class": "etf"}
        - Do NOT pass the validation result back to the tool
@@ -122,7 +122,7 @@ etf_technical_detail_task:
        - Strategy backtesting with tracking error analysis against benchmarks
        - Performance metrics calculation including correlation analysis with underlying assets
        - Use asset_class="etf" and analysis_type="comprehensive" for complete ETF analysis
-    9. Charts: Generate visuals with the "Chart-img Generator" tool and embed returned data URLs in the report.
+    9. Charts: Use the `chart_img` tool to generate visuals; its JSON result contains the chart's data URL — embed that URL in the report.
 
     CRITICAL OUTPUT FORMAT:
     - Return ONLY the ETFTechnicalAnalysis object directly - do NOT wrap it in additional fields
@@ -159,7 +159,7 @@ etf_risk_assessment_task:
     4. Analyze liquidity risks during market stress scenarios, considering current market conditions as of {full_date}.
     5. Evaluate counterparty and structural risks based on replication methods and issuer stability.
     6. Review regulatory and tax considerations relevant for {current_year}.
-    7. Apply the "Standardized Risk Scoring Tool" methodology for consistent 0-5 risk scores across all ETFs.
+    7. Apply the "risk_scoring" tool to obtain standardized risk scores. Note: the tool returns scores on a 0-10 scale; divide the returned risk_score by 2 and round to one decimal place to produce the required 0-5 scale (e.g., 7.5 → 3.8, 10.0 → 5.0).
     8. Quantitative risk assessment: Use the "Quantitative Analysis Tool" with analysis_type="performance"
        to calculate ETF-specific risk metrics including:
        - Tracking error and correlation analysis with benchmark indices

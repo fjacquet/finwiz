@@ -12,11 +12,11 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
+from crewai_custom_tools import perplexity_structured
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from finwiz.analysis._helpers import _today_french
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
-from finwiz.tools.perplexity_structured import perplexity_structured
 
 if TYPE_CHECKING:
     pass

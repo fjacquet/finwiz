@@ -8,10 +8,10 @@ trending topics extraction, and consistent methodology across asset classes.
 from datetime import datetime, timedelta
 
 import pytest
+from crewai_custom_tools.core.results import err, ok
 from pytest import approx
 
 from finwiz.tools.standardized_sentiment_tool import (
-    CrossAssetSentimentComparatorTool,
     StandardizedSentimentAnalysisTool,
     StandardizedSentimentInput,
 )
@@ -351,29 +351,59 @@ class TestStandardizedSentimentAnalysisTool:
         assert result_crypto["asset_class"] == "crypto"
 
 
-class TestCrossAssetSentimentComparatorTool:
-    """Test the Cross-Asset Sentiment Comparator Tool."""
+class TestYahooFinanceNewsBranch:
+    """Cover the live Yahoo Finance news branch inside `_get_financial_news`.
+
+    That branch calls the central `YahooFinanceNewsTool()._run(...)`, parses its
+    envelope via `parse_tool_result`, and maps `news` items to standardized
+    articles (headline<-title, url<-link, source="Yahoo Finance"). It only
+    became reachable once the Perplexity branch either is disabled or yields
+    no results, so we disable the `perplexity_research` feature flag to reach
+    it deterministically.
+    """
 
     @pytest.fixture
     def tool(self):
-        """Create an instance of the Cross-Asset Sentiment Comparator Tool."""
-        return CrossAssetSentimentComparatorTool()
+        """Create an instance of the Standardized Sentiment Analysis Tool."""
+        return StandardizedSentimentAnalysisTool()
 
-    def test_should_return_methodology_information(self, tool):
-        """Test that the tool returns methodology information."""
+    def test_should_map_yahoo_finance_news_items_to_articles(self, mocker, tool):
+        """A successful Yahoo Finance envelope surfaces one mapped article."""
         # Arrange
-        symbols = ["AAPL", "BTC-USD"]
-        asset_classes = ["stock", "crypto"]
+        mocker.patch("finwiz.config.features.flags.FeatureFlags.is_enabled", return_value=False)
+        mocker.patch(
+            "crewai_custom_tools.tools.finance.yfinance_news.YahooFinanceNewsTool._run",
+            return_value=ok(
+                {
+                    "ticker": "AAPL",
+                    "news": [{"title": "T1", "publisher": "P", "link": "http://x", "published_date": "2026-07-14"}],
+                }
+            ),
+        )
 
         # Act
-        result = tool._run(symbols=symbols, asset_classes=asset_classes)
+        articles = tool._get_financial_news(symbol="AAPL", max_count=10, days_back=30)
 
         # Assert
-        assert result["tool"] == "CrossAssetSentimentComparatorTool"
-        assert result["symbols"] == symbols
-        assert result["asset_classes"] == asset_classes
-        assert "methodology" in result
-        assert "cross-asset" in result["methodology"].lower()
+        assert len(articles) == 1
+        assert articles[0]["headline"] == "T1"
+        assert articles[0]["url"] == "http://x"
+        assert articles[0]["source"] == "Yahoo Finance"
+
+    def test_should_return_no_articles_when_yahoo_returns_error_envelope(self, mocker, tool):
+        """An error envelope from the Yahoo Finance tool yields no articles and raises nothing."""
+        # Arrange
+        mocker.patch("finwiz.config.features.flags.FeatureFlags.is_enabled", return_value=False)
+        mocker.patch(
+            "crewai_custom_tools.tools.finance.yfinance_news.YahooFinanceNewsTool._run",
+            return_value=err("boom"),
+        )
+
+        # Act
+        articles = tool._get_financial_news(symbol="AAPL", max_count=10, days_back=30)
+
+        # Assert
+        assert articles == []
 
 
 class TestIntegrationScenarios:
