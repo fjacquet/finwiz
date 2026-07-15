@@ -322,3 +322,4 @@ site/
 # Added by code-review-graph
 .code-review-graph/
 .serena/
+output_baseline_*/
