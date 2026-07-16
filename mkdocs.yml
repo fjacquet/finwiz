@@ -193,9 +193,9 @@ nav:
 
   - Investment Discovery:
       - investment_discovery/index.md
-      - User Guide: investment_discovery/investment_discovery_user_guide.md
-      - API Reference: investment_discovery/investment_discovery_api_reference.md
-      - Developer Guide: investment_discovery/investment_discovery_developer_guide.md
+      - User Guide: investment_discovery/user_guide.md
+      - API Reference: investment_discovery/api_reference.md
+      - Developer Guide: investment_discovery/developer_guide.md
       - FAQ: investment_discovery/faq.md
 
   - Portfolio Rebalancing:

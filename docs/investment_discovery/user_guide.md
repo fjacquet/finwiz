@@ -368,8 +368,8 @@ R : Le système génère automatiquement des rapports de comparaison avec métri
 
 ### Documentation technique
 
-- [Guide développeur](investment_discovery_developer_guide.md)
-- [Référence API](investment_discovery_api_reference.md)
+- [Guide développeur](developer_guide.md)
+- [Référence API](api_reference.md)
 - [Schémas de données](../reference/schemas/index.md)
 
 ### Contact support

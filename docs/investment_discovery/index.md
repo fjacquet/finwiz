@@ -125,8 +125,8 @@ All opportunities undergo comprehensive risk assessment:
 ### Specialized Guides
 
 - **[Portfolio Holdings Analysis](portfolio_holdings_analysis_user_guide.md)** - Analyze existing portfolios
-- **[A+ Opportunity Discovery](investment_discovery_user_guide.md)** - Find top investment opportunities
-- **[Alternative Investment Finder](investment_discovery_api_reference.md)** - Replace underperforming assets
+- **[A+ Opportunity Discovery](user_guide.md)** - Find top investment opportunities
+- **[Alternative Investment Finder](user_guide.md#alternative-finder-integration)** - Replace underperforming assets
 
 ## Discovery Results
 

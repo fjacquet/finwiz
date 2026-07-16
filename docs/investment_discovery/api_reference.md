@@ -268,10 +268,15 @@ all_results = crew.discover_all_assets(
 
 #### APlusScoringTool
 
-Tool for calculating A+ scores.
+Tool for calculating A+ scores. Not local finwiz code — lives in the
+central `crewai-custom-tools` package
+(`crewai_custom_tools.tools.analytics.a_plus_scoring`). The real tool
+exposes a single `_run(...)` entry point (see the developer guide's
+"Basic Scoring" example); `score_etf`/`score_stock` below illustrate intent
+only.
 
 ```python
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
+from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
 
 # Initialize scoring tool
 scorer = APlusScoringTool()
@@ -299,16 +304,24 @@ stock_score = scorer.score_stock(
 )
 ```
 
-#### MarketScreeningTool
+#### APlusScreeningTool
 
-Tool for screening large universes of investments.
+Tool for screening large universes of investments. Renamed from
+`MarketScreeningTool` when ported to the central `crewai-custom-tools`
+package (`crewai_custom_tools.tools.analytics.aplus_screening`, `.name =
+"aplus_screening"`) to avoid colliding with that package's own live-data
+`MarketScreeningTool` (tool name `"market_screening"`). Criteria are plain
+dicts from `ScreeningCriteria.get_default_criteria(asset_type)`
+(`crewai_custom_tools.tools.analytics.screening_criteria`), not the
+`ETFScreeningCriteria` Pydantic model shown below — that model illustrates
+the criteria *shape* only.
 
 ```python
-from finwiz.tools.market_screening_tool import MarketScreeningTool
+from crewai_custom_tools.tools.analytics.aplus_screening import APlusScreeningTool
 from finwiz.schemas.screening_criteria import ETFScreeningCriteria
 
 # Initialize screening tool
-screener = MarketScreeningTool()
+screener = APlusScreeningTool()
 
 # Screen ETFs
 criteria = ETFScreeningCriteria(
@@ -670,6 +683,6 @@ Sample test data is available at:
 
 For more information, see:
 
-- [User Guide](investment_discovery_user_guide.md)
-- [Developer Guide](investment_discovery_developer_guide.md)
+- [User Guide](user_guide.md)
+- [Developer Guide](developer_guide.md)
 - [API Status Page](https://status.finwiz.ai)

@@ -12,6 +12,13 @@ date: "2025-10-26"
 
 # Tools Reference
 
+> **Outdated / unverified**: Much of this file's tool inventory predates the
+> 4-wave migration that moved ~30 tools into the `crewai-custom-tools`
+> package and has not been fully re-verified against `src/`. A rewrite is
+> planned but not yet done. Until then, trust `src/finwiz/tools/CLAUDE.md`
+> and the central package's own docs (`crewai_custom_tools` in
+> `.venv/lib/python3.13/site-packages/`) over the specifics below.
+
 Complete reference documentation for FinWiz's analysis tools, including financial data tools, technical analysis tools, and validation utilities.
 
 ## Overview
@@ -70,7 +77,7 @@ Analyzes SEC filings (10-K, 10-Q) for fundamental analysis.
 **Example**:
 
 ```python
-from finwiz.tools.enhanced_sec_analysis_tool import EnhancedSECAnalysisTool
+from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 
 tool = EnhancedSECAnalysisTool()
 analysis = tool.run("AAPL")
@@ -101,7 +108,7 @@ Specialized analysis for Exchange-Traded Funds.
 **Example**:
 
 ```python
-from finwiz.tools.enhanced_etf_analysis_tool import EnhancedETFAnalysisTool
+from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 
 tool = EnhancedETFAnalysisTool()
 analysis = tool.run("SPY")
@@ -132,7 +139,7 @@ Cryptocurrency analysis including market metrics and blockchain data.
 **Example**:
 
 ```python
-from finwiz.tools.enhanced_crypto_analysis_tool import EnhancedCryptoAnalysisTool
+from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 
 tool = EnhancedCryptoAnalysisTool()
 analysis = tool.run("BTC")
@@ -656,33 +663,9 @@ def analyst(self) -> Agent:
 
 ### Custom Tool Development
 
-Create custom tools following FinWiz patterns:
-
-```python
-from finwiz.tools.base_tool import BaseTool
-
-class CustomAnalysisTool(BaseTool):
-    def __init__(self, custom_param: str):
-        super().__init__()
-        self.custom_param = custom_param
-
-    def run(self, ticker: str) -> dict:
-        # Custom analysis logic
-        result = self._perform_analysis(ticker)
-
-        # Validate output
-        self._validate_output(result)
-
-        return result
-
-    def _perform_analysis(self, ticker: str) -> dict:
-        # Implementation details
-        pass
-
-    def _validate_output(self, result: dict) -> None:
-        # Output validation
-        pass
-```
+For current guidance on building custom tools, see `src/finwiz/tools/CLAUDE.md`
+(local tools extend `crewai.tools.BaseTool` directly; there is no
+`finwiz.tools.base_tool` module).
 
 ## Troubleshooting
 

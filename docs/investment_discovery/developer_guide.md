@@ -45,9 +45,16 @@ class InvestmentDiscoveryCrew:
 
 #### A+ Scoring Tool
 
+`APlusScoringTool` is not local finwiz code — it now lives in the central
+`crewai-custom-tools` package at
+`crewai_custom_tools.tools.analytics.a_plus_scoring` (input schema
+`APlusScoringInput` from `crewai_custom_tools.models.analytics_models`). The
+snippet below illustrates its public interface; see the installed package
+for the real implementation.
+
 ```python
-# src/finwiz/tools/a_plus_scoring_tool.py
-from crewai_tools import BaseTool
+# crewai_custom_tools.tools.analytics.a_plus_scoring (central package)
+from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional
 
@@ -110,12 +117,18 @@ class APlusScoringTool(BaseTool):
         }
 ```
 
-#### Market Screening Tool
+#### A+ Screening Tool
+
+`MarketScreeningTool` was renamed `APlusScreeningTool` when it was ported to
+`crewai_custom_tools.tools.analytics.aplus_screening` (`.name =
+"aplus_screening"`; input schema `APlusScreeningInput`). The rename avoids
+colliding with the central package's own live-data `MarketScreeningTool`
+(tool name `"market_screening"`, in `crewai_custom_tools.tools.finance.screening`).
 
 ```python
-# src/finwiz/tools/market_screening_tool.py
-class MarketScreeningTool(BaseTool):
-    name: str = "Market Screening Tool"
+# crewai_custom_tools.tools.analytics.aplus_screening (central package)
+class APlusScreeningTool(BaseTool):
+    name: str = "aplus_screening"
     description: str = """
     Screens large universes of investments using quantitative filters
     to identify A+ candidates efficiently. Supports ETFs, stocks, and crypto.
@@ -220,8 +233,17 @@ class APlusDiscoveryResult(BaseModel):
 
 #### Screening Criteria Models
 
+`schemas/screening_criteria.py` no longer exists in finwiz. The real
+`ScreeningCriteria` class lives at
+`crewai_custom_tools.tools.analytics.screening_criteria` and exposes default
+criteria as plain dicts via the static method
+`ScreeningCriteria.get_default_criteria(asset_type)` rather than the
+per-asset Pydantic models shown below — the models here illustrate the
+*shape* of that criteria data, not a class you can still import.
+
 ```python
-# src/finwiz/schemas/screening_criteria.py
+# Illustrative shape only -- crewai_custom_tools.tools.analytics.screening_criteria
+# uses dicts (ScreeningCriteria.get_default_criteria), not these Pydantic models
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -298,7 +320,7 @@ commodity_discovery_agent:
     dynamics, storage costs, and macroeconomic factors affecting prices.
   tools:
     - commodity_analysis_tool
-    - a_plus_scoring_tool
+    - a_plus_scoring_tool  # wired via finance_tools.get_investment_discovery_tools() -> crewai_custom_tools.tools.analytics.a_plus_scoring.APlusScoringTool
     - commodity_screening_tool
 ```
 
@@ -385,9 +407,10 @@ class MarketContextAnalyzer:
 
 ```python
 # tests/unit/test_a_plus_scoring.py
+# NOTE: unittest.mock is banned in this repo (use the mocker fixture, as
+# below); APlusScoringTool is imported from the central package, not finwiz.
 import pytest
-from unittest.mock import Mock, patch
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
+from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
 from finwiz.schemas.investment_discovery import AssetType
 
 class TestAPlusScoringTool:
@@ -437,7 +460,7 @@ class TestDiscoveryWorkflow:
     @pytest.mark.integration
     def test_should_complete_full_discovery_workflow(self, mocker):
         # Arrange
-        mock_market_data = mocker.patch('finwiz.tools.market_screening_tool.get_market_data')
+        mock_market_data = mocker.patch('crewai_custom_tools.tools.analytics.aplus_screening.get_market_data')
         mock_market_data.return_value = self._get_mock_market_data()
 
         crew = InvestmentDiscoveryCrew()
@@ -739,7 +762,7 @@ class PortfolioDataProtection:
 
 ---
 
-This developer guide provides comprehensive technical documentation for extending and customizing the A+ Investment Discovery system. For user-facing documentation, see the [User Guide](investment_discovery_user_guide.md).
+This developer guide provides comprehensive technical documentation for extending and customizing the A+ Investment Discovery system. For user-facing documentation, see the [User Guide](user_guide.md).
 
 ---
 
@@ -863,7 +886,7 @@ def calculate_crypto_fundamental_score(data: dict) -> float:
 **Basic Scoring**:
 
 ```python
-from finwiz.tools.a_plus_scoring_tool import APlusScoringTool
+from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
 
 tool = APlusScoringTool()
 

@@ -635,6 +635,10 @@ Centralized tool initialization eliminates code duplication.
 
 **File**: `src/finwiz/tools/tool_factories.py`
 
+> Generic tools now come from the `crewai-custom-tools` package rather than
+> local finwiz code — see [Centralized tools package](dependencies.md#centralized-tools-package)
+> and `src/finwiz/tools/CLAUDE.md` before adding a new tool.
+
 ```python
 from typing import List
 from crewai.tools import BaseTool
