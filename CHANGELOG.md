@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.10.0] - 2026-07-16
+
+Deep-analysis latency pass (PR #100) + post-migration documentation cleanup (PR #101).
+
+### Added
+
+- `LLM_REASONING_EFFORT` (default `low`, values `low|medium|high|none`): reasoning
+  effort is now explicitly pinned on every LLM construction instead of inherited
+  from provider defaults — hybrid-reasoning models (glm-5.2, qwen3.7) no longer
+  spend uncontrolled thinking tokens on qualitative-synthesis calls. Sent via
+  OpenRouter's `reasoning` passthrough; `none` sends nothing; non-OpenRouter
+  routes untouched.
+- JSON repair now fixes the duplicated-leading-brace pattern some LLMs emit
+  (`{` newline `{…`), turning previously unrepairable full-call retries into
+  instant repairs.
+- `docs/development/dependencies.md` documents the centralized-tools package:
+  git-tag pin, wave→release mapping, and the local `[tool.uv.sources]`
+  co-development override.
+
+### Fixed
+
+- mkdocs nav pointed the three Investment Discovery entries at placeholder
+  stubs while the real guides sat outside the nav — repointed, stubs deleted,
+  dangling cross-links fixed.
+- 60 stale documentation references from the tool-centralization migration
+  (dead feature-flag names, deleted module paths, tools misattributed to
+  finwiz that now live in crewai-custom-tools).
+
+### Removed
+
+- Dead `_get_thinking_params()`/`THINKING_CAPABLE_MODELS` subsystem
+  (superseded by `LLM_REASONING_EFFORT`).
+
 ## [5.9.0] - 2026-07-15
 
 Tool centralization: all reusable tools now come from
