@@ -461,7 +461,7 @@ docs = [
     "mkdocs-awesome-pages-plugin>=2.10.1",
     "mkdocs-mermaid2-plugin>=1.2.3",
     "mkdocs-git-revision-date-localized-plugin>=1.5.0",
-    "pymdown-extensions>=10.21.3",
+    "pymdown-extensions>=11.0.1",
     "pre-commit>=4.6.0",
 ]
 
