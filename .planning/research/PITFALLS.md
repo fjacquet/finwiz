@@ -1,5 +1,7 @@
 # Domain Pitfalls
 
+> **Stale as of 2026-07**: The local `rate_limiter_config.py`, `APIProvider` enum, and `aiolimiter` extension points this document references were removed in the 2026-07 tool centralization (waves 1-4); rate limiting now lives in `crewai-custom-tools`' bounded registry (`crewai_custom_tools.core.rate_limiter`). Refresh this document before using it for v5 planning.
+
 **Domain:** Adding news sentiment, macroeconomic indicators, and data intelligence to existing Python financial analysis platform (FinWiz)
 **Researched:** 2026-02-08
 **Overall Confidence:** HIGH (verified against existing codebase patterns + multiple external sources)

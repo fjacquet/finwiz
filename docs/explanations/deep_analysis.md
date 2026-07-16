@@ -332,8 +332,10 @@ Recommendation: SELL
 # Validation strictness
 VALIDATION_STRICTNESS=warn  # off, warn, error
 
-# Enable deep analysis
-DEEP_ANALYSIS_ENABLED=true
+# Per-asset-class analysis crews (all default to true)
+FF_STOCK_ANALYSIS=true
+FF_ETF_ANALYSIS=true
+FF_CRYPTO_ANALYSIS=true
 
 # Batch processing for portfolios
 BATCH_PREFETCH_ENABLED=true

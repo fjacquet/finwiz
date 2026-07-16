@@ -9,7 +9,7 @@
 > - Parse content using the `unstructured` library
 > - Extract insights using vector similarity search with OpenAI embeddings
 >
-> **API Key**: While `SEC_API_API_KEY` is configured in our environment, it's only used optionally for filing date lookups in `EnhancedSECAnalysisTool`.
+> **API Key**: No API key is required. `SEC_API_API_KEY` is not read by any code — the optional `sec_api` integration was removed as part of a dependency trim, and `EnhancedSECAnalysisTool._get_filing_date_from_api()` always returns `None`. The variable name only survives in the log sanitizer's redaction list as a defensive precaution.
 >
 > **Future Integration**: This documentation could be useful if we decide to integrate the paid SEC API service for enhanced section extraction capabilities.
 
@@ -282,11 +282,11 @@ FinWiz implements SEC filing analysis without using the paid SEC API service:
 
 ### Integration Points
 
-**Optional SEC API Usage**:
+**SEC API Usage**: None. The `sec_api` integration was removed as part of a dependency trim.
 
-- `EnhancedSECAnalysisTool._get_filing_date_from_api()` can use SEC API for filing dates
-- Gracefully falls back when `SEC_API_API_KEY` is not available
-- Uses lazy imports to avoid hard dependency on `sec-api` package
+- `EnhancedSECAnalysisTool._get_filing_date_from_api()` always returns `None`; it is kept only as a patch point for tests and any future provider
+- Callers fall back to the current timestamp for `filed_at`
+- No `SEC_API_API_KEY` is read by any code; it needs no configuration
 
 **Code Location**:
 

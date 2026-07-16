@@ -38,7 +38,7 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 - **HTML reporting** -- Generate styled reports for portfolio review, deep analysis, discovery, and rebalancing.
 - **RunLedger artifact** -- Every flow run writes a JSONL ledger to `output/run_ledger/<run_id>.jsonl` capturing each pipeline stage (ticker, stage, status, duration, error). Provides replayable post-mortem without re-running.
 - **TrustBanner UX** -- Report header displays a 4-state trust banner (green / amber / red / blocked) derived deterministically from ledger coverage. Blocked state shows an explicit "NE PAS prendre de décisions sur ce rapport" warning when coverage falls below threshold.
-- **Feature flags** -- Toggle optional capabilities: `PERPLEXITY_RESEARCH_ENABLED`, batch prefetch.
+- **Feature flags** -- Toggle optional capabilities: `FF_PERPLEXITY_RESEARCH`, batch prefetch.
 
 ## 5. Non-Functional Requirements
 

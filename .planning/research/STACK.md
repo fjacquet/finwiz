@@ -1,5 +1,7 @@
 # Technology Stack: News Sentiment, Macro Indicators & Additional Data Providers
 
+> **Stale as of 2026-07**: The local `aiolimiter`/`APIProvider` rate-limiter extension points this document references were removed in the 2026-07 tool centralization (waves 1-4); rate limiting now lives in `crewai-custom-tools`' bounded registry (`crewai_custom_tools.core.rate_limiter`). Refresh this document before using it for v5 planning.
+
 **Project:** FinWiz Milestone -- Data Enrichment & Sentiment
 **Researched:** 2026-02-08
 **Overall confidence:** MEDIUM-HIGH (verified against PyPI, official docs, and existing codebase patterns)

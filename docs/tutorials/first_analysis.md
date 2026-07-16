@@ -222,11 +222,13 @@ Risk Factors:
 
 ### Enable Deep Analysis
 
-For more comprehensive analysis:
+Per-asset-class analysis crews are controlled by feature flags (all default
+to `true`). For a stock ticker, that's `FF_STOCK_ANALYSIS` (see
+`FF_ETF_ANALYSIS` / `FF_CRYPTO_ANALYSIS` for the other asset classes):
 
 ```bash
-# Enable deep analysis mode
-export DEEP_ANALYSIS_ENABLED=true
+# Explicitly enable stock analysis (on by default)
+export FF_STOCK_ANALYSIS=true
 uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 ```
 

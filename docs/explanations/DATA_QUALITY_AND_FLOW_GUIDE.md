@@ -549,8 +549,8 @@ grep "ReportDataValidator" logs/finwiz.log
 **Diagnosis**:
 
 ```bash
-# Check if deep analysis was enabled
-grep "DEEP_ANALYSIS_ENABLED" logs/finwiz.log
+# Check if a per-asset-class analysis crew was skipped
+grep "disabled via feature flag" logs/finwiz.log
 
 # Check for crew execution errors
 grep "crew_error" logs/finwiz.log
@@ -559,8 +559,10 @@ grep "crew_error" logs/finwiz.log
 **Fix**:
 
 ```bash
-# Enable deep analysis
-export DEEP_ANALYSIS_ENABLED=true
+# Enable stock/etf/crypto analysis explicitly (all default to true)
+export FF_STOCK_ANALYSIS=true
+export FF_ETF_ANALYSIS=true
+export FF_CRYPTO_ANALYSIS=true
 
 # Re-run analysis
 uv run python src/finwiz/main.py

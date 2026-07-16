@@ -269,8 +269,14 @@ client = openai.OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 print('✅ OpenAI API key valid')
 "
 
-# Test other APIs
-uv run python scripts/validate_api_keys.py
+# Test other APIs (validates format and required-vs-optional status,
+# never prints key values)
+uv run python -c "
+from finwiz.config.manager import ConfigurationManager
+manager = ConfigurationManager()
+manager.validate_api_keys()
+print('✅ API key configuration valid')
+"
 ```
 
 ### 2. Test Configuration

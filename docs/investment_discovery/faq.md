@@ -438,9 +438,9 @@ Solution :
 
 **Documentation :**
 
-- [Guide utilisateur complet](investment_discovery_user_guide.md)
-- [Guide développeur](investment_discovery_developer_guide.md)
-- [Référence API](investment_discovery_api_reference.md)
+- [Guide utilisateur complet](user_guide.md)
+- [Guide développeur](developer_guide.md)
+- [Référence API](api_reference.md)
 
 **Support technique :**
 
