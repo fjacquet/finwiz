@@ -4,6 +4,7 @@ Unit tests for HoldingAnalyzerOrchestrator performance optimizations.
 Tests caching, rate limiting, parallel processing, and connection pooling.
 """
 
+import asyncio
 from datetime import datetime, timedelta
 
 import pytest
@@ -99,6 +100,91 @@ class TestHoldingAnalyzerOrchestratorPerformance:
         # Assert
         assert len(results) == 25
         assert mock_analyze.call_count == 25
+
+    @pytest.mark.asyncio
+    async def test_should_not_block_next_holding_behind_slow_straggler_when_pool_has_capacity(self, tmp_path, mocker):
+        """Bounded-pool proof: a freed slot starts the next holding immediately.
+
+        With parallel_batch_size=2 and holdings [FAST1, SLOW, FAST2], the old
+        batch-barrier implementation would group FAST1+SLOW into batch 1 and
+        would not start FAST2 (batch 2) until *both* FAST1 and SLOW finished.
+        Here SLOW blocks until FAST2 has started, so if the barrier still
+        existed this would deadlock (and time out via asyncio.wait_for).
+        The bounded worker pool instead frees FAST1's slot the moment FAST1
+        completes, starting FAST2 while SLOW is still in flight.
+        """
+        orchestrator = HoldingAnalyzerOrchestrator(
+            output_dir=tmp_path,
+            enable_caching=False,
+            enable_rate_limiting=False,
+            parallel_batch_size=2,
+        )
+        holdings = [
+            {"ticker": "FAST1", "asset_class": "stock", "currency": "USD", "name": "Fast 1"},
+            {"ticker": "SLOW", "asset_class": "stock", "currency": "USD", "name": "Slow"},
+            {"ticker": "FAST2", "asset_class": "stock", "currency": "USD", "name": "Fast 2"},
+        ]
+        fast2_started = asyncio.Event()
+        events: list[str] = []
+
+        async def fake_analyze(ticker, asset_class, currency, name):
+            if ticker == "SLOW":
+                # Would deadlock (and time out) if FAST2 were stuck behind a batch barrier.
+                await asyncio.wait_for(fast2_started.wait(), timeout=2.0)
+                events.append("SLOW_done")
+            elif ticker == "FAST2":
+                events.append("FAST2_started")
+                fast2_started.set()
+            else:
+                events.append(f"{ticker}_done")
+            return HoldingAnalysis(
+                ticker=ticker,
+                name=name,
+                asset_class=asset_class,
+                currency=currency,
+                analysis_date=datetime.now(),
+                data_freshness="fresh",
+            )
+
+        mocker.patch.object(orchestrator, "analyze_holding_async", side_effect=fake_analyze)
+
+        # Act
+        results = await orchestrator.analyze_holdings_parallel(holdings)
+
+        # Assert
+        assert len(results) == 3
+        assert events.index("FAST2_started") < events.index("SLOW_done")
+        # No barrier means SLOW resolved via the real analysis, not a timeout baseline.
+        slow_result = results[1]
+        assert slow_result.ticker == "SLOW"
+        assert slow_result.data_freshness == "fresh"
+
+    @pytest.mark.asyncio
+    async def test_should_acquire_rate_limiter_once_per_holding_when_enabled(self, orchestrator, mocker):
+        """Per-holding pacing: every holding acquires a token, not just once per batch boundary."""
+        # Arrange
+        holdings = [{"ticker": f"TEST{i}", "asset_class": "stock", "currency": "USD", "name": f"Test {i}"} for i in range(5)]
+        mock_acquire = mocker.patch.object(orchestrator.rate_limiter, "acquire")
+        mocker.patch.object(
+            orchestrator,
+            "analyze_holding_async",
+            return_value=HoldingAnalysis(
+                ticker="TEST",
+                name="Test",
+                asset_class="stock",
+                currency="USD",
+                analysis_date=datetime.now(),
+                data_freshness="fresh",
+            ),
+        )
+
+        # Act
+        results = await orchestrator.analyze_holdings_parallel(holdings)
+
+        # Assert
+        assert len(results) == 5
+        assert mock_acquire.call_count == 5
+        mock_acquire.assert_called_with("YahooFinance")
 
     @pytest.mark.asyncio
     async def test_should_not_acquire_rate_limiter_when_disabled(self, orchestrator_no_cache, mocker):

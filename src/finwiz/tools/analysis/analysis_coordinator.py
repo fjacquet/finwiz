@@ -70,66 +70,65 @@ class HoldingAnalyzerOrchestrator:
         holdings: list[dict[str, Any]],
     ) -> list[HoldingAnalysis]:
         """
-        Analyze multiple holdings in parallel with batching and rate limiting.
+        Analyze multiple holdings via a bounded worker pool with per-holding rate limiting.
+
+        All holdings are scheduled up front behind an
+        ``asyncio.Semaphore(parallel_batch_size)``: a slot frees the moment any
+        holding finishes, so a single slow straggler no longer idles the other
+        slots for the remainder of a fixed batch (the old sequential-batch
+        implementation waited for the slowest member of each batch before
+        starting the next one).
 
         Args:
             holdings: List of holding dicts with ticker, asset_class, currency, name
 
         Returns:
-            List of HoldingAnalysis results
+            List of HoldingAnalysis results, in the same order as `holdings`
 
         """
-        logger.info(f"Starting parallel analysis of {len(holdings)} holdings")
+        logger.info(f"Starting parallel analysis of {len(holdings)} holdings (max concurrency: {self.parallel_batch_size})")
         start_time = datetime.now()
 
-        results = []
-        total_batches = (len(holdings) + self.parallel_batch_size - 1) // self.parallel_batch_size
+        semaphore = asyncio.Semaphore(self.parallel_batch_size)
 
-        # Process holdings in batches to avoid overwhelming the system
-        for batch_idx in range(0, len(holdings), self.parallel_batch_size):
-            batch = holdings[batch_idx : batch_idx + self.parallel_batch_size]
-            batch_num = batch_idx // self.parallel_batch_size + 1
-
-            logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} holdings)")
-
-            # Create async tasks for batch
-            tasks = [
-                self.analyze_holding_async(
-                    ticker=h.get("ticker", ""),
-                    asset_class=h.get("asset_class", "stock"),
-                    currency=h.get("currency", "USD"),
-                    name=h.get("name", ""),
-                )
-                for h in batch
-            ]
-
-            # Execute batch in parallel
-            batch_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            # Handle results and exceptions
-            for holding, result in zip(batch, batch_results):
-                analysis: HoldingAnalysis
-                if isinstance(result, BaseException):
-                    logger.error(
-                        f"Error analyzing {holding.get('ticker')}: {result}",
-                        extra={"ticker": holding.get("ticker"), "error": str(result)},
-                    )
-                    # Create baseline analysis for failed holdings
-                    analysis = HoldingProcessor.create_baseline_analysis(
-                        ticker=holding.get("ticker", ""),
-                        asset_class=holding.get("asset_class", "stock"),
-                        currency=holding.get("currency", "USD"),
-                        name=holding.get("name", ""),
-                    )
-                else:
-                    analysis = result
-
-                results.append(analysis)
-
-            # Token-bucket throttle between batches instead of fixed sleep
-            if batch_idx + self.parallel_batch_size < len(holdings):
+        async def _analyze_bounded(holding: dict[str, Any]) -> HoldingAnalysis:
+            async with semaphore:
+                # Per-holding pacing: acquire a token right before this holding's
+                # work, inside the semaphore, rather than once per batch boundary.
                 if self.rate_limiter is not None:
                     await asyncio.to_thread(self.rate_limiter.acquire, "YahooFinance")
+
+                return await self.analyze_holding_async(
+                    ticker=holding.get("ticker", ""),
+                    asset_class=holding.get("asset_class", "stock"),
+                    currency=holding.get("currency", "USD"),
+                    name=holding.get("name", ""),
+                )
+
+        # Schedule every holding up front; the semaphore bounds concurrency.
+        tasks = [asyncio.create_task(_analyze_bounded(holding)) for holding in holdings]
+        task_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Handle results and exceptions, preserving input order.
+        results: list[HoldingAnalysis] = []
+        for holding, result in zip(holdings, task_results):
+            analysis: HoldingAnalysis
+            if isinstance(result, BaseException):
+                logger.error(
+                    f"Error analyzing {holding.get('ticker')}: {result}",
+                    extra={"ticker": holding.get("ticker"), "error": str(result)},
+                )
+                # Create baseline analysis for failed holdings
+                analysis = HoldingProcessor.create_baseline_analysis(
+                    ticker=holding.get("ticker", ""),
+                    asset_class=holding.get("asset_class", "stock"),
+                    currency=holding.get("currency", "USD"),
+                    name=holding.get("name", ""),
+                )
+            else:
+                analysis = result
+
+            results.append(analysis)
 
         elapsed = (datetime.now() - start_time).total_seconds()
         logger.info(
