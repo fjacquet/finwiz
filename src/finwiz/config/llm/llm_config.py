@@ -4,11 +4,12 @@ LLM Configuration Utility for FinWiz.
 Provides centralized LLM configuration with proper parameter handling
 for CrewAI integration. All models are configurable via environment variables.
 
-Supports modern "thinking" models with native reasoning capabilities:
-- DeepSeek V3.2: Native thinking mode for complex reasoning
-- Grok 4.x: Reasoning/non-reasoning modes
-- Gemini 3 Flash: Configurable thinking_level (minimal, low, medium, high)
-- Claude Opus 4.5: Extended thinking capabilities
+Reasoning effort is pinned explicitly (default: low) rather than inherited
+from provider defaults — see ``LLM_REASONING_EFFORT`` and
+``_get_reasoning_params()``. Hybrid-reasoning models (e.g. glm-5.2,
+qwen3.7-plus) otherwise run at whatever effort the provider defaults to,
+which inflates latency/output-token cost and eats into the generation
+budget that would otherwise go to a complete, well-formed JSON response.
 
 Environment Variables:
     LLM_MODEL_STANDARD: Standard model for general operations
@@ -16,8 +17,11 @@ Environment Variables:
     LLM_MODEL_MANAGER: Manager model for crew management
     LLM_MODEL_PLANNING: Planning model for crew planning
     LLM_MODEL_BASELINE: Baseline model for comparison operations
-    LLM_MODEL_THINKING: Model for high-value reasoning tasks (defaults to PLANNING)
-    LLM_THINKING_LEVEL: Thinking intensity (off, low, medium, high) - default: medium
+    LLM_REASONING_EFFORT: Reasoning effort (low, medium, high, none) - default: low.
+        "none" sends no reasoning params at all. Only applied on routes verified
+        to accept it (currently: openrouter/* via extra_body); other routes get
+        no params regardless of this value, matching existing provider-default
+        behavior.
     MODEL: Fallback model if specific models not set
     OPENAI_TIMEOUT: Timeout in seconds (default: 300)
 """
@@ -72,25 +76,6 @@ litellm.num_retries = _parse_num_retries()
 # Model Capabilities Registry
 # =============================================================================
 
-# Models with native thinking/reasoning capabilities
-THINKING_CAPABLE_MODELS = {
-    # DeepSeek models with native thinking
-    "deepseek-v3.2": {"thinking_param": "enable_thinking", "default_value": True},
-    "deepseek-v3": {"thinking_param": "enable_thinking", "default_value": True},
-    # Grok models with reasoning mode
-    "grok-4": {"thinking_param": "reasoning", "supports_toggle": True},
-    "grok-4.1": {"thinking_param": "reasoning", "supports_toggle": True},
-    "grok-4-fast": {"thinking_param": "reasoning", "supports_toggle": True},
-    "grok-4.1-fast": {"thinking_param": "reasoning", "supports_toggle": True},
-    # Gemini models with thinking_level
-    "gemini-3-flash": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
-    "gemini-3-flash-preview": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
-    "gemini-3-pro": {"thinking_param": "thinking_level", "levels": ["minimal", "low", "medium", "high"]},
-    # Claude models with extended thinking
-    "claude-opus-4.5": {"thinking_param": "thinking", "budget_param": "thinking_budget"},
-    "claude-sonnet-4.5": {"thinking_param": "thinking", "budget_param": "thinking_budget"},
-}
-
 # Models with excellent JSON/structured output support
 JSON_RELIABLE_MODELS = [
     "deepseek-v3.2",
@@ -125,59 +110,89 @@ def _get_model_short_name(model: str) -> str:
     return model
 
 
-def _is_thinking_capable(model: str) -> bool:
-    """Check if a model has native thinking capabilities."""
-    short_name = _get_model_short_name(model)
-    return any(cap_model in short_name for cap_model in THINKING_CAPABLE_MODELS)
-
-
 def _is_json_reliable(model: str) -> bool:
     """Check if a model has excellent JSON output support."""
     short_name = _get_model_short_name(model)
     return any(json_model in short_name for json_model in JSON_RELIABLE_MODELS)
 
 
-def _get_thinking_params(model: str, thinking_level: str = "medium") -> dict[str, Any]:
-    """
-    Get model-specific thinking parameters.
+# Reasoning effort levels accepted for LLM_REASONING_EFFORT. "none" sends no
+# reasoning params at all (distinct from an unset env var, which falls back
+# to _DEFAULT_REASONING_EFFORT below).
+_VALID_REASONING_EFFORTS = {"low", "medium", "high", "none"}
+_DEFAULT_REASONING_EFFORT = "low"
 
-    Args:
-        model: Model name
-        thinking_level: Thinking intensity (off, low, medium, high)
+
+def _resolve_reasoning_effort() -> str:
+    """
+    Resolve LLM_REASONING_EFFORT from the environment.
+
+    Empty or invalid values fall back to the default ("low") with a warning;
+    never raises, mirroring _parse_num_retries()'s tolerance for typo'd env
+    values.
 
     Returns:
-        Dict of thinking parameters to pass to the model
+        One of "low", "medium", "high", "none".
     """
-    if thinking_level == "off":
+    raw = os.getenv("LLM_REASONING_EFFORT", "").strip().lower()
+    if not raw:
+        return _DEFAULT_REASONING_EFFORT
+    if raw not in _VALID_REASONING_EFFORTS:
+        logger.warning(f"Invalid LLM_REASONING_EFFORT={raw!r}, falling back to {_DEFAULT_REASONING_EFFORT!r}")
+        return _DEFAULT_REASONING_EFFORT
+    return raw
+
+
+def _get_reasoning_params(model: str, effort: str) -> dict[str, Any]:
+    """
+    Build provider-appropriate reasoning-effort params for `model`.
+
+    Pins reasoning effort explicitly instead of letting hybrid-reasoning
+    models inherit provider defaults (a driver of both inflated qualify-stage
+    latency and truncated/malformed JSON output, since reasoning tokens eat
+    into the generation budget).
+
+    Only OpenRouter's chat-completions route is verified (against the
+    installed crewai/litellm) to accept the unified ``reasoning: {"effort":
+    ...}`` field via ``extra_body``: crewai's native OpenAI-compatible
+    completion class (used for every ``openrouter/*`` model in this codebase)
+    forwards ``extra_body`` straight into the OpenAI SDK's
+    ``chat.completions.create(**params)`` call, which merges it into the raw
+    request body — the same mechanism already used for OpenRouter's
+    ``transforms`` passthrough. OpenRouter documents unsupported request
+    parameters as silently ignored rather than rejected, so this is safe to
+    send even to non-reasoning models.
+
+    litellm's own ``reasoning_effort``/``thinking`` param mapping for
+    OpenRouter (gated on ``litellm.supports_reasoning()``) does NOT apply
+    here: crewai routes ``openrouter/*`` models through its native provider
+    class, bypassing litellm entirely (confirmed in the installed crewai's
+    ``LLM.__new__`` — "openrouter" is in ``SUPPORTED_NATIVE_PROVIDERS``).
+
+    No other route is verified, so "none" (no params sent) is the safe
+    fallback for them — matching prior (provider-default) behavior.
+
+    Args:
+        model: Full model string (e.g. "openrouter/z-ai/glm-5.2")
+        effort: One of "low", "medium", "high", "none"
+
+    Returns:
+        Dict to merge into extra_body; empty when no verified route applies.
+    """
+    if effort == "none":
         return {}
+    if model.startswith("openrouter/"):
+        return {"reasoning": {"effort": effort}}
+    return {}
 
-    short_name = _get_model_short_name(model)
-    params: dict[str, Any] = {}
 
-    for cap_model, config in THINKING_CAPABLE_MODELS.items():
-        if cap_model in short_name:
-            thinking_param = config.get("thinking_param")
-
-            if "levels" in config:
-                # Gemini-style thinking_level
-                level_map = {"low": "low", "medium": "medium", "high": "high"}
-                params[thinking_param] = level_map.get(thinking_level, "medium")
-            elif "budget_param" in config:
-                # Claude-style thinking with budget
-                params[thinking_param] = {"type": "enabled"}
-                # Budget in tokens: low=1024, medium=4096, high=16384
-                budget_map = {"low": 1024, "medium": 4096, "high": 16384}
-                params[config["budget_param"]] = budget_map.get(thinking_level, 4096)
-            elif config.get("supports_toggle"):
-                # Grok-style reasoning toggle
-                params[thinking_param] = True
-            else:
-                # DeepSeek-style enable_thinking
-                params[thinking_param] = config.get("default_value", True)
-
-            break
-
-    return params
+def _apply_reasoning_effort(extra_body: dict[str, Any], model: str, reasoning_effort: str, reasoning_params: dict[str, Any]) -> None:
+    """Merge resolved reasoning params into `extra_body` in place and log the outcome."""
+    if reasoning_params:
+        extra_body.update(reasoning_params)
+        logger.info(f"Reasoning effort pinned: {reasoning_effort} (via extra_body)")
+    elif reasoning_effort != "none":
+        logger.debug(f"Reasoning effort {reasoning_effort!r} requested but not sent: unverified route for {model}")
 
 
 # =============================================================================
@@ -287,6 +302,7 @@ def get_configured_llm(
         LLM_MODEL_MANAGER: Manager model (default: openai/gpt-4o-mini)
         LLM_MODEL_PLANNING: Planning model (default: openai/gpt-4o-mini)
         LLM_MODEL_BASELINE: Baseline model (default: openai/gpt-4o)
+        LLM_REASONING_EFFORT: Reasoning effort (low, medium, high, none) - default: low
         MODEL: Fallback if specific model not set
         OPENAI_TIMEOUT: Timeout in seconds (default: 300)
 
@@ -310,8 +326,16 @@ def get_configured_llm(
         fallback = "openai/gpt-4o" if model_type == "baseline" else "openai/gpt-4o-mini"
         model = _get_model_from_env(env_var, fallback)
 
-    # Check cache first (include max_tokens + json mode so callers with different needs get distinct instances)
-    cache_key = f"{model}:{model_type}:{max_tokens}:json={force_json_object}"
+    # Reasoning effort is resolved up front (env-driven) because it affects
+    # extra_body, which must be part of the cache key below — otherwise a
+    # changed LLM_REASONING_EFFORT would silently return a stale cached
+    # instance built with the old effort.
+    reasoning_effort = _resolve_reasoning_effort()
+    reasoning_params = _get_reasoning_params(model, reasoning_effort)
+
+    # Check cache first (include max_tokens + json mode + reasoning effort so callers
+    # with different needs get distinct instances)
+    cache_key = f"{model}:{model_type}:{max_tokens}:json={force_json_object}:reasoning={reasoning_effort}"
     if cache_key in _llm_cache:
         logger.debug(f"Returning cached LLM instance for {cache_key}")
         return _llm_cache[cache_key]
@@ -368,6 +392,11 @@ def get_configured_llm(
             extra_body["response_format"] = {"type": "json_object"}
             logger.info("Provider JSON mode enabled (response_format=json_object via extra_body)")
 
+        # Explicit reasoning effort: pins hybrid-reasoning models (e.g. glm-5.2,
+        # qwen3.7-plus) to a known effort instead of inheriting provider defaults.
+        # See _get_reasoning_params() for which routes are verified to accept this.
+        _apply_reasoning_effort(extra_body, model, reasoning_effort, reasoning_params)
+
         # Create LLM with proper configuration.
         # Note: retry on transient errors is handled at the litellm module level
         # (litellm.num_retries set at import time in this file).
@@ -392,7 +421,8 @@ def get_configured_llm(
         _llm_cache[cache_key] = llm
 
         parallel_status = "disabled" if disable_parallel else "enabled"
-        logger.info(f"LLM configured: {model} (timeout: {timeout}s, max_tokens: {max_tokens}, parallel_tool_calls: {parallel_status})")
+        reasoning_status = reasoning_effort if reasoning_params else "none"
+        logger.info(f"LLM configured: {model} (timeout: {timeout}s, max_tokens: {max_tokens}, parallel_tool_calls: {parallel_status}, reasoning_effort: {reasoning_status})")
         return llm
 
     except Exception as e:
