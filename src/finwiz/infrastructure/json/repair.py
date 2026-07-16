@@ -159,8 +159,11 @@ def _fix_duplicated_leading_brace(text: str) -> str:
     since it expects either a closing brace or a quoted key right after the
     first "{" and finds a second "{" instead.
 
-    Also handles the symmetric trailing case (an orphan closing brace on its
-    own line after the real object's closing brace), when trivially present.
+    Only the leading case is handled: two consecutive opening braces can never
+    occur in valid JSON (a key must sit between them), so stripping is safe.
+    The symmetric trailing pattern ("}" newline "}") IS valid JSON — the normal
+    closing sequence of any pretty-printed nested object — so it must not be
+    touched here; genuine trailing imbalances fall through to truncation repair.
     """
     leading_match = re.match(r"^\s*\{\s*\n\s*\{", text)
     if leading_match:
@@ -172,14 +175,6 @@ def _fix_duplicated_leading_brace(text: str) -> str:
         if stripped.startswith("{"):
             text = stripped
             logger.debug("Stripped duplicated leading brace from JSON")
-
-    trailing_match = re.search(r"\}\s*\n\s*\}\s*$", text)
-    if trailing_match:
-        last_brace = text.rindex("}")
-        rest = text[:last_brace].rstrip()
-        if rest.endswith("}"):
-            text = rest
-            logger.debug("Stripped duplicated trailing brace from JSON")
 
     return text
 

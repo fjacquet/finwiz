@@ -31,13 +31,24 @@ class TestFixDuplicatedLeadingBrace:
         assert result == '{"a": 1, "b": 2}'
         assert json.loads(result) == {"a": 1, "b": 2}
 
-    def test_should_strip_lone_trailing_brace_when_duplicated(self):
-        text = '{"a": {"b": "c"}}\n}'
+    def test_should_not_touch_pretty_printed_nested_close(self):
+        """Regression: '}' newline '}' is the NORMAL closing sequence of a
+        pretty-printed nested object — stripping it corrupts valid JSON."""
+        text = '{"a": {"b": 1}\n}'
 
         result = _fix_duplicated_leading_brace(text)
 
-        assert result == '{"a": {"b": "c"}}'
-        assert json.loads(result) == {"a": {"b": "c"}}
+        assert result == text
+        assert json.loads(result) == {"a": {"b": 1}}
+
+    def test_should_not_downgrade_repairable_document_with_nested_close(self):
+        """Regression: a trailing-comma document ending in '}' newline '}' must be
+        fixed by the cheap comma repair, not corrupted into the truncation path."""
+        text = '{"a": {"b": 1,}\n}'
+
+        repaired = repair_json(text)
+
+        assert json.loads(repaired) == {"a": {"b": 1}}
 
     def test_should_leave_normal_object_untouched(self):
         text = '{"a": 1, "b": 2}'
