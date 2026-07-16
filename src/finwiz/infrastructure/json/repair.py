@@ -5,7 +5,7 @@ Repairs common JSON syntax errors from LLM outputs using a pipeline pattern.
 Each repair step is a separate function that can be tested independently.
 
 Handles:
-- Duplicated leading/trailing brace (LLM emits a lone "{" before the real object)
+- Duplicated leading brace (LLM emits a lone "{" before the real object)
 - Trailing commas in arrays and objects
 - Missing quotes around keys
 - Single quotes instead of double quotes
