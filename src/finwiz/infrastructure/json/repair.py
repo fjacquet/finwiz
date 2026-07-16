@@ -5,6 +5,7 @@ Repairs common JSON syntax errors from LLM outputs using a pipeline pattern.
 Each repair step is a separate function that can be tested independently.
 
 Handles:
+- Duplicated leading brace (LLM emits a lone "{" before the real object)
 - Trailing commas in arrays and objects
 - Missing quotes around keys
 - Single quotes instead of double quotes
@@ -141,6 +142,41 @@ def _escape_newlines_in_strings(text: str) -> str:
 
     result.append(text[pos:])
     return "".join(result)
+
+
+def _fix_duplicated_leading_brace(text: str) -> str:
+    """
+    Strip a duplicated opening brace that some LLMs (observed: glm-5.2) emit.
+
+    Occurs before the real JSON object, e.g.:
+
+        {
+        {"sec_insights":{"business_model":"..."}}
+
+    The lone leading "{" on its own line leaves the object unbalanced by one
+    extra opening brace, which json.loads reports as:
+        "Expecting property name enclosed in double quotes: line 2 column 1"
+    since it expects either a closing brace or a quoted key right after the
+    first "{" and finds a second "{" instead.
+
+    Only the leading case is handled: two consecutive opening braces can never
+    occur in valid JSON (a key must sit between them), so stripping is safe.
+    The symmetric trailing pattern ("}" newline "}") IS valid JSON — the normal
+    closing sequence of any pretty-printed nested object — so it must not be
+    touched here; genuine trailing imbalances fall through to truncation repair.
+    """
+    leading_match = re.match(r"^\s*\{\s*\n\s*\{", text)
+    if leading_match:
+        # Drop everything up to (and including) the first lone "{" and its
+        # trailing newline/whitespace, keeping the real object's own "{".
+        first_brace = text.index("{")
+        rest = text[first_brace + 1 :]
+        stripped = rest.lstrip()
+        if stripped.startswith("{"):
+            text = stripped
+            logger.debug("Stripped duplicated leading brace from JSON")
+
+    return text
 
 
 def _remove_markdown_blocks(text: str) -> str:
@@ -353,6 +389,7 @@ def _fix_truncated_values(text: str) -> str:
 
 # Basic repair steps (fast, safe)
 BASIC_REPAIR_STEPS: list[Callable[[str], str]] = [
+    _fix_duplicated_leading_brace,  # Structural fix; must run before extraction/truncation repair
     _extract_json_from_text,
     _remove_markdown_blocks,  # Moved earlier - markdown blocks are common
     _remove_comments,
