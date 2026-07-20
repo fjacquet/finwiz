@@ -7,7 +7,7 @@ requires-python = ">=3.13,<3.14"
 dependencies = [
     "python-dotenv>=1.2.2",
     "yfinance>=0.2.62",
-    "ta-lib>=0.6.8",
+    "ta-lib>=0.7.1",
     "backtrader>=1.9.78.123",
     "quantlib>=1.42.1",
     "pyportfolioopt>=1.5.5",
