@@ -5,6 +5,13 @@ LABEL org.opencontainers.image.title="finwiz" \
       org.opencontainers.image.source="https://github.com/fjacquet/finwiz" \
       org.opencontainers.image.licenses="MIT"
 
+# git is needed at install time: crewai-custom-tools is a git+https dependency
+# (see pyproject.toml), and python:*-slim ships without git. Without it the
+# install fails with "Git executable not found".
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends git \
+ && rm -rf /var/lib/apt/lists/*
+
 # Fast, reproducible installs with uv.
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
