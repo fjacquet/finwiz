@@ -32,7 +32,7 @@ dependencies = [
     "tenacity>=9.1.4",
     "crewai>=1.15.4",
     "langchain-core>=1.5.3",
-    "litellm>=1.92.0",
+    "litellm>=1.94.1",
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.6.0",
 ]
 
