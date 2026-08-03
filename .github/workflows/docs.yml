@@ -10,5 +10,5 @@ on:
 permissions: { contents: read, pages: write, id-token: write }
 jobs:
   docs:
-    uses: fjacquet/ci/.github/workflows/docs-publish.yml@v1
+    uses: fjacquet/ci/.github/workflows/docs-publish.yml@v1.2.0
     with: { python-version: "3.13" }

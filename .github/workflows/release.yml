@@ -12,7 +12,7 @@ jobs:
   release:
     # Builds wheel/sdist + SBOM, publishes a GitHub Release with those assets,
     # and pushes a Docker image to ghcr.io/fjacquet/finwiz. No PyPI. See fjacquet/ci.
-    uses: fjacquet/ci/.github/workflows/python-app-release.yml@v1
+    uses: fjacquet/ci/.github/workflows/python-app-release.yml@v1.2.0
     permissions:
       contents: write
       packages: write
