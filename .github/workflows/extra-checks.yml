@@ -18,7 +18,7 @@ jobs:
         with: { egress-policy: audit }
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { fetch-depth: 0, persist-credentials: false }
-      - uses: fjacquet/ci/actions/setup-uv@v1 # nosemgrep: github-actions.security.third-party-action-not-pinned-to-commit-sha
+      - uses: fjacquet/ci/actions/setup-uv@v1.2.0 # nosemgrep: github-actions.security.third-party-action-not-pinned-to-commit-sha
         with: { python-version: "3.13" }
       - run: uv sync --all-extras --all-groups
       - run: uvx vulture src/finwiz --min-confidence 80
