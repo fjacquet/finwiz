@@ -487,3 +487,18 @@ exclude-newer-package = { crewai = "P0D", crewai-core = "P0D", crewai-cli = "P0D
 constraint-dependencies = [
 
 ]
+
+# Dependency overrides: unlike constraint-dependencies (which intersects with
+# existing requirements), these REPLACE a package's requirement wherever it
+# appears in the graph. Needed when a transitive requirement's own upper bound
+# blocks a security fix rather than merely allowing an old floor.
+# - cyclonedx-python-lib: pip-audit 2.9.0 pins "cyclonedx-python-lib>=5,<10",
+#   which caps cyclonedx-python-lib at 9.1.0. That version's "validation"
+#   extra requires "lxml<6", blocking the fix for GHSA-vfmq-68hx-4jfw
+#   (CVE-2026-41066, lxml XXE via iterparse()/ETCompatXMLParser()). Overriding
+#   lets the resolver pick cyclonedx-python-lib>=11 (still satisfies
+#   cyclonedx-bom's >=8,<12 and pip-audit's own >=5 floor), which allows
+#   lxml<7 and unblocks the lxml 6.1.0+ security fix.
+override-dependencies = [
+    "cyclonedx-python-lib[validation]>=11,<12",
+]
