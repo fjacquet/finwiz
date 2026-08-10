@@ -6,5 +6,5 @@ permissions:
   contents: read
 jobs:
   security:
-    uses: fjacquet/ci/.github/workflows/python-security.yml@v1.2.0
+    uses: fjacquet/ci/.github/workflows/python-security.yml@v1.3.0
     with: { python-version: "3.13" }
