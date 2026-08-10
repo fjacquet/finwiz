@@ -1,4 +1,4 @@
-FROM python:3.13-slim
+FROM docker.io/library/python:3.13-slim
 
 LABEL org.opencontainers.image.title="finwiz" \
       org.opencontainers.image.description="finwiz using crewAI — financial research/analysis crew" \
