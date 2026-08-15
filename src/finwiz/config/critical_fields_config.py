@@ -134,6 +134,36 @@ def get_safe_default(field_name: str) -> float | None:
     return SAFE_DEFAULTS.get(field_name)
 
 
+# Annualized volatility above this is not a real reading — it is a units error
+# or corrupt data. Below it, values > 5.0 are treated as percent-scaled and
+# divided by 100 (two producers in-tree disagree on units; see
+# quantitative/performance_metrics.py:90 vs quantitative/backtesting_performance.py:246).
+_VOLATILITY_ABSURD_CEILING = 500.0
+
+
+def normalize_volatility(value: float | int | None) -> float | None:
+    """Coerce a volatility reading to the fractional scale, or None if unusable.
+
+    Args:
+        value: Raw volatility, fractional (0.25) or percent-scaled (25.0).
+
+    Returns:
+        Fractional volatility, or None when the value is missing, negative, or absurd.
+
+    """
+    if value is None:
+        return None
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    if v < 0.0 or v > _VOLATILITY_ABSURD_CEILING:
+        return None
+    if v > 5.0:
+        return v / 100.0
+    return v
+
+
 def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "crypto"], data: dict[str, Any]) -> None:
     """
     Validate that all critical fields are present with real data.
@@ -171,6 +201,11 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
 
     for field in critical_fields:
         value = data.get(field)
+
+        if field == "volatility":
+            value = normalize_volatility(value)
+            if value is not None:
+                data[field] = value
 
         # Check if field is missing or None
         if field not in data or value is None:

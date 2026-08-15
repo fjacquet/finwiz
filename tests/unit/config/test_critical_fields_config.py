@@ -2,7 +2,7 @@
 
 import pytest
 
-from finwiz.config.critical_fields_config import CriticalFieldError, validate_critical_fields
+from finwiz.config.critical_fields_config import CriticalFieldError, normalize_volatility, validate_critical_fields
 
 
 def _make_stock_data(**overrides):
@@ -46,5 +46,54 @@ class TestRoeSanityCheck:
     def test_should_flag_extreme_negative_roe(self):
         """ROE=-6.0 (-600%) is extreme and likely a data error."""
         data = _make_stock_data(roe=-6.0)
+        with pytest.raises(CriticalFieldError):
+            validate_critical_fields("TEST", "stock", data)
+
+
+class TestNormalizeVolatility:
+    """Tests for normalize_volatility() — coercing raw volatility to the fractional scale."""
+
+    def test_fractional_volatility_passes_through(self):
+        """Values already on the fractional scale (0.25 = 25%) are returned unchanged."""
+        assert normalize_volatility(0.25) == 0.25
+
+    def test_percent_scaled_volatility_is_rescaled(self):
+        """Values on the percent scale (25.3 = 25.3%) are rescaled to fractional."""
+        assert normalize_volatility(25.3) == pytest.approx(0.253)
+
+    def test_absurd_volatility_is_rejected(self):
+        """Values above the absurd ceiling are neither real fractional nor percent readings — reject as None."""
+        assert normalize_volatility(900.0) is None
+
+    def test_negative_volatility_is_rejected(self):
+        """Negative volatility is not physically meaningful — reject as None."""
+        assert normalize_volatility(-0.25) is None
+
+    def test_none_stays_none(self):
+        """A missing reading stays missing."""
+        assert normalize_volatility(None) is None
+
+    def test_zero_is_preserved_not_treated_as_missing(self):
+        """A genuine 0.0 volatility reading must not be coerced to None."""
+        assert normalize_volatility(0.0) == 0.0
+
+
+class TestVolatilityGateNormalization:
+    """Tests that validate_critical_fields normalizes volatility before the sanity check runs."""
+
+    def test_percent_scaled_volatility_no_longer_rejected_by_gate(self):
+        """A percent-scaled volatility (25.3) must not be reported as an invalid value by the gate."""
+        data = _make_stock_data(volatility=25.3)
+        validate_critical_fields("TEST", "stock", data)  # Should not raise
+
+    def test_gate_normalizes_volatility_in_place(self):
+        """After validation, the normalized fractional value replaces the raw percent-scaled one."""
+        data = _make_stock_data(volatility=25.3)
+        validate_critical_fields("TEST", "stock", data)
+        assert data["volatility"] == pytest.approx(0.253)
+
+    def test_absurd_volatility_still_fails_the_gate(self):
+        """An absurd volatility reading (900.0) is still rejected, just as a units error rather than merely missing."""
+        data = _make_stock_data(volatility=900.0)
         with pytest.raises(CriticalFieldError):
             validate_critical_fields("TEST", "stock", data)
