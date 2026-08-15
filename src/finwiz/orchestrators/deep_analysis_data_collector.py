@@ -586,10 +586,29 @@ class DeepAnalysisDataCollector:
             return None
 
     def _flatten_recursive(self, obj: Any, target: dict[str, Any]) -> None:
-        """Recursively flatten nested dict structures."""
+        """Recursively flatten nested dict structures.
+
+        ``backtest_result`` and ``quantitative_recommendation`` are skipped
+        entirely, not just de-prioritized. Both carry fields that share a
+        name with the sanctioned, fractional-scale source
+        (``performance_metrics``) -- ``max_drawdown``, ``volatility``,
+        ``total_return`` -- but ``backtest_result``'s are percent-scaled
+        (``backtesting_performance.py:246``), and
+        ``quantitative_recommendation.risk_metrics`` mirrors whichever of the
+        two ``generate_recommendation`` picked (currently backtest-only, see
+        Task 15). When ``performance_metrics`` is absent (that sub-analysis
+        failed), "first key wins" would otherwise let one of these
+        percent-scaled duplicates through, and a downstream consumer
+        comparing it against fractional thresholds (``risk_scorer.py``) would
+        silently score, e.g., a -3% drawdown as if it were -300%. Neither
+        section has any field this method is relied on to extract today --
+        volatility/max_drawdown/sharpe_ratio/total_return/beta come from the
+        targeted ``performance_metrics`` extraction above, so skipping these
+        two sections loses nothing. See Task 15 review round 2 (Ruling 30).
+        """
         if isinstance(obj, dict):
             for key, value in obj.items():
-                if key in ["meta", "metadata", "raw_data", "debug_info"]:
+                if key in ["meta", "metadata", "raw_data", "debug_info", "backtest_result", "quantitative_recommendation"]:
                     continue
 
                 if isinstance(value, (int, float, str, bool, type(None))):

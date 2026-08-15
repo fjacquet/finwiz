@@ -332,6 +332,13 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
 
     """
     tech_signal = tech_result.overall_signal.value if tech_result is not None else "N/A"
+    # 0.0 here is a real value, not a fabrication: `confidence` measures how
+    # much basis this function had for its recommendation, and with no
+    # technical signal to weigh, the honest amount of confidence is none.
+    # Contrast with the risk_metrics fields above/below, where a substituted
+    # 0.0 would misrepresent an unmeasured quantity (volatility, drawdown)
+    # as a measured one of value zero -- that distinction is why those are
+    # omitted but this is not. See Task 15 review round 2.
     tech_confidence = tech_result.overall_confidence if tech_result is not None else 0.0
 
     backtest_return = backtest_result.annualized_return if backtest_result is not None else None

@@ -160,11 +160,16 @@ class TestBacktestFailureIsolation:
         assert result["backtest_result"]["volatility"] == 10.0
         assert result["performance_metrics"] is None
         assert result["technical_analysis"] is not None
-        # risk_metrics is sourced from the backtest only, unscaled -- no
-        # mixing with perf_metrics' fractional scale (see module docstring
-        # and generate_recommendation's docstring for why that mixing is
-        # unsafe: BacktestResult figures are percent-scaled, PerformanceMetrics
-        # figures are fractional, and only volatility has a normalizer).
+        # risk_metrics is sourced from the backtest only, passed through
+        # exactly as BacktestResult reports it (percent-scaled -- -3.0 here
+        # means a -3% drawdown) -- no mixing with perf_metrics' fractional
+        # scale (see generate_recommendation's docstring for why that mixing
+        # is unsafe: only volatility has a normalizer, max_drawdown does
+        # not). DeepAnalysisDataCollector._flatten_recursive additionally
+        # excludes this whole risk_metrics block from the scorer's flat dict
+        # (Task 15 review round 2) precisely because it is percent-scaled
+        # and would otherwise be misread against the scorer's fractional
+        # thresholds -- see test_deep_analysis_data_collector.py::TestFlattenExcludesPercentScaledDuplicates.
         assert result["quantitative_recommendation"]["risk_metrics"]["max_drawdown"] == -3.0
         assert result["quantitative_recommendation"]["risk_metrics"]["volatility"] == 10.0
 
