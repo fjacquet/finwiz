@@ -323,3 +323,7 @@ site/
 .code-review-graph/
 .serena/
 output_baseline_*/
+
+# Git worktrees for isolated implementation workspaces
+.claude/worktrees/
+.superpowers/
