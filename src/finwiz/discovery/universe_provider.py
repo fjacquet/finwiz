@@ -12,6 +12,7 @@ from typing import Any, ClassVar
 import yfinance as yf
 from crewai_custom_tools.tools.analytics.screening_utils import ScreeningUtils
 
+from finwiz.discovery.ticker_hygiene import sanitize_symbols
 from finwiz.tools.logger import get_logger
 
 
@@ -84,7 +85,7 @@ class DynamicUniverseProvider:
                 source = "static"
 
         # Deduplicate, filter exclusions, sort
-        result = sorted({t.upper() for t in tickers} - exclude_set)
+        result = sorted(set(sanitize_symbols(tickers)) - exclude_set)
 
         self._logger.info(
             "Universe for %s: %d tickers (source=%s, excluded=%d)",
