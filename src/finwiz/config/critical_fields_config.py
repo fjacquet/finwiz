@@ -5,6 +5,7 @@ Defines which fields are CRITICAL (must have real data) vs OPTIONAL (can use def
 Missing critical fields should cause analysis to FAIL rather than use fallback values.
 """
 
+import math
 from typing import Any, Literal
 
 # Critical fields by asset class - MUST have real data or analysis fails
@@ -148,7 +149,8 @@ def normalize_volatility(value: float | int | None) -> float | None:
         value: Raw volatility, fractional (0.25) or percent-scaled (25.0).
 
     Returns:
-        Fractional volatility, or None when the value is missing, negative, or absurd.
+        Fractional volatility, or None when the value is missing, non-finite (NaN/inf),
+        negative, or absurd.
 
     """
     if value is None:
@@ -156,6 +158,10 @@ def normalize_volatility(value: float | int | None) -> float | None:
     try:
         v = float(value)
     except (TypeError, ValueError):
+        return None
+    if not math.isfinite(v):
+        # Covers NaN, +inf, and -inf: comparisons against NaN are always False, so the
+        # range checks below would otherwise let it slide through as "valid".
         return None
     if v < 0.0 or v >= _VOLATILITY_ABSURD_CEILING:
         return None

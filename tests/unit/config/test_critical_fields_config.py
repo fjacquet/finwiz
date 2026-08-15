@@ -1,5 +1,7 @@
 """Tests for critical fields configuration and sanity checks."""
 
+import math
+
 import pytest
 
 from finwiz.config.critical_fields_config import CriticalFieldError, normalize_volatility, validate_critical_fields
@@ -89,6 +91,19 @@ class TestNormalizeVolatility:
         """Exactly 5.0 sits at the rescale threshold (not > 5.0) and is left unchanged, not divided by 100."""
         assert normalize_volatility(5.0) == 5.0
 
+    def test_nan_volatility_is_rejected(self):
+        """NaN defeats every ordinary comparison (all False), so it must be explicitly rejected (Ruling 16)."""
+        # Never assert `== float("nan")` — NaN is never equal to itself. Assert the None result directly.
+        assert normalize_volatility(float("nan")) is None
+
+    def test_positive_infinity_volatility_is_rejected(self):
+        """+inf is not a real volatility reading — reject as None (Ruling 16)."""
+        assert normalize_volatility(float("inf")) is None
+
+    def test_negative_infinity_volatility_is_rejected(self):
+        """-inf is not a real volatility reading — reject as None (Ruling 16)."""
+        assert normalize_volatility(float("-inf")) is None
+
 
 class TestVolatilityGateNormalization:
     """Tests that validate_critical_fields normalizes volatility before the sanity check runs."""
@@ -149,3 +164,13 @@ class TestVolatilityGateNormalization:
         data = _make_stock_data(volatility=5.0)
         validate_critical_fields("TEST", "stock", data)  # Should not raise
         assert data["volatility"] == 5.0
+
+    def test_gate_rejects_nan_volatility_as_invalid(self):
+        """A NaN volatility must be refused by the gate as an invalid value, not silently accepted (Ruling 16)."""
+        data = _make_stock_data(volatility=float("nan"))
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", data)
+        assert "volatility (invalid value: nan)" in exc_info.value.missing_fields
+        # normalize_volatility rejected it, so the gate must not have overwritten data in place.
+        # Never assert `== float("nan")` here — NaN is never equal to itself.
+        assert math.isnan(data["volatility"])
