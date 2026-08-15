@@ -9,7 +9,6 @@ I/O hiccups.
 
 import json
 import logging
-import threading
 from datetime import datetime
 
 from finwiz.quantitative.config import QuantConfig
@@ -49,47 +48,47 @@ def test_save_cache_metadata_serializes_datetime_via_default_str(tmp_path):
     assert saved["fetched_at"] == "2026-08-15 12:30:00"
 
 
-def test_save_cache_metadata_survives_concurrent_mutation(tmp_path):
-    """The caller owns the dict and may mutate it from another thread while
-    save_cache_metadata is serializing it; the write must not fail.
+def test_save_cache_metadata_snapshot_is_unaffected_by_concurrent_mutation(tmp_path, mocker):
+    """Deterministic proof that save_cache_metadata serializes an isolated
+    snapshot, not the caller's live dict.
 
-    The churn thread adds and evicts keys in a rolling window rather than
-    growing the dict unboundedly. An unbounded churner races json.dump's
-    per-write GIL yield points: the dict balloons between dump calls, each
-    call takes longer, which gives the churner even more time to grow it
-    further -- a runaway that made an earlier version of this test run for
-    minutes. A bounded window still exercises the exact defect (dict size
-    changing mid-iteration) without that blowup.
+    A threaded version of this test (real OS thread mutating `metadata`
+    while save_cache_metadata ran) proved the mechanism but only failed on
+    the exact scheduling that happened to trigger the race, and an earlier,
+    unbounded-growth version of that thread caused a runaway feedback loop
+    with json.dump's per-write GIL yield points (minutes of CPU before it
+    was killed). Neither is acceptable as a regression guard: a race that
+    only sometimes fires gives false confidence, and a revert of the fix
+    could sail through CI green.
+
+    Instead, force the mutation to land at a controlled point: patch
+    json.dump itself so that, at the exact moment save_cache_metadata hands
+    off to it, the *caller's* dict gets a key added and a key removed --
+    simulating a concurrent writer's mutation landing right then. Against
+    the fix, that mutation cannot reach the snapshot (a different object,
+    already copied before this point), so the write is untouched and
+    matches the pre-mutation content. Against a reverted fix (dumping
+    `cache_metadata` directly, no snapshot), the mutated object *is* the one
+    being serialized, so the write reflects the mutation and this assertion
+    fails -- verified by temporarily reverting the snapshot line (see
+    task-14-report.md for that evidence).
     """
     processor = DataProcessor(QuantConfig())
-    metadata = {f"seed{i}": i for i in range(500)}
+    cache_metadata = {f"seed{i}": i for i in range(20)}
+    expected_snapshot = dict(cache_metadata)
     target = tmp_path / "cache_metadata.json"
-    stop = threading.Event()
-    errors: list[BaseException] = []
-    window = 200
+    real_dump = json.dump
 
-    def churn():
-        i = 0
-        while not stop.is_set():
-            metadata[f"k{i}"] = i
-            if i >= window:
-                metadata.pop(f"k{i - window}", None)
-            i += 1
+    def mutate_then_dump(obj, fp, **kwargs):
+        cache_metadata["added_concurrently"] = -1
+        del cache_metadata["seed0"]
+        return real_dump(obj, fp, **kwargs)
 
-    writer = threading.Thread(target=churn, daemon=True)
-    writer.start()
-    try:
-        for _ in range(50):
-            try:
-                processor.save_cache_metadata(metadata, target)
-            except BaseException as exc:  # the test is the assertion
-                errors.append(exc)
-    finally:
-        stop.set()
-        writer.join(timeout=2.0)
+    mocker.patch("finwiz.quantitative.data_processors.json.dump", side_effect=mutate_then_dump)
 
-    assert errors == []
-    assert json.loads(target.read_text(encoding="utf-8"))
+    processor.save_cache_metadata(cache_metadata, target)  # must not raise
+
+    assert json.loads(target.read_text(encoding="utf-8")) == expected_snapshot
 
 
 def test_save_cache_metadata_os_error_is_swallowed_and_logged(tmp_path, caplog):
