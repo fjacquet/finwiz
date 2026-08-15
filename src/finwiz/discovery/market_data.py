@@ -204,6 +204,21 @@ def get_sectors(tickers: list[str], asset_class: str = "stock") -> dict[str, str
     return out
 
 
+# Calibration target: a candidate up ~12%+ over a 6-month window with ordinary
+# daily volatility (~1.5%) must be able to reach the C floor (0.65,
+# grading_system.py:39-90), while a flat/mediocre/declining candidate at the
+# same volatility must not. The original gain of 4 centered at zero return
+# compressed realistic candidates into 0.50-0.65, so the grade ladder was
+# unreachable and discovery reported "0 opportunities" for a universe it had
+# graded rather than searched. The floor itself stays at C -- weak signals are
+# excluded, never low-graded. Values verified against a grid of representative
+# (cumulative return, daily volatility) pairs, not just the zero-volatility
+# degenerate case: see tests/unit/discovery/test_market_data.py.
+_MOMENTUM_GAIN = 9.0
+_MOMENTUM_CENTER = 0.05
+_VOL_PENALTY = 12.0
+
+
 def factor_score_from_returns(returns: list[float] | None) -> float | None:
     """Standalone quality factor score in ``[0, 1]`` from a daily-return series.
 
@@ -221,9 +236,9 @@ def factor_score_from_returns(returns: list[float] | None) -> float | None:
 
     arr = np.asarray(returns, dtype=float)
     cumulative = float(np.prod(1.0 + arr) - 1.0)
-    momentum = 1.0 / (1.0 + np.exp(-4.0 * cumulative))  # cumulative 0 -> 0.5
+    momentum = 1.0 / (1.0 + np.exp(-_MOMENTUM_GAIN * (cumulative - _MOMENTUM_CENTER)))
     daily_vol = float(arr.std())
-    vol_score = max(0.0, min(1.0, 1.0 - daily_vol * 20.0))  # ~5% daily vol -> 0
+    vol_score = max(0.0, min(1.0, 1.0 - daily_vol * _VOL_PENALTY))
     score = 0.7 * momentum + 0.3 * vol_score
     return max(0.0, min(1.0, float(score)))
 
