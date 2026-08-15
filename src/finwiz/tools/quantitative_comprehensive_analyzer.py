@@ -58,15 +58,31 @@ def perform_comprehensive_analysis(
     Returns:
         JSON string with comprehensive analysis results
 
+    Technical analysis, backtesting, and performance analysis are three
+    independent computations over the same price history -- each is
+    attempted separately and a failure or refusal in one does not discard
+    the other two. That matters concretely: volatility is read downstream
+    from ``performance_metrics``, not from ``backtest_result``
+    (``deep_analysis_data_collector.flatten_collected_data``), so a
+    backtest-side failure must not take volatility down with it. Before this
+    fix, all three lived in one shared try/except, which is the actual
+    mechanism behind "a crash drops the holding's entire quantitative
+    payload" (Task 15).
+
     """
     logger = get_logger(__name__)
 
+    tech_result = None
+    quant_tech = None
     try:
-        # Technical analysis
         tech_result = technical_engine.analyze_symbol(data, input_data.symbol, timeframe="1d")
         quant_tech = _create_technical_result(input_data.symbol, tech_result)
+    except Exception as e:
+        logger.error(f"Technical analysis failed for {input_data.symbol}: {e}")
 
-        # Backtesting
+    backtest_result = None
+    quant_backtest = None
+    try:
         backtest_result = backtesting_engine.run_strategy_backtest(
             SimpleMovingAverageStrategy,
             input_data.symbol,
@@ -74,15 +90,27 @@ def perform_comprehensive_analysis(
             end_date,
             strategy_params={"short_period": 20, "long_period": 50},
         )
-        quant_backtest = _create_backtest_result(input_data.symbol, backtest_result)
+        if backtest_result is not None:
+            quant_backtest = _create_backtest_result(input_data.symbol, backtest_result)
+    except Exception as e:
+        logger.error(f"Backtest failed for {input_data.symbol}: {e}")
 
-        # Performance analysis
+    metrics = None
+    quant_perf = None
+    try:
         returns = data["Close"].pct_change().dropna()
         perf_report = performance_analyzer.analyze_performance(returns, strategy_name=f"{input_data.symbol}_analysis")
         metrics = perf_report.strategy_metrics
         quant_perf = _create_performance_result(input_data.symbol, metrics, len(returns))
+    except Exception as e:
+        logger.error(f"Performance analysis failed for {input_data.symbol}: {e}")
 
-        # Generate recommendation
+    if quant_tech is None and quant_backtest is None and quant_perf is None:
+        message = f"technical, backtest, and performance analysis all failed for {input_data.symbol}"
+        logger.error(f"Comprehensive analysis error: {message}")
+        return f"Comprehensive analysis error: {message}"
+
+    try:
         recommendation = generate_recommendation(input_data.symbol, tech_result, backtest_result, metrics)
 
         # Add ETF-specific metrics if applicable
@@ -101,7 +129,7 @@ def perform_comprehensive_analysis(
         return json.dumps(result_dict, indent=2, default=str)
 
     except Exception as e:
-        logger.error(f"Error in comprehensive analysis: {e}")
+        logger.error(f"Error assembling comprehensive analysis for {input_data.symbol}: {e}")
         return f"Comprehensive analysis error: {e!s}"
 
 
@@ -205,9 +233,9 @@ def _fetch_etf_specific_data(symbol: str, logger) -> dict:
 
 def _create_asset_specific_result(
     input_data: QuantitativeAnalysisInput,
-    quant_tech: QuantitativeTechnicalAnalysis,
-    quant_backtest: QuantitativeBacktestResult,
-    quant_perf: QuantitativePerformanceMetrics,
+    quant_tech: QuantitativeTechnicalAnalysis | None,
+    quant_backtest: QuantitativeBacktestResult | None,
+    quant_perf: QuantitativePerformanceMetrics | None,
     recommendation: QuantitativeRecommendation,
 ):
     """Create asset-class specific analysis result."""
@@ -237,63 +265,77 @@ def _create_asset_specific_result(
         )
 
 
-def generate_recommendation(symbol: str, tech_result: Any, backtest_result: Any, perf_metrics: Any) -> QuantitativeRecommendation:
+def generate_recommendation(symbol: str, tech_result: Any | None, backtest_result: Any | None, perf_metrics: Any | None) -> QuantitativeRecommendation:
     """
     Generate investment recommendation based on quantitative analysis.
 
     Args:
         symbol: Asset symbol
-        tech_result: Technical analysis result
-        backtest_result: Backtesting result
-        perf_metrics: Performance metrics
+        tech_result: Technical analysis result, or None if that sub-analysis failed
+        backtest_result: Backtesting result, or None if refused (short series) or failed
+        perf_metrics: Performance metrics, or None if that sub-analysis failed
 
     Returns:
         QuantitativeRecommendation with buy/hold/sell signal
 
-    """
-    # Determine recommendation based on signals
-    tech_signal = tech_result.overall_signal.value
-    backtest_return = backtest_result.annualized_return
-    sharpe_ratio = backtest_result.sharpe_ratio
+    Any of the three inputs may be None -- each of the three sub-analyses in
+    perform_comprehensive_analysis is now independent, so the recommendation
+    degrades gracefully to whichever subset succeeded rather than crashing.
+    Risk metrics (drawdown/volatility/sharpe/VaR) prefer the backtest when
+    available and fall back to performance analysis, since both compute the
+    same quantities from the same price history by different means.
 
-    # Simple recommendation logic
-    if tech_signal in ["BUY", "STRONG_BUY"] and backtest_return > 10 and sharpe_ratio > 1.0:
+    """
+    tech_signal = tech_result.overall_signal.value if tech_result is not None else "HOLD"
+    tech_confidence = tech_result.overall_confidence if tech_result is not None else 0.0
+
+    backtest_return = backtest_result.annualized_return if backtest_result is not None else None
+    sharpe_ratio = backtest_result.sharpe_ratio if backtest_result is not None else (perf_metrics.sharpe_ratio if perf_metrics is not None else None)
+    max_drawdown = backtest_result.max_drawdown if backtest_result is not None else (perf_metrics.max_drawdown if perf_metrics is not None else None)
+    volatility = backtest_result.volatility if backtest_result is not None else (perf_metrics.volatility if perf_metrics is not None else None)
+    var_95 = backtest_result.var_95 if backtest_result is not None else (perf_metrics.var_95 if perf_metrics is not None else None)
+
+    # Simple recommendation logic -- unknown backtest/sharpe inputs simply
+    # don't trigger their branch rather than being treated as failing it.
+    if tech_signal in ["BUY", "STRONG_BUY"] and backtest_return is not None and backtest_return > 10 and sharpe_ratio is not None and sharpe_ratio > 1.0:
         recommendation = "BUY"
-        confidence = min(0.9, tech_result.overall_confidence + 0.2)
-    elif tech_signal in ["SELL", "STRONG_SELL"] or backtest_return < -5 or sharpe_ratio < 0:
+        confidence = min(0.9, tech_confidence + 0.2)
+    elif tech_signal in ["SELL", "STRONG_SELL"] or (backtest_return is not None and backtest_return < -5) or (sharpe_ratio is not None and sharpe_ratio < 0):
         recommendation = "SELL"
-        confidence = min(0.9, tech_result.overall_confidence + 0.1)
+        confidence = min(0.9, tech_confidence + 0.1)
     else:
         recommendation = "HOLD"
-        confidence = tech_result.overall_confidence
+        confidence = tech_confidence
 
     # Risk assessment
-    if backtest_result.max_drawdown < -20:
+    if max_drawdown is not None and max_drawdown < -20:
         risk_assessment = "High risk due to significant drawdown potential"
-    elif backtest_result.volatility > 30:
+    elif volatility is not None and volatility > 30:
         risk_assessment = "Moderate to high risk due to volatility"
     else:
         risk_assessment = "Moderate risk profile"
+
+    backtest_performance = f"Annualized return: {backtest_return:.1f}%, Sharpe: {sharpe_ratio:.2f}" if backtest_return is not None and sharpe_ratio is not None else None
 
     return QuantitativeRecommendation(
         symbol=symbol,
         recommendation=recommendation,
         confidence=confidence,
         technical_signal=tech_signal,
-        backtest_performance=f"Annualized return: {backtest_return:.1f}%, Sharpe: {sharpe_ratio:.2f}",
+        backtest_performance=backtest_performance,
         risk_assessment=risk_assessment,
-        target_return=backtest_return if backtest_return > 0 else None,
+        target_return=backtest_return if backtest_return is not None and backtest_return > 0 else None,
         target_timeframe="1 year",
         key_indicators={
             "technical_signal": tech_signal,
-            "technical_confidence": tech_result.overall_confidence,
-            "bullish_signals": tech_result.bullish_signals,
-            "bearish_signals": tech_result.bearish_signals,
+            "technical_confidence": tech_confidence,
+            "bullish_signals": tech_result.bullish_signals if tech_result is not None else 0,
+            "bearish_signals": tech_result.bearish_signals if tech_result is not None else 0,
         },
         risk_metrics={
-            "max_drawdown": backtest_result.max_drawdown,
-            "volatility": backtest_result.volatility,
-            "sharpe_ratio": sharpe_ratio,
-            "var_95": backtest_result.var_95 or 0,
+            "max_drawdown": max_drawdown if max_drawdown is not None else 0.0,
+            "volatility": volatility if volatility is not None else 0.0,
+            "sharpe_ratio": sharpe_ratio if sharpe_ratio is not None else 0.0,
+            "var_95": var_95 or 0,
         },
     )
