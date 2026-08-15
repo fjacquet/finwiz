@@ -36,7 +36,6 @@ class JsonToHtmlConverter:
         "deep_analysis_etf_*.json": "enriched_analysis_report.html",
         "deep_analysis_crypto_*.json": "enriched_analysis_report.html",
         "discovery_output_*.json": "discovery_latest.html",
-        "discovery_latest.json": "discovery_latest.html",
         "a_plus_stocks.json": "a_plus_discovery.html",
         "a_plus_etfs.json": "a_plus_discovery.html",
         "a_plus_crypto.json": "a_plus_discovery.html",
