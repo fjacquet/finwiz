@@ -32,7 +32,7 @@ def calculate_missing_technical_indicators(data: dict[str, Any], price_history: 
         Updated data dictionary with calculated indicators
 
     """
-    _fill_volatility(data, price_history)
+    fill_volatility(data, price_history)
 
     current_price = data.get("current_price")
 
@@ -58,12 +58,16 @@ def calculate_missing_technical_indicators(data: dict[str, Any], price_history: 
     return data
 
 
-def _fill_volatility(data: dict[str, Any], price_history: pd.Series | None) -> None:
+def fill_volatility(data: dict[str, Any], price_history: pd.Series | None) -> None:
     """
     Derive annualized volatility from price history when the quant tool did not supply it.
 
     Mutates ``data`` in place. Never overwrites a value the quant tool already
     produced, and stays silent when there is not enough history to be meaningful.
+
+    Public (not prefixed with ``_``) because this is called directly by
+    DeepAnalysisScorer._recover_derivable_fields, ahead of the critical-field gate — unlike
+    the beta fallback below, which is a hardcoded assumption and must only run after the gate.
     """
     if data.get("volatility") is not None:
         return

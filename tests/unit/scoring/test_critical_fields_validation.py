@@ -189,6 +189,28 @@ class TestDerivableFieldRecoveryBeforeGate:
         # Assert
         assert "current_price" in str(exc_info.value)
 
+    def test_beta_hardcoded_fallback_does_not_rescue_the_gate(self, scorer):
+        """Test that recovery stays narrow: beta's neutral-default fallback must never let a stock through the gate.
+
+        Unlike volatility (derived from real price_history), beta's fallback is a hardcoded
+        assumption (1.0). Pre-gate recovery must not apply it, or the gate stops meaning anything.
+        """
+        # Arrange - stock has price_history (so volatility IS derivable) but no beta
+        data = {
+            "current_price": 150.0,
+            "roe": 0.20,
+            "debt_to_equity": 0.5,
+            "revenue_growth": 0.15,
+            "price_history": self._price_series(),
+            # beta is missing and must NOT be silently defaulted before the gate
+        }
+
+        # Act & Assert
+        with pytest.raises(CriticalFieldError) as exc_info:
+            scorer.calculate_composite_score(ticker="AAPL", asset_class="stock", data=data)
+
+        assert any("beta" in field for field in exc_info.value.missing_fields)
+
 
 class TestCriticalFieldsConfig:
     """Test critical fields configuration."""

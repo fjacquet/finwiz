@@ -27,6 +27,7 @@ from finwiz.scoring.score_result_builder import ScoreResultBuilder
 from finwiz.scoring.sentiment_scorer import SentimentScorer
 from finwiz.scoring.technical_fallback import (
     calculate_missing_technical_indicators,
+    fill_volatility,
     get_price_history_from_data,
 )
 from finwiz.scoring.technical_scorer import TechnicalScorer
@@ -222,12 +223,22 @@ class DeepAnalysisScorer:
 
     def _recover_derivable_fields(self, data: dict[str, Any]) -> None:
         """
-        Fill fields derivable from collected data before the critical-field gate runs.
+        Fill fields derivable from data already in hand, before the critical-field gate runs.
 
-        Only touches fields that are absent; never overwrites collected values.
+        Deliberately narrow: only touches fields that are absent, and only when the
+        replacement value is genuinely derived from data the caller already provided
+        (e.g. volatility from price_history). It must NOT run the full technical
+        fallback here — that also assigns hardcoded assumptions (e.g. beta=1.0) with
+        no data behind them, which would let the gate wave through a holding it should
+        reject. Those fallbacks still run later, in _calculate_component_scores, where
+        they only affect scoring for holdings that already passed the gate on real data.
+
+        Uses a plain dict lookup rather than get_price_history_from_data() on purpose:
+        that helper can trigger a live network fetch as a last resort, and doing that
+        before the gate would fetch data for holdings about to be rejected anyway.
         """
-        price_history = get_price_history_from_data(data)
-        calculate_missing_technical_indicators(data, price_history)
+        price_history = data.get("price_history")
+        fill_volatility(data, price_history)
 
     def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]) -> dict[str, Any]:
         """Calculate fundamental, technical, and risk component scores."""
