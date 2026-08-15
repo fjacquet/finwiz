@@ -456,6 +456,8 @@ class NewcomerDiscoveryPipeline:
             logger.info("Persisted %d scored %s candidates (%d actionable) to %s", len(scored), self.asset_class, actionable_count, out)
         except OSError as e:
             logger.warning("Failed to write scored candidates: %s", e)
+        except Exception as e:
+            logger.warning("Unexpected error persisting scored candidates: %s", e)
 
     def _persist_result(self, result: NewcomerDiscoveryResult, asset_class: str) -> None:
         """Save results to ``output/discovery/newcomer_{asset_class}.json``."""

@@ -455,13 +455,24 @@ class TestPortfolioAwareDiscovery:
         mocker.patch.object(pipeline, "_gather_portfolio_aware_candidates", return_value=graded)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
-        mocker.patch.object(pipeline, "_persist_scored")
+        mock_persist_scored = mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("sess-filter")
         grades = {c.grade for c in result.candidates}
         tickers = {c.ticker for c in result.candidates}
         assert "D" not in grades and "F" not in grades
         assert tickers == {"STRONG", "MIDC"}
+
+        # _persist_scored must receive the FULL pre-filter set (including the
+        # dropped D/F candidates) -- this is the actual point of the task.
+        # Asserting only on result.candidates above would pass even if
+        # _persist_scored were wired to the post-filter list or dropped
+        # entirely, which is exactly the regression this test exists to catch.
+        mock_persist_scored.assert_called_once()
+        persisted_call = mock_persist_scored.call_args
+        persisted_tickers = {c.ticker for c in persisted_call.args[0]}
+        assert persisted_tickers == {"STRONG", "MIDC", "WEAKD", "WEAKF"}
+        assert persisted_call.kwargs["actionable_count"] == 2
 
     def test_signal_score_used_when_present(self, pipeline, mocker):
         """When a ticker trips a signal, its richer signal composite is the standalone factor."""
