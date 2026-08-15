@@ -130,12 +130,32 @@ class DataProcessor:
             return {}
 
     def save_cache_metadata(self, cache_metadata: dict[str, Any], cache_metadata_file: Path) -> None:
-        """Save cache metadata to disk."""
+        """Save cache metadata to disk.
+
+        The caller owns ``cache_metadata`` and may mutate it from another
+        thread, so snapshot before serializing -- iterating the live dict
+        raised "dictionary changed size during iteration" and silently
+        dropped the write. ``default=str`` covers values (e.g. ``datetime``)
+        that are not natively JSON-serializable.
+
+        A cache write is a best-effort side effect, never worth aborting a
+        production run over, so every failure here is swallowed. But the two
+        kinds of failure are handled differently: an ``OSError`` (disk full,
+        permission denied, missing directory) is a routine I/O hiccup and is
+        logged at its usual one-line severity. Anything else means the
+        snapshot still couldn't be serialized despite ``default=str`` -- a
+        programming error, not a transient hiccup -- so it is logged with a
+        full traceback (``logger.exception``) instead of disappearing into
+        the same one-line message the original bug hid behind.
+        """
         try:
+            snapshot = dict(cache_metadata)
             with open(cache_metadata_file, "w") as f:
-                json.dump(cache_metadata, f, indent=2)
-        except Exception as e:
+                json.dump(snapshot, f, indent=2, default=str)
+        except OSError as e:
             self.logger.error(f"Error saving cache metadata: {e}")
+        except Exception:
+            self.logger.exception("Error saving cache metadata")
 
     def create_cache_metadata_entry(
         self,
