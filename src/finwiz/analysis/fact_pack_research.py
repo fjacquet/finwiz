@@ -1,7 +1,7 @@
 """Fact pack fetcher (v5.2) — verified corporate facts via Perplexity.
 
-Mirrors strategic_research.py's pattern: direct httpx call via
-perplexity_structured(), sync wrapper for non-async callers.
+Calls Perplexity via ``perplexity_with_retry`` (retry + backoff wrapper
+around ``perplexity_structured``), with a sync wrapper for non-async callers.
 """
 
 from __future__ import annotations
@@ -12,10 +12,10 @@ import logging
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from crewai_custom_tools import perplexity_structured
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from finwiz.analysis._helpers import _today_french
+from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
 if TYPE_CHECKING:
@@ -180,7 +180,7 @@ async def fetch_fact_pack(
     """
     prompt = _build_prompt(ticker, company_name, sector, industry)
     try:
-        raw = await perplexity_structured(
+        raw = await perplexity_with_retry(
             prompt=prompt,
             schema=_FactPackRaw,
             system=_SYSTEM_FR,
