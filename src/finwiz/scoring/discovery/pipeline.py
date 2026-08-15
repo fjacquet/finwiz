@@ -102,7 +102,9 @@ class NewcomerDiscoveryPipeline:
         # but must still EXCLUDE noise from the surfaced opportunity list rather
         # than emit it low-graded — otherwise the a_plus_*/consolidated outputs
         # fill with F/D candidates. See feedback rule: filter, don't low-grade.
+        scored_before_filter = list(candidates)
         candidates = self._filter_actionable(candidates)
+        self._persist_scored(scored_before_filter, actionable_count=len(candidates))
 
         candidates.sort(key=lambda c: c.composite_score, reverse=True)
         candidates = candidates[: self.MAX_SURFACED_CANDIDATES]
@@ -432,6 +434,28 @@ class NewcomerDiscoveryPipeline:
     # ------------------------------------------------------------------
     # Persistence & format conversion
     # ------------------------------------------------------------------
+
+    def _persist_scored(self, scored: list[NewcomerCandidate], actionable_count: int) -> None:
+        """Write the full scored candidate list before actionability filtering.
+
+        Without this, every dropped candidate is unrecoverable and "0
+        opportunities" is indistinguishable from "we scored 10 and rejected all
+        10". Diagnostics need the distinction.
+        """
+        try:
+            discovery_dir = Path("output") / "discovery"
+            discovery_dir.mkdir(parents=True, exist_ok=True)
+            out = discovery_dir / f"scored_{self.asset_class}.json"
+            payload = {
+                "asset_class": self.asset_class,
+                "scored": [c.model_dump() for c in scored],
+                "actionable_count": actionable_count,
+            }
+            with open(out, "w") as f:
+                json.dump(payload, f, indent=2, default=str)
+            logger.info("Persisted %d scored %s candidates (%d actionable) to %s", len(scored), self.asset_class, actionable_count, out)
+        except OSError as e:
+            logger.warning("Failed to write scored candidates: %s", e)
 
     def _persist_result(self, result: NewcomerDiscoveryResult, asset_class: str) -> None:
         """Save results to ``output/discovery/newcomer_{asset_class}.json``."""
