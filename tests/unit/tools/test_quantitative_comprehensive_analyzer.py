@@ -160,6 +160,13 @@ class TestBacktestFailureIsolation:
         assert result["backtest_result"]["volatility"] == 10.0
         assert result["performance_metrics"] is None
         assert result["technical_analysis"] is not None
+        # risk_metrics is sourced from the backtest only, unscaled -- no
+        # mixing with perf_metrics' fractional scale (see module docstring
+        # and generate_recommendation's docstring for why that mixing is
+        # unsafe: BacktestResult figures are percent-scaled, PerformanceMetrics
+        # figures are fractional, and only volatility has a normalizer).
+        assert result["quantitative_recommendation"]["risk_metrics"]["max_drawdown"] == -3.0
+        assert result["quantitative_recommendation"]["risk_metrics"]["volatility"] == 10.0
 
     def test_all_three_failing_returns_a_clean_error_not_a_crash(self, mocker, input_data, date_range):
         """When technical, backtest, and performance analysis all fail, the
@@ -188,3 +195,109 @@ class TestBacktestFailureIsolation:
         assert "error" in result.lower()
         with pytest.raises(json.JSONDecodeError):
             json.loads(result)
+
+
+class TestNoFabricatedRiskMetrics:
+    """Review round 1, Critical: a fabricated 0.0 in risk_metrics used to
+    leak into the scorer's flat dict (via
+    DeepAnalysisDataCollector._flatten_recursive, which walks the whole
+    quantitative_analysis payload and picks up the first "volatility" key it
+    finds anywhere -- including quantitative_recommendation.risk_metrics)
+    and defeat three of this plan's own defenses at once: Task 4/5's
+    price-history volatility fallback (which only fires when the field is
+    genuinely absent), and the Task 6 critical-field gate (which only
+    refuses a holding by name when the field is missing). A 0.0 satisfies
+    both checks and scores an unanalyzable holding as the safest one in the
+    portfolio. These tests verify the fix end to end, through the real
+    downstream consumers, not just perform_comprehensive_analysis in
+    isolation."""
+
+    def test_short_series_omits_risk_metrics_and_gate_refuses_by_name(self, mocker, input_data, date_range, technical_engine, performance_analyzer):
+        """Reproduces the reviewer's scenario with real engines, nothing
+        mocked: a single row of data is enough for analyze_symbol to
+        succeed trivially (no indicator has enough history to fire, so
+        there are simply no signals), but too short for the backtest
+        (needs >= 60 bars, refuses with None) and too short for
+        analyze_performance (pct_change().dropna() on 1 row yields 0
+        returns, raising ZeroDivisionError internally).
+
+        Verifies, through the real DeepAnalysisDataCollector.flatten_collected_data
+        and the real critical_fields_config.validate_critical_fields -- not just
+        perform_comprehensive_analysis's own JSON -- that:
+        1. quantitative_recommendation.risk_metrics has no volatility/max_drawdown key.
+        2. The flattened dict the scorer receives has no "volatility" key.
+        3. The critical-field gate raises CriticalFieldError naming volatility
+           as (missing), not as an invalid/absurd value -- i.e. the holding is
+           refused by name, not scored as risk-free.
+        """
+        from finwiz.config.critical_fields_config import CriticalFieldError, validate_critical_fields
+        from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
+
+        start_date, end_date = date_range
+        data = _ohlcv(1)
+        backtesting_engine = mocker.Mock()
+        backtesting_engine.run_strategy_backtest.return_value = None
+
+        result_json = perform_comprehensive_analysis(
+            data,
+            input_data,
+            start_date,
+            end_date,
+            technical_engine,
+            backtesting_engine,
+            performance_analyzer,
+        )
+
+        result = json.loads(result_json)
+        assert result["backtest_result"] is None
+        assert result["performance_metrics"] is None
+        assert result["technical_analysis"] is not None
+
+        risk_metrics = result["quantitative_recommendation"]["risk_metrics"]
+        assert "volatility" not in risk_metrics, f"fabricated volatility leaked into risk_metrics: {risk_metrics}"
+        assert "max_drawdown" not in risk_metrics, f"fabricated max_drawdown leaked into risk_metrics: {risk_metrics}"
+
+        # Downstream: the real flattener the scorer's data collector uses.
+        collector = DeepAnalysisDataCollector(state=mocker.MagicMock())
+        collected = {
+            "ticker": "TEST",
+            "asset_class": "stock",
+            "ticker_info": {"beta": 1.0},  # short-circuits the network-hitting beta fallback
+            "quantitative_analysis": result,
+        }
+        flattened = collector.flatten_collected_data(collected)
+        assert "volatility" not in flattened, f"fabricated volatility reached the scorer's flat dict: {flattened.get('volatility')}"
+
+        # The gate: refuses by name, not silently passes a fabricated zero.
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", flattened)
+        assert "volatility (missing)" in exc_info.value.missing_fields
+
+    def test_technical_failure_does_not_fabricate_signal_or_counts(self, mocker, input_data, date_range, performance_analyzer):
+        """When technical analysis fails, technical_signal must not present
+        the fabricated "HOLD" as if it were a computed neutral signal, and
+        bullish/bearish signal counts must not be fabricated as 0 -- both
+        looked like real computed values before this fix."""
+        start_date, end_date = date_range
+        data = _ohlcv(65)
+        technical_engine = mocker.Mock()
+        technical_engine.analyze_symbol.side_effect = RuntimeError("boom")
+        backtesting_engine = mocker.Mock()
+        backtesting_engine.run_strategy_backtest.return_value = None
+
+        result_json = perform_comprehensive_analysis(
+            data,
+            input_data,
+            start_date,
+            end_date,
+            technical_engine,
+            backtesting_engine,
+            performance_analyzer,
+        )
+
+        result = json.loads(result_json)
+        assert result["technical_analysis"] is None
+        recommendation = result["quantitative_recommendation"]
+        assert recommendation["technical_signal"] == "N/A"
+        assert "bullish_signals" not in recommendation["key_indicators"]
+        assert "bearish_signals" not in recommendation["key_indicators"]

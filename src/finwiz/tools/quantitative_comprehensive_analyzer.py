@@ -265,6 +265,36 @@ def _create_asset_specific_result(
         )
 
 
+def _build_key_indicators(tech_result: Any | None, tech_signal: str, tech_confidence: float) -> dict[str, Any]:
+    """Signal counts are omitted (not fabricated as 0) when technical analysis failed."""
+    key_indicators: dict[str, Any] = {"technical_signal": tech_signal, "technical_confidence": tech_confidence}
+    if tech_result is not None:
+        key_indicators["bullish_signals"] = tech_result.bullish_signals
+        key_indicators["bearish_signals"] = tech_result.bearish_signals
+    return key_indicators
+
+
+def _build_risk_metrics(max_drawdown: float | None, volatility: float | None, sharpe_ratio: float | None, var_95: float | None) -> dict[str, float]:
+    """Omit a risk figure rather than fabricate 0.0 when it could not be computed.
+
+    A fabricated 0.0 here used to leak into the scorer's flat dict (via
+    DeepAnalysisDataCollector._flatten_recursive, which walks the whole
+    quantitative_analysis payload) and defeat both the Task 4/5 price-history
+    volatility fallback and the critical-field gate -- both only act when the
+    field is genuinely absent. See Task 15 review round 1.
+    """
+    risk_metrics: dict[str, float] = {}
+    if max_drawdown is not None:
+        risk_metrics["max_drawdown"] = max_drawdown
+    if volatility is not None:
+        risk_metrics["volatility"] = volatility
+    if sharpe_ratio is not None:
+        risk_metrics["sharpe_ratio"] = sharpe_ratio
+    if var_95 is not None:
+        risk_metrics["var_95"] = var_95
+    return risk_metrics
+
+
 def generate_recommendation(symbol: str, tech_result: Any | None, backtest_result: Any | None, perf_metrics: Any | None) -> QuantitativeRecommendation:
     """
     Generate investment recommendation based on quantitative analysis.
@@ -273,7 +303,8 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
         symbol: Asset symbol
         tech_result: Technical analysis result, or None if that sub-analysis failed
         backtest_result: Backtesting result, or None if refused (short series) or failed
-        perf_metrics: Performance metrics, or None if that sub-analysis failed
+        perf_metrics: Performance metrics, or None if that sub-analysis failed (currently
+            unused here -- see note below; kept in the signature for API stability)
 
     Returns:
         QuantitativeRecommendation with buy/hold/sell signal
@@ -281,19 +312,33 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
     Any of the three inputs may be None -- each of the three sub-analyses in
     perform_comprehensive_analysis is now independent, so the recommendation
     degrades gracefully to whichever subset succeeded rather than crashing.
-    Risk metrics (drawdown/volatility/sharpe/VaR) prefer the backtest when
-    available and fall back to performance analysis, since both compute the
-    same quantities from the same price history by different means.
+
+    Risk figures (drawdown/volatility/sharpe/VaR) are read from backtest_result
+    ONLY, never from perf_metrics: BacktestResult.volatility/max_drawdown are
+    percent-scaled (backtesting_performance.py:246) while
+    PerformanceMetrics.volatility/max_drawdown are fractional
+    (performance_metrics.py:90). volatility has a sanctioned normalizer
+    (config/critical_fields_config.py:normalize_volatility); max_drawdown does
+    not, so mixing the two sources here would silently produce a wrong,
+    mis-scaled number (e.g. -3.0 read as -300%) rather than an honestly-absent
+    one. When backtest_result is None these fields are simply None/omitted --
+    never fabricated as 0.0. A fabricated 0.0 is worse than a missing value:
+    downstream, `technical_fallback.fill_volatility` only fills volatility
+    when it is genuinely absent (`data.get("volatility") is None`), and the
+    critical-field gate (`critical_fields_config.validate_critical_fields`)
+    only refuses a holding by name when the field is missing -- a `0.0`
+    defeats both, making an unanalyzable holding look like the safest one in
+    the portfolio. See Task 15 review round 1.
 
     """
-    tech_signal = tech_result.overall_signal.value if tech_result is not None else "HOLD"
+    tech_signal = tech_result.overall_signal.value if tech_result is not None else "N/A"
     tech_confidence = tech_result.overall_confidence if tech_result is not None else 0.0
 
     backtest_return = backtest_result.annualized_return if backtest_result is not None else None
-    sharpe_ratio = backtest_result.sharpe_ratio if backtest_result is not None else (perf_metrics.sharpe_ratio if perf_metrics is not None else None)
-    max_drawdown = backtest_result.max_drawdown if backtest_result is not None else (perf_metrics.max_drawdown if perf_metrics is not None else None)
-    volatility = backtest_result.volatility if backtest_result is not None else (perf_metrics.volatility if perf_metrics is not None else None)
-    var_95 = backtest_result.var_95 if backtest_result is not None else (perf_metrics.var_95 if perf_metrics is not None else None)
+    sharpe_ratio = backtest_result.sharpe_ratio if backtest_result is not None else None
+    max_drawdown = backtest_result.max_drawdown if backtest_result is not None else None
+    volatility = backtest_result.volatility if backtest_result is not None else None
+    var_95 = backtest_result.var_95 if backtest_result is not None else None
 
     # Simple recommendation logic -- unknown backtest/sharpe inputs simply
     # don't trigger their branch rather than being treated as failing it.
@@ -307,15 +352,19 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
         recommendation = "HOLD"
         confidence = tech_confidence
 
-    # Risk assessment
+    # Risk assessment -- an honest "unavailable" beats a fabricated "Moderate".
     if max_drawdown is not None and max_drawdown < -20:
         risk_assessment = "High risk due to significant drawdown potential"
     elif volatility is not None and volatility > 30:
         risk_assessment = "Moderate to high risk due to volatility"
-    else:
+    elif max_drawdown is not None or volatility is not None:
         risk_assessment = "Moderate risk profile"
+    else:
+        risk_assessment = "Risk assessment unavailable: backtest could not run for this series"
 
     backtest_performance = f"Annualized return: {backtest_return:.1f}%, Sharpe: {sharpe_ratio:.2f}" if backtest_return is not None and sharpe_ratio is not None else None
+    key_indicators = _build_key_indicators(tech_result, tech_signal, tech_confidence)
+    risk_metrics = _build_risk_metrics(max_drawdown, volatility, sharpe_ratio, var_95)
 
     return QuantitativeRecommendation(
         symbol=symbol,
@@ -326,16 +375,6 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
         risk_assessment=risk_assessment,
         target_return=backtest_return if backtest_return is not None and backtest_return > 0 else None,
         target_timeframe="1 year",
-        key_indicators={
-            "technical_signal": tech_signal,
-            "technical_confidence": tech_confidence,
-            "bullish_signals": tech_result.bullish_signals if tech_result is not None else 0,
-            "bearish_signals": tech_result.bearish_signals if tech_result is not None else 0,
-        },
-        risk_metrics={
-            "max_drawdown": max_drawdown if max_drawdown is not None else 0.0,
-            "volatility": volatility if volatility is not None else 0.0,
-            "sharpe_ratio": sharpe_ratio if sharpe_ratio is not None else 0.0,
-            "var_95": var_95 or 0,
-        },
+        key_indicators=key_indicators,
+        risk_metrics=risk_metrics,
     )
