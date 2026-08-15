@@ -52,13 +52,30 @@ class TestFactPackCache:
         assert loaded is not None
         assert loaded.freshness == "stale"
 
+    def test_get_returns_stale_entry_within_new_horizon_not_evicted(self, tmp_path: Path) -> None:
+        """A 20d-old entry used to be evicted under the old 15-day cliff. It now
+        falls within the widened stale band (7-90d) so a rate-limited run can
+        still be rescued by it — see fact_pack.py's _STALE_HORIZON_DAYS.
+        """
+        cache = FactPackCache(cache_dir=tmp_path)
+        fp = _build_fp(days_old=0)
+        cache.put("DELL", fp)
+        path = tmp_path / "DELL.json"
+        data = json.loads(path.read_text())
+        twenty_days = (datetime.now(UTC) - timedelta(days=20)).isoformat()
+        data["payload"]["fetched_at"] = twenty_days
+        path.write_text(json.dumps(data, default=str))
+        loaded = cache.get("DELL")
+        assert loaded is not None
+        assert loaded.freshness == "stale"
+
     def test_get_returns_none_for_too_old(self, tmp_path: Path) -> None:
         cache = FactPackCache(cache_dir=tmp_path)
         fp = _build_fp(days_old=0)
         cache.put("DELL", fp)
         path = tmp_path / "DELL.json"
         data = json.loads(path.read_text())
-        too_old = (datetime.now(UTC) - timedelta(days=20)).isoformat()
+        too_old = (datetime.now(UTC) - timedelta(days=95)).isoformat()
         data["payload"]["fetched_at"] = too_old
         path.write_text(json.dumps(data, default=str))
         assert cache.get("DELL") is None

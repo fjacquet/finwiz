@@ -35,16 +35,28 @@ class TestFreshnessDerivation:
             (7, "stale"),
             (10, "stale"),
             (14, "stale"),
+            (30, "stale"),
+            (89.9, "stale"),
         ],
     )
     def test_derive_freshness_table(self, days_old: float, expected: str) -> None:
         fetched = datetime.now(UTC) - timedelta(days=days_old)
         assert FactPack.derive_freshness(fetched) == expected
 
-    def test_derive_freshness_raises_on_too_old(self) -> None:
-        old = datetime.now(UTC) - timedelta(days=15)
-        with pytest.raises(ValueError, match="older than 14 days"):
-            FactPack.derive_freshness(old)
+    def test_month_old_pack_is_stale_not_an_error(self) -> None:
+        """Regression guard: a 16d+ cache entry used to raise ValueError, which
+        FactPackCache.get() caught and returned None — indistinguishable from no
+        cache at all. A rate-limited run then had nothing to fall back on and the
+        holding died outright, instead of degrading to a labelled stale answer.
+        Corporate structure and leadership do not turn over in a fortnight.
+        """
+        month_old = datetime.now(UTC) - timedelta(days=30)
+        assert FactPack.derive_freshness(month_old) == "stale"
+
+    def test_derive_freshness_raises_beyond_new_horizon(self) -> None:
+        ancient = datetime.now(UTC) - timedelta(days=91)
+        with pytest.raises(ValueError, match="older than 90 days"):
+            FactPack.derive_freshness(ancient)
 
 
 class TestFactPackValidation:
