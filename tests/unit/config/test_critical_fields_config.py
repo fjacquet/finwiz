@@ -77,6 +77,18 @@ class TestNormalizeVolatility:
         """A genuine 0.0 volatility reading must not be coerced to None."""
         assert normalize_volatility(0.0) == 0.0
 
+    def test_ceiling_boundary_is_rejected(self):
+        """Exactly the absurd ceiling (500.0) is rejected, not silently accepted as a valid 500% reading (Ruling 13)."""
+        assert normalize_volatility(500.0) is None
+
+    def test_just_below_ceiling_is_still_rescaled(self):
+        """Just under the ceiling is still treated as percent-scaled and rescaled, not rejected."""
+        assert normalize_volatility(499.9) == pytest.approx(4.999)
+
+    def test_rescale_threshold_boundary_passes_through_unchanged(self):
+        """Exactly 5.0 sits at the rescale threshold (not > 5.0) and is left unchanged, not divided by 100."""
+        assert normalize_volatility(5.0) == 5.0
+
 
 class TestVolatilityGateNormalization:
     """Tests that validate_critical_fields normalizes volatility before the sanity check runs."""
@@ -97,3 +109,43 @@ class TestVolatilityGateNormalization:
         data = _make_stock_data(volatility=900.0)
         with pytest.raises(CriticalFieldError):
             validate_critical_fields("TEST", "stock", data)
+
+    def test_absurd_volatility_reported_as_invalid_not_missing(self):
+        """Risk A fix: a present-but-absurd volatility must be named honestly as invalid, not masked as missing."""
+        data = _make_stock_data(volatility=900.0)
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", data)
+        assert "volatility (invalid value: 900.0)" in exc_info.value.missing_fields
+
+    def test_negative_volatility_reported_as_invalid_not_missing(self):
+        """A present-but-negative volatility must also be named as invalid, not masked as missing."""
+        data = _make_stock_data(volatility=-5.0)
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", data)
+        assert "volatility (invalid value: -5.0)" in exc_info.value.missing_fields
+
+    def test_none_volatility_still_reported_as_missing(self):
+        """A raw None must still fall through to the ordinary "(missing)" message, not "(invalid value)"."""
+        data = _make_stock_data(volatility=None)
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", data)
+        assert "volatility (missing)" in exc_info.value.missing_fields
+
+    def test_gate_accepts_zero_volatility(self):
+        """A genuine 0.0 volatility must pass the gate through validate_critical_fields itself, not just the bare function."""
+        data = _make_stock_data(volatility=0.0)
+        validate_critical_fields("TEST", "stock", data)  # Should not raise
+        assert data["volatility"] == 0.0
+
+    def test_gate_rejects_ceiling_boundary_volatility(self):
+        """A volatility of exactly 500.0 must still fail the gate (Ruling 13 boundary)."""
+        data = _make_stock_data(volatility=500.0)
+        with pytest.raises(CriticalFieldError) as exc_info:
+            validate_critical_fields("TEST", "stock", data)
+        assert "volatility (invalid value: 500.0)" in exc_info.value.missing_fields
+
+    def test_gate_accepts_rescale_threshold_boundary_volatility(self):
+        """A volatility of exactly 5.0 sits at the rescale threshold and must pass the gate unchanged."""
+        data = _make_stock_data(volatility=5.0)
+        validate_critical_fields("TEST", "stock", data)  # Should not raise
+        assert data["volatility"] == 5.0

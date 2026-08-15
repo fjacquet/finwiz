@@ -157,7 +157,7 @@ def normalize_volatility(value: float | int | None) -> float | None:
         v = float(value)
     except (TypeError, ValueError):
         return None
-    if v < 0.0 or v > _VOLATILITY_ABSURD_CEILING:
+    if v < 0.0 or v >= _VOLATILITY_ABSURD_CEILING:
         return None
     if v > 5.0:
         return v / 100.0
@@ -189,6 +189,9 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
         # These CAN be 0.0 legitimately, so only check for None or extreme values
         "debt_to_equity": lambda v: v is None or v < 0.0 or v > 100.0,
         "revenue_growth": lambda v: v is None or v < -0.95 or v > 10.0,  # -95% to 1000%
+        # Backstop only — normalize_volatility() already rejects/rescales upstream in the
+        # loop below, so a normalized value can never trip this. Kept so the field's
+        # contract doesn't silently depend on the caller remembering to normalize first.
         "volatility": lambda v: v is None or v < 0.0 or v > 5.0,
         "beta": lambda v: v is None or v < -5.0 or v > 10.0,
         # ETF metrics
@@ -203,9 +206,16 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
         value = data.get(field)
 
         if field == "volatility":
-            value = normalize_volatility(value)
-            if value is not None:
+            normalized = normalize_volatility(value)
+            if normalized is not None:
+                value = normalized
                 data[field] = value
+            elif value is not None:
+                # Present but unusable (negative or absurd) — a units/data error,
+                # not a missing field. Report it honestly instead of masking it
+                # as "missing".
+                missing_fields.append(f"{field} (invalid value: {value})")
+                continue
 
         # Check if field is missing or None
         if field not in data or value is None:
