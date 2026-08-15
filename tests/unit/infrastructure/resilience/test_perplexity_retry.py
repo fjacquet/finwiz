@@ -65,6 +65,26 @@ async def test_gives_up_after_max_attempts(mocker):
 
 
 @pytest.mark.asyncio
+async def test_retries_and_returns_none_when_call_raises(mocker):
+    # The vendored client's own try/except covers most failures, but a missing-key
+    # ValueError from require_api_key() escapes it (raised before that try starts),
+    # and any other unexpected raise outside its internal handling would too. The
+    # wrapper must treat a raise exactly like a None result: retry, then give up
+    # cleanly, never propagate.
+    inner = mocker.patch(
+        "finwiz.infrastructure.resilience.perplexity_retry.perplexity_structured",
+        new=mocker.AsyncMock(side_effect=ValueError("boom")),
+    )
+    sleep = mocker.patch("finwiz.infrastructure.resilience.perplexity_retry.asyncio.sleep", new=mocker.AsyncMock())
+
+    result = await perplexity_with_retry(prompt="p", schema=_Payload, system="s", max_attempts=3)
+
+    assert result is None
+    assert inner.await_count == 3
+    assert sleep.await_count == 2
+
+
+@pytest.mark.asyncio
 async def test_missing_api_key_fails_fast_without_retrying(mocker, monkeypatch):
     monkeypatch.delenv("PERPLEXITY_API_KEY", raising=False)
     monkeypatch.delenv("PPLX_API_KEY", raising=False)
