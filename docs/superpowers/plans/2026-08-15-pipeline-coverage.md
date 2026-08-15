@@ -1259,6 +1259,13 @@ Expected: PASS — 2 passed
 
 Append to `tests/unit/scoring/test_discovery_analyzers.py`:
 
+> **Corrected 2026-08-15.** This test originally listed `AAPL`, `BTC-USD` and
+> `ETH-USD` — tickers that never appeared in these modules. Written that way it
+> passes against fully intact fabrication, certifying the exact thing this task
+> removes. The three invented sets genuinely differ (etf `VTI`/`VXUS`/`BND`,
+> stock `MSFT`/`NVDA`/`GOOGL`, crypto `BTC`/`ETH`); read each module and pin its
+> own list rather than assuming they match.
+
 ```python
 import pytest
 
@@ -1266,8 +1273,8 @@ import pytest
 @pytest.mark.parametrize(
     ("module_name", "invented"),
     [
-        ("finwiz.scoring.stock_analyzer", ("AAPL", "MSFT", "NVDA")),
-        ("finwiz.scoring.crypto_analyzer", ("BTC-USD", "ETH-USD")),
+        ("finwiz.scoring.stock_analyzer", ("MSFT", "NVDA", "GOOGL")),
+        ("finwiz.scoring.crypto_analyzer", ("BTC", "ETH")),
     ],
 )
 def test_other_analyzers_have_no_hardcoded_tickers(module_name, invented):

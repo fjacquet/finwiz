@@ -50,7 +50,7 @@ ANTHROPIC_API_KEY=...        # Optional
 BATCH_PREFETCH_ENABLED=true
 DEEP_ANALYSIS_BATCH_SIZE=5
 MAX_RETRIES=3
-FF_NEWCOMER_DISCOVERY=false  # Feature flags use FF_ prefix
+FF_PORTFOLIO_AWARE_DISCOVERY=false  # Feature flags use FF_ prefix
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ from finwiz.config.settings import get_settings
 from finwiz.config.features.flags import is_feature_enabled
 
 settings = get_settings()
-if is_feature_enabled("newcomer_discovery"):
+if is_feature_enabled("portfolio_aware_discovery"):
     time_budget = settings.max_batch_processing_time_seconds
 ```
 
