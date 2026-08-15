@@ -299,7 +299,7 @@ class TestVolatilityFallback:
     def test_flat_price_series_yields_zero_volatility_and_is_preserved(self):
         """Test that a genuine 0.0 volatility (perfectly flat prices) is computed and never treated as missing.
 
-        The ``is not None`` guard in _fill_volatility must not be replaced with a truthy check,
+        The ``is not None`` guard in fill_volatility must not be replaced with a truthy check,
         or a real 0.0 would look "missing" and get recomputed/discarded on a later call.
         """
         # Arrange - zero variance in prices means zero volatility, not "no data"
