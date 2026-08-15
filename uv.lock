@@ -1146,10 +1146,10 @@ docs = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", specifier = ">=3.14.1" },
+    { name = "aiohttp", specifier = ">=3.14.3" },
     { name = "backtrader", specifier = ">=1.9.78.123" },
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
-    { name = "crewai", specifier = ">=1.15.4" },
+    { name = "crewai", specifier = ">=1.15.12" },
     { name = "crewai-custom-tools", git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.6.0" },
     { name = "empyrical-reloaded", specifier = ">=0.5.12" },
     { name = "fear-and-greed", specifier = ">=0.4" },
@@ -1163,7 +1163,7 @@ requires-dist = [
     { name = "litellm", specifier = ">=1.94.1" },
     { name = "nest-asyncio", specifier = ">=1.6.0" },
     { name = "numpy", specifier = ">=2.5.1" },
-    { name = "pandas", specifier = ">=2.3.2" },
+    { name = "pandas", specifier = ">=3.0.5" },
     { name = "plotly", specifier = ">=6.8.0" },
     { name = "psutil", specifier = ">=7.2.2" },
     { name = "pyportfolioopt", specifier = ">=1.6.0" },
@@ -1181,7 +1181,7 @@ requires-dist = [
 dev = [
     { name = "bandit", specifier = ">=1.8.6" },
     { name = "cyclonedx-bom", specifier = ">=7.3.1" },
-    { name = "faker", specifier = ">=33.1.0" },
+    { name = "faker", specifier = ">=40.36.0" },
     { name = "hypothesis", specifier = ">=6.155.7" },
     { name = "mypy", specifier = ">=2.3.0" },
     { name = "pandas-stubs", specifier = ">=3.0.3.260530" },
