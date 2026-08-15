@@ -166,6 +166,10 @@ def normalize_volatility(value: float | int | None) -> float | None:
     if v < 0.0 or v >= _VOLATILITY_ABSURD_CEILING:
         return None
     if v > 5.0:
+        # Backstop, not a live path. This rescale existed for percent-scaled volatility
+        # hoisted out of ``backtest_result``; that subtree is no longer flattened into the
+        # scorer's dict, and every remaining in-tree producer is fractional. Keep it: a new
+        # percent-scaled producer would otherwise be rejected as absurd rather than rescaled.
         return v / 100.0
     return v
 
