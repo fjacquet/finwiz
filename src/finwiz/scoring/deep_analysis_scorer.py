@@ -93,6 +93,11 @@ class DeepAnalysisScorer:
             # Step 1: Initialize tracking systems
             self._initialize_tracking(ticker, asset_class, data)
 
+            # Step 1b: Recover derivable fields BEFORE the gate.
+            # The gate is fail-fast by design, but failing fast on a field we can
+            # compute from data already in hand is a false negative, not honesty.
+            self._recover_derivable_fields(data)
+
             # Step 2: Validate critical fields
             self._validate_critical_fields(ticker, asset_class, data)
 
@@ -214,6 +219,15 @@ class DeepAnalysisScorer:
                 f"   Recommendation: Check API connectivity and data sources."
             )
             raise
+
+    def _recover_derivable_fields(self, data: dict[str, Any]) -> None:
+        """
+        Fill fields derivable from collected data before the critical-field gate runs.
+
+        Only touches fields that are absent; never overwrites collected values.
+        """
+        price_history = get_price_history_from_data(data)
+        calculate_missing_technical_indicators(data, price_history)
 
     def _calculate_component_scores(self, asset_class: str, data: dict[str, Any]) -> dict[str, Any]:
         """Calculate fundamental, technical, and risk component scores."""

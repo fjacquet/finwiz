@@ -5,6 +5,7 @@ Tests that the scorer FAILS FAST when critical fields are missing,
 rather than silently using hardcoded fallback values.
 """
 
+import pandas as pd
 import pytest
 from pytest import approx
 
@@ -150,6 +151,43 @@ class TestCriticalFieldsValidation:
 
         # Lineage should track the failure
         # (Implementation detail - lineage tracker should record validation failure)
+
+
+class TestDerivableFieldRecoveryBeforeGate:
+    """Test that fields derivable from collected data (e.g. volatility) are recovered before the gate fires."""
+
+    @pytest.fixture
+    def scorer(self):
+        """Create scorer instance."""
+        return DeepAnalysisScorer()
+
+    @staticmethod
+    def _price_series() -> pd.Series:
+        return pd.Series([100.0, 101.5, 99.8, 102.3, 101.1, 103.4, 102.0, 104.2, 103.1, 105.0])
+
+    def test_volatility_is_recovered_before_the_critical_gate(self, scorer):
+        """Test that a missing volatility is derived from price_history before the critical-field gate runs."""
+        # Arrange - ETF data has price_history but no volatility
+        data = {
+            "current_price": 105.0,
+            "expense_ratio": 0.07,
+            "price_history": self._price_series(),
+        }
+
+        # Act
+        result = scorer.calculate_composite_score(ticker="VUSA.L", asset_class="etf", data=data)
+
+        # Assert - analysis proceeds instead of raising CriticalFieldError
+        assert result.composite_score >= 0.0
+
+    def test_gate_still_fires_when_nothing_can_be_recovered(self, scorer):
+        """Test that the gate still fails fast when a critical field cannot be derived from anything on hand."""
+        # Arrange - no current_price and no price_history to derive it from
+        with pytest.raises(CriticalFieldError) as exc_info:
+            scorer.calculate_composite_score(ticker="XTSLA", asset_class="etf", data={"expense_ratio": 0.07})
+
+        # Assert
+        assert "current_price" in str(exc_info.value)
 
 
 class TestCriticalFieldsConfig:
