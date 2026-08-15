@@ -69,10 +69,11 @@ class DynamicUniverseProvider:
             tickers = self._fallback_static_universe("crypto")
             source = "static"
         else:
-            seed_etfs = self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS
+            default_seeds = self.DEFAULT_STOCK_SEED_ETFS if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS
+            seed_etfs = self._seed_etfs or default_seeds
             try:
                 tickers = self._mine_etf_holdings(seed_etfs)
-            except (ValueError, Exception):
+            except Exception:
                 self._logger.warning(
                     "Dynamic universe failed for %s, falling back to static",
                     asset_class,
