@@ -142,11 +142,10 @@ For technical content:
    make docs-build
    ```
 
-3. **Preview deployment** (if available):
-
-   ```bash
-   make docs-deploy-staging
-   ```
+There is no `make docs-deploy-staging` target and no staging environment
+in this repo — the only deploy target is `docs-deploy`, which runs
+`mkdocs gh-deploy --clean` directly against production. Preview locally
+with `make docs-serve` instead before merging.
 
 #### Publication
 
@@ -401,6 +400,12 @@ Examples of how this concept is used in practice.
 
 ## Writing Standards
 
+> **Canonical source:** [`style-guide.md`](style-guide.md) is the
+> authoritative reference for these rules — it covers the same voice/tone,
+> clarity, inclusivity, heading, code-block, list, link, image, table, and
+> admonition guidance in more depth. The summary below is kept as a quick
+> reference; if the two ever disagree, `style-guide.md` wins.
+
 ### Voice and Tone
 
 - **Active voice**: "Configure the API" not "The API should be configured"
@@ -638,7 +643,7 @@ When content becomes outdated:
 
 1. **Mark as deprecated** with clear notice
 2. **Provide migration path** to new content
-3. **Set removal date** (minimum 6 months notice)
+3. **Set removal date** (minimum 3 months notice — reconciled with `content-governance.md`, which previously specified 3 months for the same process while this document said 6)
 4. **Archive content** rather than deleting
 5. **Set up redirects** to new content
 
