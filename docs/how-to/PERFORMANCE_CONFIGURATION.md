@@ -17,7 +17,7 @@ FinWiz's performance configuration system provides three optimization modes that
 RISK_ASSESSMENT_USE_MINI=true
 USE_MINIMAL_RISK_TOOLS=true
 DEEP_ANALYSIS_AI_SUMMARY=false
-DEEP_ANALYSIS_BATCH_SIZE=5
+DEEP_ANALYSIS_BATCH_SIZE=10
 ```
 
 **Performance Characteristics**:
@@ -151,7 +151,7 @@ else:
 | `RISK_ASSESSMENT_USE_MINI` | `true`  | Use gpt-4o-mini for risk assessment    | 5-10x faster, 80% cost reduction |
 | `USE_MINIMAL_RISK_TOOLS`   | `true`  | Use minimal tool set for risk analysis | 2-3x faster, reduced complexity  |
 | `DEEP_ANALYSIS_AI_SUMMARY` | `false` | Generate optional AI summary           | +5-10s per ticker, +\$0.01 cost  |
-| `DEEP_ANALYSIS_BATCH_SIZE` | `5`     | Concurrent analysis batch size         | Higher = faster but more memory  |
+| `DEEP_ANALYSIS_BATCH_SIZE` | `10`    | Concurrent analysis batch size         | Higher = faster but more memory  |
 
 ### Automatic Mode Detection
 
@@ -203,7 +203,7 @@ logger.info(f"  Mode: maximum_speed")
 logger.info(f"  Risk Assessment Use Mini: True")
 logger.info(f"  Use Minimal Risk Tools: True")
 logger.info(f"  Deep Analysis AI Summary: False")
-logger.info(f"  Deep Analysis Batch Size: 5")
+logger.info(f"  Deep Analysis Batch Size: 10")
 
 logger.info(f"Expected Performance (maximum_speed):")
 logger.info(f"  Description: Python scoring + no AI summary + gpt-4o-mini + minimal tools")
@@ -214,26 +214,32 @@ logger.info(f"  Cost per ticker: $0")
 
 ### Real-Time Performance Tracking
 
-Monitor performance during execution:
+**`PerformanceMonitor` has no `track_analysis` context manager, no
+`get_performance_summary`, and no `record_cost` — there is no separate
+`tracker` object either.** Its real API is `start_ticker_analysis` /
+`record_api_call` / `record_llm_call` / `complete_ticker_analysis` /
+`complete_portfolio_analysis`, all called directly on the monitor:
 
 ```python
 from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
-monitor = PerformanceMonitor()
+monitor = PerformanceMonitor(session_id="analysis-session-123")
 
 # Track analysis performance
-with monitor.track_analysis("AAPL", "stock") as tracker:
-    result = scorer.calculate_composite_score("AAPL", "stock", data)
+monitor.start_ticker_analysis("AAPL", "stock")
+result = scorer.calculate_composite_score("AAPL", "stock", data)
 
-    # Metrics automatically recorded
-    tracker.record_llm_call(0)  # Python scoring = 0 LLM calls
-    tracker.record_cost(0.0)    # Python scoring = $0 cost
+monitor.record_llm_call(0.0)  # Python scoring = 0 LLM calls, $0 cost
+metrics = monitor.complete_ticker_analysis(success=True, ticker="AAPL")
 
-# View performance summary
-summary = monitor.get_performance_summary()
-print(f"Average execution time: {summary.avg_execution_time:.2f}s")
-print(f"Total cost savings: ${summary.total_cost_savings:.2f}")
+# View portfolio-level summary
+portfolio_metrics = monitor.complete_portfolio_analysis()
+summary = portfolio_metrics.calculate_portfolio_performance()
+print(f"Total time: {summary['total_execution_time']:.2f}s")
+print(f"Success rate: {summary['success_rate_pct']:.1f}%")
 ```
+
+(Source: `src/finwiz/infrastructure/monitoring/performance.py:217-349`.)
 
 ## Batch Processing Configuration
 
@@ -243,32 +249,20 @@ print(f"Total cost savings: ${summary.total_cost_savings:.2f}")
 | ----------------------------- | ------- | ------------------------------------- | ------------------------------------ |
 | `BATCH_PREFETCH_ENABLED`      | `true`  | Enable batch data pre-fetching        | 10-20x speedup                       |
 | `BATCH_PREFETCH_MIN_HOLDINGS` | `10`    | Min holdings to trigger batch mode    | Avoids overhead for small portfolios |
-| `DEEP_ANALYSIS_BATCH_SIZE`    | `5`     | Concurrent crew execution batch size  | Balances speed vs memory             |
+| `DEEP_ANALYSIS_BATCH_SIZE`    | `10`    | Concurrent crew execution batch size  | Balances speed vs memory             |
 | `ENABLE_ALPHA_VANTAGE`        | `false` | Use Alpha Vantage as secondary source | Adds ~13 min for 66 tickers          |
 
 ### Batch Size Optimization
 
-The batch size affects performance and resource usage:
+**There is no adaptive batch sizing.** `get_recommended_batch_size` and
+`BATCH_SIZE_RECOMMENDATIONS` do not exist anywhere in the codebase (`grep -rn
+'get_recommended_batch_size' src/ tests/` finds no matches). Batch size comes
+from exactly one place — `get_batch_size()` reading `DEEP_ANALYSIS_BATCH_SIZE`
+(default 10) — and portfolio size does not influence it. To change it, set
+the environment variable directly:
 
-```python
-# Batch size recommendations by portfolio size
-BATCH_SIZE_RECOMMENDATIONS = {
-    "small": (1, 10),      # 1-5 batch size for ≤10 holdings
-    "medium": (3, 30),     # 3-7 batch size for 10-30 holdings
-    "large": (5, 100),     # 5-10 batch size for 30+ holdings
-    "xlarge": (8, 200)     # 8-15 batch size for 100+ holdings
-}
-
-def get_recommended_batch_size(portfolio_size: int) -> int:
-    """Get recommended batch size based on portfolio size."""
-    if portfolio_size <= 10:
-        return min(3, portfolio_size)
-    elif portfolio_size <= 30:
-        return min(5, portfolio_size // 3)
-    elif portfolio_size <= 100:
-        return min(8, portfolio_size // 8)
-    else:
-        return min(12, portfolio_size // 15)
+```bash
+DEEP_ANALYSIS_BATCH_SIZE=10   # default
 ```
 
 ### Data Source Configuration
@@ -289,54 +283,41 @@ def get_recommended_batch_size(portfolio_size: int) -> int:
 
 ### Fallback Behavior
 
-The system automatically falls back to sequential mode when:
-
-1. **Complete Batch Failure**: Batch pre-fetch fails entirely
-2. **High Failure Rate**: >50% of tickers fail during pre-fetch
-3. **Memory Constraints**: Available memory < 2GB
-4. **Configuration**: `BATCH_PREFETCH_ENABLED=false`
-
-**Fallback Process**:
-
-```python
-def _fallback_to_sequential_mode(self, reason: str) -> dict[str, Any]:
-    """Fallback to sequential analysis mode."""
-    logger.warning(f"Falling back to sequential mode: {reason}")
-
-    # Update state
-    self.state.batch_prefetch_enabled = False
-    self.state.fallback_reason = reason
-    self.state.fallback_timestamp = datetime.now()
-
-    # Execute sequential analysis (1 ticker at a time)
-    return self._run_deep_analysis_sequential()
-```
+**There is no sequential-mode fallback.** `_fallback_to_sequential_mode` does
+not exist anywhere in the codebase. When batch prefetch is disabled, skipped
+for too few holdings, or raises an exception, `run_batch_prefetch` simply
+logs it and returns `{}` (`src/finwiz/orchestrators/batch_prefetch_runner.py:38-48,64-66`).
+Deep analysis then proceeds concurrently on all holdings regardless — there
+is no one-ticker-at-a-time sequential path, and no failure-rate or
+memory-based trigger for one.
 
 ### Memory Management
 
 Monitor and manage memory usage during batch processing:
 
 ```python
-import psutil
-from finwiz.infrastructure.monitoring.memory_manager import MemoryManager
+from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
-memory_manager = MemoryManager()
+memory_manager = get_memory_manager(session_id="analysis-session-123")
 
-# Check memory before batch processing
-if memory_manager.get_available_memory_gb() < 2.0:
-    logger.warning("Low memory available, reducing batch size")
-    batch_size = max(1, batch_size // 2)
+# Sample memory at a processing stage; returns a dict, not a context manager
+sample = memory_manager.monitor_memory("batch_analysis")
+if sample["memory_mb"] > 1000:  # 1GB threshold
+    logger.warning("High memory usage detected")
+    memory_manager.cleanup_cache()
 
-# Monitor memory during processing
-with memory_manager.monitor_memory("batch_analysis") as monitor:
-    for batch in create_batches(holdings, batch_size):
-        results = process_batch(batch)
-
-        # Check memory usage
-        if monitor.memory_usage_mb > 1000:  # 1GB threshold
-            logger.warning("High memory usage detected")
-            memory_manager.cleanup_cache()
+# After the Flow completes
+metrics = memory_manager.get_memory_metrics()
+memory_manager.validate_memory_constraints()
 ```
+
+**`MemoryManager()` cannot be constructed without a `session_id`** (use the
+`get_memory_manager(session_id)` factory instead), and there is no
+`get_available_memory_gb` method — `MemoryManager` tracks memory *used* by
+this process against a fixed limit, it does not query available system
+memory, and it never feeds back into batch sizing.
+
+(Source: `src/finwiz/infrastructure/monitoring/memory_manager.py:49,120,230,287,309`.)
 
 ### Error Handling
 
@@ -348,7 +329,9 @@ with memory_manager.monitor_memory("batch_analysis") as monitor:
 
 **Complete Failure Recovery**:
 
-- Automatic fallback to sequential mode
+- No sequential-mode fallback exists — on complete batch prefetch failure,
+  `run_batch_prefetch` returns `{}` and deep analysis proceeds concurrently
+  on all holdings without the prefetched cache
 - Detailed logging of failure reasons
 - Graceful degradation without data loss
 
@@ -570,7 +553,7 @@ if current_mode != OptimizationMode.MAXIMUM_SPEED:
 # Check batch processing status
 batch_enabled = os.getenv("BATCH_PREFETCH_ENABLED", "true").lower() == "true"
 if not batch_enabled:
-    logger.warning("Batch processing is disabled - using slower sequential mode")
+    logger.warning("Batch processing is disabled - tickers will be fetched individually during analysis")
 
 # Solution: Enable batch processing and maximum speed mode
 os.environ["BATCH_PREFETCH_ENABLED"] = "true"
@@ -590,23 +573,25 @@ if memory_usage > 80:
     logger.warning(f"High memory usage: {memory_usage}%")
 
 # Solution: Reduce batch size
-current_batch_size = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "5"))
+current_batch_size = int(os.getenv("DEEP_ANALYSIS_BATCH_SIZE", "10"))
 new_batch_size = max(1, current_batch_size // 2)
 os.environ["DEEP_ANALYSIS_BATCH_SIZE"] = str(new_batch_size)
 logger.info(f"Reduced batch size from {current_batch_size} to {new_batch_size}")
 ```
 
-**Issue**: Frequent fallback to sequential mode
+**Issue**: Frequent batch prefetch failures
 
 ```python
-# Diagnosis: Check fallback reasons in logs
+# Diagnosis: check for prefetch failures in logs (there is no sequential-mode
+# fallback; on failure run_batch_prefetch just returns {} and logs the
+# exception, then deep analysis continues without the prefetched cache)
 import subprocess
-result = subprocess.run(["grep", "Falling back to sequential mode", "logs/finwiz.log"],
+result = subprocess.run(["grep", "Batch prefetch failed", "logs/finwiz.log"],
                        capture_output=True, text=True)
-fallback_reasons = result.stdout.strip().split('\n')
+failures = result.stdout.strip().split('\n')
 
-for reason in fallback_reasons[-5:]:  # Last 5 fallbacks
-    logger.info(f"Recent fallback: {reason}")
+for failure in failures[-5:]:  # Last 5 failures
+    logger.info(f"Recent failure: {failure}")
 
 # Common solutions:
 # 1. Network issues: Check internet connection

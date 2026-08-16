@@ -52,13 +52,11 @@ The `BatchDataPreFetcher` class handles parallel data fetching:
 from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 
 # Initialize prefetcher
-prefetcher = BatchDataPreFetcher(
-    tickers=["AAPL", "MSFT", "GOOGL"],
-    session_id="analysis-session-123"
-)
+# Constructor takes session_id (and an optional Alpha Vantage toggle) — NOT tickers
+prefetcher = BatchDataPreFetcher(session_id="analysis-session-123")
 
-# Fetch all data in parallel
-prefetched_data = await prefetcher.prefetch_all_data()
+# Synchronous, and the tickers go here
+prefetched_data = prefetcher.prefetch_all_data(["AAPL", "MSFT", "GOOGL"])
 
 # Data structure:
 # {
@@ -112,7 +110,7 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 |----------|---------|-------------|---------|
 | `BATCH_PREFETCH_ENABLED` | `true` | Enable/disable batch processing | 10-20x performance improvement |
 | `BATCH_PREFETCH_MIN_HOLDINGS` | `10` | Minimum holdings to trigger batch mode | Avoids overhead for small portfolios |
-| `DEEP_ANALYSIS_BATCH_SIZE` | `5` | Concurrent crew execution batch size | Balances speed vs memory usage |
+| `DEEP_ANALYSIS_BATCH_SIZE` | `10` | Concurrent crew execution batch size | Balances speed vs memory usage |
 | `ENABLE_ALPHA_VANTAGE` | `false` | Use Alpha Vantage as secondary source | Adds ~13 minutes for 66 tickers |
 
 ### Configuration Examples
@@ -122,7 +120,7 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 ```bash
 # Maximum speed with Yahoo Finance only
 BATCH_PREFETCH_ENABLED=true
-DEEP_ANALYSIS_BATCH_SIZE=5
+DEEP_ANALYSIS_BATCH_SIZE=10
 ENABLE_ALPHA_VANTAGE=false
 BATCH_PREFETCH_MIN_HOLDINGS=10
 ```
@@ -248,24 +246,25 @@ print(f"Minimum holdings for batch: {config.min_holdings_for_batch}")
 
 ## Batch Size Optimization
 
-### Automatic Batch Sizing
+### Batch Sizing
 
-The system automatically determines optimal batch sizes:
+**There is no adaptive batch sizing.** Batch size comes from exactly one
+place — `get_batch_size()` reading `DEEP_ANALYSIS_BATCH_SIZE` (default 10) —
+and the deep-analysis orchestrator uses it directly as `max_workers`. Portfolio
+size does not influence it, and neither does available memory.
 
-```python
-def get_recommended_batch_size(portfolio_size: int) -> int:
-    """Get recommended batch size based on portfolio size."""
-    if portfolio_size <= 10:
-        return min(3, portfolio_size)  # Small portfolios: quality over speed
-    elif portfolio_size <= 30:
-        return min(5, portfolio_size // 3)  # Medium portfolios: balanced
-    elif portfolio_size <= 100:
-        return min(8, portfolio_size // 8)  # Large portfolios: speed optimization
-    else:
-        return min(12, portfolio_size // 15)  # Very large: maximum parallelization
+`get_recommended_batch_size()` and `MemoryManager.get_available_memory_gb()`
+do not exist anywhere in the codebase, and `MemoryManager()` cannot be
+constructed without a `session_id`. `MemoryManager` monitors and logs; it never
+feeds back into batch sizing.
+
+To change the batch size, set the environment variable:
+
+```bash
+DEEP_ANALYSIS_BATCH_SIZE=10   # default
 ```
 
-### Batch Size Guidelines
+## Batch Size Guidelines
 
 | Portfolio Size | Recommended Batch Size | Rationale |
 |----------------|------------------------|-----------|
@@ -346,147 +345,61 @@ async def _fetch_yahoo_finance_batch(self, tickers: list[str]) -> dict[str, Any]
 
 ### Complete Failure Fallback
 
-If batch processing fails completely, the system falls back to sequential mode:
-
-```python
-def _fallback_to_sequential_mode(self, reason: str) -> dict[str, Any]:
-    """Fallback to sequential analysis mode."""
-    logger.warning(f"Falling back to sequential mode: {reason}")
-
-    # Update state to indicate fallback
-    self.state.batch_prefetch_enabled = False
-    self.state.fallback_reason = reason
-    self.state.fallback_timestamp = datetime.now()
-
-    # Execute sequential analysis
-    return self._run_deep_analysis_sequential()
-```
-
-### Failure Detection Logic
-
-The system detects various failure scenarios:
-
-```python
-def _should_fallback_to_sequential(self, prefetched_data: dict) -> tuple[bool, str]:
-    """Determine if we should fallback to sequential mode."""
-
-    total_tickers = len(prefetched_data)
-    failed_tickers = sum(1 for data in prefetched_data.values() if data.get("failed", False))
-    failure_rate = failed_tickers / total_tickers if total_tickers > 0 else 0
-
-    # Fallback if failure rate is too high
-    if failure_rate > 0.5:  # More than 50% failed
-        return True, f"High failure rate: {failure_rate:.1%} ({failed_tickers}/{total_tickers})"
-
-    # Fallback if no data was fetched at all
-    if total_tickers == 0:
-        return True, "No tickers to analyze"
-
-    # Continue with batch mode
-    return False, ""
-```
+**There is no sequential-fallback mode.** `_fallback_to_sequential_mode`,
+`_should_fallback_to_sequential`, and `_run_deep_analysis_sequential` do not
+exist in the codebase, and the "Falling back to sequential mode" message is
+never logged. What actually happens: `run_batch_prefetch` catches any
+exception from the prefetcher, logs it, and returns `{}` — the same thing it
+does when batch prefetch is disabled or the portfolio has too few holdings
+(`src/finwiz/orchestrators/batch_prefetch_runner.py:38-48,64-66`). Deep
+analysis then proceeds concurrently on all holdings regardless, just without
+the pre-fetched cache to draw on for the tickers that failed.
 
 ## Performance Monitoring
 
-### Comprehensive Metrics Tracking
+### Batch Prefetch Metrics
 
-The system tracks detailed performance metrics:
+**`BatchPrefetchMetrics` does not exist.** Batch prefetch tracking is a plain
+dict, set once by `run_batch_prefetch` on `state.batch_prefetch_metrics`, with
+exactly three keys:
 
 ```python
-@dataclass
-class BatchPrefetchMetrics:
-    """Comprehensive batch processing metrics."""
-
-    # Basic counts
-    total_tickers: int = 0
-    successful_tickers: int = 0
-    failed_tickers: int = 0
-
-    # Timing metrics
-    prefetch_duration_seconds: float = 0.0
-    crew_execution_duration_seconds: float = 0.0
-    total_duration_seconds: float = 0.0
-
-    # Performance metrics
-    time_savings_percentage: float = 0.0
-    estimated_sequential_time_seconds: float = 0.0
-
-    # Batch configuration
-    batch_size: int = 5
-    total_batches: int = 0
-
-    # Resource usage
-    memory_usage_mb: float = 0.0
-    peak_memory_usage_mb: float = 0.0
-
-    # Error tracking
-    failed_ticker_list: list[str] = field(default_factory=list)
-    error_summary: dict[str, int] = field(default_factory=dict)
+state.batch_prefetch_metrics = {
+    "tickers_requested": len(tickers),
+    "tickers_fetched": sum(1 for v in prefetched_data.values() if not v.get("failed")),
+    "elapsed_seconds": round(elapsed, 1),
+}
 ```
+
+There is no per-batch/crew-execution timing, no time-savings percentage, and
+no memory usage captured here — memory is monitored separately by
+`MemoryManager` (see below), not folded into this dict.
+
+(Source: `src/finwiz/orchestrators/batch_prefetch_runner.py:71-76`.)
 
 ### Real-Time Performance Logging
 
-The system provides detailed logging during execution:
+`run_batch_prefetch` logs the following during execution — nothing more
+granular than this (no per-batch/per-crew log lines, since crew execution
+itself doesn't operate on "batches" in code):
 
 ```
-2025-01-25 10:30:00 - INFO - Starting batch data pre-fetch for 66 tickers
-2025-01-25 10:30:00 - INFO - Yahoo Finance: Fetching data for all 66 tickers in parallel
-2025-01-25 10:30:04 - INFO - Yahoo Finance: Completed in 4.2 seconds (66/66 successful)
-2025-01-25 10:30:04 - INFO - Alpha Vantage: Skipped (ENABLE_ALPHA_VANTAGE=false)
-2025-01-25 10:30:04 - INFO - Batch pre-fetch completed: 66 successful, 0 failed
-2025-01-25 10:30:04 - INFO - Starting concurrent crew execution (batch size: 5)
-2025-01-25 10:30:04 - INFO - Batch 1/14: Processing AAPL, MSFT, GOOGL, TSLA, NVDA
-2025-01-25 10:32:18 - INFO - Batch 1/14: Completed in 134.2 seconds
-2025-01-25 10:32:18 - INFO - Batch 2/14: Processing AMZN, META, NFLX, CRM, ADBE
-...
-2025-01-25 11:00:45 - INFO - All batches completed successfully
-2025-01-25 11:00:45 - INFO - Performance Summary:
-2025-01-25 11:00:45 - INFO -   Total time: 30.75 minutes
-2025-01-25 11:00:45 - INFO -   Estimated sequential time: 5.5 hours
-2025-01-25 11:00:45 - INFO -   Time savings: 89.1% (10.7x faster)
-2025-01-25 11:00:45 - INFO -   Memory usage: 456 MB peak
+INFO - Batch prefetching 66 tickers before deep analysis
+INFO - Batch prefetch complete: 66/66 tickers in 4.2s
 ```
+
+If prefetch is disabled, skipped for too few holdings, or raises an
+exception, one of these is logged instead: `"Batch prefetch disabled via
+BATCH_PREFETCH_ENABLED"`, `"Batch prefetch skipped: %d holdings < min %d"`,
+`"No valid tickers found in holdings"`, or `"Batch prefetch failed,
+continuing without prefetched data"`.
 
 ### Performance Metrics File
 
-Detailed metrics are saved to JSON for analysis:
-
-```json
-{
-  "batch_prefetch_metrics": {
-    "session_id": "portfolio-analysis-20250125-103000",
-    "timestamp": "2025-01-25T10:30:00Z",
-    "total_tickers": 66,
-    "successful_tickers": 66,
-    "failed_tickers": 0,
-    "prefetch_duration_seconds": 4.2,
-    "crew_execution_duration_seconds": 1841.3,
-    "total_duration_seconds": 1845.5,
-    "time_savings_percentage": 89.1,
-    "estimated_sequential_time_seconds": 19800.0,
-    "batch_size": 5,
-    "total_batches": 14,
-    "memory_usage_mb": 456.7,
-    "peak_memory_usage_mb": 523.1,
-    "failed_ticker_list": [],
-    "error_summary": {},
-    "data_sources": {
-      "yahoo_finance": {
-        "enabled": true,
-        "successful_tickers": 66,
-        "failed_tickers": 0,
-        "duration_seconds": 4.2
-      },
-      "alpha_vantage": {
-        "enabled": false,
-        "successful_tickers": 0,
-        "failed_tickers": 0,
-        "duration_seconds": 0.0
-      }
-    }
-  }
-}
-```
+**There is no dedicated performance metrics JSON file.** The only persisted
+batch metrics are the three keys on `state.batch_prefetch_metrics` shown
+above; they travel with the rest of `FinwizState` and end up wherever that
+state is serialized, not in a standalone report.
 
 ## Best Practices
 
@@ -496,13 +409,13 @@ Detailed metrics are saved to JSON for analysis:
 2. **Monitor Memory Usage**: Set up alerts for high memory usage during batch processing
 3. **Disable Alpha Vantage**: Yahoo Finance provides all essential data for most analyses
 4. **Monitor Performance Metrics**: Track batch processing performance over time
-5. **Set Up Error Alerts**: Monitor for high failure rates or fallback events
+5. **Set Up Error Alerts**: Monitor for high per-ticker failure rates in `state.batch_prefetch_metrics`
 
 ### Development and Testing
 
 1. **Test with Small Portfolios**: Start with 5-10 holdings to verify configuration
 2. **Monitor Logs**: Watch batch processing logs for errors or performance issues
-3. **Test Fallback Scenarios**: Verify sequential mode works when batch processing fails
+3. **Test Failure Handling**: Verify deep analysis still completes when batch prefetch fails or is skipped (there is no separate sequential mode — see "Complete Failure Fallback" above)
 4. **Memory Profiling**: Profile memory usage with different batch sizes
 5. **API Rate Limit Testing**: Test with different rate limit configurations
 
@@ -586,11 +499,13 @@ free -h
 export DEEP_ANALYSIS_BATCH_SIZE=3
 ```
 
-**Issue**: Frequent fallback to sequential mode
+**Issue**: Frequent batch prefetch failures
 
 ```bash
-# Check logs for fallback reasons
-grep "Falling back to sequential mode" logs/finwiz.log
+# Check logs for the failure (there is no sequential-mode fallback; on
+# failure run_batch_prefetch just returns {} and deep analysis continues
+# without the prefetched cache)
+grep "Batch prefetch failed" logs/finwiz.log
 
 # Common causes and solutions:
 # 1. Network issues: Check internet connection
