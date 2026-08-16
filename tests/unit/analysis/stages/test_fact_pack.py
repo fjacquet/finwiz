@@ -9,8 +9,8 @@ from typing import Any
 import pytest
 
 from finwiz.analysis.stages._ledger import RunLedger
-from finwiz.analysis.stages._resilience import StageContext
-from finwiz.analysis.stages.fact_pack import fact_pack
+from finwiz.analysis.stages._resilience import StageContext, TransientStageError
+from finwiz.analysis.stages.fact_pack import _fact_pack_inner, fact_pack
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.stage_contract import StageOutcome
@@ -125,6 +125,34 @@ class TestFactPackStage:
         assert result.provenance.outcome == StageOutcome.FAILED
         assert result.payload is None
         assert "DELL" in (result.provenance.reason or "")
+
+    def test_no_cache_perplexity_fails_retries_once_then_fails(self, tmp_path: Path, mocker: Any, patched_cache: FactPackCache) -> None:
+        """Regression guard: the declared retries=1 on @stage(name="fact_pack") must
+        actually fire. Before TransientStageError, _fact_pack_inner raised a plain
+        RuntimeError, which _is_transient() classified non-transient, so all 22
+        fact_pack failures on the 2026-08-15 run recorded retries_used=0.
+        """
+        spy = mocker.patch(
+            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            return_value=None,
+        )
+        ctx = _build_ctx(tmp_path, mocker)
+        result = fact_pack(ctx, {})
+        assert result.provenance.outcome == StageOutcome.FAILED
+        assert result.provenance.retries_used == 1
+        assert spy.call_count == 2
+
+    def test_fact_pack_inner_raises_transient_error_when_no_cache_and_no_fetch(self, tmp_path: Path, mocker: Any, patched_cache: FactPackCache) -> None:
+        """No cache and Perplexity fetch fails: _fact_pack_inner raises TransientStageError,
+        not a plain RuntimeError, so the @stage decorator's _is_transient check can route it
+        through the declared retry instead of failing on the first attempt.
+        """
+        mocker.patch(
+            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            return_value=None,
+        )
+        with pytest.raises(TransientStageError, match="fact_pack unavailable for NVDA"):
+            _fact_pack_inner("NVDA", "NVIDIA Corp", "Technology", "Semiconductors")
 
     def test_cache_stale_live_fetch_succeeds_returns_fresh(self, tmp_path: Path, mocker: Any, patched_cache: FactPackCache) -> None:
         # Stale cached + Perplexity returns new

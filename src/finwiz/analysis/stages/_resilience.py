@@ -50,9 +50,19 @@ if httpcore is not None:  # pragma: no branch
     _TRANSIENT_HTTP_TYPES = (*_TRANSIENT_HTTP_TYPES, httpcore.RemoteProtocolError)
 
 
+class TransientStageError(RuntimeError):
+    """A stage failure that is worth retrying (rate limit, upstream unavailable).
+
+    Plain RuntimeError stays non-transient: it signals a programming or state
+    error where a retry would only repeat the same wrong thing.
+    """
+
+
 def _is_transient(exc: BaseException) -> bool:
     if isinstance(exc, (ValidationError, AssertionError)):
         return False
+    if isinstance(exc, TransientStageError):
+        return True
     if isinstance(exc, _TRANSIENT_EXC):
         return True
     if isinstance(exc, httpx.HTTPStatusError):

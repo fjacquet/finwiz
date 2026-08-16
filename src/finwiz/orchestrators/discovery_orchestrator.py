@@ -58,29 +58,43 @@ class DiscoveryOrchestrator:
             session_id = self.state.session_id or "default"
             crypto_results = analyze_crypto_opportunities(session_id)
 
+            # A pipeline failure is honestly labelled by the analyzer itself
+            # (performance_metrics.method == "newcomer_discovery_failed"). It must
+            # not be reported as a successful zero-opportunity run - the report
+            # this feeds must be able to tell "we ran and found nothing" apart
+            # from "we failed and therefore have nothing".
+            metrics = crypto_results.get("performance_metrics", {})
+            pipeline_failed = metrics.get("method") == "newcomer_discovery_failed"
+
             # Update state with Python results
             result_data = {
-                "crypto_analysis_success": True,
+                "crypto_analysis_success": not pipeline_failed,
                 "crypto_result": crypto_results.get("analysis_summary", "Crypto analysis completed"),
                 "crypto_opportunities": crypto_results.get("opportunities", []),
-                "crypto_performance_metrics": crypto_results.get("performance_metrics", {}),
+                "crypto_performance_metrics": metrics,
             }
+            if pipeline_failed:
+                result_data["crypto_analysis_error"] = metrics.get("error", "Newcomer discovery pipeline failed")
 
             self._update_state_from_dict(result_data)
 
             # Save results to disk
             self._save_discovery_results("crypto", crypto_results)
 
-            # Track successful Python execution
+            # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
                     source="crypto_crew",
-                    status="available",
+                    status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(crypto_results.get("opportunities", [])),
+                    error_message=result_data.get("crypto_analysis_error"),
                 )
 
-            self.logger.info(f"✅ Crypto discovery completed: {len(crypto_results.get('opportunities', []))} opportunities found")
+            if pipeline_failed:
+                self.logger.error(f"❌ Crypto discovery failed: {result_data['crypto_analysis_error']}")
+            else:
+                self.logger.info(f"✅ Crypto discovery completed: {len(crypto_results.get('opportunities', []))} opportunities found")
 
             return {"crypto_analysis_complete": True, "crypto_result": result_data.get("crypto_result", "")}
 
@@ -123,29 +137,43 @@ class DiscoveryOrchestrator:
             session_id = self.state.session_id or "default"
             stock_results = analyze_stock_opportunities(session_id)
 
+            # A pipeline failure is honestly labelled by the analyzer itself
+            # (performance_metrics.method == "newcomer_discovery_failed"). It must
+            # not be reported as a successful zero-opportunity run - the report
+            # this feeds must be able to tell "we ran and found nothing" apart
+            # from "we failed and therefore have nothing".
+            metrics = stock_results.get("performance_metrics", {})
+            pipeline_failed = metrics.get("method") == "newcomer_discovery_failed"
+
             # Update state with Python results
             result_data = {
-                "stock_analysis_success": True,
+                "stock_analysis_success": not pipeline_failed,
                 "stock_result": stock_results.get("analysis_summary", "Stock analysis completed"),
                 "stock_opportunities": stock_results.get("opportunities", []),
-                "stock_performance_metrics": stock_results.get("performance_metrics", {}),
+                "stock_performance_metrics": metrics,
             }
+            if pipeline_failed:
+                result_data["stock_analysis_error"] = metrics.get("error", "Newcomer discovery pipeline failed")
 
             self._update_state_from_dict(result_data)
 
             # Save results to disk
             self._save_discovery_results("stock", stock_results)
 
-            # Track successful Python execution
+            # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
                     source="stock_crew",
-                    status="available",
+                    status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(stock_results.get("opportunities", [])),
+                    error_message=result_data.get("stock_analysis_error"),
                 )
 
-            self.logger.info(f"✅ Stock discovery completed: {len(stock_results.get('opportunities', []))} opportunities found")
+            if pipeline_failed:
+                self.logger.error(f"❌ Stock discovery failed: {result_data['stock_analysis_error']}")
+            else:
+                self.logger.info(f"✅ Stock discovery completed: {len(stock_results.get('opportunities', []))} opportunities found")
 
             return {"stock_analysis_complete": True, "stock_result": result_data.get("stock_result", "")}
 
@@ -188,29 +216,43 @@ class DiscoveryOrchestrator:
             session_id = self.state.session_id or "default"
             etf_results = analyze_etf_opportunities(session_id)
 
+            # A pipeline failure is honestly labelled by the analyzer itself
+            # (performance_metrics.method == "newcomer_discovery_failed"). It must
+            # not be reported as a successful zero-opportunity run - the report
+            # this feeds must be able to tell "we ran and found nothing" apart
+            # from "we failed and therefore have nothing".
+            metrics = etf_results.get("performance_metrics", {})
+            pipeline_failed = metrics.get("method") == "newcomer_discovery_failed"
+
             # Update state with Python results
             result_data = {
-                "etf_analysis_success": True,
+                "etf_analysis_success": not pipeline_failed,
                 "etf_result": etf_results.get("analysis_summary", "ETF analysis completed"),
                 "etf_opportunities": etf_results.get("opportunities", []),
-                "etf_performance_metrics": etf_results.get("performance_metrics", {}),
+                "etf_performance_metrics": metrics,
             }
+            if pipeline_failed:
+                result_data["etf_analysis_error"] = metrics.get("error", "Newcomer discovery pipeline failed")
 
             self._update_state_from_dict(result_data)
 
             # Save results to disk
             self._save_discovery_results("etf", etf_results)
 
-            # Track successful Python execution
+            # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
                     source="etf_crew",
-                    status="available",
+                    status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(etf_results.get("opportunities", [])),
+                    error_message=result_data.get("etf_analysis_error"),
                 )
 
-            self.logger.info(f"✅ ETF discovery completed: {len(etf_results.get('opportunities', []))} opportunities found")
+            if pipeline_failed:
+                self.logger.error(f"❌ ETF discovery failed: {result_data['etf_analysis_error']}")
+            else:
+                self.logger.info(f"✅ ETF discovery completed: {len(etf_results.get('opportunities', []))} opportunities found")
 
             return {"etf_analysis_complete": True, "etf_result": result_data.get("etf_result", "")}
 

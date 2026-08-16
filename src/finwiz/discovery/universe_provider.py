@@ -12,7 +12,14 @@ from typing import Any, ClassVar
 import yfinance as yf
 from crewai_custom_tools.tools.analytics.screening_utils import ScreeningUtils
 
+from finwiz.discovery.ticker_hygiene import sanitize_symbols
 from finwiz.tools.logger import get_logger
+
+# A universe smaller than this is not a search. Measured 2026-08-15: mining three
+# seed ETFs yielded 18 unique names, 11 after excluding the portfolio — every one
+# of which graded below the actionability floor. Discovery reported "0
+# opportunities" when the honest statement was "we looked at 11 candidates".
+MIN_UNIVERSE_SIZE = 50
 
 
 class DynamicUniverseProvider:
@@ -68,10 +75,11 @@ class DynamicUniverseProvider:
             tickers = self._fallback_static_universe("crypto")
             source = "static"
         else:
-            seed_etfs = self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS
+            default_seeds = self.DEFAULT_STOCK_SEED_ETFS if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS
+            seed_etfs = self._seed_etfs or default_seeds
             try:
                 tickers = self._mine_etf_holdings(seed_etfs)
-            except (ValueError, Exception):
+            except Exception:
                 self._logger.warning(
                     "Dynamic universe failed for %s, falling back to static",
                     asset_class,
@@ -84,7 +92,20 @@ class DynamicUniverseProvider:
                 source = "static"
 
         # Deduplicate, filter exclusions, sort
-        result = sorted({t.upper() for t in tickers} - exclude_set)
+        result = sorted(set(sanitize_symbols(tickers)) - exclude_set)
+
+        if len(result) < MIN_UNIVERSE_SIZE and asset_class != "crypto":
+            static = sanitize_symbols(self._fallback_static_universe(asset_class))
+            result = sorted(set(result) | (set(static) - exclude_set))
+            source = f"{source}+static"
+
+        if len(result) < MIN_UNIVERSE_SIZE:
+            self._logger.warning(
+                "Universe for %s has %d tickers, below the floor of %d — discovery coverage is limited this run",
+                asset_class,
+                len(result),
+                MIN_UNIVERSE_SIZE,
+            )
 
         self._logger.info(
             "Universe for %s: %d tickers (source=%s, excluded=%d)",

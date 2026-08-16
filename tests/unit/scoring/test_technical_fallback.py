@@ -244,6 +244,82 @@ class TestCalculateMissingTechnicalIndicators:
         assert result_bearish["macd"] < 0
 
 
+class TestVolatilityFallback:
+    """Test cases for volatility derivation in calculate_missing_technical_indicators."""
+
+    @staticmethod
+    def _price_series() -> pd.Series:
+        return pd.Series([100.0, 101.5, 99.8, 102.3, 101.1, 103.4, 102.0, 104.2, 103.1, 105.0])
+
+    def test_derives_volatility_from_price_history_when_missing(self):
+        """Test that volatility is derived from price history when the quant tool didn't supply it."""
+        # Arrange
+        data = {"current_price": 105.0}
+
+        # Act
+        result = calculate_missing_technical_indicators(data, self._price_series())
+
+        # Assert
+        assert "volatility" in result
+        assert 0.0 < result["volatility"] < 5.0
+
+    def test_does_not_overwrite_existing_volatility(self):
+        """Test that a volatility value already supplied by the quant tool is never overwritten."""
+        # Arrange
+        data = {"current_price": 105.0, "volatility": 0.42}
+
+        # Act
+        result = calculate_missing_technical_indicators(data, self._price_series())
+
+        # Assert
+        assert result["volatility"] == approx(0.42)
+
+    def test_leaves_volatility_absent_when_no_price_history(self):
+        """Test that volatility stays absent when there is no price history to derive it from."""
+        # Arrange
+        data = {"current_price": 105.0}
+
+        # Act
+        result = calculate_missing_technical_indicators(data, None)
+
+        # Assert
+        assert "volatility" not in result
+
+    def test_leaves_volatility_absent_when_history_too_short(self):
+        """Test that volatility stays absent when price history has fewer than 2 points."""
+        # Arrange
+        data = {"current_price": 105.0}
+
+        # Act
+        result = calculate_missing_technical_indicators(data, pd.Series([100.0]))
+
+        # Assert
+        assert "volatility" not in result
+
+    def test_flat_price_series_yields_zero_volatility_and_is_preserved(self):
+        """Test that a genuine 0.0 volatility (perfectly flat prices) is computed and never treated as missing.
+
+        The ``is not None`` guard in fill_volatility must not be replaced with a truthy check,
+        or a real 0.0 would look "missing" and get recomputed/discarded on a later call.
+        """
+        # Arrange - zero variance in prices means zero volatility, not "no data"
+        flat_prices = pd.Series([100.0] * 10)
+        data = {"current_price": 100.0}
+
+        # Act
+        result = calculate_missing_technical_indicators(data, flat_prices)
+
+        # Assert - a genuine zero was computed
+        assert "volatility" in result
+        assert result["volatility"] == approx(0.0)
+
+        # Act again - re-running must preserve the existing 0.0, not treat it as absent
+        second_result = calculate_missing_technical_indicators(dict(result), flat_prices)
+
+        # Assert
+        assert second_result["volatility"] == approx(0.0)
+
+
 class TestGetPriceHistoryFromData:
     """Test cases for get_price_history_from_data function."""
 

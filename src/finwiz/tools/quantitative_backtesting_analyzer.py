@@ -9,7 +9,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from finwiz.quantitative.backtesting import SimpleMovingAverageStrategy
+from finwiz.quantitative.backtesting import SimpleMovingAverageStrategy, minimum_bars_required
 from finwiz.schemas.quantitative_crew import QuantitativeBacktestResult
 from finwiz.tools.logger import get_logger
 
@@ -38,10 +38,12 @@ def perform_backtesting(
         backtesting_engine: Backtesting engine instance
 
     Returns:
-        JSON string with backtesting results
+        JSON string with backtesting results, or a plain-text refusal when the
+        price history is too short for the strategy to be backtested at all.
 
     """
     logger = get_logger(__name__)
+    strategy_params = {"short_period": 20, "long_period": 50}
 
     try:
         # Run backtest with simple moving average strategy
@@ -50,8 +52,22 @@ def perform_backtesting(
             input_data.symbol,
             start_date,
             end_date,
-            strategy_params={"short_period": 20, "long_period": 50},
+            strategy_params=strategy_params,
         )
+
+        # A short series is a refusal, not a failure: the engine returns None
+        # because backtrader would never reach the strategy's minperiod. Say so
+        # by name -- reading attributes off the None instead produced
+        # "Backtesting error: 'NoneType' object has no attribute
+        # 'strategy_name'", which tells the reading agent nothing.
+        if backtest_result is None:
+            minimum_bars = minimum_bars_required(strategy_params)
+            refusal = (
+                f"Insufficient data for {input_data.symbol}: price history is shorter than the {minimum_bars} bars "
+                f"{SimpleMovingAverageStrategy.__name__} needs (lookback + warm-up buffer). No backtest performed."
+            )
+            logger.info(refusal)
+            return refusal
 
         # Convert to simplified schema
         quant_backtest = QuantitativeBacktestResult(

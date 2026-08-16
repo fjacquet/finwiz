@@ -48,12 +48,16 @@ The pipeline composes 5 live components from `finwiz.discovery.*`:
 
 ## Feature Flag
 
-Gated by `newcomer_discovery` feature flag in `config/features/definitions.py`.
-When disabled, analyzers fall back to legacy mocked discovery data.
+The `newcomer_discovery` flag has been retired and is no longer read anywhere
+in the codebase — `analyze_{stock,etf,crypto}_opportunities()` always route
+through `NewcomerDiscoveryPipeline` unconditionally. A pipeline failure returns
+an empty, honestly-labelled result (`performance_metrics.method ==
+"newcomer_discovery_failed"`) — never mocked/invented data. The pipeline's own
+recall strategy is still governed by `portfolio_aware_discovery` (see above).
 
 ## Related Modules
 
 - `finwiz.discovery` — Individual discovery components (universe, screeners, scorer)
 - `finwiz.schemas.newcomer_discovery` — Pydantic schemas for pipeline I/O
-- `finwiz.config.features.flags` — `is_feature_enabled("newcomer_discovery")`
-- `finwiz.scoring.{stock,etf,crypto}_analyzer` — Callers that route through pipeline when flag enabled
+- `finwiz.config.features.flags` — `is_feature_enabled("portfolio_aware_discovery")`
+- `finwiz.scoring.{stock,etf,crypto}_analyzer` — Callers that always route through the pipeline (no flag gate)

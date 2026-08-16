@@ -5,6 +5,7 @@ Defines which fields are CRITICAL (must have real data) vs OPTIONAL (can use def
 Missing critical fields should cause analysis to FAIL rather than use fallback values.
 """
 
+import math
 from typing import Any, Literal
 
 # Critical fields by asset class - MUST have real data or analysis fails
@@ -134,6 +135,45 @@ def get_safe_default(field_name: str) -> float | None:
     return SAFE_DEFAULTS.get(field_name)
 
 
+# Annualized volatility above this is not a real reading — it is a units error
+# or corrupt data. Below it, values > 5.0 are treated as percent-scaled and
+# divided by 100 (two producers in-tree disagree on units; see
+# quantitative/performance_metrics.py:90 vs quantitative/backtesting_performance.py:246).
+_VOLATILITY_ABSURD_CEILING = 500.0
+
+
+def normalize_volatility(value: float | int | None) -> float | None:
+    """Coerce a volatility reading to the fractional scale, or None if unusable.
+
+    Args:
+        value: Raw volatility, fractional (0.25) or percent-scaled (25.0).
+
+    Returns:
+        Fractional volatility, or None when the value is missing, non-finite (NaN/inf),
+        negative, or absurd.
+
+    """
+    if value is None:
+        return None
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(v):
+        # Covers NaN, +inf, and -inf: comparisons against NaN are always False, so the
+        # range checks below would otherwise let it slide through as "valid".
+        return None
+    if v < 0.0 or v >= _VOLATILITY_ABSURD_CEILING:
+        return None
+    if v > 5.0:
+        # Backstop, not a live path. This rescale existed for percent-scaled volatility
+        # hoisted out of ``backtest_result``; that subtree is no longer flattened into the
+        # scorer's dict, and every remaining in-tree producer is fractional. Keep it: a new
+        # percent-scaled producer would otherwise be rejected as absurd rather than rescaled.
+        return v / 100.0
+    return v
+
+
 def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "crypto"], data: dict[str, Any]) -> None:
     """
     Validate that all critical fields are present with real data.
@@ -159,6 +199,9 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
         # These CAN be 0.0 legitimately, so only check for None or extreme values
         "debt_to_equity": lambda v: v is None or v < 0.0 or v > 100.0,
         "revenue_growth": lambda v: v is None or v < -0.95 or v > 10.0,  # -95% to 1000%
+        # Backstop only — normalize_volatility() already rejects/rescales upstream in the
+        # loop below, so a normalized value can never trip this. Kept so the field's
+        # contract doesn't silently depend on the caller remembering to normalize first.
         "volatility": lambda v: v is None or v < 0.0 or v > 5.0,
         "beta": lambda v: v is None or v < -5.0 or v > 10.0,
         # ETF metrics
@@ -171,6 +214,18 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
 
     for field in critical_fields:
         value = data.get(field)
+
+        if field == "volatility":
+            normalized = normalize_volatility(value)
+            if normalized is not None:
+                value = normalized
+                data[field] = value
+            elif value is not None:
+                # Present but unusable (negative or absurd) — a units/data error,
+                # not a missing field. Report it honestly instead of masking it
+                # as "missing".
+                missing_fields.append(f"{field} (invalid value: {value})")
+                continue
 
         # Check if field is missing or None
         if field not in data or value is None:

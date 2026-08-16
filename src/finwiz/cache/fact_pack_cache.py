@@ -43,8 +43,9 @@ class FactPackCache:
         """Return cached FactPack if valid (any age — caller checks freshness).
 
         Returns None if file missing, corrupted, or schema version mismatched.
-        Returns FactPack even if 7-14d old (marked stale via freshness derivation).
-        Returns None if older than 14d (cache invalid).
+        Returns FactPack even if 7-90d old (marked stale via freshness derivation) —
+        a stale-but-labelled answer beats no cache at all on a rate-limited run.
+        Returns None if older than 90d (cache invalid).
         """
         path = self._path(ticker)
         if not path.exists():

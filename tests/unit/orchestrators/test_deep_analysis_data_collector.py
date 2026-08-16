@@ -178,3 +178,68 @@ class TestBenchmarkBetaFallback:
         combined = pd.concat({"AAPL": ticker_df, "^GSPC": bench_df}, axis=1)
         mocker.patch("yfinance.download", return_value=combined)
         assert collector._compute_benchmark_beta("AAPL", "stock") is None
+
+
+class TestFlattenExcludesPercentScaledDuplicates:
+    """Task 15 review round 2 (Ruling 30).
+
+    When performance analysis fails and the backtest succeeds,
+    backtest_result.max_drawdown (percent-scaled, e.g. -3.0 for a -3%
+    drawdown -- backtesting_performance.py:246) and
+    quantitative_recommendation.risk_metrics (which mirrors backtest_result,
+    see Task 15 round 1) used to leak into the flat dict through
+    _flatten_recursive's generic "first key wins" walk, since nothing set
+    "max_drawdown" from the sanctioned, fractional-scale
+    performance_metrics extraction first. risk_scorer.py compares
+    max_drawdown against fractional thresholds (0.10/0.20/0.35/0.50), so
+    the percent-scaled leak silently scored a -3% drawdown as if it were
+    -300% -- the worst possible bucket for what is actually a very safe
+    holding.
+    """
+
+    @pytest.fixture
+    def collector(self, mocker):
+        return DeepAnalysisDataCollector(state=mocker.MagicMock())
+
+    @pytest.fixture
+    def thin_history_payload(self):
+        """performance_metrics is None (that sub-analysis failed);
+        backtest_result and quantitative_recommendation.risk_metrics both
+        carry the same percent-scaled max_drawdown, mirroring what
+        perform_comprehensive_analysis actually produces after Task 15
+        round 1 (risk_metrics is sourced from backtest_result only)."""
+        return {
+            "ticker": "TEST",
+            "asset_class": "stock",
+            "ticker_info": {"beta": 1.0},  # short-circuits the network-hitting beta fallback
+            "quantitative_analysis": {
+                "backtest_result": {
+                    "symbol": "TEST",
+                    "strategy_name": "SimpleMovingAverageStrategy",
+                    "max_drawdown": -3.0,
+                    "volatility": 10.0,
+                    "sharpe_ratio": 0.5,
+                },
+                "performance_metrics": None,
+                "quantitative_recommendation": {
+                    "risk_metrics": {"max_drawdown": -3.0, "volatility": 10.0, "sharpe_ratio": 0.5},
+                },
+            },
+        }
+
+    def test_percent_scaled_max_drawdown_does_not_reach_the_flat_dict(self, collector, thin_history_payload):
+        flattened = collector.flatten_collected_data(thin_history_payload)
+        assert "max_drawdown" not in flattened, f"percent-scaled max_drawdown leaked into the flat dict: {flattened.get('max_drawdown')}"
+
+    def test_risk_scorer_does_not_score_a_safe_drawdown_as_catastrophic(self, collector, thin_history_payload):
+        """Drives the real RiskScorer on the real flattened output -- pins
+        the actual downstream consequence, not just the intermediate dict."""
+        from finwiz.scoring.risk_scorer import RiskScorer
+
+        flattened = collector.flatten_collected_data(thin_history_payload)
+        _score, details = RiskScorer().calculate_risk_score(flattened)
+
+        # Absent max_drawdown falls back to RiskScorer's own -0.20 default
+        # (fractional, lands in the drawdown_low bucket) -- not the worst
+        # bucket (0.2) a misread "-300%" would produce.
+        assert details["drawdown_score"] == 0.8, f"drawdown scored as catastrophic -- the percent-scaled leak reproduced: {details}"

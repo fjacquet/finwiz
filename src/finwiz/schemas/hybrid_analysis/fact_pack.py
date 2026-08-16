@@ -15,6 +15,10 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 _FRESHNESS_VALUES = ("fresh", "recent", "stale")
 Freshness = Literal["fresh", "recent", "stale"]
 
+# Beyond this, a cached fact pack is not merely stale — it predates any
+# reporting cycle we would defend, so the cache evicts rather than serve it.
+_STALE_HORIZON_DAYS = 90
+
 
 class FactPack(BaseModel):
     """Verified corporate facts for one holding.
@@ -38,7 +42,7 @@ class FactPack(BaseModel):
     def derive_freshness(cls, fetched_at: datetime) -> Freshness:
         """Python owns freshness derivation; AI may not lie about it.
 
-        <3d -> fresh, 3-7d -> recent, 7-14d -> stale, >14d -> raises (cache must have evicted).
+        <3d -> fresh, 3-7d -> recent, 7-90d -> stale, >90d -> raises (cache must have evicted).
         """
         if fetched_at.tzinfo is None:
             fetched_at = fetched_at.replace(tzinfo=UTC)
@@ -48,9 +52,13 @@ class FactPack(BaseModel):
             return "fresh"
         if age < timedelta(days=7):
             return "recent"
-        if age < timedelta(days=15):
+        # Corporate structure and leadership do not turn over in a fortnight.
+        # A 15-day cliff meant a rate-limited run had no cache to fall back on
+        # and killed the holding outright — worse than a labelled stale answer.
+        # Staleness is a payload field, not a stage outcome (see stages/fact_pack.py).
+        if age < timedelta(days=_STALE_HORIZON_DAYS):
             return "stale"
-        raise ValueError(f"FactPack older than 14 days (age={age}); cache should have evicted")
+        raise ValueError(f"FactPack older than {_STALE_HORIZON_DAYS} days (age={age}); cache should have evicted")
 
     @model_validator(mode="after")
     def _check_freshness_matches_fetched_at(self) -> FactPack:

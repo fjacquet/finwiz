@@ -119,9 +119,12 @@ class DataParser:
             # Case 1: data is already a list of candidates
             if isinstance(data, list):
                 candidates = data
-            # Case 2: data is a dict with "candidates" or "a_plus_candidates" key
+            # Case 2: data is a dict with "candidates", "a_plus_candidates", or
+            # "opportunities" key. "opportunities" is the key NewcomerDiscoveryPipeline's
+            # _to_legacy_format() emits (see scoring/discovery/pipeline.py) -- without it,
+            # a_plus_{stocks,etfs,crypto}.json is silently read as empty.
             elif isinstance(data, dict):
-                candidates = data.get("candidates") or data.get("a_plus_candidates") or []
+                candidates = data.get("candidates") or data.get("a_plus_candidates") or data.get("opportunities") or []
             else:
                 self.logger.error(f"Unexpected data type in {file_path.name}: {type(data)}")
                 return []

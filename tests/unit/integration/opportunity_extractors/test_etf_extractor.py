@@ -96,6 +96,34 @@ class TestETFOpportunityExtractor:
         # Assert
         assert result is False
 
+    def test_should_include_etf_keyed_by_ticker_instead_of_symbol(self, extractor, valid_etf_candidate):
+        """NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" -- must still be included."""
+        # Arrange
+        del valid_etf_candidate["symbol"]
+        valid_etf_candidate["ticker"] = "VWCE"
+
+        # Act
+        result = extractor._should_include(valid_etf_candidate)
+
+        # Assert
+        assert result is True
+
+    def test_should_include_etf_with_no_cost_data_at_all(self, extractor, valid_etf_candidate):
+        """NewcomerDiscoveryPipeline's candidates never carry cost_metrics/key_metrics.
+
+        Missing TER data must not be treated as a de-facto high TER -- there is
+        no signal to gate on, so the candidate should pass through, not be
+        silently dropped.
+        """
+        # Arrange
+        del valid_etf_candidate["cost_metrics"]
+
+        # Act
+        result = extractor._should_include(valid_etf_candidate)
+
+        # Assert
+        assert result is True
+
     def test_should_exclude_etf_without_name(self, extractor, valid_etf_candidate):
         """Test that ETFs without name are excluded."""
         # Arrange
@@ -239,16 +267,60 @@ class TestETFOpportunityExtractor:
         # Assert
         assert len(opportunities) == 0
 
-    def test_should_handle_extraction_errors_gracefully(self, extractor):
-        """Test handling of extraction errors."""
+    def test_should_refuse_rather_than_score_a_fabricated_perfect_ter(self, extractor):
+        """A candidate with no composite_score and no cost_metrics must be
+        refused, not built with a fabricated composite_score of 1.0.
+
+        This used to return an opportunity with composite_score computed from
+        an all-zero cost_metrics fallback: min((1-0)*0.4 + (1-0)*0.4 + 0.2, 1.0)
+        == 1.0 -- a perfect score, on the exact axis (TER) the ETF inclusion
+        gate exists to screen, synthesised entirely from data that was never
+        measured. Refusing is the honest outcome: there's nothing here to score.
+        """
         # Arrange
-        invalid_candidate = {"symbol": "TEST"}  # Missing required fields
+        invalid_candidate = {"symbol": "TEST"}  # No composite_score, no cost_metrics
 
         # Act
         opportunity = extractor._build_opportunity(invalid_candidate, 0)
 
         # Assert
-        # Should return opportunity with default values (Python doesn't raise on missing dict keys with .get())
+        assert opportunity is None
+
+    def test_should_handle_missing_optional_fields_gracefully(self, extractor):
+        """Test handling of extraction errors for fields other than composite_score's inputs.
+
+        As long as composite_score itself is derivable (supplied directly here),
+        every other missing field still defaults gracefully -- Python doesn't
+        raise on missing dict keys accessed via .get().
+        """
+        # Arrange
+        minimal_candidate = {"symbol": "TEST", "composite_score": 0.5}  # Missing everything else
+
+        # Act
+        opportunity = extractor._build_opportunity(minimal_candidate, 0)
+
+        # Assert
         assert opportunity is not None
         assert opportunity["symbol"] == "TEST"
-        assert opportunity["composite_score"] >= 0
+        assert opportunity["composite_score"] == approx(0.5)
+
+    def test_malformed_candidate_does_not_zero_its_siblings(self, extractor, valid_etf_candidate):
+        """A single candidate that raises inside extract() must not wipe the whole batch.
+
+        cost_metrics: None is a candidate whose field is present but the wrong
+        type: `"ter" in None` raises TypeError from inside _should_include, which
+        the extraction loop does not catch per-candidate -- before the fix, that
+        exception escaped a single try wrapped around the *entire* loop in
+        OpportunityExtractor.extract() (orchestrators/discovery/extractors/base.py),
+        discarding every opportunity already built for every well-formed sibling
+        candidate in the same batch, not just the malformed one.
+        """
+        # Arrange
+        malformed_candidate = {"symbol": "BAD", "name": "Malformed ETF", "grade": "A+", "cost_metrics": None}
+
+        # Act
+        opportunities = extractor.extract([valid_etf_candidate, malformed_candidate])
+
+        # Assert
+        assert len(opportunities) == 1, "the malformed candidate must be skipped, not fatal to its well-formed sibling"
+        assert opportunities[0]["symbol"] == "VWCE"

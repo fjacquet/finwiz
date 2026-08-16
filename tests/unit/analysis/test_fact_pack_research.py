@@ -40,10 +40,28 @@ class TestPromptBuilder:
 
 class TestFetchFactPack:
     @pytest.mark.asyncio
+    async def test_fetch_routes_through_retry_wrapper(self, mocker: Any) -> None:
+        """fetch_fact_pack must call perplexity_with_retry (Task 1's wrapper), not
+        perplexity_structured directly, so the single fact_pack call gets retry +
+        backoff instead of failing outright on the first timeout/429.
+        """
+        called = mocker.patch(
+            "finwiz.analysis.fact_pack_research.perplexity_with_retry",
+            new=mocker.AsyncMock(return_value=None),
+        )
+
+        result = await fetch_fact_pack("NVDA", "NVIDIA Corp", "Technology", "Semiconductors")
+
+        assert result is None
+        assert called.await_count == 1
+        assert called.await_args.kwargs["schema"] is _FactPackRaw
+        assert called.await_args.kwargs["search_recency_filter"] == "month"
+
+    @pytest.mark.asyncio
     async def test_fetch_returns_factpack_with_python_freshness(self, mocker: Any) -> None:
         mocker.patch(
-            "finwiz.analysis.fact_pack_research.perplexity_structured",
-            return_value=_build_raw(),
+            "finwiz.analysis.fact_pack_research.perplexity_with_retry",
+            new=mocker.AsyncMock(return_value=_build_raw()),
         )
         fp = await fetch_fact_pack("DELL", "Dell Technologies", "Tech", "Hardware")
         assert fp is not None
@@ -54,19 +72,25 @@ class TestFetchFactPack:
         assert fp.fetched_at.tzinfo is not None
 
     @pytest.mark.asyncio
-    async def test_fetch_returns_none_on_perplexity_failure(self, mocker: Any) -> None:
+    async def test_fetch_returns_none_when_wrapper_raises(self, mocker: Any) -> None:
+        """perplexity_with_retry already catches every exception internally and
+        returns None on failure, so it shouldn't raise in normal operation. The
+        try/except in fetch_fact_pack is defensive depth at the stage boundary
+        (guards against the wrapper's contract changing later) rather than
+        something this call site currently relies on for a *known* failure mode.
+        """
         mocker.patch(
-            "finwiz.analysis.fact_pack_research.perplexity_structured",
-            side_effect=RuntimeError("Perplexity down"),
+            "finwiz.analysis.fact_pack_research.perplexity_with_retry",
+            new=mocker.AsyncMock(side_effect=RuntimeError("unexpected")),
         )
         fp = await fetch_fact_pack("DELL", "Dell Technologies")
         assert fp is None
 
     @pytest.mark.asyncio
-    async def test_fetch_returns_none_on_perplexity_returning_none(self, mocker: Any) -> None:
+    async def test_fetch_returns_none_on_wrapper_returning_none(self, mocker: Any) -> None:
         mocker.patch(
-            "finwiz.analysis.fact_pack_research.perplexity_structured",
-            return_value=None,
+            "finwiz.analysis.fact_pack_research.perplexity_with_retry",
+            new=mocker.AsyncMock(return_value=None),
         )
         fp = await fetch_fact_pack("DELL", "Dell Technologies")
         assert fp is None
