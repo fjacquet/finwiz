@@ -333,6 +333,15 @@ dimensions now reach the prompt, at 1 bullet per dimension plus 1 threat and
 exist for portfolios dense or large enough that rung 3 doesn't fit; they are
 not expected to fire for the current portfolio size, but keep the ladder
 graceful rather than a hard cliff into the scores-only floor.
+
+Landing on rung 3 used to mean *building and serializing all 64 holdings
+three times* — once each for rungs 1 and 2, discarded, before the kept
+attempt at rung 3 — on every single synthesis call. ``_serialize_holdings``
+now estimates the likely starting rung from one sample holding (cheap, O(1))
+before doing any real O(n) digest-and-serialize, so the common case costs
+exactly one full serialization instead of three. See its docstring for the
+correctness guarantee: a wrong estimate can only cost an extra real
+serialization, never a dropped holding.
 """
 
 
@@ -384,6 +393,25 @@ def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, inc
     return out
 
 
+_SERIALIZE_RUNGS: tuple[tuple[int, bool, bool, bool], ...] = (
+    (3, True, True, True),  # full detail
+    (2, True, True, True),  # fewer bullets, still both pestel fields
+    (1, True, True, True),  # fewest bullets, still both pestel fields
+    (1, True, False, True),  # drop the derived pestel summary, keep dimensions (primary evidence)
+    (1, False, False, True),  # drop prose too, dimensions still present
+)
+"""(bullets, include_prose, include_pestel_summary, include_pestel_dimensions) per rung, finest first."""
+
+
+def _digest_all(holdings_strategic: dict[str, StrategicAnalysis], rung: tuple[int, bool, bool, bool]) -> dict[str, Any]:
+    """Digest every holding at one rung. The one place that does the O(n) work."""
+    bullets, include_prose, include_pestel_summary, include_pestel_dimensions = rung
+    return {
+        ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions)
+        for ticker, sa in holdings_strategic.items()
+    }
+
+
 def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str:
     """Compact JSON digest of every holding, fitted to the budget.
 
@@ -404,24 +432,47 @@ def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str
     was the only rung ever selected, so the dimensions never actually reached
     the prompt. Shrinking bullets while keeping both fields, then shedding
     the derived summary before the dimensions, is what gets them there.
+
+    Rung selection is estimate-then-verify, not brute-force-from-the-top. A
+    naive version rebuilds the full per-holding digest for *every* holding and
+    serializes it at every rung, discarding all but the last, purely to
+    measure ``len(payload)``. For the real 64-holding portfolio that means two
+    full ~330-460K-char dict-builds-and-serializes thrown away on every single
+    synthesis call, before ever landing on the rung it was always going to
+    land on. Instead: digest and serialize *one* holding at each rung (O(1)
+    per rung, not O(n)) to estimate the finest rung likely to fit, then do a
+    real, full verification starting there — stepping to a coarser rung only
+    if the estimate undershot. The estimate can only cost one extra real
+    serialization when it's wrong; it can never cause a holding to be
+    dropped, because every real candidate payload is still checked against
+    the budget before being returned, and the floor below is unchanged.
     """
     import json
 
-    rungs = (
-        (3, True, True, True),  # full detail
-        (2, True, True, True),  # fewer bullets, still both pestel fields
-        (1, True, True, True),  # fewest bullets, still both pestel fields
-        (1, True, False, True),  # drop the derived pestel summary, keep dimensions (primary evidence)
-        (1, False, False, True),  # drop prose too, dimensions still present
-    )
-    for bullets, include_prose, include_pestel_summary, include_pestel_dimensions in rungs:
-        compact = {
-            ticker: _digest_one(
-                sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions
-            )
-            for ticker, sa in holdings_strategic.items()
-        }
-        payload = json.dumps(compact, ensure_ascii=False, default=str)
+    if not holdings_strategic:
+        return "{}"
+
+    holding_count = len(holdings_strategic)
+    sample_ticker, sample_sa = next(iter(holdings_strategic.items()))
+
+    start_index = len(_SERIALIZE_RUNGS) - 1
+    for index, rung in enumerate(_SERIALIZE_RUNGS):
+        bullets, include_prose, include_pestel_summary, include_pestel_dimensions = rung
+        sample_entry = json.dumps(
+            {
+                sample_ticker: _digest_one(
+                    sample_sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions
+                )
+            },
+            ensure_ascii=False,
+            default=str,
+        )
+        if len(sample_entry) * holding_count <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
+            start_index = index
+            break
+
+    for rung in _SERIALIZE_RUNGS[start_index:]:
+        payload = json.dumps(_digest_all(holdings_strategic, rung), ensure_ascii=False, default=str)
         if len(payload) <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
             return payload
 

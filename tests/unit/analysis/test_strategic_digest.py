@@ -263,3 +263,44 @@ def test_serialize_holdings_drops_prose_last_dimensions_still_present(mocker):
     assert "dimensions" in sample["pestel"]
     assert "assessment" not in sample["swot"]
     assert "summary" not in sample["moat"]
+
+
+def test_serialize_holdings_does_one_full_serialization_when_the_estimate_is_right(mocker):
+    """The naive version rebuilds and serializes all 64 holdings at every rung it tries,
+    discarding all but the last -- 3 full O(n) serializations for the real portfolio
+    shape (rung 1 and rung 2 always overflow, rung 3 is kept). Estimating the starting
+    rung from a single holding first means the common case costs exactly one real,
+    full digest-and-serialize, not three."""
+    from finwiz.analysis import strategic_research
+
+    holdings = {f"T{i}": _rich_holding_with_dimensions() for i in range(64)}
+    spy = mocker.spy(strategic_research, "_digest_all")
+
+    payload = strategic_research._serialize_holdings(holdings)
+
+    assert len(json.loads(payload)) == 64
+    assert spy.call_count == 1
+
+
+def test_serialize_holdings_never_drops_a_holding_when_the_estimate_undershoots(mocker):
+    """The cheap estimate samples exactly one holding. If that holding happens to be
+    much smaller than the rest, the estimate can pick a rung that doesn't actually fit
+    the real population. The real, full serialization must still be verified against
+    the budget before anything is returned -- a wrong estimate costs an extra real
+    serialization, never a dropped holding."""
+    from finwiz.analysis import strategic_research
+
+    thin = StrategicAnalysis(pestel=PestelAnalysis(strategic_score=0.5, confidence=0.5))
+    holdings = {"THIN": thin} | {f"T{i}": _rich_holding_with_dimensions() for i in range(63)}
+    spy = mocker.spy(strategic_research, "_digest_all")
+
+    payload = strategic_research._serialize_holdings(holdings)
+    parsed = json.loads(payload)
+
+    assert len(parsed) == 64
+    assert "THIN" in parsed
+    assert len(payload) <= strategic_research.SYNTHESIS_PAYLOAD_BUDGET_CHARS
+    # The undersized sample (THIN, inserted first) made the cheap estimate too
+    # optimistic -- it takes more than one real full serialization to land on a
+    # rung that actually fits the other 63 near-cap holdings.
+    assert spy.call_count > 1
