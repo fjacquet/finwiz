@@ -19,7 +19,11 @@ The test structure follows principles similar to the Diátaxis documentation fra
 
 ### Domain-Driven Structure
 
-Tests are organized by domain and responsibility:
+Tests are organized by domain and responsibility. There is no
+`tests/performance/` directory — the `performance` pytest marker exists in
+`pyproject.toml`, but no directory backs it. The actual top level (`find
+tests -type d`) is `fixtures/`, `integration/`, `property/`, `regression/`,
+`tools/`, `unit/`, `validation/`:
 
 ```
 tests/
@@ -31,7 +35,10 @@ tests/
 │   ├── orchestrators/      # Business logic tests
 │   └── utils/              # Utility function tests
 ├── integration/            # Component interaction tests
-├── performance/            # Performance and load tests
+├── fixtures/                # Shared test data and factories
+├── property/                # Property-based tests
+├── regression/              # Regression tests
+├── tools/                   # Standalone test/debug scripts (not to be confused with unit/tools/)
 └── validation/             # Manual validation scripts
 ```
 
@@ -70,11 +77,14 @@ tests/
 │   ├── schemas/            # Schema validation tests (enhanced)
 │   ├── orchestrators/      # Orchestration component tests
 │   └── utils/              # Utility function tests (enhanced)
-├── integration/
-│   └── core_analysis/      # Core analysis integration tests
-├── performance/            # Performance tests (enhanced)
+├── integration/             # tests/integration/analysis/ + top-level test_*.py
+                             # (no core_analysis/ subdirectory — core_analysis-marked
+                             # tests are scattered across tests/unit/ instead)
 └── validation/             # Manual validation scripts
 ```
+
+There is no `tests/performance/` directory (the `performance` marker exists
+but nothing backs it with a directory).
 
 ## Key Improvements
 
@@ -97,8 +107,8 @@ tests/
 
 **New Structure**:
 
-- `tests/unit/flow/test_main_flow_integration.py` - Main flow orchestration
-- `tests/unit/flow/test_session_integration.py` - Session management
+Neither of these files exists. `tests/unit/flow/` currently contains only
+`test_core_analysis_error_handler.py`.
 
 **Benefits**:
 
@@ -139,7 +149,8 @@ tests/
 
 ### 5. Integration Testing
 
-**New `tests/integration/core_analysis/`**:
+**`tests/integration/`** (no `core_analysis/` subdirectory — it contains
+`analysis/` plus top-level `test_*.py` files):
 
 - Crew output validation
 - Data flow validation
@@ -202,7 +213,11 @@ The reorganization follows CrewAI Testing Standards:
 The structure supports the complete ban on `unittest.mock`:
 
 - All tests use `pytest-mock` exclusively
-- 4-layer enforcement (ruff, pre-commit, runtime, makefile)
+- Enforced by ruff, pre-commit, and the `make check-unittest-mock` grep.
+  `tests/conftest_unittest_blocker.py` installs a `sys.meta_path` hook that
+  would add runtime enforcement, but nothing imports that module — no `-p`
+  entry references it in `pyproject.toml`'s `addopts` — so the runtime layer
+  is not actually active; only three layers currently enforce the ban.
 - Consistent mocking patterns across all test categories
 
 ## Benefits Realized
@@ -245,8 +260,8 @@ uv run pytest tests/unit/flow/ -v
 # Integration tests (slow, requires API keys)
 uv run pytest tests/integration/ -v -m integration
 
-# Performance tests
-uv run pytest tests/performance/ -v -m slow
+# Performance tests (there is no tests/performance/ directory — select by marker instead)
+uv run pytest -v -m slow
 ```
 
 ### Running by Test Markers
@@ -281,7 +296,7 @@ The new structure is designed for easy extension:
 - **New crews**: Add to `tests/unit/crews/{new_crew}/`
 - **New tools**: Add to `tests/unit/tools/`
 - **New integrations**: Add to `tests/integration/{domain}/`
-- **New performance tests**: Add to `tests/performance/`
+- **New performance tests**: Mark with `@pytest.mark.performance` or `@pytest.mark.slow` (no dedicated `tests/performance/` directory exists)
 
 ## Migration Lessons
 
