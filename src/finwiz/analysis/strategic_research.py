@@ -18,6 +18,11 @@ from typing import Any
 from crewai_custom_tools import perplexity_structured
 
 from finwiz.schemas.hybrid_analysis.strategic import (
+    MAX_BULLET_CHARS,
+    MAX_BULLETS_PESTEL,
+    MAX_BULLETS_SWOT,
+    MAX_PROSE_CHARS,
+    MAX_RATIONALE_CHARS,
     FiveForcesAnalysis,
     PestelAnalysis,
     PortfolioStrategicPosture,
@@ -62,12 +67,13 @@ def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, cu
     return (
         _date_preamble(current_date) + f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        f"Couvre les six dimensions (politique, économique, social, technologique, "
-        f"environnemental, légal) en 2-4 phrases chacune, en citant des évolutions "
-        f"des 12 mois précédant {current_date} (pas d'années antérieures). Liste ensuite "
-        f"les menaces et opportunités les plus matérielles à la date du {current_date}. "
-        f"Termine en attribuant strategic_score (favorabilité globale "
-        f"de l'environnement PESTEL pour cette entreprise) et confidence."
+        f"Pour chacune des six dimensions (politique, économique, social, technologique, "
+        f"environnemental, légal) : au maximum {MAX_BULLETS_PESTEL} puces, chacune de "
+        f"{MAX_BULLET_CHARS} caractères maximum. Pas de paragraphes, pas de prose. "
+        f"Chaque puce cite une évolution des 12 mois précédant {current_date}. "
+        f"Liste ensuite au maximum {MAX_BULLETS_PESTEL} menaces et {MAX_BULLETS_PESTEL} "
+        f"opportunités, même format. "
+        f"Termine en attribuant strategic_score et confidence."
     )
 
 
@@ -75,11 +81,11 @@ def _swot_prompt(ticker: str, sector: str, industry: str, description: str, curr
     return (
         _date_preamble(current_date) + f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        f"Liste 3-6 éléments par catégorie (forces, faiblesses, opportunités, menaces) "
-        f"reflétant la situation au {current_date}. Sois spécifique : chiffres, parts de "
-        f"marché, avantages produit, dépendances, risques concurrentiels — vérifiés via "
-        f"recherche web. Donne ensuite un strategic_assessment (paragraphe de synthèse). "
-        f"Évalue strategic_score (équilibre S+O vs W+T) et confidence."
+        f"Liste au maximum {MAX_BULLETS_SWOT} puces par catégorie (forces, faiblesses, "
+        f"opportunités, menaces) reflétant la situation au {current_date}. Sois spécifique : "
+        f"chiffres, parts de marché, avantages produit, dépendances, risques concurrentiels "
+        f"— vérifiés via recherche web. Donne ensuite un strategic_assessment (≤ {MAX_PROSE_CHARS} "
+        f"caractères). Évalue strategic_score (équilibre S+O vs W+T) et confidence."
     )
 
 
@@ -91,9 +97,10 @@ def _porter_prompt(ticker: str, sector: str, industry: str, description: str, cu
         f"des fournisseurs, pouvoir de négociation des clients, menace des produits de "
         f"substitution, intensité concurrentielle) au {current_date}, attribue une "
         f"intensité (LOW/MEDIUM/HIGH) où LOW = favorable à l'entreprise, et fournis "
-        f"une rationale courte avec preuves vérifiées (concurrents nommés actuels, parts "
-        f"de marché récentes). Termine par competitive_position_summary (force du moat "
-        f"actuel). Évalue strategic_score (1 = moat large, 0 = pas de moat) et confidence."
+        f"une rationale (≤ {MAX_RATIONALE_CHARS} caractères) avec preuves vérifiées "
+        f"(concurrents nommés actuels, parts de marché récentes). Termine par "
+        f"competitive_position_summary (≤ {MAX_PROSE_CHARS} caractères, force du moat actuel). "
+        f"Évalue strategic_score (1 = moat large, 0 = pas de moat) et confidence."
     )
 
 
