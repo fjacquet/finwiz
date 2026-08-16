@@ -6,7 +6,6 @@ import time
 import pytest
 
 from finwiz.infrastructure.resilience.crew_execution import (
-    CircuitBreakerOpenError,
     _crew_circuit_open,
     _crew_failures,
     execute_crew_with_timeout,
@@ -87,6 +86,9 @@ async def test_execute_crew_with_timeout_exception(mocker):
 @pytest.mark.asyncio
 async def test_circuit_breaker_opens_after_threshold(mocker):
     """Circuit breaker opens after FAILURE_THRESHOLD consecutive failures."""
+    from finwiz.infrastructure.resilience import crew_execution
+
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.05)
     crew = _make_crew(mocker, side_effect=RuntimeError("fail"))
 
     # Fail FAILURE_THRESHOLD times
@@ -97,9 +99,14 @@ async def test_circuit_breaker_opens_after_threshold(mocker):
     assert _crew_failures["flaky_crew"] == FAILURE_THRESHOLD
     assert "flaky_crew" in _crew_circuit_open
 
-    # Next call should raise CircuitBreakerOpenError without even trying
-    with pytest.raises(CircuitBreakerOpenError, match="Circuit breaker open for flaky_crew"):
+    # Next call waits out the (mocked, near-zero) cooldown and retries — the
+    # crew still fails, so the caller sees the crew's own error rather than an
+    # instant CircuitBreakerOpenError. Task 2: the breaker now costs a holding
+    # time, not its analysis attempt.
+    with pytest.raises(RuntimeError, match="fail"):
         await execute_crew_with_timeout("flaky_crew", crew, {"ticker": "FAIL"}, timeout=10)
+
+    assert crew.kickoff.call_count == FAILURE_THRESHOLD + 1
 
 
 @pytest.mark.asyncio
@@ -120,17 +127,48 @@ async def test_circuit_breaker_half_open_after_recovery(mocker):
 
 @pytest.mark.asyncio
 async def test_circuit_breaker_still_open_before_recovery(mocker):
-    """Circuit breaker stays open if recovery timeout has not passed."""
+    """Circuit breaker waits out the remaining cooldown, then retries.
+
+    Previously asserted an immediate CircuitBreakerOpenError with kickoff
+    never called. Task 2 replaces that fail-fast with wait-then-retry: a
+    holding pays for an open breaker in time (bounded by the outer
+    FINWIZ_HOLDING_TIMEOUT), not by losing its in-flight analysis. See
+    test_open_breaker_waits_for_cooldown_then_retries for the isolated case.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.05)
     _crew_failures["still_open"] = FAILURE_THRESHOLD
     _crew_circuit_open["still_open"] = time.time()  # Just opened
 
-    crew = _make_crew(mocker, return_value="should_not_reach")
+    crew = _make_crew(mocker, return_value="recovered_after_wait")
 
-    with pytest.raises(CircuitBreakerOpenError):
-        await execute_crew_with_timeout("still_open", crew, {"ticker": "X"}, timeout=10)
+    result = await execute_crew_with_timeout("still_open", crew, {"ticker": "X"}, timeout=10)
 
-    # kickoff should NOT have been called
-    crew.kickoff.assert_not_called()
+    assert result == "recovered_after_wait"
+    crew.kickoff.assert_called_once()
+    assert "still_open" not in _crew_circuit_open
+
+
+@pytest.mark.asyncio
+async def test_open_breaker_waits_for_cooldown_then_retries(mocker):
+    """An open breaker should cost a holding time, not its analysis."""
+    from finwiz.infrastructure.resilience import crew_execution
+
+    crew_execution.reset_circuit_breakers()
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
+    crew_execution._crew_circuit_open["deep_analysis_stock"] = time.time()
+
+    good_crew = mocker.Mock()
+    good_crew.kickoff = mocker.Mock(return_value="ok")
+
+    # NOTE: the task brief's snippet called execute_crew_with_timeout(good_crew,
+    # "deep_analysis_stock", {}) — the real signature is
+    # (crew_name, crew_instance, inputs, timeout=None). Using the real order below.
+    result = await crew_execution.execute_crew_with_timeout("deep_analysis_stock", good_crew, {})
+
+    assert result == "ok"
+    good_crew.kickoff.assert_called_once()
 
 
 @pytest.mark.asyncio

@@ -110,9 +110,18 @@ async def execute_crew_with_timeout(
         The crew result from kickoff()
 
     Raises:
-        CircuitBreakerOpenError: If the crew's circuit breaker is open
         TimeoutError: If the crew exceeds the timeout
         Exception: Any exception from crew.kickoff() is re-raised after tracking
+
+    Note:
+        An open circuit breaker no longer fails instantly. Holdings run
+        concurrently, so an instant failure here rejects every queued holding
+        in the same moment (the 31-holding cascade of 2026-08-16). Instead,
+        this call waits out the remaining recovery cooldown and then retries —
+        a holding pays for the breaker with time (still bounded by the outer
+        FINWIZ_HOLDING_TIMEOUT), not by losing its in-flight analysis.
+        CircuitBreakerOpenError is kept for API stability but is no longer
+        raised by this function.
 
     """
     effective_timeout = timeout if timeout is not None else CREW_TIMEOUT
@@ -123,12 +132,16 @@ async def execute_crew_with_timeout(
     # --- Circuit breaker check ---
     if crew_name in _crew_circuit_open:
         elapsed = time.time() - _crew_circuit_open[crew_name]
-        if elapsed < recovery_timeout:
-            logger.warning(f"Circuit breaker OPEN for {crew_name} ({elapsed:.0f}s < {recovery_timeout}s)")
-            raise CircuitBreakerOpenError(f"Circuit breaker open for {crew_name}")
-        # Half-open: recovery timeout passed, allow retry
+        remaining = recovery_timeout - elapsed
+        if remaining > 0:
+            # Wait the cooldown out rather than failing instantly. Holdings run
+            # concurrently, so fail-fast here rejects every queued holding in the
+            # same instant — the 31-holding cascade of 2026-08-16. The outer
+            # FINWIZ_HOLDING_TIMEOUT still bounds total time.
+            logger.warning(f"Circuit breaker OPEN for {crew_name}; waiting {remaining:.0f}s for cooldown")
+            await asyncio.sleep(remaining)
         logger.info(f"Circuit breaker half-open for {crew_name}, allowing retry")
-        del _crew_circuit_open[crew_name]
+        _crew_circuit_open.pop(crew_name, None)
 
     # --- Execute with timeout ---
     from finwiz.infrastructure.monitoring.litellm_callback import clear_crew_context, set_crew_context
