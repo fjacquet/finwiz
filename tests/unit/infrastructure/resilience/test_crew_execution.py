@@ -129,11 +129,13 @@ async def test_circuit_breaker_half_open_after_recovery(mocker):
 async def test_circuit_breaker_still_open_before_recovery(mocker):
     """Circuit breaker waits out the remaining cooldown, then retries.
 
-    Previously asserted an immediate CircuitBreakerOpenError with kickoff
-    never called. Task 2 replaces that fail-fast with wait-then-retry: a
-    holding pays for an open breaker in time (bounded by the outer
-    FINWIZ_HOLDING_TIMEOUT), not by losing its in-flight analysis. See
-    test_open_breaker_waits_for_cooldown_then_retries for the isolated case.
+    Previously asserted an immediate breaker-open error with kickoff never
+    called (that error type has since been deleted -- nothing raises it).
+    Task 2 replaces that fail-fast with wait-then-retry: a holding pays for
+    an open breaker in time, not by losing its in-flight analysis. This wait
+    is NOT bounded by FINWIZ_HOLDING_TIMEOUT -- see the module docstring's
+    Note for why. See test_open_breaker_waits_for_cooldown_then_retries for
+    the isolated case.
     """
     from finwiz.infrastructure.resilience import crew_execution
 
@@ -216,11 +218,13 @@ async def test_validation_error_does_not_increment_breaker(mocker):
 
 
 def test_timeout_does_not_increment_breaker_counter(mocker):
-    """A timeout is a per-holding event, not an upstream outage.
+    """A handful of timeouts is a per-holding event, not an upstream outage.
 
     Five slow holdings must not blind 31 healthy ones. ValidationError already
-    bypasses the counter for the same reason (the 2026-04-28 ETF cascade); this
-    pins the timeout half of that lesson.
+    bypasses the (non-timeout) failure counter for the same reason (the
+    2026-04-28 ETF cascade); this pins the timeout half of that lesson. Six
+    timeouts stay well under the separate, higher timeout threshold (default
+    15) added for the hung-provider case below.
     """
     from finwiz.infrastructure.resilience import crew_execution
 
@@ -235,7 +239,139 @@ def test_timeout_does_not_increment_breaker_counter(mocker):
             asyncio.run(crew_execution.execute_crew_with_timeout("deep_analysis_stock", slow_crew, {}))
 
     assert crew_execution._crew_failures.get("deep_analysis_stock", 0) == 0
+    assert crew_execution._crew_timeout_failures.get("deep_analysis_stock", 0) == 6
     assert "deep_analysis_stock" not in crew_execution._crew_circuit_open
+
+
+def test_hung_provider_eventually_opens_breaker_via_timeout_counter(mocker):
+    """A provider that hangs on every request must still trip the breaker.
+
+    Bug: excluding timeouts from the failure counter entirely (the original
+    Task 1 fix) means a fully hung upstream produces only TimeoutErrors and
+    the breaker never opens -- every one of 64 holdings burns a full
+    CREW_TIMEOUT before giving up. Fix: timeouts get their own counter with
+    its own (higher) threshold, so a hung provider is still detected.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    crew_execution.reset_circuit_breakers()
+    mocker.patch.object(crew_execution, "_get_timeout_failure_threshold", lambda: 3)
+    mocker.patch.object(crew_execution, "CREW_TIMEOUT", 0.01)
+
+    hung_crew = mocker.Mock()
+    hung_crew.kickoff = lambda inputs: time.sleep(1.0)
+
+    for _ in range(3):
+        with pytest.raises(TimeoutError):
+            asyncio.run(crew_execution.execute_crew_with_timeout("hung_crew", hung_crew, {}))
+
+    assert crew_execution._crew_timeout_failures["hung_crew"] == 3
+    assert "hung_crew" in crew_execution._crew_circuit_open
+    # The non-timeout counter must stay untouched -- opening came from the
+    # timeout counter, not a reinterpretation of timeouts as generic failures.
+    assert crew_execution._crew_failures.get("hung_crew", 0) == 0
+
+
+@pytest.mark.asyncio
+async def test_one_slow_holding_does_not_open_breaker(mocker):
+    """A single slow ticker among many healthy ones must never trip the breaker."""
+    from finwiz.infrastructure.resilience import crew_execution
+
+    mocker.patch.object(crew_execution, "_get_timeout_failure_threshold", lambda: 15)
+
+    def slow_kickoff(inputs=None):
+        time.sleep(2)
+
+    crew = _make_crew(mocker, side_effect=slow_kickoff)
+
+    with pytest.raises(TimeoutError):
+        await execute_crew_with_timeout("one_slow", crew, {"ticker": "SLOW"}, timeout=0.1)
+
+    assert crew_execution._crew_timeout_failures.get("one_slow", 0) == 1
+    assert "one_slow" not in crew_execution._crew_circuit_open
+
+
+@pytest.mark.asyncio
+async def test_failure_counter_reset_on_half_open_prevents_instant_reopen(mocker):
+    """After a cooldown elapses, a single subsequent failure must not immediately reopen it.
+
+    Bug: the failure counter stayed at FAILURE_THRESHOLD after the cooldown
+    expired, so the very next failure made it threshold+1 >= threshold and
+    reopened the breaker instantly -- a live-but-flaky provider became a loop
+    where every holding paid a full cooldown for one failure. Fix: reset the
+    counter on the half-open transition.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    _crew_failures["flaky_reset"] = FAILURE_THRESHOLD
+    _crew_circuit_open["flaky_reset"] = time.time() - RECOVERY_TIMEOUT - 1  # already past cooldown
+
+    crew = _make_crew(mocker, side_effect=RuntimeError("still flaky"))
+
+    with pytest.raises(RuntimeError, match="still flaky"):
+        await execute_crew_with_timeout("flaky_reset", crew, {"ticker": "X"}, timeout=10)
+
+    # One failure after half-open -> counter is 1, not 6, so the breaker must
+    # NOT have reopened.
+    assert crew_execution._crew_failures["flaky_reset"] == 1
+    assert "flaky_reset" not in crew_execution._crew_circuit_open
+
+
+@pytest.mark.asyncio
+async def test_cooldown_reopened_during_wait_is_not_cleared_by_stale_waiter(mocker):
+    """A cooldown re-opened by a concurrent holding during another's sleep must not be cleared.
+
+    Bug: `remaining` was snapshotted before `await asyncio.sleep(remaining)`,
+    but the `pop` after the sleep was unconditional. A breaker re-opened by a
+    concurrent holding *during* the sleep got wiped by this coroutine,
+    discarding that fresh cooldown.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
+    first_open_ts = time.time()
+    crew_execution._crew_circuit_open["racy_crew"] = first_open_ts
+
+    async def reopen_mid_wait() -> None:
+        # Fires while the main waiter below is still asleep (its cooldown is
+        # 0.2s; this reopens with a fresh timestamp partway through).
+        await asyncio.sleep(0.05)
+        with crew_execution._state_lock:
+            crew_execution._crew_circuit_open["racy_crew"] = time.time()
+
+    crew = _make_crew(mocker, return_value="ok")
+
+    reopener = asyncio.create_task(reopen_mid_wait())
+    result = await execute_crew_with_timeout("racy_crew", crew, {"ticker": "X"}, timeout=10)
+    await reopener
+
+    # The stale waiter (snapshotted first_open_ts) must not have popped the
+    # fresher cooldown set by the concurrent reopen.
+    assert result == "ok"
+    assert "racy_crew" in crew_execution._crew_circuit_open
+    assert crew_execution._crew_circuit_open["racy_crew"] != first_open_ts
+
+
+@pytest.mark.asyncio
+async def test_concurrent_waiters_on_same_crew_do_not_serialize_cooldown(mocker):
+    """N concurrent holdings hitting the same open breaker must wait roughly
+    one cooldown period in total, not N cooldown periods serialized.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
+    crew_execution._crew_circuit_open["parallel_crew"] = time.time()
+
+    crew = _make_crew(mocker, return_value="ok")
+
+    start = time.monotonic()
+    results = await asyncio.gather(*(execute_crew_with_timeout("parallel_crew", crew, {"ticker": f"T{i}"}, timeout=10) for i in range(5)))
+    elapsed = time.monotonic() - start
+
+    assert results == ["ok"] * 5
+    # Serialized would take ~5 * 0.2s = 1.0s; concurrent should stay well
+    # under that -- generous bound to absorb scheduling jitter.
+    assert elapsed < 0.6
 
 
 @pytest.mark.asyncio
