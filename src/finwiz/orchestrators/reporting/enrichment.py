@@ -104,7 +104,43 @@ class ReportEnrichmentMixin:
             cost_summary=cost_summary,
         )
 
+        self._write_posture_page(
+            report_path,
+            portfolio_strategic_posture,
+            holdings_strategic=self._extract_holdings_strategic(deep_analysis_results, records=enriched_records),
+        )
+
         return report_path
+
+    def _write_posture_page(
+        self,
+        report_path: str,
+        portfolio_strategic_posture: dict[str, Any] | None,
+        *,
+        holdings_strategic: dict[str, dict] | None,
+    ) -> None:
+        """Write the dedicated posture page beside the family report.
+
+        Best-effort by design: the family report is the primary deliverable and
+        must be returned regardless of whether this companion page could be
+        written. The failure is still logged at warning level rather than
+        swallowed silently -- a bare ``except Exception`` in this same mixin
+        once turned a `TypeError` into a silently missing posture section
+        (Task 7), and narrowing that gap was the whole point.
+        """
+        if not portfolio_strategic_posture:
+            return
+        try:
+            from finwiz.reporting.sections.posture_page import generate_posture_page
+
+            posture_path = Path(report_path).parent / "finwiz_posture_strategique.html"
+            posture_path.write_text(
+                generate_posture_page(portfolio_strategic_posture, holdings_strategic=holdings_strategic),
+                encoding="utf-8",
+            )
+            self.logger.info("Posture page written: %s", posture_path)
+        except Exception as e:
+            self.logger.warning("Failed to write posture page beside %s: %s", report_path, e)
 
     def _load_opportunity_shortlist(self) -> Any:
         """Return the gap-fill opportunity shortlist (state preferred, file fallback).

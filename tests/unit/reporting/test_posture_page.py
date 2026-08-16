@@ -228,3 +228,52 @@ class TestStandaloneDocument:
         assert "<html" in html
         assert "</html>" in html
         assert 'lang="fr"' in html
+
+
+class TestFamilySectionSummarisesAndLinksOut:
+    """The family artifact carries a verdict and a link, not the analysis (Task 11).
+
+    ``generate_strategic_posture_section`` lives in
+    ``finwiz.reporting.sections.portfolio_summary`` and is re-exported through
+    the ``section_generators`` facade; tests import from the facade because
+    that's the stable public surface.
+    """
+
+    def test_family_section_summarises_and_links_out(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        html = generate_strategic_posture_section(_full_posture())
+
+        assert "Environnement porteur." in html
+        assert "Moats solides." in html
+        assert "Équilibré." in html
+        assert "finwiz_posture_strategique.html" in html
+        assert "PESTEL" not in html
+        assert "SWOT" not in html
+        assert "Porter" not in html
+        assert len(html) < 2000
+
+    def test_coverage_appears_beside_the_score_not_alone(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        html = generate_strategic_posture_section(_full_posture(holdings_covered=26, holdings_total=64))
+
+        assert "26/64" in html
+        # The score paragraph itself must carry the coverage fraction --
+        # never the score alone. That's the defect this whole branch removes.
+        para = html.split("<p><strong>", 1)[1].split("</p>", 1)[0]
+        assert "26/64" in para
+        assert "71 %" in para
+
+    def test_model_supplied_verdicts_are_escaped(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        html = generate_strategic_posture_section(_full_posture(macro_verdict="<script>alert(1)</script>"))
+
+        assert "<script>" not in html
+        assert "&lt;script&gt;" in html
+
+    def test_no_posture_renders_nothing(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        assert generate_strategic_posture_section(None) == ""

@@ -228,6 +228,36 @@
       border: 1px solid #fecaca;
       color: #991b1b;
     }
+
+    /* Trust banner (data-quality coverage signal, render_trust_banner()) */
+    .trust-banner-green, .trust-banner-amber, .trust-banner-red, .trust-banner-blocked {
+      border-radius: 12px;
+      padding: 14px 20px;
+      margin: 16px 0;
+      border: 1px solid;
+      font-size: 0.95rem;
+    }
+    .trust-banner-green {
+      background: var(--accent-soft);
+      border-color: #a7f3d0;
+      color: var(--accent-strong);
+    }
+    .trust-banner-amber {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: #92400e;
+    }
+    .trust-banner-red {
+      background: #fef2f2;
+      border-color: #fecaca;
+      color: #991b1b;
+    }
+    .trust-banner-blocked {
+      background: #1e293b;
+      border-color: #0f172a;
+      color: #fca5a5;
+      font-weight: 700;
+    }
     footer {
       margin-top: 40px;
       padding: 24px;
@@ -280,6 +310,10 @@
       .success { background: var(--accent-soft); border-color: #14532d; color: var(--accent-strong); }
       .warning { background: #3a2f0b; border-color: #5a4d10; color: #fcd34d; }
       .danger { background: #3a1414; border-color: #5a2020; color: #fca5a5; }
+      .trust-banner-green { background: var(--accent-soft); border-color: #14532d; color: var(--accent-strong); }
+      .trust-banner-amber { background: #3a2f0b; border-color: #5a4d10; color: #fcd34d; }
+      .trust-banner-red { background: #3a1414; border-color: #5a2020; color: #fca5a5; }
+      .trust-banner-blocked { background: #000000; border-color: #450a0a; color: #fca5a5; }
       footer { border-top-color: var(--line); }
       .ticker-link { color: var(--accent-strong); border-bottom-color: #34d39966; }
       .ticker-link:hover { color: var(--accent); background-color: var(--accent-soft); }

@@ -29,6 +29,31 @@ class TestReportCssAsset:
         assert get_report_css() is get_report_css()  # functools.cache — no re-read per report
 
 
+class TestTrustBannerCss:
+    """The colour-coded data-quality banner (render_trust_banner) must actually be styled.
+
+    python_report_generator.py applies trust-banner-{green,amber,red,blocked}
+    classes but report_styles.css had zero rules for any of them -- a status
+    signal invisible to the family reading the report.
+    """
+
+    def test_all_four_trust_banner_states_have_css_rules(self):
+        css = get_report_css()
+        for cls in ("trust-banner-green", "trust-banner-amber", "trust-banner-red", "trust-banner-blocked"):
+            assert f".{cls}" in css, f"missing CSS rule for .{cls}"
+
+    def test_trust_banner_states_are_visually_distinct(self):
+        css = get_report_css()
+        blocks = {}
+        for cls in ("trust-banner-green", "trust-banner-amber", "trust-banner-red", "trust-banner-blocked"):
+            start = css.index(f".{cls}")
+            end = css.index("}", start)
+            blocks[cls] = css[start:end]
+        # Every state must resolve to its own rule body -- no two states may
+        # share a verbatim block, or they'd be indistinguishable at a glance.
+        assert len(set(blocks.values())) == 4
+
+
 class TestCssElementsAssets:
     def test_base_styles_nonempty(self):
         css = get_base_styles()

@@ -229,3 +229,95 @@ def test_genuine_runtime_failure_still_returns_none(mocker):
 
     assert result is None
     assert mixin.logger.warnings, "a runtime failure should still be logged"
+
+
+def _wired_mixin(mocker) -> ReportEnrichmentMixin:
+    """A mixin with every ``_generate_python_report`` dependency stubbed except
+    the posture-page write path, so tests can isolate that wiring."""
+    mixin = _mixin()
+    mixin.state = mocker.Mock(
+        session_id="s1",
+        stress_test_results=None,
+        macro_snapshot=None,
+        run_ledger=None,
+        deep_analysis_coverage=None,
+        opportunity_shortlist=None,
+    )
+    mocker.patch.object(mixin, "_read_discovery_results", return_value=None)
+    mocker.patch.object(mixin, "_extract_holdings_sentiment", return_value=None)
+    mocker.patch.object(mixin, "_collect_economic_calendar", return_value=None)
+    mocker.patch.object(mixin, "_extract_holdings_insights", return_value=None)
+    mocker.patch.object(mixin, "_load_opportunity_shortlist", return_value=None)
+    mocker.patch.object(mixin, "_read_live_cost_summary", return_value=None)
+    mocker.patch.object(mixin, "_iter_enriched_records", return_value=iter([]))
+    return mixin
+
+
+def test_posture_page_is_written_beside_the_family_report(mocker, tmp_path):
+    """Until the page is written to disk, it's code that nothing calls."""
+    import datetime as _dt
+
+    from finwiz.schemas.portfolio_review import PortfolioReview
+
+    mixin = _wired_mixin(mocker)
+    report_path = str(tmp_path / "finwiz_family_financial_plan.html")
+    mocker.patch.object(mixin, "_extract_holdings_strategic", return_value={"AAPL": _valid_strategic()})
+    mocker.patch.object(mixin, "_synthesize_portfolio_strategic", return_value=_valid_posture().model_dump(mode="json"))
+    mocker.patch("finwiz.reporting.python_report_generator.generate_python_report", return_value=report_path)
+
+    portfolio_review = PortfolioReview(as_of=_dt.datetime.now(), holdings=[_holding("AAPL", eur_value=100.0)])
+
+    result_path = mixin._generate_python_report(portfolio_review, deep_analysis_results={"AAPL": {}})
+
+    assert result_path == report_path
+    posture_path = tmp_path / "finwiz_posture_strategique.html"
+    assert posture_path.exists()
+    html = posture_path.read_text(encoding="utf-8")
+    assert "Posture Stratégique" in html
+    assert "AAPL" in html  # holdings_strategic was threaded through
+
+
+def test_no_posture_skips_the_page_write(mocker, tmp_path):
+    """Nothing to write beats writing a page for a posture that doesn't exist."""
+    import datetime as _dt
+
+    from finwiz.schemas.portfolio_review import PortfolioReview
+
+    mixin = _wired_mixin(mocker)
+    report_path = str(tmp_path / "finwiz_family_financial_plan.html")
+    mocker.patch.object(mixin, "_extract_holdings_strategic", return_value=None)
+    mocker.patch.object(mixin, "_synthesize_portfolio_strategic", return_value=None)
+    mocker.patch("finwiz.reporting.python_report_generator.generate_python_report", return_value=report_path)
+
+    portfolio_review = PortfolioReview(as_of=_dt.datetime.now(), holdings=[_holding("AAPL", eur_value=100.0)])
+
+    result_path = mixin._generate_python_report(portfolio_review, deep_analysis_results={"AAPL": {}})
+
+    assert result_path == report_path
+    assert not (tmp_path / "finwiz_posture_strategique.html").exists()
+
+
+def test_posture_page_write_failure_does_not_break_the_family_report(mocker, tmp_path):
+    """A broken companion page must never take down the primary deliverable --
+    but the failure must still be visible, not swallowed silently (Task 7)."""
+    import datetime as _dt
+
+    from finwiz.schemas.portfolio_review import PortfolioReview
+
+    mixin = _wired_mixin(mocker)
+    report_path = str(tmp_path / "finwiz_family_financial_plan.html")
+    mocker.patch.object(mixin, "_extract_holdings_strategic", return_value=None)
+    mocker.patch.object(mixin, "_synthesize_portfolio_strategic", return_value=_valid_posture().model_dump(mode="json"))
+    mocker.patch("finwiz.reporting.python_report_generator.generate_python_report", return_value=report_path)
+    mocker.patch(
+        "finwiz.reporting.sections.posture_page.generate_posture_page",
+        side_effect=RuntimeError("boom"),
+    )
+
+    portfolio_review = PortfolioReview(as_of=_dt.datetime.now(), holdings=[_holding("AAPL", eur_value=100.0)])
+
+    result_path = mixin._generate_python_report(portfolio_review, deep_analysis_results={"AAPL": {}})
+
+    assert result_path == report_path
+    assert not (tmp_path / "finwiz_posture_strategique.html").exists()
+    assert mixin.logger.warnings, "the write failure must be logged, not swallowed silently"

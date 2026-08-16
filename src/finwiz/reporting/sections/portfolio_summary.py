@@ -87,56 +87,35 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
 
 
 def generate_strategic_posture_section(posture: dict | None) -> str:
-    """Render the portfolio-wide strategic posture (PESTEL/SWOT/Porter synthesis).
+    """Verdict and link only; the analyst-length synthesis lives on its own page.
 
-    ``posture`` is a :class:`PortfolioStrategicPosture` model_dump. Returns "" when
-    no posture is available so the surrounding report stays clean.
+    This section used to embed the full PESTEL/SWOT/Porter prose, which rendered
+    as a wall of raw markdown in a document meant for a family. ``posture`` is a
+    :class:`PortfolioStrategicPosture` model_dump. Returns "" when no posture is
+    available so the surrounding report stays clean.
     """
     if not posture or not isinstance(posture, dict):
         return ""
 
-    def _list(items: list[str] | None, emoji: str) -> str:
-        if not items:
-            return ""
-        return "<ul>" + "".join(f"<li>{emoji} {escape(str(x))}</li>" for x in items) + "</ul>"
+    covered = posture.get("holdings_covered")
+    total = posture.get("holdings_total")
+    # The score is never shown alone -- the fraction it speaks for goes right
+    # beside it, in the same paragraph.
+    coverage = f" (sur {covered}/{total} lignes)" if covered is not None and total else ""
 
-    macro = escape(posture.get("macro_environment_summary") or "")
-    competitive = escape(posture.get("competitive_landscape_summary") or "")
-    overall = escape(posture.get("overall_assessment") or "")
-    # Schema defaults strategic_score / confidence to 0.5; only fall back to that
-    # when the field is genuinely missing (key absent or None) — never use `or 0.5`
-    # because it masks a legitimate AI-rated 0.0 (worst signal) as 50% (neutral).
-    score_raw = posture.get("strategic_score")
-    conf_raw = posture.get("confidence")
-    score_pct = round((score_raw if score_raw is not None else 0.5) * 100)
-    conf_pct = round((conf_raw if conf_raw is not None else 0.5) * 100)
-    themes = posture.get("dominant_themes") or []
-    themes_html = "".join(f'<span class="badge">{escape(str(t))}</span>' for t in themes)
+    score_pct = round((posture.get("strategic_score") or 0.0) * 100)
+    conf_pct = round((posture.get("confidence") or 0.0) * 100)
 
     return f"""
   <div class="section">
     <h2>🎯 Posture Stratégique du Portefeuille</h2>
-    <div class="metrics-grid">
-      <div class="metric-card">
-        <h4>Score Stratégique Global</h4>
-        <p class="metric-value">{score_pct}%</p>
-        <small>Confiance : {conf_pct}%</small>
-      </div>
-    </div>
-
-    {f"<h3>🌍 Environnement Macro</h3><p>{macro}</p>" if macro else ""}
-    {f"<h3>⚔️ Paysage Concurrentiel</h3><p>{competitive}</p>" if competitive else ""}
-
-    <h3>📐 SWOT Agrégé</h3>
-    <div class="metrics-grid">
-      <div class="metric-card"><h4>💪 Forces du portefeuille</h4>{_list(posture.get("portfolio_strengths"), "✅")}</div>
-      <div class="metric-card"><h4>🪫 Faiblesses</h4>{_list(posture.get("portfolio_weaknesses"), "•")}</div>
-      <div class="metric-card"><h4>🚀 Opportunités</h4>{_list(posture.get("portfolio_opportunities"), "→")}</div>
-      <div class="metric-card"><h4>⚡ Menaces</h4>{_list(posture.get("portfolio_threats"), "⚠️")}</div>
-    </div>
-
-    {f"<h3>🧭 Thèmes Dominants</h3><div>{themes_html}</div>" if themes_html else ""}
-    {f"<h3>📝 Synthèse</h3><p>{overall}</p>" if overall else ""}
+    <p><strong>{score_pct} %</strong>{coverage} · Confiance : {conf_pct} %</p>
+    <ul>
+      <li>{escape(posture.get("macro_verdict") or "")}</li>
+      <li>{escape(posture.get("competitive_verdict") or "")}</li>
+      <li>{escape(posture.get("swot_verdict") or "")}</li>
+    </ul>
+    <p><a href="finwiz_posture_strategique.html">Analyse stratégique complète →</a></p>
   </div>
 """
 
