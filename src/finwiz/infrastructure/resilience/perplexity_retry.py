@@ -22,9 +22,15 @@ from __future__ import annotations
 
 import asyncio
 import os
+import threading
+from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from crewai_custom_tools import perplexity_structured
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 from finwiz.tools.logger import get_logger
 from finwiz.tools.perplexity_errors import PerplexityFallbackManager
@@ -39,15 +45,59 @@ PERPLEXITY_CONCURRENCY = int(os.getenv("PERPLEXITY_CONCURRENCY", "4"))
 # PerplexityFallbackManager.calculate_backoff_delay elsewhere in the codebase.
 _MAX_BACKOFF_DELAY = 60.0
 
-_semaphore: asyncio.Semaphore | None = None
+# How long a coroutine waits between attempts to claim a throttle slot. Slots are
+# held for the duration of a network call (seconds), so a 10ms poll adds latency
+# that is invisible next to it while keeping the event loop free -- see
+# _throttle_slot() for why the wait cannot simply block.
+_SLOT_POLL_INTERVAL = 0.01
+
+_throttle: threading.BoundedSemaphore | None = None
 
 
-def get_perplexity_semaphore() -> asyncio.Semaphore:
-    """Return the process-wide Perplexity concurrency semaphore."""
-    global _semaphore
-    if _semaphore is None:
-        _semaphore = asyncio.Semaphore(PERPLEXITY_CONCURRENCY)
-    return _semaphore
+def get_perplexity_semaphore() -> threading.BoundedSemaphore:
+    """Return the process-wide Perplexity concurrency throttle.
+
+    Deliberately a ``threading`` primitive, not an ``asyncio`` one. Production
+    runs one holding per ThreadPoolExecutor worker, and a worker has no running
+    loop, so ``fetch_fact_pack_sync`` calls ``asyncio.run`` -- a *fresh event
+    loop per holding, per thread*. An ``asyncio.Semaphore`` binds to the first
+    loop that contends on it and raises ``RuntimeError`` on every other one, so
+    it throttled nothing and instead failed most of the fleet (and could park a
+    thread forever on a future owned by a dead loop). A threading semaphore
+    belongs to no loop, so the cap is genuinely process-wide however the callers
+    are scheduled.
+
+    A per-loop semaphore keyed by the running loop would silence the
+    ``RuntimeError`` but deliver no throttle at all here: each holding owns its
+    own loop, so a per-loop cap of 4 admits 4 x (number of loops) concurrent
+    calls -- precisely the self-inflicted 429 storm the cap exists to prevent.
+    """
+    global _throttle
+    if _throttle is None:
+        _throttle = threading.BoundedSemaphore(PERPLEXITY_CONCURRENCY)
+    return _throttle
+
+
+@asynccontextmanager
+async def _throttle_slot() -> AsyncIterator[None]:
+    """Hold one throttle slot for the duration of the block.
+
+    Acquires without blocking and yields to the event loop between tries.
+    Blocking on ``acquire()`` inside a coroutine would stall the whole loop --
+    and if several Perplexity coroutines were ever gathered on one loop, the
+    slot holders would be tasks on that same stalled loop and could never
+    release: a deadlock of exactly the kind this fix removes.
+
+    The wait is unordered (a thread can in principle be passed over), which is
+    acceptable for a fleet of a few dozen holdings against a cap of 4.
+    """
+    throttle = get_perplexity_semaphore()
+    while not throttle.acquire(blocking=False):
+        await asyncio.sleep(_SLOT_POLL_INTERVAL)
+    try:
+        yield
+    finally:
+        throttle.release()
 
 
 def _has_api_key() -> bool:
@@ -85,7 +135,7 @@ async def perplexity_with_retry[T: BaseModel](
 
     for attempt in range(max_attempts):
         try:
-            async with get_perplexity_semaphore():
+            async with _throttle_slot():
                 result = await perplexity_structured(
                     prompt=prompt,
                     schema=schema,

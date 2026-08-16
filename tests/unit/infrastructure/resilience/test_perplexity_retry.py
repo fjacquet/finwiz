@@ -1,10 +1,12 @@
 """Tests for the Perplexity retry wrapper."""
 
 import asyncio
+import threading
 
 import pytest
 from pydantic import BaseModel
 
+from finwiz.infrastructure.resilience import perplexity_retry
 from finwiz.infrastructure.resilience.perplexity_retry import (
     get_perplexity_semaphore,
     perplexity_with_retry,
@@ -99,6 +101,72 @@ async def test_missing_api_key_fails_fast_without_retrying(mocker, monkeypatch):
     assert inner.await_count == 0
 
 
-def test_semaphore_is_a_process_singleton():
+def test_throttle_is_a_loop_agnostic_process_singleton():
+    # Replaces the former `test_semaphore_is_a_process_singleton`, which asserted the
+    # throttle was an `asyncio.Semaphore`. That is the very property that broke it:
+    # an asyncio primitive binds to the first event loop that contends on it and
+    # raises RuntimeError for every other one. Production runs one holding per
+    # worker thread, each on its own fresh loop (deep_analysis_orchestrator ->
+    # run_in_executor -> fetch_fact_pack_sync -> asyncio.run), so the throttle must
+    # be a plain threading primitive that belongs to no loop at all.
     assert get_perplexity_semaphore() is get_perplexity_semaphore()
-    assert isinstance(get_perplexity_semaphore(), asyncio.Semaphore)
+    assert isinstance(get_perplexity_semaphore(), threading.BoundedSemaphore)
+
+
+def test_throttle_caps_concurrent_calls_across_independent_event_loops(mocker, monkeypatch):
+    """More threads than the cap, each on its own loop: no RuntimeError, real ceiling.
+
+    This is the production topology at production numbers: the deep-analysis
+    orchestrator hands each holding to a ThreadPoolExecutor worker, the worker has
+    no running loop, so ``fetch_fact_pack_sync`` takes its bare ``asyncio.run``
+    branch -- a fresh event loop per holding, per thread. A loop-bound throttle
+    fails every thread but the first with a swallowed ``RuntimeError`` (which the
+    wrapper logs as an attempt failure and turns into a ``None`` result) and can
+    park a thread forever on a future belonging to a dead loop.
+    """
+    cap = 4  # PERPLEXITY_CONCURRENCY's production default.
+    monkeypatch.setattr(perplexity_retry, "PERPLEXITY_CONCURRENCY", cap)
+    monkeypatch.setattr(perplexity_retry, "_throttle", None)
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "test-perplexity-key")
+
+    thread_count = cap + 2
+    lock = threading.Lock()
+    state = {"in_flight": 0, "max_in_flight": 0}
+    reached_cap = threading.Event()
+    warnings: list[str] = []
+
+    async def fake_call(**_kwargs):
+        with lock:
+            state["in_flight"] += 1
+            state["max_in_flight"] = max(state["max_in_flight"], state["in_flight"])
+            if state["in_flight"] >= cap:
+                reached_cap.set()
+        try:
+            # Hold the slot until `cap` calls are genuinely concurrent, so the observed
+            # ceiling is deterministic instead of a timing race. Off-loop so a waiting
+            # task on this thread's loop is never blocked by a holder on it.
+            await asyncio.to_thread(reached_cap.wait, 5.0)
+            return _Payload(value="ok")
+        finally:
+            with lock:
+                state["in_flight"] -= 1
+
+    mocker.patch.object(perplexity_retry, "perplexity_structured", new=fake_call)
+    mocker.patch.object(perplexity_retry.logger, "warning", new=lambda msg, *a, **k: warnings.append(str(msg)))
+
+    results: list[object] = []
+
+    def worker() -> None:
+        results.append(asyncio.run(perplexity_with_retry(prompt="p", schema=_Payload, system="s", max_attempts=1)))
+
+    # daemon=True so a thread parked on a dead loop's future cannot wedge the suite.
+    threads = [threading.Thread(target=worker, daemon=True) for _ in range(thread_count)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=15.0)
+
+    assert [t.name for t in threads if t.is_alive()] == [], "thread(s) deadlocked inside asyncio.run"
+    assert warnings == [], "the throttle made calls fail (the wrapper swallows the raise into a warning)"
+    assert results == [_Payload(value="ok")] * thread_count
+    assert state["max_in_flight"] == cap, f"expected the throttle to admit exactly {cap} concurrent calls, saw {state['max_in_flight']}"
