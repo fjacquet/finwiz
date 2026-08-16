@@ -139,17 +139,23 @@ async def test_circuit_breaker_still_open_before_recovery(mocker):
     """
     from finwiz.infrastructure.resilience import crew_execution
 
-    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.05)
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
     _crew_failures["still_open"] = FAILURE_THRESHOLD
     _crew_circuit_open["still_open"] = time.time()  # Just opened
 
     crew = _make_crew(mocker, return_value="recovered_after_wait")
 
+    started = time.monotonic()
     result = await execute_crew_with_timeout("still_open", crew, {"ticker": "X"}, timeout=10)
+    elapsed = time.monotonic() - started
 
     assert result == "recovered_after_wait"
     crew.kickoff.assert_called_once()
     assert "still_open" not in _crew_circuit_open
+    # The cooldown must actually be *waited out*, not merely popped. Without
+    # this, an implementation that cleared the breaker and returned
+    # immediately would satisfy every other assertion here.
+    assert elapsed >= 0.2
 
 
 @pytest.mark.asyncio
@@ -167,10 +173,16 @@ async def test_open_breaker_waits_for_cooldown_then_retries(mocker):
     # NOTE: the task brief's snippet called execute_crew_with_timeout(good_crew,
     # "deep_analysis_stock", {}) — the real signature is
     # (crew_name, crew_instance, inputs, timeout=None). Using the real order below.
+    started = time.monotonic()
     result = await crew_execution.execute_crew_with_timeout("deep_analysis_stock", good_crew, {})
+    elapsed = time.monotonic() - started
 
     assert result == "ok"
     good_crew.kickoff.assert_called_once()
+    # "Costs a holding time, not its analysis" is half a timing claim. Without
+    # this assertion the test passes against an implementation that pops the
+    # cooldown without ever sleeping.
+    assert elapsed >= 0.2
 
 
 @pytest.mark.asyncio
