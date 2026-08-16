@@ -96,6 +96,34 @@ class TestETFOpportunityExtractor:
         # Assert
         assert result is False
 
+    def test_should_include_etf_keyed_by_ticker_instead_of_symbol(self, extractor, valid_etf_candidate):
+        """NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" -- must still be included."""
+        # Arrange
+        del valid_etf_candidate["symbol"]
+        valid_etf_candidate["ticker"] = "VWCE"
+
+        # Act
+        result = extractor._should_include(valid_etf_candidate)
+
+        # Assert
+        assert result is True
+
+    def test_should_include_etf_with_no_cost_data_at_all(self, extractor, valid_etf_candidate):
+        """NewcomerDiscoveryPipeline's candidates never carry cost_metrics/key_metrics.
+
+        Missing TER data must not be treated as a de-facto high TER -- there is
+        no signal to gate on, so the candidate should pass through, not be
+        silently dropped.
+        """
+        # Arrange
+        del valid_etf_candidate["cost_metrics"]
+
+        # Act
+        result = extractor._should_include(valid_etf_candidate)
+
+        # Assert
+        assert result is True
+
     def test_should_exclude_etf_without_name(self, extractor, valid_etf_candidate):
         """Test that ETFs without name are excluded."""
         # Arrange

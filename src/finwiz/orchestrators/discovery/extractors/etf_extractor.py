@@ -32,7 +32,9 @@ class ETFOpportunityExtractor(OpportunityExtractor):
         if grade not in ["A+", "A"]:
             return False
 
-        symbol = candidate.get("symbol", "")
+        # NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" --
+        # accept either so its payload isn't silently filtered out.
+        symbol = candidate.get("symbol") or candidate.get("ticker", "")
         fund_name = candidate.get("name", "")
 
         if not (symbol and fund_name):
@@ -42,7 +44,16 @@ class ETFOpportunityExtractor(OpportunityExtractor):
         # Try cost_metrics first, then key_metrics (for test data compatibility)
         cost_metrics = candidate.get("cost_metrics", {})
         key_metrics = candidate.get("key_metrics", {})
-        ter = cost_metrics.get("ter", key_metrics.get("ter", 1.0))
+        if "ter" in cost_metrics:
+            ter = cost_metrics["ter"]
+        elif "ter" in key_metrics:
+            ter = key_metrics["ter"]
+        else:
+            # No TER signal at all -- e.g. NewcomerDiscoveryPipeline's candidates
+            # never carry cost_metrics/key_metrics. Defaulting to a fail-value
+            # here would silently exclude every candidate from that source; not
+            # having the signal is not the same as having a bad one.
+            return True
 
         return bool(ter <= 0.15)
 
@@ -65,7 +76,7 @@ class ETFOpportunityExtractor(OpportunityExtractor):
 
         """
         try:
-            symbol = candidate.get("symbol", "")
+            symbol = candidate.get("symbol") or candidate.get("ticker", "")
             fund_name = candidate.get("name", "")
             grade = candidate.get("grade", "")
 

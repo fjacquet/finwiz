@@ -32,7 +32,9 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
         if grade not in ["A+", "A"]:
             return False
 
-        symbol = candidate.get("symbol", "")
+        # NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" --
+        # accept either so its payload isn't silently filtered out.
+        symbol = candidate.get("symbol") or candidate.get("ticker", "")
         crypto_name = candidate.get("name", "")
 
         if not (symbol and crypto_name):
@@ -40,7 +42,16 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
 
         # Check market cap threshold
         # Try market_cap_usd first, then market_cap (for test data compatibility)
-        market_cap = candidate.get("market_cap_usd", candidate.get("market_cap", 0))
+        if "market_cap_usd" in candidate:
+            market_cap = candidate["market_cap_usd"]
+        elif "market_cap" in candidate:
+            market_cap = candidate["market_cap"]
+        else:
+            # No market-cap signal at all -- e.g. NewcomerDiscoveryPipeline's
+            # candidates never carry market_cap_usd/market_cap. Defaulting to a
+            # fail-value here would silently exclude every candidate from that
+            # source; not having the signal is not the same as having a bad one.
+            return True
 
         return bool(market_cap >= 10_000_000_000)  # $10B minimum
 
@@ -63,7 +74,7 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
 
         """
         try:
-            symbol = candidate.get("symbol", "")
+            symbol = candidate.get("symbol") or candidate.get("ticker", "")
             crypto_name = candidate.get("name", "")
             grade = candidate.get("grade", "")
 

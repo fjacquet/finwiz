@@ -98,6 +98,34 @@ class TestCryptoOpportunityExtractor:
         # Assert
         assert result is False
 
+    def test_should_include_crypto_keyed_by_ticker_instead_of_symbol(self, extractor, valid_crypto_candidate):
+        """NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" -- must still be included."""
+        # Arrange
+        del valid_crypto_candidate["symbol"]
+        valid_crypto_candidate["ticker"] = "BTC-USD"
+
+        # Act
+        result = extractor._should_include(valid_crypto_candidate)
+
+        # Assert
+        assert result is True
+
+    def test_should_include_crypto_with_no_market_cap_data_at_all(self, extractor, valid_crypto_candidate):
+        """NewcomerDiscoveryPipeline's candidates never carry market_cap_usd/market_cap.
+
+        Missing market-cap data must not be treated as a de-facto zero market
+        cap -- there is no signal to gate on, so the candidate should pass
+        through, not be silently dropped.
+        """
+        # Arrange
+        del valid_crypto_candidate["market_cap_usd"]
+
+        # Act
+        result = extractor._should_include(valid_crypto_candidate)
+
+        # Assert
+        assert result is True
+
     def test_should_exclude_crypto_without_name(self, extractor, valid_crypto_candidate):
         """Test that cryptos without name are excluded."""
         # Arrange

@@ -31,7 +31,9 @@ class StockOpportunityExtractor(OpportunityExtractor):
         if grade not in ["A+", "A"]:
             return False
 
-        symbol = candidate.get("symbol", "")
+        # NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" --
+        # accept either so its payload isn't silently filtered out.
+        symbol = candidate.get("symbol") or candidate.get("ticker", "")
         company_name = candidate.get("name", "")
 
         return bool(symbol and company_name)
@@ -55,7 +57,7 @@ class StockOpportunityExtractor(OpportunityExtractor):
 
         """
         try:
-            symbol = candidate.get("symbol", "")
+            symbol = candidate.get("symbol") or candidate.get("ticker", "")
             company_name = candidate.get("name", "")
             grade = candidate.get("grade", "")
 

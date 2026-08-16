@@ -87,6 +87,31 @@ class TestStockOpportunityExtractor:
         # Assert
         assert result is False
 
+    def test_should_include_stock_keyed_by_ticker_instead_of_symbol(self, extractor, valid_stock_candidate):
+        """NewcomerDiscoveryPipeline's writer emits "ticker", not "symbol" -- must still be included."""
+        # Arrange
+        del valid_stock_candidate["symbol"]
+        valid_stock_candidate["ticker"] = "NVDA"
+
+        # Act
+        result = extractor._should_include(valid_stock_candidate)
+
+        # Assert
+        assert result is True
+
+    def test_should_build_opportunity_from_ticker_keyed_candidate(self, extractor, valid_stock_candidate):
+        """_build_opportunity must also fall back to "ticker" for the symbol field."""
+        # Arrange
+        del valid_stock_candidate["symbol"]
+        valid_stock_candidate["ticker"] = "NVDA"
+
+        # Act
+        opportunity = extractor._build_opportunity(valid_stock_candidate, 0)
+
+        # Assert
+        assert opportunity is not None
+        assert opportunity["symbol"] == "NVDA"
+
     def test_should_exclude_stock_without_name(self, extractor, valid_stock_candidate):
         """Test that stocks without name are excluded."""
         # Arrange
