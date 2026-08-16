@@ -29,7 +29,9 @@ FinWiz provides specialized crews for different asset types:
 
 ### Portfolio Analysis
 
-- **PortfolioReviewCrew** - Portfolio holdings analysis and recommendations
+- `PortfolioReviewCrew` does not exist. Portfolio holdings analysis and
+  recommendations are handled by `ValidationOrchestrator` (Python, not a
+  crew) — see `orchestrators/validation_orchestrator.py`.
 - **PortfolioRebalancingCrew** - Portfolio optimization and rebalancing
 - See [Portfolio Crews](api/crews.md) for details
 
@@ -81,8 +83,11 @@ New to the FinWiz API? Check out these resources:
 
 ### Running Stock Analysis
 
+`finwiz/crews/stock_crew/` has no `__init__.py` and re-exports nothing —
+import from the submodule:
+
 ```python
-from finwiz.crews.stock_crew import StockCrew
+from finwiz.crews.stock_crew.stock_crew import StockCrew
 
 crew = StockCrew()
 result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
@@ -91,8 +96,11 @@ print(result.raw)
 
 ### Portfolio Review
 
+There is no `finwiz/flows/flow_orchestrator.py` — `FinwizFlow` is defined in
+`finwiz/flows/orchestrator.py`:
+
 ```python
-from finwiz.flows.flow_orchestrator import FinwizFlow
+from finwiz.flows.orchestrator import FinwizFlow
 
 flow = FinwizFlow()
 result = flow.kickoff()

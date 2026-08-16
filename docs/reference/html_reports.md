@@ -24,7 +24,10 @@ FinWiz automatically converts JSON outputs into professional, responsive HTML re
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/backtesting_results_default.json --type backtesting_results
+# output/backtesting_results_default.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -45,7 +48,10 @@ python scripts/generate_html_reports.py --file output/backtesting_results_defaul
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/portfolio/portfolio_review.json --type portfolio_review
+# output/portfolio/portfolio_review.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -72,7 +78,10 @@ python scripts/generate_html_reports.py --file output/portfolio/portfolio_review
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/discovery/a_plus_stocks.json --type a_plus_discovery
+# output/discovery/a_plus_stocks.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -93,7 +102,10 @@ python scripts/generate_html_reports.py --file output/discovery/a_plus_stocks.js
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/deep_analysis_consolidated_default.json --type deep_analysis_consolidated
+# output/deep_analysis_consolidated_default.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -126,7 +138,10 @@ python scripts/generate_html_reports.py --file output/deep_analysis_consolidated
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/discovery/discovery_latest.json --type discovery_latest
+# output/discovery/discovery_latest.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -147,7 +162,10 @@ python scripts/generate_html_reports.py --file output/discovery/discovery_latest
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/discovery/validation_report.json --type validation_report
+# output/discovery/validation_report.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -168,7 +186,10 @@ python scripts/generate_html_reports.py --file output/discovery/validation_repor
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/portfolio/portfolio_processing_summary.json --type portfolio_processing_summary
+# output/portfolio/portfolio_processing_summary.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -189,15 +210,22 @@ python scripts/generate_html_reports.py --file output/portfolio/portfolio_proces
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/discovery/optimization_report.json --type optimization_report
+# output/discovery/optimization_report.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
 
-### 9. Feedback Learning Report
+### 9. Feedback Learning Report — template missing
 
 **JSON Pattern**: `feedback_learning_report.json`
-**Template**: `feedback_learning_report.html`
+**Template**: `feedback_learning_report.html` — **does not exist** in
+`src/finwiz/templates/`. The mapping in `JsonToHtmlConverter.TEMPLATE_MAPPING`
+still points at it, so converting a `feedback_learning_report.json` file
+currently fails with a Jinja2 `TemplateNotFound` error. Only 8 of these 9
+documented report types actually have a template on disk.
 **Purpose**: Feedback analysis and learning insights
 
 **Key Features**:
@@ -250,7 +278,10 @@ python scripts/generate_html_reports.py --file output/discovery/optimization_rep
 **Generation**:
 
 ```bash
-python scripts/generate_html_reports.py --file output/discovery/feedback_learning_report.json --type feedback_learning_report
+# output/discovery/feedback_learning_report.json is picked up automatically by filename pattern —
+# there is no --file or --type flag; the script only accepts
+# --output-dir, --force, --verbose
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ---
@@ -296,25 +327,32 @@ Print-friendly formatting:
 
 ## Batch Generation
 
+`scripts/generate_html_reports.py`'s `ArgumentParser` defines exactly three
+options — `--output-dir` (default `output`), `--force`, `--verbose` — and no
+positional argument or `--file`/`--type`/`--all` flags. The script always
+batch-scans a directory for known filename patterns; there is no per-file
+mode.
+
+**`make html-reports` and `make html-report` are both currently broken** —
+they invoke `--all` and `--file "$(FILE)" --type "$(TYPE)"` respectively,
+neither of which the script accepts, so both exit with "unrecognized
+arguments". `make html-convert` is the one Makefile target that actually
+works, since it calls the script with no extra flags.
+
 ### Generate All Reports
 
 ```bash
-# Using Makefile
-make html-reports
-
-# Using script directly
-python scripts/generate_html_reports.py --all
+# The working invocation:
+make html-convert
+# or directly:
+uv run python scripts/generate_html_reports.py --output-dir output --force
 ```
 
 ### Generate Specific Report
 
-```bash
-# By file path (auto-detects type)
-python scripts/generate_html_reports.py output/portfolio_review.json
-
-# By file path and explicit type
-python scripts/generate_html_reports.py --file output/portfolio_review.json --type portfolio_review
-```
+There is no way to target a single file — the script always scans the whole
+`--output-dir` for files matching its known patterns and converts every
+match it finds.
 
 ---
 
@@ -444,20 +482,24 @@ All templates extend `base_template.html` which provides:
 
 {% endraw %}
 
-1. Register in `template_renderer.py`:
+Neither `template_renderer.py` nor `html_generator.py` exists anywhere in
+this repo, and there is no `render_methods` dict or `_save_with_html`
+helper. Template registration is a single entry in
+`JsonToHtmlConverter.TEMPLATE_MAPPING`
+(`src/finwiz/infrastructure/json/to_html_converter.py:30-47`):
+
+1. Add your JSON filename pattern and template name to `TEMPLATE_MAPPING`:
 
    ```python
-   self.render_methods = {
-       "custom_report": self.render_custom_report
+   TEMPLATE_MAPPING = {
+       ...
+       "custom_report.json": "custom_report.html",
    }
    ```
 
-2. Add helper function in `html_generator.py`:
-
-   ```python
-   def save_custom_report(data: dict, output_path: str) -> tuple[Path, Path]:
-       return _save_with_html(data, output_path, "custom_report")
-   ```
+2. Drop the corresponding `custom_report.html` file in
+   `src/finwiz/templates/` — no separate Python registration step is
+   needed.
 
 ---
 
@@ -483,7 +525,7 @@ Templates are cached automatically by Jinja2 for performance.
 
 ## Success Metrics
 
-✅ **9 Professional Templates** - All report types covered
+⚠️ **8 of 9 Professional Templates** - `feedback_learning_report.html` is missing; see "9. Feedback Learning Report" above
 ✅ **Automatic Generation** - Inline generation working
 ✅ **Dark/Light Mode** - Fully functional theme switching
 ✅ **Responsive Design** - Mobile, tablet, desktop support
