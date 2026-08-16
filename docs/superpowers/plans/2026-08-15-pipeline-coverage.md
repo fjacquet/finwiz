@@ -83,12 +83,14 @@ The vendored client at `.venv/.../crewai_custom_tools/tools/web/perplexity_struc
 Because status codes are not observable through that surface, this wrapper retries **by outcome** (`None`), not by status. It fails fast on a missing API key so a misconfiguration does not burn four attempts.
 
 **Files:**
+
 - Create: `src/finwiz/infrastructure/resilience/perplexity_retry.py`
 - Test: `tests/unit/infrastructure/test_perplexity_retry.py`
 
 **Interfaces:**
+
 - Consumes: `perplexity_structured` from `crewai_custom_tools` (async, keyword-only: `prompt`, `schema`, `system`, `model`, `search_recency_filter`, `timeout`, `api_key`).
-- Produces: `async def perplexity_with_retry(*, prompt: str, schema: type[T], system: str, search_recency_filter: str | None = "month", timeout: float = 15.0, max_attempts: int = 4, base_delay: float = 1.0) -> T | None` and `PERPLEXITY_CONCURRENCY` / `get_perplexity_semaphore() -> asyncio.Semaphore`. Tasks 2 and 12 consume both.
+- Produces: `async def perplexity_with_retry(*, prompt: str, schema: type[T], system: str, search_recency_filter: str | None = "month", timeout: float = 15.0, max_attempts: int = 4, base_delay: float = 1.0) -> T | None` and `PERPLEXITY_CONCURRENCY` / `get_perplexity_semaphore() -> threading.BoundedSemaphore`. Tasks 2 and 12 consume both.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -174,8 +176,16 @@ async def test_missing_api_key_fails_fast_without_retrying(mocker, monkeypatch):
 
 def test_semaphore_is_a_process_singleton():
     assert get_perplexity_semaphore() is get_perplexity_semaphore()
-    assert isinstance(get_perplexity_semaphore(), asyncio.Semaphore)
 ```
+
+> **Corrected 2026-08-16.** This test originally asserted
+> `isinstance(get_perplexity_semaphore(), asyncio.Semaphore)` — the exact
+> property that made the throttle broken. Production runs one holding per
+> `ThreadPoolExecutor` worker, a worker has no running loop, so each holding
+> gets a fresh event loop; an `asyncio.Semaphore` binds to the first loop that
+> contends on it and raises on every other. Measured at production numbers,
+> 5 of 10 holdings were lost with no rate limit involved. The throttle must be
+> a loop-agnostic `threading.BoundedSemaphore`; do not assert the asyncio type.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -219,15 +229,20 @@ T = TypeVar("T", bound=BaseModel)
 # the account allows. This caps in-flight requests process-wide.
 PERPLEXITY_CONCURRENCY = int(os.getenv("PERPLEXITY_CONCURRENCY", "4"))
 
-_semaphore: asyncio.Semaphore | None = None
+_throttle: threading.BoundedSemaphore | None = None
 
 
-def get_perplexity_semaphore() -> asyncio.Semaphore:
-    """Return the process-wide Perplexity concurrency semaphore."""
-    global _semaphore
-    if _semaphore is None:
-        _semaphore = asyncio.Semaphore(PERPLEXITY_CONCURRENCY)
-    return _semaphore
+def get_perplexity_semaphore() -> threading.BoundedSemaphore:
+    """Return the process-wide Perplexity concurrency throttle.
+
+    A threading primitive, not an asyncio one: production gives each holding
+    its own event loop (one holding per ThreadPoolExecutor worker), and an
+    asyncio.Semaphore binds to the first loop that contends on it.
+    """
+    global _throttle
+    if _throttle is None:
+        _throttle = threading.BoundedSemaphore(PERPLEXITY_CONCURRENCY)
+    return _throttle
 
 
 def _has_api_key() -> bool:
@@ -308,10 +323,12 @@ git commit -m "feat(resilience): add Perplexity retry wrapper with backoff and c
 `fact_pack_research.py:183-189` calls `perplexity_structured` directly, exactly once. This is the call that failed 28 times in the 2026-08-15 run (20 transport timeouts, 8 HTTP 429s) and cost 22 holdings.
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/fact_pack_research.py:15` (import), `:183-189` (call site)
 - Test: `tests/unit/analysis/test_fact_pack_stage.py`
 
 **Interfaces:**
+
 - Consumes: `perplexity_with_retry` from Task 1.
 - Produces: no signature change — `fetch_fact_pack` and `fetch_fact_pack_sync` keep their exact existing signatures (`fetch_fact_pack_sync(ticker: str, company_name: str, sector: str | None = None, industry: str | None = None, *, timeout: float = 15.0) -> FactPack | None`).
 
@@ -389,11 +406,13 @@ git commit -m "fix(fact_pack): retry Perplexity fetches instead of failing on fi
 Introduce a dedicated exception the resilience layer recognises, so the declared retry actually happens.
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/stages/fact_pack.py:74`
 - Modify: `src/finwiz/analysis/stages/_resilience.py:46-62`
 - Test: `tests/unit/analysis/test_fact_pack_stage.py` (append)
 
 **Interfaces:**
+
 - Produces: `class TransientStageError(RuntimeError)` in `src/finwiz/analysis/stages/_resilience.py`, exported for any stage body that wants its declared `retries` to be reachable.
 
 - [ ] **Step 1: Write the failing test**
@@ -501,10 +520,12 @@ It currently does not. `FactPack.derive_freshness` (`schemas/hybrid_analysis/fac
 Corporate structure and leadership do not turn over in a fortnight. Widen the stale band and let the payload's own `freshness` label carry the caveat — which is exactly the trust-spine design ("staleness is a payload field, NOT a stage outcome", `fact_pack.py:3-5`).
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/fact_pack.py:45-53`
 - Test: `tests/unit/analysis/test_fact_pack_stage.py` (append)
 
 **Interfaces:**
+
 - Produces: `FactPack.derive_freshness(fetched_at: datetime) -> str` — unchanged signature, wider stale band, raising only beyond the new horizon.
 
 - [ ] **Step 1: Write the failing test**
@@ -593,10 +614,12 @@ git commit -m "fix(fact_pack): widen the stale window so an old cache can still 
 `technical_fallback.py` fills MA50/MA200/RSI/MACD/beta from `price_history` but has **no volatility branch** (grep for "volatility" in that file returns nothing). Meanwhile `calculate_volatility(returns: pd.Series, annualize: bool = True) -> float` already exists at `quantitative/risk/risk_metrics.py:19`, built on empyrical's `annual_volatility`. `raw_data["price_history"]` is a `pandas.Series` of daily closes set at `deep_analysis_data_collector.py:436`.
 
 **Files:**
+
 - Modify: `src/finwiz/scoring/technical_fallback.py`
 - Test: `tests/unit/scoring/test_volatility_fallback.py`
 
 **Interfaces:**
+
 - Consumes: `calculate_volatility` from `finwiz.quantitative.risk.risk_metrics`.
 - Produces: `calculate_missing_technical_indicators(data: dict[str, Any], price_history: pd.Series | None = None) -> dict[str, Any]` — unchanged signature, now also sets `data["volatility"]` when absent and `price_history` has ≥2 points.
 
@@ -716,10 +739,12 @@ This is the ordering bug. In `deep_analysis_scorer.calculate_composite_score`:
 So no fallback can ever rescue a critical field: the raise has already fired. This is why `beta` (critical for stocks, `critical_fields_config.py:18`) can never be rescued by the existing `data["beta"] = 1.0` fallback at `technical_fallback.py:50-51` either. Task 4 is inert until this task lands.
 
 **Files:**
+
 - Modify: `src/finwiz/scoring/deep_analysis_scorer.py:92-100`
 - Test: `tests/unit/scoring/test_volatility_fallback.py` (append)
 
 **Interfaces:**
+
 - Consumes: `calculate_missing_technical_indicators` (Task 4).
 - Produces: no signature change to `calculate_composite_score`.
 
@@ -815,10 +840,12 @@ Two producers disagree on units. `performance_metrics.py:90` emits fractional vo
 The gate bound is `v > 5.0` (`critical_fields_config.py:162`), so a percent-scaled 25.3 is rejected as `volatility (invalid value: 25.3)` — a units bug reported as missing data.
 
 **Files:**
+
 - Modify: `src/finwiz/config/critical_fields_config.py`
 - Test: `tests/unit/scoring/test_volatility_fallback.py` (append)
 
 **Interfaces:**
+
 - Produces: `normalize_volatility(value: float | int | None) -> float | None` in `finwiz.config.critical_fields_config`.
 
 - [ ] **Step 1: Write the failing test**
@@ -924,10 +951,12 @@ git commit -m "fix(validation): normalize percent-scaled volatility instead of r
 `discovery/ticker_hygiene.py` exists and blocklists `XTSLA` by name at `:30` ("BlackRock cash-sweep placeholder, not a tradable ticker"), exposing `is_tradable()` at `:44` and `sanitize_symbols()` at `:49`. It is applied in `market_data.py:85` and `:175` — but `universe_provider.py`, `breakout_detector.py` and `momentum_scanner.py` contain zero references to it. That is why `XTSLA` entered the universe and produced nine `Quote not found for symbol: XTSLA` errors in the run.
 
 **Files:**
+
 - Modify: `src/finwiz/discovery/universe_provider.py:87`
 - Test: `tests/unit/discovery/test_universe_provider_selection.py`
 
 **Interfaces:**
+
 - Consumes: `sanitize_symbols` from `finwiz.discovery.ticker_hygiene`.
 - Produces: `DynamicUniverseProvider.get_universe(asset_class: str, exclude_tickers: list[str] | None = None) -> list[str]` — unchanged signature, now hygiene-filtered.
 
@@ -998,6 +1027,7 @@ seed_etfs = self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS if asset_class == "s
 Python binds this as `(self._seed_etfs or self.DEFAULT_STOCK_SEED_ETFS) if asset_class == "stock" else self.DEFAULT_ETF_SEED_ETFS`, so the constructor's `seed_etfs` override is **unreachable for ETFs** — the ETF path always uses `DEFAULT_ETF_SEED_ETFS = ["VT", "AOA", "AOR"]`. Line 74's `except (ValueError, Exception)` is also a catch-all whose first member is dead (`ValueError` is an `Exception`).
 
 **Files:**
+
 - Modify: `src/finwiz/discovery/universe_provider.py:71,74`
 - Test: `tests/unit/discovery/test_universe_provider_selection.py` (append)
 
@@ -1068,10 +1098,12 @@ Spec §4.3: at least 50 candidates per asset class must survive exclusion, and a
 Measured on 2026-08-15: `VT`(10) ∪ `AOA`(8) ∪ `AOR`(8) = 18 unique; 7 already held; 11 remained. The static fallback returns far more — `ScreeningUtils().get_screening_universe(...)` yields 50 for `etf`, 66 for `stock`, 39 for `crypto` (verified by execution). So the fix is to union the static universe in when mining falls short, not to replace mining.
 
 **Files:**
+
 - Modify: `src/finwiz/discovery/universe_provider.py`
 - Test: `tests/unit/discovery/test_universe_provider_selection.py` (append)
 
 **Interfaces:**
+
 - Produces: module constant `MIN_UNIVERSE_SIZE = 50` in `finwiz.discovery.universe_provider`.
 
 - [ ] **Step 1: Write the failing test**
@@ -1164,10 +1196,12 @@ git commit -m "feat(discovery): enforce a minimum universe size and log shortfal
 Any pipeline exception therefore injects invented A+ tickers into `a_plus_*.json` and into the family report. This is the single largest correctness hazard in the discovery area, and it is exactly the failure mode the spec exists to eliminate: presenting fabricated output as authoritative.
 
 **Files:**
+
 - Modify: `src/finwiz/scoring/etf_analyzer.py`, `src/finwiz/scoring/stock_analyzer.py`, `src/finwiz/scoring/crypto_analyzer.py`
 - Test: `tests/unit/scoring/test_discovery_analyzers.py`
 
 **Interfaces:**
+
 - Produces: `analyze_etf_opportunities(session_id: str) -> dict[str, Any]` (and stock/crypto twins) — unchanged signature. On pipeline failure it now returns an empty, honestly-labelled result instead of invented data.
 
 - [ ] **Step 1: Write the failing test**
@@ -1307,6 +1341,7 @@ This is why every holding logged "No discovery crew output found at output/disco
 Spec §4.4 resolution: point the readers at the real file, retire the dead name.
 
 **Files:**
+
 - Modify: `src/finwiz/tools/alternative_finder_tool.py:179,181`
 - Modify: `src/finwiz/orchestrators/extraction/engine.py:169,192`
 - Modify: `src/finwiz/infrastructure/json/to_html_converter.py:38-39`
@@ -1381,10 +1416,12 @@ git commit -m "fix(discovery): read the artifact discovery actually writes"
 `_filter_actionable` runs at `scoring/discovery/pipeline.py:105`; `_persist_result` runs at `:121`. So `newcomer_*.json` only ever contains post-filter survivors, and the 29/42/10 candidates dropped on 2026-08-15 are unrecoverable from this run's outputs. That contradicts the stated rationale at `candidate_scorer.py:40-42` ("callers that legitimately need the full scored list (diagnostics, tests)") and makes Task 13's calibration unverifiable against real data.
 
 **Files:**
+
 - Modify: `src/finwiz/scoring/discovery/pipeline.py:105,121`
 - Test: `tests/unit/scoring/discovery/test_pipeline.py` (existing — append)
 
 **Interfaces:**
+
 - Produces: `output/discovery/scored_{asset_class}.json` with shape `{"asset_class": str, "scored": list[dict], "actionable_count": int}`.
 
 - [ ] **Step 1: Write the failing test**
@@ -1480,10 +1517,12 @@ So a genuinely strong candidate cannot currently reach C. That is the real reaso
 The floor stays at C — noise stays out, per the project rule that discovery scanners exclude weak signals rather than emitting them with D/F grades. What changes is the formula's dynamic range, so that a strong performer can actually clear the bar.
 
 **Files:**
+
 - Modify: `src/finwiz/discovery/market_data.py:207-228`
 - Test: `tests/unit/discovery/test_factor_score.py`
 
 **Interfaces:**
+
 - Produces: `factor_score_from_returns(returns: list[float] | None) -> float | None` — exact current signature at `market_data.py:207`, preserved. It takes a **plain list of floats**, not a pandas Series, and returns `None` for series shorter than 5 points.
 
 - [ ] **Step 1: Write the failing test**
@@ -1624,10 +1663,12 @@ git commit -m "fix(discovery): calibrate factor score so strong candidates can r
 Two occurrences on 2026-08-15. Every one silently loses a cache write — and a cold cache is exactly what turns a Perplexity rate-limit into a dead holding (Tasks 2-3). The `json.dump` also omits `default=str`, violating the project rule.
 
 **Files:**
+
 - Modify: `src/finwiz/quantitative/data_processors.py:132-138`
 - Test: `tests/unit/quantitative/test_cache_metadata.py`
 
 **Interfaces:**
+
 - Produces: `DataProcessor.save_cache_metadata(cache_metadata: dict[str, Any], cache_metadata_file: Path) -> None` — unchanged signature.
 
 - [ ] **Step 1: Write the failing test**
@@ -1736,6 +1777,7 @@ Confirmed in the 2026-08-15 run: `index N is out of bounds for axis 0 with size 
 **Do not** also chase `cannot convert float NaN to integer` or the `_QualitativeInsightsRaw` failures — those are 2026-07-15 only. See "Known-Broken Ground".
 
 **Files:**
+
 - Modify: `src/finwiz/tools/quantitative_comprehensive_analyzer.py`, `src/finwiz/quantitative/backtesting.py`
 - Test: `tests/unit/quantitative/test_short_series_handling.py`
 
