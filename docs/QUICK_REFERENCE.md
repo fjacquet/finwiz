@@ -20,21 +20,15 @@ make docs-clean
 
 ## Local Preview
 
-### With Jekyll (recommended)
-
 ```bash
-cd docs
-jekyll serve --baseurl '' --livereload
-# Visit: http://localhost:4000
+make docs-serve
+# Visit: http://127.0.0.1:8000
 ```
 
-### With Python
-
-```bash
-cd docs
-python3 -m http.server 8000
-# Visit: http://localhost:8000
-```
+This runs `mkdocs serve` with live reload. Serving the raw `docs/` directory
+over `python3 -m http.server` will not work — the site needs building, since
+the nav, the Material theme, and the mermaid diagrams all come from
+`mkdocs.yml`.
 
 ## File Organization
 
@@ -120,12 +114,16 @@ def hello():
 
 ## GitHub Pages
 
-### Enable Pages
+### How publishing works
 
-1. Settings → Pages
-2. Source: Deploy from branch
-3. Branch: `main`, Folder: `/docs`
-4. Save
+Pages is published by the `Docs` workflow
+(`.github/workflows/docs.yml`), which builds the MkDocs site and uploads it as
+a Pages artifact. It runs on pushes to `main` that touch `docs/**` or
+`mkdocs.yml`, and can be triggered manually.
+
+Set **Settings → Pages → Source** to **GitHub Actions**, not "Deploy from
+branch". Serving `/docs` from a branch would publish raw markdown instead of
+the built site.
 
 ### Check Deployment
 

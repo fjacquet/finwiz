@@ -14,8 +14,9 @@ def generate_deep_analysis_section(deep_analysis_results: dict[str, Any] | None)
     <h2>Deep Analysis</h2>
     <div class="highlight warning">
       <p><strong>Deep analysis not available.</strong></p>
-      <p>Python deep analysis was not executed for this session.</p>
-      <p>To enable deep analysis, use the parameter <code>DEEP_PORTFOLIO_ANALYSIS=true</code>.</p>
+      <p>Deep analysis produced no results for this session. It always runs —
+      there is no switch to turn it on — so an empty result means the phase
+      failed rather than that it was skipped. Check the run logs.</p>
     </div>
   </div>
             """

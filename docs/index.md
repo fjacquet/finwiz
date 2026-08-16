@@ -186,9 +186,9 @@ Professional-grade quantitative analysis framework:
 
 ### Professional Documentation System
 
-- **GitHub Pages**: Clean, fast documentation with Jekyll
+- **GitHub Pages**: Clean, fast documentation built with MkDocs + Material
 - **Mobile Responsive**: Optimized experience across all devices
-- **Full-Text Search**: GitHub search integration
+- **Full-Text Search**: Built into the Material theme
 - **Professional Navigation**: Clear hierarchical structure
 - **Diátaxis Framework**: Organized by documentation type
 
@@ -248,7 +248,7 @@ Professional-grade quantitative analysis framework:
 
 ### Minimum Requirements
 
-- Python 3.12+ (3.13 not supported)
+- Python 3.13 (`requires-python = ">=3.13,<3.14"` — 3.12 and 3.14 are not supported)
 - 2GB RAM (4GB+ recommended)
 - 1GB free storage
 - Internet connection for API access
@@ -316,10 +316,10 @@ Professional-grade quantitative analysis framework:
 
 ## Version Information
 
-- **Current Version**: 0.1.0
-- **Python Version**: 3.12+
-- **CrewAI Version**: 0.120.1+
-- **Documentation Updated**: 2025-01-18
+- **Current Version**: 5.12.0
+- **Python Version**: 3.13
+- **CrewAI Version**: 1.15.12+
+- **Documentation Updated**: 2026-08-16
 
 ## License
 
@@ -331,4 +331,4 @@ FinWiz is released under the MIT License. See the [LICENSE](https://github.com/f
 
 ---
 
-*Documentation built with Jekyll and hosted on GitHub Pages*
+*Documentation built with MkDocs + Material and hosted on GitHub Pages*
