@@ -44,26 +44,47 @@ if validation_result.is_valid:
 
 ### Analysis Schema Relationships
 
-All analysis schemas share common patterns:
+**There is no shared `BaseAnalysis` class.** `grep -rn 'class BaseAnalysis'
+src/` finds no matches — `TenKInsight`, `ETFFactsheet`, and `CryptoThesis`
+all subclass `BaseModel` directly, and their shapes differ considerably:
 
 ```python
-# Common base structure
-class BaseAnalysis:
+class TenKInsight(BaseModel):      # src/finwiz/schemas/stock.py
+    schema_version: int = 1
     ticker: str
-    analysis_date: datetime
-    recommendation: Literal["BUY", "HOLD", "SELL"]
-    confidence_level: float
-    risk_assessment: RiskAssessmentStandardized
-    rationale: str
-    data_sources: List[str]
+    filing_url: str
+    filed_at: AwareDatetime
+    section: Literal["Item 1", "Item 1A", "Item 7", "Item 7A", "Item 8"]
+    excerpt: str
+    sec_citation: str
+    # no recommendation, no risk field
+
+class ETFFactsheet(BaseModel):     # src/finwiz/schemas/etf.py
+    schema_version: int = 1
+    ticker: str
+    issuer: str
+    expense_ratio: float
+    factsheet_url: str
+    as_of: date
+    factsheet_highlights: list[str]
+    top_holdings: list[ETFTopHolding]
+    risk: RiskAssessmentStandardized | None = None  # the only one of the three with a risk field
+
+class CryptoThesis(BaseModel):     # src/finwiz/schemas/crypto.py
+    schema_version: int = 1
+    symbol: str  # NOT "ticker" — field name differs from the other two
+    thesis_bullets: list[str]
+    references: list[str]
+    # no recommendation, no risk field
 ```
 
-**Inheritance Pattern:**
+**Relationship summary:**
 
-- `TenKInsight` extends BaseAnalysis for stocks
-- `ETFFactsheet` extends BaseAnalysis for ETFs
-- `CryptoThesis` extends BaseAnalysis for cryptocurrencies
-- All include `RiskAssessmentStandardized`
+- `TenKInsight`, `ETFFactsheet`, and `CryptoThesis` are independent
+  `BaseModel` subclasses, not a common-base inheritance hierarchy.
+- Only `ETFFactsheet` carries a `RiskAssessmentStandardized` field —
+  `TenKInsight` and `CryptoThesis` have none.
+- `CryptoThesis` identifies its asset via `symbol`, not `ticker`.
 
 ### Portfolio Integration
 

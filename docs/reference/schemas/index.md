@@ -185,7 +185,7 @@ def validate_price_target(cls, v: Optional[float]) -> Optional[float]:
 ### Validation Manager
 
 ```python
-from finwiz.validation import get_validation_manager
+from finwiz.validation.manager import get_validation_manager
 
 manager = get_validation_manager()
 result = manager.validate_crew_output(data, "stock", "analysis")
@@ -200,7 +200,7 @@ else:
 ### Schema Registry
 
 ```python
-from finwiz.validation import get_registry
+from finwiz.validation.registry import get_registry
 
 registry = get_registry()
 schema = registry.get_schema("TenKInsight")
