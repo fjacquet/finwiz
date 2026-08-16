@@ -71,7 +71,7 @@ print(f"⚡ Execution time: {analysis_results['performance_metrics']['total_exec
 Identify A+ and A grade holdings:
 
 ```python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
 # Run A+ discovery
 discovery_results = integrate_aplus_discovery_with_deep_analysis(
@@ -144,7 +144,7 @@ Here's a complete example that runs the entire pipeline:
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 from finwiz.reporting.python_report_generator import generate_python_report
 from datetime import datetime

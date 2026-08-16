@@ -99,7 +99,6 @@ LLM_MODEL_MINI=openrouter/google/gemini-3-flash-preview
 LLM_MODEL_MANAGER=openrouter/deepseek/deepseek-v3.2
 LLM_MODEL_PLANNING=openrouter/x-ai/grok-4.1-fast
 LLM_MODEL_BASELINE=openrouter/mistralai/devstral-2512:free
-LLM_MODEL_THINKING=openrouter/x-ai/grok-4.1-fast
 ```
 
 **Estimated Cost**: $0.50-2/day for typical usage
@@ -112,7 +111,6 @@ LLM_MODEL_MINI=openrouter/google/gemini-3-flash-preview
 LLM_MODEL_MANAGER=openrouter/anthropic/claude-opus-4.5
 LLM_MODEL_PLANNING=openrouter/anthropic/claude-opus-4.5
 LLM_MODEL_BASELINE=openrouter/deepseek/deepseek-v3.2
-LLM_MODEL_THINKING=openrouter/anthropic/claude-opus-4.5
 ```
 
 **Estimated Cost**: $5-15/day for typical usage
@@ -125,7 +123,6 @@ LLM_MODEL_MINI=openrouter/xiaomi/mimo-v2-flash:free
 LLM_MODEL_MANAGER=openrouter/mistralai/devstral-2512:free
 LLM_MODEL_PLANNING=openrouter/deepseek/deepseek-v3.2
 LLM_MODEL_BASELINE=openrouter/mistralai/devstral-2512:free
-LLM_MODEL_THINKING=openrouter/deepseek/deepseek-v3.2
 ```
 
 **Estimated Cost**: $0.05-0.50/day
@@ -182,14 +179,20 @@ Modern LLMs have native "thinking" capabilities that differ from CrewAI's `reaso
 
 ## Implementation Notes
 
-The `llm_config.py` module now includes:
-
-1. **Model Capabilities Registry** - Tracks which models support thinking
-2. **`get_thinking_llm()`** - Returns LLM configured for high-value tasks
-3. **`is_model_thinking_capable()`** - Check if model supports native thinking
-4. **`get_model_capabilities()`** - Get full capability summary
+None of "Model Capabilities Registry", `get_thinking_llm()`,
+`is_model_thinking_capable()`, or `get_model_capabilities()` exist in
+`llm_config.py` — that module's public API is `get_configured_llm`,
+`get_llm_for_crew`, `get_manager_llm`, and `get_mini_llm`. There is no
+per-model "thinking capability" registry; reasoning is controlled
+uniformly via `LLM_REASONING_EFFORT` (see ADR-005).
 
 ### Environment Variables
+
+`LLM_MODEL_THINKING` and `LLM_THINKING_LEVEL` are not read anywhere in
+`src/` or `tests/` — reasoning effort is controlled by
+`LLM_REASONING_EFFORT` (`low`/`medium`/`high`/`none`, default `low`), which
+applies uniformly across model types rather than being tied to a specific
+"thinking" model:
 
 ```bash
 # Standard model configuration
@@ -199,9 +202,8 @@ LLM_MODEL_MANAGER=openrouter/anthropic/claude-opus-4.5
 LLM_MODEL_PLANNING=openrouter/anthropic/claude-opus-4.5
 LLM_MODEL_BASELINE=openrouter/deepseek/deepseek-v3.2
 
-# Thinking configuration
-LLM_MODEL_THINKING=openrouter/anthropic/claude-opus-4.5
-LLM_THINKING_LEVEL=medium  # off, low, medium, high
+# Reasoning configuration
+LLM_REASONING_EFFORT=medium  # none, low, medium, high (default: low)
 ```
 
 ## Future Considerations

@@ -179,7 +179,7 @@ uv run pytest tests/unit/crews/helpers/test_llm_config.py -v
 - **User Guide**: `docs/LLM_CONFIGURATION.md`
 - **Technical Details**: `CHANGES_SUMMARY.md`
 - **Environment Variables**: `.env.example`
-- **CrewAI Standards**: `.kiro/steering/crewai-standards.md`
+- **CrewAI Standards**: `.claude/skills/crewai/SKILL.md` (`.kiro/` does not exist in this repository)
 
 ---
 
