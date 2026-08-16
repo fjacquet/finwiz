@@ -18,7 +18,7 @@ Complete guide for deploying, operating, and running your first FinWiz analysis.
 
 **System Requirements**:
 
-- Python 3.12+
+- Python 3.13 (`requires-python = ">=3.13,<3.14"` — 3.12 and 3.14 are not supported)
 - `uv` package manager (recommended) or `pip`
 - Linux, macOS, or Windows with WSL
 - Minimum 2GB RAM (4GB+ recommended)
@@ -77,7 +77,6 @@ CACHE_STRATEGY=ttl         # ttl, lru, lfu, adaptive
 
 # Feature Flags
 FF_PERPLEXITY_RESEARCH=false
-PORTFOLIO_REVIEW_ENABLED=true
 
 # Performance Optimization (Deep Analysis)
 RISK_ASSESSMENT_USE_MINI=true    # Use gpt-4o-mini for risk assessment (faster, cheaper)
@@ -94,15 +93,25 @@ PORTFOLIO_STOCK_CSV=data/stock.csv
 
 Analyze a specific stock, ETF, or cryptocurrency:
 
+**FinWiz has no command-line flags.** `main.py` parses no arguments — it is a
+shim whose `__main__` block calls `kickoff()`, which takes no parameters. The
+commands below would run the full flow and silently ignore everything after
+`main.py`.
+
+The supported entry point is:
+
 ```bash
-# Analyze a stock
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+crewai flow kickoff
+```
 
-# Analyze an ETF
-uv run python src/finwiz/main.py --ticker VOO --asset-class etf
+To analyse a specific holding, pass parameters through CrewAI's own inputs
+mechanism, which populates `FinwizState` before any `@start()` method runs:
 
-# Analyze cryptocurrency
-uv run python src/finwiz/main.py --ticker BTC --asset-class crypto
+```python
+from finwiz.flows.orchestrator import FinwizFlow
+from finwiz.flow_state import FinwizState
+
+FinwizFlow(state=FinwizState()).kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
 ```
 
 ### Portfolio Analysis
@@ -110,8 +119,8 @@ uv run python src/finwiz/main.py --ticker BTC --asset-class crypto
 Analyze your entire portfolio:
 
 ```bash
-# Run portfolio review
-uv run python src/finwiz/main.py --mode portfolio_review
+# Portfolio review is Phase 2 of the single flow — there is no separate mode
+crewai flow kickoff
 ```
 
 Your portfolio holdings should be stored in CSV files:
@@ -142,14 +151,18 @@ After analysis completes, you'll find:
 
 FinWiz uses a letter grade system to rate investments:
 
-| Grade     | Meaning             | Action                     |
-| --------- | ------------------- | -------------------------- |
-| **A+** 🌟 | Exceptional quality | Keep, consider adding more |
-| **A** ✅  | High quality        | Keep                       |
-| **B** 👍  | Good quality        | Keep, monitor              |
-| **C** ⚠️  | Average quality     | Consider alternatives      |
-| **D** 🔻  | Below average       | Review for replacement     |
-| **F** ❌  | Poor quality        | Exit position              |
+| Grade     | Score  | Meaning             | Action                     |
+| --------- | ------ | ------------------- | -------------------------- |
+| **A+** 🌟 | ≥ 0.95 | Exceptional quality | Keep, consider adding more |
+| **A** ✅  | ≥ 0.85 | High quality        | Keep                       |
+| **B+** 📈 | ≥ 0.80 | Good+               | Keep, watch for openings   |
+| **B** 👍  | ≥ 0.75 | Good quality        | Keep, monitor              |
+| **C+** ⚠️ | ≥ 0.70 | Fair+               | Keep but watch closely     |
+| **C** 🔍  | ≥ 0.65 | Minimum acceptable  | Keep, do not add           |
+| **D** 🔻  | ≥ 0.50 | Below average       | Review for replacement     |
+| **F** ❌  | < 0.50 | Poor quality        | Exit position              |
+
+Eight grades, not six — a report row showing **B+** or **C+** is not an error.
 
 ## Deployment Environments
 
@@ -158,7 +171,7 @@ FinWiz uses a letter grade system to rate investments:
 ```bash
 # Run with debug logging
 export LOG_LEVEL=DEBUG
-uv run python src/finwiz/main.py
+crewai flow kickoff
 ```
 
 ### Staging
@@ -166,7 +179,7 @@ uv run python src/finwiz/main.py
 ```bash
 # Run with validation warnings
 export VALIDATION_STRICTNESS=warn
-uv run python src/finwiz/main.py
+crewai flow kickoff
 ```
 
 ### Production
@@ -175,7 +188,7 @@ uv run python src/finwiz/main.py
 # Run with strict validation
 export VALIDATION_STRICTNESS=error
 export LOG_LEVEL=INFO
-uv run python src/finwiz/main.py
+crewai flow kickoff
 ```
 
 ## Daily Operations
@@ -197,12 +210,12 @@ grep -i "warning\|error" logs/finwiz.log | tail -n 20
 1. **Performance Metrics**:
 
 ```python
-from finwiz.cache import get_cache_manager
+from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-stats = cache.get_statistics()
-print(f"Cache hit rate: {stats.hit_rate:.2%}")
-print(f"Total requests: {stats.total_requests}")
+stats = cache.get_stats()          # returns a plain dict, not an object
+print(f"Cache hit rate: {stats['hit_rate']:.2%}")
+print(f"Hits: {stats['hits']}, misses: {stats['misses']}")
 ```
 
 ### Monitoring
@@ -218,7 +231,6 @@ print(f"Total requests: {stats.total_requests}")
 
 - Application logs: `logs/finwiz.log`
 - Error logs: `logs/finwiz_error.log`
-- Agent logs: `logs/agentops.log`
 
 ## Troubleshooting
 
@@ -244,7 +256,7 @@ export VALIDATION_STRICTNESS=warn
 
 ```bash
 # Solution: Check cache configuration
-python -c "from finwiz.cache import get_cache_manager; print(get_cache_manager().get_statistics())"
+python -c "from finwiz.infrastructure.caching.manager import get_cache_manager; print(get_cache_manager().get_stats())"
 
 # Clear cache if needed
 rm -rf cache/*
