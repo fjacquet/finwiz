@@ -38,13 +38,15 @@ sequenceDiagram
     Deep->>State: Update deep_analysis_results
     Deep-->>Flow: Return analysis results
 
+    Flow->>Disc: check_investment_discovery()
+    Disc->>State: Update investment_discovery_result / investment_discovery_structured
+    Disc-->>Flow: Return discovery results
+
     Flow->>Alt: match_alternatives_for_holdings()
+    Note over Alt: Runs after discovery (Phase 5), consuming its output —
+    Note over Alt: match_alternatives_after_discovery(discovery_data)
     Alt->>State: Update portfolio_alternatives
     Alt-->>Flow: Return alternatives
-
-    Flow->>Disc: check_investment_discovery()
-    Disc->>State: Update discovery_results
-    Disc-->>Flow: Return discovery results
 
     Flow->>Rep: report()
     Rep->>State: Update final_report_path
@@ -113,8 +115,8 @@ sequenceDiagram
         Crew-->>Error: Return crew result
         Error-->>Deep: Return wrapped result
 
-        Deep->>Util: parse_crew_output_for_holding()
-        Util-->>Deep: Return parsed data
+        Note over Deep,Util: parse_crew_output_for_holding() does not exist on UtilityOrchestrator —
+        Note over Deep,Util: it only has extract_sec_filing_urls / validate_and_fix_sec_urls
 
         Deep->>State: Store analysis result
 
@@ -141,8 +143,7 @@ sequenceDiagram
         Alt->>Alt: Check grade < B
 
         alt Grade < B
-            Alt->>Util: parse_crew_output_for_holding()
-            Util-->>Alt: Return parsed alternatives
+            Note over Alt,Util: parse_crew_output_for_holding() does not exist on UtilityOrchestrator
             Alt->>State: Store alternatives for holding
         else Grade >= B
             Alt->>Alt: Skip (no alternatives needed)
@@ -205,8 +206,7 @@ sequenceDiagram
     loop For each crew export
         Rep->>FS: Read export file
         FS-->>Rep: Return export data
-        Rep->>Util: parse_crew_output()
-        Util-->>Rep: Return parsed data
+        Note over Rep,Util: parse_crew_output() does not exist on UtilityOrchestrator
     end
 
     Rep->>Rep: generate_final_report()
@@ -243,10 +243,10 @@ graph LR
 
 | Orchestrator | State Fields Updated |
 |--------------|---------------------|
-| ValidationOrchestrator | `validation_complete`, `portfolio_data` |
+| ValidationOrchestrator | `portfolio_review`, `portfolio_review_success`, `data_availability_report` |
 | DeepAnalysisOrchestrator | `deep_analysis_results`, `deep_analysis_success`, `deep_analysis_error` |
 | AlternativesMatchingOrchestrator | `portfolio_alternatives` |
-| DiscoveryOrchestrator | `discovery_results` |
+| DiscoveryOrchestrator | `investment_discovery_result`, `investment_discovery_structured`, `investment_discovery_available` |
 | ReportingOrchestrator | `final_report_path`, `crew_export_paths` |
 | ProgressTrackingOrchestrator | `holdings_processed`, `total_holdings`, `progress_percentage` |
 
@@ -300,26 +300,30 @@ sequenceDiagram
 
 ## Data Parsing Flow
 
+**`UtilityOrchestrator` is narrower than this diagram previously claimed.**
+Its real purpose is SEC filing URL extraction and validation only
+(`orchestrators/utility_orchestrator.py`) — it has no
+`parse_crew_output_for_holding`, no `parse_crew_output`, and no public
+`calculate_grade_distribution` (only a private `_calculate_grade_distribution`
+exists, on the unrelated monitoring metrics class in
+`infrastructure/monitoring/metrics.py`). Where crew-output parsing and
+grade-distribution aggregation actually happen elsewhere in the codebase
+was not confirmed while fixing this doc — treat that as still needing
+investigation rather than inferring it from this diagram.
+
 ```mermaid
 sequenceDiagram
     participant Orch as Any Orchestrator
     participant Util as UtilityOrchestrator
     participant Crew as CrewOutput
 
-    Orch->>Util: parse_crew_output_for_holding(output, ticker)
+    Orch->>Util: extract_sec_filing_urls(crew_output)
     Util->>Crew: Access raw output
-    Util->>Util: Extract ticker data
-    Util->>Util: Parse JSON/Pydantic
-    Util->>Util: Validate structure
-    Util-->>Orch: Return parsed data
+    Util->>Util: Extract SEC filing URLs
+    Util-->>Orch: Return dict[ticker, dict[filing_type, url]]
 
-    Orch->>Util: calculate_grade_distribution(holdings)
-    Util->>Util: Aggregate grades
-    Util-->>Orch: Return distribution
-
-    Orch->>Util: extract_sec_filing_urls(output)
-    Util->>Util: Parse URLs
-    Util->>Util: validate_and_fix_sec_urls()
+    Orch->>Util: validate_and_fix_sec_urls(...)
+    Util->>Util: Validate and repair extracted URLs
     Util-->>Orch: Return validated URLs
 ```
 
