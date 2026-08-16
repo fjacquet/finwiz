@@ -44,7 +44,7 @@ USE_MINIMAL_RISK_TOOLS=true
 # Both optimizations enabled (fastest, cheapest)
 RISK_ASSESSMENT_USE_MINI=true
 USE_MINIMAL_RISK_TOOLS=true
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 **Baseline Configuration (No Optimizations):**
@@ -53,7 +53,7 @@ uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 # Both optimizations disabled (for comparison)
 RISK_ASSESSMENT_USE_MINI=false
 USE_MINIMAL_RISK_TOOLS=false
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 ## Phase 1: gpt-4o-mini for Risk Assessment
@@ -70,18 +70,20 @@ The risk assessor agent uses gpt-4o-mini instead of the default LLM (GPT-4) for 
 
 ### Implementation
 
+`RISK_ASSESSMENT_USE_MINI` is not read in `deep_analysis.py` — it's read
+once, centrally, in `config/performance/performance_config.py`, and
+consumed via `self.perf_config.should_use_mini_model()`:
+
+```python
+# In src/finwiz/config/performance/performance_config.py
+risk_assessment_use_mini = os.getenv("RISK_ASSESSMENT_USE_MINI", "true").lower() == "true"
+```
+
 ```python
 # In src/finwiz/crews/deep_analysis/deep_analysis.py
-import os
-
-use_mini = os.getenv("RISK_ASSESSMENT_USE_MINI", "true").lower() == "true"
-
-if use_mini:
-    risk_llm = LLM(model="gpt-4o-mini")
-    logger.info("Risk assessor using gpt-4o-mini for faster execution")
-else:
-    risk_llm = self._get_configured_llm()
-    logger.info("Risk assessor using default LLM")
+if self.perf_config.should_use_mini_model():
+    return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=40960, force_json_object=True)
+return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=61440, force_json_object=True)
 ```
 
 ### When to Disable
@@ -126,16 +128,24 @@ The minimal tool set includes only essential tools for risk assessment:
 
 ### Implementation
 
+`_get_minimal_risk_tools` is a module-level function in
+`src/finwiz/crews/deep_analysis/tool_routing.py`, not a method on
+`deep_analysis.py` — it takes no `self` and accepts an optional
+`prefetched_data` parameter for batch mode:
+
 ```python
-# In src/finwiz/crews/deep_analysis/deep_analysis.py
-def _get_minimal_risk_tools(self, asset_class: str) -> list:
-    """Get minimal tool set for risk assessment only."""
-    tools = []
+# In src/finwiz/crews/deep_analysis/tool_routing.py
+def _get_minimal_risk_tools(
+    asset_class: str,
+    prefetched_data: dict[str, dict[str, Any]] | None = None,
+) -> list[Any]:
+    """Get minimal tool set for risk assessment only (Phase 2 optimization)."""
+    tools: list[Any] = []
 
-    # Core risk metrics
-    tools.append(QuantitativeAnalysisTool(asset_class=asset_class))
+    # Always include quantitative analysis (core risk metrics)
+    tools.append(QuantitativeAnalysisTool(asset_class=asset_class, prefetched_data=prefetched_data))
 
-    # Ticker validation
+    # Always include ticker validation
     tools.append(TickerExistenceValidationTool())
 
     # Asset-specific tool
@@ -146,7 +156,7 @@ def _get_minimal_risk_tools(self, asset_class: str) -> list:
     elif asset_class == "crypto":
         tools.append(EnhancedCryptoAnalysisTool())
 
-    return make_tools_robust(tools)
+    return tools
 ```
 
 ### When to Disable
@@ -174,28 +184,28 @@ export USE_MINIMAL_RISK_TOOLS=false
 
 ```bash
 RISK_ASSESSMENT_USE_MINI=true USE_MINIMAL_RISK_TOOLS=true \
-  time uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+  time crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 **Scenario 2: Phase 1 Only**
 
 ```bash
 RISK_ASSESSMENT_USE_MINI=true USE_MINIMAL_RISK_TOOLS=false \
-  time uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+  time crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 **Scenario 3: Phase 2 Only**
 
 ```bash
 RISK_ASSESSMENT_USE_MINI=false USE_MINIMAL_RISK_TOOLS=true \
-  time uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+  time crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 **Scenario 4: Baseline (No Optimizations)**
 
 ```bash
 RISK_ASSESSMENT_USE_MINI=false USE_MINIMAL_RISK_TOOLS=false \
-  time uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+  time crewai flow kickoff  # analyzes the whole configured portfolio — main.py takes no CLI args
 ```
 
 ### Expected Results
@@ -220,13 +230,16 @@ RISK_ASSESSMENT_USE_MINI=false USE_MINIMAL_RISK_TOOLS=false \
 Compare risk scores between optimized and baseline configurations:
 
 ```bash
+# crewai flow kickoff analyzes the whole configured portfolio (main.py
+# takes no CLI args — a single-ticker run isn't possible this way)
+
 # Generate optimized results
 RISK_ASSESSMENT_USE_MINI=true USE_MINIMAL_RISK_TOOLS=true \
-  uv run python src/finwiz/main.py --ticker AAPL --asset-class stock > output_optimized.txt
+  crewai flow kickoff > output_optimized.txt
 
 # Generate baseline results
 RISK_ASSESSMENT_USE_MINI=false USE_MINIMAL_RISK_TOOLS=false \
-  uv run python src/finwiz/main.py --ticker AAPL --asset-class stock > output_baseline.txt
+  crewai flow kickoff > output_baseline.txt
 
 # Compare risk scores
 diff output_optimized.txt output_baseline.txt
@@ -347,9 +360,11 @@ logger.info("Risk assessor using gpt-4o-mini for faster execution")
 
 ## References
 
-- **Implementation Details**: See `PHASE_1_SPEEDUP_IMPLEMENTATION.md` and `PHASE_2_SPEEDUP_IMPLEMENTATION.md`
-- **Complete Results**: See `RISK_ASSESSMENT_SPEEDUP_COMPLETE.md`
-- **Source Code**: `src/finwiz/crews/deep_analysis/deep_analysis.py`
+`PHASE_1_SPEEDUP_IMPLEMENTATION.md`, `PHASE_2_SPEEDUP_IMPLEMENTATION.md`,
+and `RISK_ASSESSMENT_SPEEDUP_COMPLETE.md` do not exist anywhere in this
+repository.
+
+- **Source Code**: `src/finwiz/crews/deep_analysis/deep_analysis.py`, `src/finwiz/crews/deep_analysis/tool_routing.py`, `src/finwiz/config/performance/performance_config.py`
 - **Operations Guide**: `docs/how-to/OPERATIONS_GUIDE.md` (Deep Analysis Crew section)
 - **Developer Guide**: `docs/development/DEVELOPER_GUIDE.md` (Performance Optimization section)
 
