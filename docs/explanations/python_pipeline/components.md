@@ -13,7 +13,7 @@ The Portfolio Deep Analyzer (`portfolio_deep_analyzer.py`) replaces AI-based Dee
 - **Pure Python Scoring**: Uses `DeepAnalysisScorer` for deterministic calculations
 - **Real Market Data**: Fetches actual data via `QuantitativeAnalysisTool`
 - **JSON Export Generation**: Creates standardized exports for downstream systems
-- **HTML Report Generation**: Uses Jinja2 templates for individual holding reports
+- **HTML Report Generation**: individual holding reports
 - **Score Uniqueness Validation**: Prevents hardcoded defaults
 
 ### Performance Characteristics
@@ -73,7 +73,7 @@ output/crypto/*.json ─┘
 ### Usage Example
 
 ```python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
 discovery_results = integrate_aplus_discovery_with_deep_analysis(
     session_id="analysis_session_123"
@@ -87,7 +87,7 @@ if discovery_results["has_a_plus_analysis"]:
 
 ### Output Structure
 
-Generates `output/aplus_discovery_{session_id}.json` containing:
+Returns an in-memory dict (it writes no file — the only reference to `output/aplus_discovery_*.json` in the repo is a *read* in `backtesting_pipeline_connector.py:50`) containing:
 
 - `has_a_plus_analysis`: Boolean indicating if opportunities exist
 - `total_opportunities_found`: Count of A+ opportunities
@@ -103,22 +103,30 @@ Generates `output/aplus_discovery_{session_id}.json` containing:
 
 The Backtesting Pipeline Connector (`backtesting_pipeline_connector.py`) automatically executes backtesting when A+ candidates are available.
 
+> **This connector runs no backtest and computes no metric.** Every number it
+> emits is a hardcoded placeholder, each tagged `# Simulated` in the source
+> under the comment *"Simulate backtesting execution / In a real
+> implementation, this would: 1. Load historical price data …"*
+> (`integration/backtesting_pipeline_connector.py:129-145`):
+>
+> | Field | Value actually emitted |
+> |---|---|
+> | `annual_return` | `0.12` + `0.05` if grade is A+, else `+0.02` |
+> | `sharpe_ratio` | `1.2` + `0.3` if grade is A+, else `+0.1` |
+> | `max_drawdown` | `-0.15`, always |
+> | `win_rate` | `0.65`, always |
+> | `backtest_period` | `"5 years"`, always |
+> | `status` | `"completed"` |
+>
+> It is not wired into the flow — nothing in `src/` or `tests/` calls it — so
+> these values do not reach the report today. Treat the module as a stub, not
+> as a data source.
+
 ### Key Features
 
 - **Automatic Candidate Detection**: Reads A+ candidates from discovery results
-- **Backtesting Execution**: Executes strategy for each candidate
-- **Performance Metrics**: Calculates comprehensive metrics
+- **Simulated results**: emits fixed placeholders per candidate (see above)
 - **JSON Export**: Saves results for report integration
-
-### Performance Metrics
-
-The connector calculates:
-
-- **Annual Return**: Annualized return percentage
-- **Sharpe Ratio**: Risk-adjusted return metric
-- **Maximum Drawdown**: Peak-to-trough decline
-- **Win Rate**: Percentage of winning trades
-- **Backtest Period**: Time period tested
 
 ### Usage Example
 
@@ -139,11 +147,14 @@ if backtesting_results["backtesting_executed"]:
 
 Generates `output/backtesting_results_{session_id}.json` containing:
 
-- `backtesting_executed`: Boolean indicating execution status
-- `candidates_count`: Number of candidates tested
 - `candidates`: List of candidate details
-- `results`: List of backtesting results with metrics
-- `execution_time_seconds`: Total execution time
+- `results`: List of simulated results
+- `execution_time_seconds`
+- `session_id`
+- `timestamp`
+
+`backtesting_executed` and `candidates_count` are on the function's **return
+value** only — they are not written to the JSON artifact.
 
 [View backtesting results structure →](json-exports.md#backtesting-results)
 
@@ -151,11 +162,11 @@ Generates `output/backtesting_results_{session_id}.json` containing:
 
 ### Overview
 
-The Python Report Generator (`python_report_generator.py`) generates comprehensive HTML reports using Jinja2 templates without any AI calls.
+The Python Report Generator (`python_report_generator.py`) generates comprehensive HTML reports without any AI calls.
 
 ### Key Features
 
-- **Template-Based Generation**: Uses Jinja2 for consistent formatting
+- **f-string generation**: the document is assembled in Python — this module imports no template engine and loads no template file. Sections come from `finwiz.reporting.sections/`, CSS from `assets/report_styles.css`.
 - **Portfolio Statistics**: Calculates comprehensive statistics
 - **Holdings Analysis**: Detailed analysis with grades and scores
 - **Deep Analysis Integration**: Incorporates deep analysis results
@@ -256,7 +267,6 @@ Each component implements graceful error handling:
 ### Parallel Processing
 
 - Deep Analyzer processes holdings sequentially (data fetching is I/O bound)
-- JSON exports are written asynchronously
 - HTML generation uses template caching
 
 ### Memory Management
