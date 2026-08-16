@@ -38,6 +38,16 @@ MAX_BULLETS_SWOT = 4
 MAX_BULLET_CHARS = 200
 MAX_PROSE_CHARS = 400
 MAX_RATIONALE_CHARS = 250
+MAX_VERDICT_CHARS = 200
+
+MAX_PORTFOLIO_PROSE_CHARS = 800
+"""Cap for the three portfolio-level narrative fields.
+
+Deliberately larger than MAX_PROSE_CHARS (400): that cap bounds a single
+framework's synthesis for one company, while these fields summarize an
+entire portfolio's worth of PESTEL/SWOT/Porter output. Reusing MAX_PROSE_CHARS
+here would be too tight for what the field legitimately has to cover.
+"""
 
 
 def _clamp_bullets(v: object, max_items: int) -> list[str]:
@@ -176,8 +186,19 @@ class StrategicAnalysis(BaseModel):
         return sum(confs) / len(confs) if confs else None
 
 
-class PortfolioStrategicPosture(BaseModel):
-    """Portfolio-wide strategic synthesis (one per kickoff)."""
+class PortfolioPostureNarrative(BaseModel):
+    """Portfolio-level synthesis fields the LLM actually supplies.
+
+    Coverage (``holdings_covered`` / ``holdings_total`` / ``value_covered_pct``
+    / ``uncovered_tickers``) is never asked of the model — an LLM cannot know
+    which holdings Python actually analyzed. It is computed in Python and
+    merged in after this schema validates; see :class:`PortfolioStrategicPosture`,
+    which extends this class with those fields, and
+    ``synthesize_portfolio_posture`` in ``analysis/strategic_research.py``,
+    which performs the merge. Keeping this schema LLM-only means a response
+    that (correctly) omits coverage never fails validation before Python gets
+    the chance to add it.
+    """
 
     macro_environment_summary: str = Field(default="", description="Cross-portfolio PESTEL synthesis (regulatory/economic/geopolitical themes)")
     portfolio_strengths: list[str] = Field(default_factory=list, description="Concentration of moats, structural advantages")
@@ -187,13 +208,29 @@ class PortfolioStrategicPosture(BaseModel):
     competitive_landscape_summary: str = Field(default="", description="Cross-holding Porter synthesis (industries with strongest/weakest moats)")
     dominant_themes: list[str] = Field(default_factory=list, description="Top 3-5 strategic themes recurring across the portfolio")
     overall_assessment: str = Field(default="", description="AI's narrative on the portfolio's strategic posture")
-    strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's confidence in this synthesis")
+
+    # One-sentence verdicts, requested from the model rather than extracted
+    # from prose by Python — first-sentence extraction is how a markdown
+    # bullet list ends up as a headline. Required (a missing verdict must
+    # fail loudly) but clamped rather than max_length-constrained: an
+    # over-long sentence must not cost the whole posture — this is the
+    # single most expensive call in the run.
+    macro_verdict: str = Field(..., description="One sentence on the macro environment")
+    competitive_verdict: str = Field(..., description="One sentence on the competitive landscape")
+    swot_verdict: str = Field(..., description="One sentence on the aggregated SWOT")
+
+    strategic_score: float = Field(..., ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="AI's confidence in this synthesis")
 
     @field_validator("macro_environment_summary", "competitive_landscape_summary", "overall_assessment", mode="before")
     @classmethod
-    def _coerce_prose_fields(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_prose_fields(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PORTFOLIO_PROSE_CHARS)
+
+    @field_validator("macro_verdict", "competitive_verdict", "swot_verdict", mode="before")
+    @classmethod
+    def _clamp_verdicts(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_VERDICT_CHARS)
 
     @field_validator("portfolio_strengths", "portfolio_weaknesses", "portfolio_opportunities", "portfolio_threats", "dominant_themes", mode="before")
     @classmethod
@@ -201,3 +238,18 @@ class PortfolioStrategicPosture(BaseModel):
         return _coerce_str_list(v)
 
     model_config = {"str_strip_whitespace": True}
+
+
+class PortfolioStrategicPosture(PortfolioPostureNarrative):
+    """Portfolio-wide strategic synthesis (one per kickoff), coverage included.
+
+    Coverage is required so a posture cannot omit what it covers. The
+    2026-08-16 report printed "71%" from 1 of 64 holdings because this schema
+    had no way to say otherwise — and strategic_score/confidence defaulted to
+    0.5, so a posture built from nothing still reported a confident midpoint.
+    """
+
+    holdings_covered: int = Field(..., ge=0, description="Holdings with a real strategic analysis")
+    holdings_total: int = Field(..., ge=0, description="Holdings in the portfolio")
+    value_covered_pct: float = Field(..., ge=0.0, le=100.0, description="Share of portfolio value covered")
+    uncovered_tickers: list[str] = Field(default_factory=list, description="Named, never silently omitted")

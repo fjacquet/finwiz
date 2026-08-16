@@ -21,10 +21,13 @@ from finwiz.schemas.hybrid_analysis.strategic import (
     MAX_BULLET_CHARS,
     MAX_BULLETS_PESTEL,
     MAX_BULLETS_SWOT,
+    MAX_PORTFOLIO_PROSE_CHARS,
     MAX_PROSE_CHARS,
     MAX_RATIONALE_CHARS,
+    MAX_VERDICT_CHARS,
     FiveForcesAnalysis,
     PestelAnalysis,
+    PortfolioPostureNarrative,
     PortfolioStrategicPosture,
     StrategicAnalysis,
     SwotAnalysis,
@@ -110,11 +113,15 @@ def _portfolio_prompt(per_holding_payload: str, current_date: str) -> str:
         "chaque ligne du portefeuille au format JSON :\n\n"
         f"{per_holding_payload}\n\n"
         f"Synthétise une posture stratégique au niveau PORTEFEUILLE à la date du {current_date} :\n"
-        "- macro_environment_summary : thèmes PESTEL transversaux (régulatoire, macro, géopolitique).\n"
+        f"- macro_environment_summary : thèmes PESTEL transversaux (régulatoire, macro, géopolitique), "
+        f"{MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
         "- portfolio_strengths / weaknesses / opportunities / threats : SWOT agrégé.\n"
-        "- competitive_landscape_summary : industries avec moats les plus forts/faibles.\n"
+        f"- competitive_landscape_summary : industries avec moats les plus forts/faibles, "
+        f"{MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
         "- dominant_themes : 3 à 5 thèmes stratégiques récurrents.\n"
-        "- overall_assessment : narratif final.\n"
+        f"- overall_assessment : narratif final, {MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
+        f"- macro_verdict / competitive_verdict / swot_verdict : UNE phrase chacun, "
+        f"{MAX_VERDICT_CHARS} caractères maximum, compréhensible par un lecteur non financier.\n"
         "Évalue strategic_score (favorabilité stratégique globale du portefeuille) et confidence."
     )
 
@@ -200,13 +207,29 @@ def gather_strategic_analysis_sync(
 async def synthesize_portfolio_posture(
     holdings_strategic: dict[str, StrategicAnalysis],
     *,
+    holdings_covered: int,
+    holdings_total: int,
+    value_covered_pct: float,
+    uncovered_tickers: list[str] | None = None,
     timeout: float = 90.0,
     current_date: str | None = None,
 ) -> PortfolioStrategicPosture | None:
     """Synthesize a portfolio-wide PortfolioStrategicPosture from per-holding analyses.
 
+    Coverage is a Python fact, never an LLM one — the model is asked to fill
+    :class:`PortfolioPostureNarrative` (no coverage fields), and Python merges
+    the caller-supplied coverage numbers into that response *before*
+    constructing the final :class:`PortfolioStrategicPosture`. Validating the
+    full schema straight out of the LLM response would fail every time
+    (the model can't supply holdings_covered/holdings_total/value_covered_pct),
+    turning every synthesis into a lost posture.
+
     Args:
         holdings_strategic: ``{ticker: StrategicAnalysis}`` for each holding analyzed.
+        holdings_covered: Count of holdings with a real strategic analysis.
+        holdings_total: Count of holdings in the portfolio.
+        value_covered_pct: Share of portfolio value covered, 0-100.
+        uncovered_tickers: Tickers with no strategic analysis (default: none).
         timeout: HTTP timeout for the synthesis call.
         current_date: Long-form French date anchor (defaults to today).
     """
@@ -216,23 +239,46 @@ async def synthesize_portfolio_posture(
 
     payload = _serialize_holdings(holdings_strategic)
     date_anchor = current_date or _today_french()
-    return await perplexity_structured(
+    narrative = await perplexity_structured(
         prompt=_portfolio_prompt(payload, date_anchor),
-        schema=PortfolioStrategicPosture,
+        schema=PortfolioPostureNarrative,
         system=SYSTEM_FR,
         search_recency_filter="week",
         timeout=timeout,
     )
+    if narrative is None:
+        return None
+
+    merged = narrative.model_dump()
+    merged.update(
+        holdings_covered=holdings_covered,
+        holdings_total=holdings_total,
+        value_covered_pct=value_covered_pct,
+        uncovered_tickers=uncovered_tickers or [],
+    )
+    return PortfolioStrategicPosture.model_validate(merged)
 
 
 def synthesize_portfolio_posture_sync(
     holdings_strategic: dict[str, StrategicAnalysis],
     *,
+    holdings_covered: int,
+    holdings_total: int,
+    value_covered_pct: float,
+    uncovered_tickers: list[str] | None = None,
     timeout: float = 90.0,
     current_date: str | None = None,
 ) -> PortfolioStrategicPosture | None:
     """Synchronous wrapper for portfolio synthesis."""
-    coro = synthesize_portfolio_posture(holdings_strategic, timeout=timeout, current_date=current_date)
+    coro = synthesize_portfolio_posture(
+        holdings_strategic,
+        holdings_covered=holdings_covered,
+        holdings_total=holdings_total,
+        value_covered_pct=value_covered_pct,
+        uncovered_tickers=uncovered_tickers,
+        timeout=timeout,
+        current_date=current_date,
+    )
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
