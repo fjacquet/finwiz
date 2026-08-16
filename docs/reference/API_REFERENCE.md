@@ -7,7 +7,6 @@ Complete API documentation for FinWiz financial analysis platform.
 - [Crew APIs](api/crews.md) - AI agent crews for analysis
 - [Tool APIs](api/tools.md) - Financial analysis tools
 - [Schema APIs](api/schemas.md) - Data models and validation
-- [CLI Commands](cli_commands.md) - Command-line interface
 
 ## Analysis Crews
 
@@ -98,7 +97,3 @@ from finwiz.flows.flow_orchestrator import FinwizFlow
 flow = FinwizFlow()
 result = flow.kickoff()
 ```
-
-## See Also
-
-- [CLI Commands](cli_commands.md) - Command-line reference

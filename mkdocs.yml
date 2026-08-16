@@ -191,19 +191,6 @@ nav:
       - Deep Analysis: explanations/deep_analysis.md
       - Design Principles: explanations/design_principles.md
 
-  - Investment Discovery:
-      - investment_discovery/index.md
-      - User Guide: investment_discovery/user_guide.md
-      - API Reference: investment_discovery/api_reference.md
-      - Developer Guide: investment_discovery/developer_guide.md
-      - FAQ: investment_discovery/faq.md
-
-  - Portfolio Rebalancing:
-      - portfolio_rebalancing/index.md
-      - User Guide: portfolio_rebalancing/user_guide.md
-      - API Reference: portfolio_rebalancing/api_reference.md
-      - Developer Guide: portfolio_rebalancing/developer_guide.md
-
   - Development:
       - Dependency Policy: development/dependencies.md
 

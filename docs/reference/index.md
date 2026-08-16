@@ -23,10 +23,6 @@ Reference documentation is **information-oriented** material that provides detai
 <!-- - **Scoring API** - Python scoring engine (TBD) -->
 <!-- - **Reporting API** - Report generation (TBD) -->
 
-### Command-Line Interface
-
-- **[CLI Commands](cli_commands.md)** - Complete command reference
-
 ### Schema Documentation
 
 - **[Schema Overview](schemas/index.md)** - Pydantic model documentation
@@ -41,19 +37,12 @@ Reference documentation is **information-oriented** material that provides detai
 
 ## Reference by Category
 
-### For Users
-
-Essential reference material for end users:
-
-1. **[CLI Commands](cli_commands.md)** - Command-line reference
-
 ### For Developers
 
 Technical reference for developers:
 
 1. **[API Overview](api/index.md)** - Complete API documentation
 2. **[Schema Documentation](schemas/index.md)** - Pydantic models
-3. **[CLI Commands](cli_commands.md)** - Command-line reference
 
 ## Quick Reference Lookup
 
@@ -61,7 +50,6 @@ Technical reference for developers:
 
 | Task | Reference |
 |------|-----------|
-| Run analysis | [CLI Commands](cli_commands.md#analysis-commands) |
 | Validate data | [Schema Documentation](schemas/index.md) |
 
 ### API Quick Reference

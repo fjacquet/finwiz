@@ -85,10 +85,6 @@ Each tutorial includes:
 - [Setup Environment](../how-to/setup_environment.md) - Environment configuration
 - [Troubleshooting](../how-to/troubleshooting.md) - Common issues
 
-### Reference
-
-- [CLI Commands](../reference/cli_commands.md) - Command reference
-
 ### Explanations
 
 - [Architecture](../explanations/ARCHITECTURE.md) - System design

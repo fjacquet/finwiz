@@ -176,7 +176,7 @@ make docs-serve
 
 ## Resources
 
-- [Setup Guide](GITHUB_PAGES_SETUP.md) - Detailed setup instructions
+- [Setup Guide](how-to/github-pages-mkdocs.md) - Detailed setup instructions
 - [Developer Guide](development/DEVELOPER_GUIDE.md) - Development guidelines
 - [GitHub Pages Docs](https://docs.github.com/en/pages)
 - [Diátaxis Framework](https://diataxis.fr/)

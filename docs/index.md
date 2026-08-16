@@ -67,7 +67,6 @@ Our documentation follows the [Diátaxis framework](https://diataxis.fr/) for cl
 **Information-oriented** - Technical reference for APIs, schemas, and commands.
 
 - [API Reference](reference/api/index.md) - Complete API documentation
-- [CLI Commands](reference/cli_commands.md) - Command-line interface
 - [Schema Documentation](reference/schemas/index.md) - Data models and validation
 
 ### 💡 [Explanations](explanations/index.md)
@@ -243,7 +242,6 @@ Professional-grade quantitative analysis framework:
 - [AI Minimalism](explanations/design_principles.md)
 - [Python Scoring Engine](how-to/PYTHON_SCORING_ENGINE.md)
 - [Batch Processing](how-to/BATCH_PROCESSING.md)
-- [Portfolio Rebalancing](how-to/risk_management.md)
 - [A+ Discovery](explanations/deep_analysis.md)
 
 ## System Requirements

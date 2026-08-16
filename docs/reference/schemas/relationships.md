@@ -386,8 +386,4 @@ def validate_analysis_pipeline(raw_data: dict) -> TenKInsight:
 
 ## Related Documentation
 
-- [Analysis Schemas](analysis_schemas.md) - Individual asset analysis schemas
-- [Portfolio Schemas](portfolio_schemas.md) - Portfolio management schemas
-- [Discovery Schemas](discovery_schemas.md) - Investment discovery schemas
-- [Validation Schemas](validation_schemas.md) - Input validation and error handling
 - [API Reference](../api/schemas.md) - Programmatic schema usage

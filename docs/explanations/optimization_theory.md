@@ -428,7 +428,5 @@ def calculate_performance_metrics(returns):
 
 ## Related Documentation
 
-- [Portfolio Rebalancing](../portfolio_rebalancing/index.md)
-- [Risk Management](../how-to/risk_management.md)
 - [Performance Attribution](optimization_theory.md)
 - [Investment Methodology](investment_methodology.md)
