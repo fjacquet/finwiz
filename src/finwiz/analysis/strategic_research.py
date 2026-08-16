@@ -248,8 +248,13 @@ def synthesize_portfolio_posture_sync(
 SYNTHESIS_PAYLOAD_BUDGET_CHARS = 240_000
 """Char budget for the portfolio-synthesis payload (~60K tokens).
 
-With the Task 3 caps a 64-holding portfolio lands near 190K, so the degradation
-ladder below is a guard-rail rather than the normal path.
+Measured (2026-08-16, tests/unit/analysis/test_strategic_digest.py): 64
+holdings at max detail per the Task 3 caps digest to 219,126 chars at rung 1
+(~9% margin under this budget). Portfolios meaningfully larger than 64 —
+roughly 70+ holdings at similar detail density — will exceed the budget at
+rung 1 and degrade to rung 2, shedding one bullet per list. The ladder is not
+purely a guard-rail against pathological input; it is within reach of the
+current portfolio size.
 """
 
 
