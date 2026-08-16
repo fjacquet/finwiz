@@ -33,7 +33,7 @@ Flag off → legacy signal-gated path.
 from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
 
 pipeline = NewcomerDiscoveryPipeline("stock")
-result = pipeline.discover()  # Returns NewcomerDiscoveryResult
+result = pipeline.discover(session_id)  # session_id is required
 ```
 
 ## Screener Wiring

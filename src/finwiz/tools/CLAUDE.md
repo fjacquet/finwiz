@@ -6,7 +6,7 @@ Custom CrewAI tools for financial data retrieval, analysis, and processing. Tool
 
 ```
 tools/
-├── tool_factories.py                # MAIN: get_stock/etf/crypto/discovery_crew_tools()
+├── tool_factories.py                # MAIN: get_stock/etf/crypto_crew_tools()
 ├── finance_tools.py                 # Core research tool bundles (get_*_research_tools())
 ├── logger.py                        # get_logger() — project-wide logging
 │
@@ -90,9 +90,12 @@ tools/
 | `tool_factories.py` | `get_stock_crew_tools()` | Stock crew tool set |
 | `tool_factories.py` | `get_etf_crew_tools()` | ETF crew tool set |
 | `tool_factories.py` | `get_crypto_crew_tools()` | Crypto crew tool set |
-| `tool_factories.py` | `get_discovery_crew_tools()` | Discovery crew tool set |
-| `tool_factories.py` | `get_deep_analysis_tools()` | Deep analysis tool set |
+| `tool_factories.py` | `get_valuation_tool()` | Single valuation tool |
+| `tool_factories.py` | `get_etf_analysis_tool()` | Single ETF analysis tool |
 | `logger.py` | `get_logger()` | Project-wide logger |
+
+There is no discovery or deep-analysis factory here. Deep-analysis tool
+selection lives in `crews/deep_analysis/tool_routing.py`.
 
 ## Usage
 

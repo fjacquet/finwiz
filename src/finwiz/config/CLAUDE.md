@@ -26,7 +26,7 @@ config/
 │   └── llm_config.py                # get_configured_llm(), get_llm_for_crew(), model capabilities
 │
 └── performance/                     # Performance tuning
-    └── performance_config.py        # OptimizationMode, get_optimization_mode(), batch sizing
+    └── performance_config.py        # OptimizationMode, mode predicates, batch sizing
 ```
 
 ## Entry Points
@@ -39,7 +39,9 @@ config/
 | `features/definitions.py` | `create_default_flags()` | All flag definitions |
 | `llm/llm_config.py` | `get_configured_llm()` | Get LLM for general use |
 | `llm/llm_config.py` | `get_llm_for_crew()` | Get LLM configured for crew execution |
-| `performance/performance_config.py` | `get_optimization_mode()` | Current performance mode |
+| `performance/performance_config.py` | `get_performance_config_manager()` | Manager holding the active `OptimizationMode` |
+| `performance/performance_config.py` | `is_maximum_speed_mode()` / `is_balanced_mode()` / `is_baseline_mode()` | Mode predicates |
+| `performance/performance_config.py` | `get_batch_size()` | Batch size for the active mode |
 
 ## Environment Variables
 
@@ -61,7 +63,8 @@ from finwiz.config.features.flags import is_feature_enabled
 
 settings = get_settings()
 if is_feature_enabled("portfolio_aware_discovery"):
-    time_budget = settings.max_batch_processing_time_seconds
+    # Nested model — the field is on HybridAnalysisSettings, not on FinWizSettings
+    time_budget = settings.hybrid_analysis.max_batch_processing_time_seconds
 ```
 
 ## Related Modules

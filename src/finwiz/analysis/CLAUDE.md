@@ -7,8 +7,28 @@ This module provides the functional programming pipeline for per-holding deep an
 ```
 analysis/
 ├── __init__.py                   # Module exports
-└── deep_analysis_pipeline.py     # Functional pipeline implementation
+├── deep_analysis_pipeline.py     # Backwards-compatible facade only
+├── _helpers.py                   # Shared helpers
+├── fact_pack_research.py         # Perplexity fact-pack research
+├── strategic_research.py         # Strategic framework research
+└── stages/                       # WHERE THE PIPELINE ACTUALLY LIVES
+    ├── __init__.py               # run_pipeline() — the real orchestrator
+    ├── collect.py                # 1. collect
+    ├── quantify.py               # 2. quantify
+    ├── fact_pack.py              # 3. fact_pack
+    ├── qualify.py                # 4. qualify (AI)
+    ├── synthesize.py             # 5. synthesize
+    ├── emit.py                   # 6. emit
+    ├── _ledger.py                # RunLedger JSONL
+    ├── _resilience.py            # @stage timeouts/retries, TransientStageError
+    ├── _qualify_fallbacks.py
+    ├── _synthesize_helpers.py
+    └── _synthesize_options.py
 ```
+
+`deep_analysis_pipeline.py` is a facade: it re-exports the stage functions and
+delegates to `finwiz.analysis.stages.run_pipeline`. Edit the stage modules, not
+the facade.
 
 ## Architecture
 
@@ -18,11 +38,13 @@ The analysis pipeline follows functional programming principles with pure functi
 ┌──────────────────────────────────────────────────────────────────┐
 │  analyze_holding(ticker, asset_class, company_name)              │
 │  │                                                               │
-│  │  Pipeline composition (pure functions):                       │
-│  │  ├── collect_raw_data(ctx) -> RawData         [Python tools]  │
-│  │  ├── calculate_quantitative(ctx, raw) -> Quant   [$0 Python]  │
-│  │  ├── generate_qualitative(ctx, quant) -> Qual    [AI crew]    │
-│  │  └── synthesize(ctx, quant, qual) -> Enriched    [Python]     │
+│  │  Six stages, in finwiz.analysis.stages:                       │
+│  │  ├── collect     -> RawData                   [Python tools]  │
+│  │  ├── quantify    -> Quant                        [$0 Python]  │
+│  │  ├── fact_pack   -> FactPack                    [Perplexity]  │
+│  │  ├── qualify     -> Qual                          [AI crew]   │
+│  │  ├── synthesize  -> Enriched                       [Python]   │
+│  │  └── emit        -> artifacts + RunLedger          [Python]   │
 │  │                                                               │
 │  └── Output: (DeepAnalysisResult, EnrichedAnalysis)              │
 └──────────────────────────────────────────────────────────────────┘
@@ -119,17 +141,27 @@ If AI fails, the pipeline returns a degraded but valid result:
 
 ### DeepAnalysisResult
 
-Used for caching and flow state:
+Used for caching and flow state. A Pydantic model (`flow_state_models.py:14`),
+**not** a dataclass — and several fields the older docs omitted are required, so
+constructing it from a partial shape raises `ValidationError`:
 
 ```python
-@dataclass
-class DeepAnalysisResult:
+class DeepAnalysisResult(BaseModel):
+    # required
     ticker: str
     asset_class: str
-    grade: str          # A+ to F
-    composite_score: float  # 0.0 to 1.0
-    recommendation: str # BUY, HOLD, SELL
-    # ... other fields
+    crew_name: str
+    composite_score: float          # 0.0-1.0
+    grade: str                      # A+ to F
+    recommendation: str             # BUY, HOLD, SELL
+    rationale: str
+    data_freshness_hours: float     # >= 0.0
+    confidence_level: float         # 0.0-1.0
+
+    # optional component scores
+    fundamental_score: float | None  # 0.0-1.0
+    technical_score: float | None    # 0.0-1.0
+    risk_score: float | None         # 0.0-5.0  (note: 0-5, not 0-1)
 ```
 
 ### EnrichedAnalysis (Pydantic)

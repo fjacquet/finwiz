@@ -36,12 +36,24 @@ integration/
 
 ## Usage
 
-```python
-from finwiz.integration import CrewDataIntegrationManager, get_integration_config
+The manager is constructed from paths, not from a config object, and reads
+whole-crew artifacts — there is no per-ticker accessor.
 
-config = get_integration_config()
-manager = CrewDataIntegrationManager(config)
-data = manager.get_crew_data(crew_name="stock_crew", ticker="AAPL")
+```python
+from finwiz.integration import CrewDataIntegrationManager
+
+manager = CrewDataIntegrationManager(output_dir=Path("output"))
+data = manager.get_crew_data_with_freshness_check(
+    crew_name="stock_crew", max_age_hours=24, warn_on_stale=True
+)
+```
+
+For a plain read without the freshness check, use `CrewDataAccessor`:
+
+```python
+from finwiz.integration.accessor import CrewDataAccessor
+
+data = CrewDataAccessor(...).get_crew_data(crew_name="stock_crew", max_age_hours=24)
 ```
 
 ## Related Modules

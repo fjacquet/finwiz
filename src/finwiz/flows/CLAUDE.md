@@ -30,7 +30,10 @@ flows/
 1. **Data Validation** → `ValidationOrchestrator`
 2. **Portfolio Review** → `portfolio_review_orchestrator.run()` (via `ValidationOrchestrator`)
 3. **Deep Analysis** → `DeepAnalysisOrchestrator`
-4. **Discovery** (optional) → `DiscoveryOrchestrator`
+4. **Discovery** → `DiscoveryOrchestrator` — runs unconditionally. The
+   `check_crypto` / `check_stock` / `check_etf` methods are plain
+   `@listen("check_portfolio")` listeners with no router and no feature gate;
+   the `INVESTMENT_DISCOVERY_ENABLED` kill switch was removed.
 5. **Alternative Matching** → `AlternativesMatchingOrchestrator`
 6. **Reporting** → `ReportingOrchestrator`
 

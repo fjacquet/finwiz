@@ -22,7 +22,17 @@ reporting/
 ├── individual_report_generator.py       # generate_individual_report_html()
 │
 ├── # HTML infrastructure
-├── section_generators.py                # generate_executive_summary(), generate_holdings_analysis()
+├── section_generators.py                # Facade only — re-exports from sections/
+├── sections/                            # THE REAL SECTION GENERATORS
+│   ├── analysis.py                      # generate_deep_analysis_section()
+│   ├── common.py
+│   ├── discovery.py
+│   ├── factpack.py
+│   ├── holdings.py
+│   ├── insights.py
+│   ├── macro.py
+│   ├── portfolio_summary.py
+│   └── sentiment.py
 ├── consolidator.py                      # ReportConsolidator
 ├── html_collector.py                    # collect_html_report_paths()
 ├── html_auto_generator.py               # auto_generate_html()

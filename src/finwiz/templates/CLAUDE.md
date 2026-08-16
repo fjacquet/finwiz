@@ -36,23 +36,30 @@ templates/
 
 ## Usage Pattern
 
-```python
-from finwiz.utils.template_renderer import render_template
+Templates are rendered through a shared Jinja2 environment — there is no
+`render_template()` helper.
 
-html = render_template(
-    template_name="portfolio_review.html",
-    context={
-        "session_id": session_id,
-        "holdings": holdings,
-        "recommendations": recommendations,
-        "generated_at": datetime.now()
-    }
+```python
+from finwiz.reporting.base_report_generator import create_report_jinja_env
+
+env = create_report_jinja_env(template_dir)   # autoescape=True, trim/lstrip_blocks
+template = env.get_template("portfolio_review.html")
+
+html = template.render(
+    session_id=session_id,
+    holdings=holdings,
+    recommendations=recommendations,
+    generated_at=datetime.now(),
 )
 
 # Save report
 with open(f"output/reports/{session_id}/portfolio_review.html", "w") as f:
     f.write(html)
 ```
+
+Crew-specific generators subclass `BaseReportGenerator` and implement
+`get_template_name()`, `get_required_fields()`, and
+`prepare_template_variables()` rather than calling Jinja directly.
 
 ## Template Inheritance
 
@@ -80,6 +87,6 @@ Templates are ALWAYS rendered by Python (Jinja2), NEVER by AI agents:
 
 ## Related Modules
 
-- `finwiz.utils.template_renderer` - Template rendering utility
+- `finwiz.reporting.base_report_generator` - `create_report_jinja_env()`, `BaseReportGenerator`
 - `finwiz.tools.html_report_generator` - HTML generation tool
 - `finwiz.reporting` - Report generation logic

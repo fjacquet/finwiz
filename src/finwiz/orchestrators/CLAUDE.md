@@ -18,6 +18,9 @@ orchestrators/
 ├── progress_tracking_orchestrator.py    # ProgressTrackingOrchestrator
 ├── utility_orchestrator.py              # Shared utilities
 ├── alternatives_matching_orchestrator.py # A+ alternatives matching
+├── gap_profile_orchestrator.py          # Builds the PortfolioGapProfile discovery scores against
+├── batch_prefetch_runner.py             # Bulk data prefetch ahead of deep analysis
+├── stress_test_orchestrator.py          # Portfolio stress scenarios
 │
 ├── # Portfolio orchestrators
 ├── portfolio_review_orchestrator.py     # run()
@@ -61,8 +64,14 @@ orchestrators/
 │   ├── registry_models.py
 │   └── registry_data_retrieval.py
 │
+├── reporting/                           # Report assembly helpers
+│   ├── crew_html.py
+│   ├── data_loading.py
+│   └── enrichment.py
+│
 └── portfolio_review/                    # Review subsystem
-    └── decisions.py
+    ├── decisions.py
+    └── merge.py
 ```
 
 ## Entry Points
@@ -79,14 +88,17 @@ orchestrators/
 
 ## Usage
 
+Every orchestrator takes `state: FinwizState` as its first positional argument
+and reads its inputs from that state — nothing is passed per-call.
+
 ```python
 from finwiz.orchestrators import DeepAnalysisOrchestrator, DiscoveryOrchestrator
 
-deep_orch = DeepAnalysisOrchestrator()
-results = deep_orch.analyze_all_holdings(holdings=holdings, state=state)
+deep_orch = DeepAnalysisOrchestrator(state)
+results = await deep_orch.analyze_and_update_portfolio()   # async
 
-discovery_orch = DiscoveryOrchestrator()
-opportunities = discovery_orch.check_investment_discovery(session_id, state)
+discovery_orch = DiscoveryOrchestrator(state)
+opportunities = discovery_orch.check_investment_discovery()   # no arguments
 ```
 
 ## Related Modules

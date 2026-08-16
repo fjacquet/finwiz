@@ -48,17 +48,21 @@ cache.cache_analysis(ticker, "stock", result)
 
 ## Cache Configuration
 
-Set in `.env`:
+**Not environment-driven.** No code in this module reads `CACHE_BACKEND`,
+`CACHE_TTL`, or `CACHE_MAX_SIZE` — setting them has no effect, even though
+`.env.example` still lists the first two.
 
-```bash
-CACHE_BACKEND=hybrid        # memory/file/hybrid
-CACHE_TTL=2700              # 45 minutes default
-CACHE_MAX_SIZE=1000         # Max entries
+TTL is a constructor argument, defaulting to 24 hours:
+
+```python
+AnalysisCacheManager(cache_dir="cache/portfolio_analysis", ttl_hours=24)
 ```
+
+The per-type TTL registry used elsewhere in the tree
+(`CACHE_TTL_{TYPE}`) lives in `infrastructure/caching/ttl_config.py` and is a
+separate layer from this one.
 
 ## Related Modules
 
-- `finwiz.utils.cache_manager` — Generic cache utilities
-- `finwiz.utils.cache_decorators` — `@cache_result` decorator
-- `finwiz.utils.crew_output_cache` — Crew-specific caching
 - `finwiz.infrastructure.caching.manager` — In-memory CacheManager (different layer)
+- `finwiz.infrastructure.caching.ttl_config` — Per-type TTL registry
