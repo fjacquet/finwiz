@@ -8,7 +8,7 @@ pure averaging — no Python derivation from item counts.
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 def _coerce_prose(v: object) -> str:
@@ -38,7 +38,15 @@ MAX_BULLETS_SWOT = 4
 MAX_BULLET_CHARS = 200
 MAX_PROSE_CHARS = 400
 MAX_RATIONALE_CHARS = 250
+
 MAX_VERDICT_CHARS = 200
+"""Cap for a portfolio-level one-sentence verdict.
+
+Equal to ``MAX_BULLET_CHARS`` today, but deliberately a separate constant: a
+per-holding PESTEL bullet and a portfolio-wide verdict sentence are tuned
+against different prompts and different readers. Do not merge them — changing
+one must not silently move the other.
+"""
 
 MAX_PORTFOLIO_PROSE_CHARS = 800
 """Cap for the three portfolio-level narrative fields.
@@ -253,3 +261,32 @@ class PortfolioStrategicPosture(PortfolioPostureNarrative):
     holdings_total: int = Field(..., ge=0, description="Holdings in the portfolio")
     value_covered_pct: float = Field(..., ge=0.0, le=100.0, description="Share of portfolio value covered")
     uncovered_tickers: list[str] = Field(default_factory=list, description="Named, never silently omitted")
+
+    @model_validator(mode="after")
+    def _coverage_counts_agree(self) -> "PortfolioStrategicPosture":
+        """Reject a posture whose own coverage numbers contradict each other.
+
+        ``holdings_covered`` is derivable — it is always
+        ``holdings_total - len(uncovered_tickers)`` — but it is stored rather
+        than computed, because the renderers and the JSON export both read it
+        as a field. Storing a derivable value means it can drift from the list
+        it summarises, and a posture that reports "26 of 64 covered" beside a
+        list naming three gaps is exactly the quietly-wrong number this schema
+        exists to make impossible.
+
+        Only enforced when ``uncovered_tickers`` is populated: an empty list is
+        ambiguous (either full coverage, or gaps that were never named), and
+        rejecting the ambiguous case would break callers that legitimately know
+        the counts without enumerating the gaps.
+        """
+        if self.uncovered_tickers:
+            expected = self.holdings_total - len(self.uncovered_tickers)
+            if self.holdings_covered != expected:
+                raise ValueError(
+                    f"coverage counts disagree: holdings_covered={self.holdings_covered} but "
+                    f"holdings_total={self.holdings_total} minus {len(self.uncovered_tickers)} "
+                    f"named uncovered tickers implies {expected}"
+                )
+        if self.holdings_covered > self.holdings_total:
+            raise ValueError(f"holdings_covered={self.holdings_covered} exceeds holdings_total={self.holdings_total}")
+        return self

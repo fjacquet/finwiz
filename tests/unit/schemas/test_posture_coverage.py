@@ -110,8 +110,12 @@ def test_uncovered_tickers_defaults_to_empty_list():
 
 
 def test_uncovered_tickers_can_be_named():
-    posture = PortfolioStrategicPosture(**_valid_kwargs(uncovered_tickers=["MSFT", "TSLA"]))
+    # Counts must agree with the named gaps: 62 covered + 2 named = 64 total.
+    # This test previously passed 64/64 alongside two named uncovered tickers —
+    # a self-contradictory posture the schema now rejects.
+    posture = PortfolioStrategicPosture(**_valid_kwargs(holdings_covered=62, uncovered_tickers=["MSFT", "TSLA"]))
     assert posture.uncovered_tickers == ["MSFT", "TSLA"]
+    assert posture.holdings_covered == 62
 
 
 def test_valid_posture_constructs():
@@ -121,3 +125,56 @@ def test_valid_posture_constructs():
     assert posture.value_covered_pct == 100.0
     assert posture.strategic_score == 0.71
     assert posture.confidence == 0.83
+
+
+def test_coverage_counts_must_agree_with_the_named_gaps():
+    """A posture cannot claim a coverage count its own gap list contradicts.
+
+    ``holdings_covered`` is derivable — it is always
+    ``holdings_total - len(uncovered_tickers)`` — but it is stored, because the
+    renderers and the JSON export read it as a field. Storing a derivable value
+    lets it drift from the list it summarises. "26 of 64 covered" printed beside
+    three named gaps is precisely the quietly-wrong number this schema exists to
+    make impossible.
+    """
+    with pytest.raises(ValidationError, match="coverage counts disagree"):
+        PortfolioStrategicPosture(
+            **_valid_kwargs(
+                holdings_covered=26,
+                holdings_total=64,
+                uncovered_tickers=["MSFT", "TSLA", "SAP"],
+            )
+        )
+
+
+def test_coverage_counts_agree_when_consistent():
+    """The identity holding is not an error — 61 covered, 3 named, 64 total."""
+    posture = PortfolioStrategicPosture(
+        **_valid_kwargs(
+            holdings_covered=61,
+            holdings_total=64,
+            uncovered_tickers=["MSFT", "TSLA", "SAP"],
+        )
+    )
+
+    assert posture.holdings_covered == 61
+    assert len(posture.uncovered_tickers) == 3
+
+
+def test_unnamed_gaps_are_still_allowed():
+    """An empty uncovered_tickers is ambiguous, so the identity is not enforced.
+
+    Either coverage is complete, or the gaps were never enumerated. Rejecting
+    the ambiguous case would break callers that legitimately know the counts
+    without listing the tickers.
+    """
+    posture = PortfolioStrategicPosture(**_valid_kwargs(holdings_covered=26, holdings_total=64))
+
+    assert posture.holdings_covered == 26
+    assert posture.uncovered_tickers == []
+
+
+def test_covered_cannot_exceed_total():
+    """Coverage above 100% is not a rounding artefact, it is a broken caller."""
+    with pytest.raises(ValidationError, match="exceeds holdings_total"):
+        PortfolioStrategicPosture(**_valid_kwargs(holdings_covered=65, holdings_total=64))
