@@ -471,7 +471,11 @@ class ReportEnrichmentMixin:
                 uncovered_tickers=uncovered_tickers,
             )
             if posture is None:
-                self.logger.info("Portfolio strategic synthesis returned no posture")
+                # Warning, not info: the five required narrative fields mean a
+                # truncated model response now loses the *entire* posture, not
+                # a few sentences of it. At info this was indistinguishable
+                # from routine progress chatter.
+                self.logger.warning("Portfolio strategic synthesis returned no posture; the report will show it as unavailable for this run")
                 return None
             return posture.model_dump(mode="json")
         except (TypeError, AttributeError):

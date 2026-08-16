@@ -92,8 +92,17 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
 
     This section used to embed the full PESTEL/SWOT/Porter prose, which rendered
     as a wall of raw markdown in a document meant for a family. ``posture`` is a
-    :class:`PortfolioStrategicPosture` model_dump. Returns "" when no posture is
-    available so the surrounding report stays clean.
+    :class:`PortfolioStrategicPosture` model_dump.
+
+    When no posture is available this renders a short "indisponible" block
+    rather than "". Silence is indistinguishable from "this report never had a
+    posture", and the branch that made ``macro_verdict`` /
+    ``competitive_verdict`` / ``swot_verdict`` / ``strategic_score`` /
+    ``confidence`` required also made losing the whole posture the normal
+    consequence of a truncated model response. Failing loudly was the right
+    call; failing silently *to the reader* turns "wrong data" into "lost data".
+    The block carries no score (0 % would read as a measurement) and no link to
+    the companion page, which is not written when there is no posture.
 
     The three verdicts are model-authored and go through the inline render
     boundary, not bare ``escape()``: escaping alone left "Le **durcissement**
@@ -102,7 +111,15 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     here, so ``[n]`` markers are stripped rather than shown pointing at nothing.
     """
     if not posture or not isinstance(posture, dict):
-        return ""
+        return """
+  <div class="section">
+    <h2>🎯 Posture Stratégique du Portefeuille</h2>
+    <div class="highlight warning">
+      <p>Posture stratégique indisponible pour ce run — la synthèse n'a pas abouti.
+      Aucun score stratégique global n'est affiché : il serait inventé.</p>
+    </div>
+  </div>
+"""
 
     covered = posture.get("holdings_covered")
     total = posture.get("holdings_total")

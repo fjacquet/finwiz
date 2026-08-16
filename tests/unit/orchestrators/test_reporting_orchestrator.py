@@ -967,6 +967,34 @@ class TestEmptyStrategicAnalysisIsNotCoverage:
         assert any("MSFT" in str(call) for call in warning.call_args_list)
 
 
+class TestFailedSynthesisIsLoggedLoudly:
+    """Losing the whole posture is a degradation, not an incidental info line.
+
+    A truncated or partial model response now fails validation on the five
+    required narrative fields and drops the entire posture. That was logged at
+    ``info``, indistinguishable from routine progress chatter in a run that
+    produces thousands of lines.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    _records = TestSynthesizePortfolioStrategicCoverage._records
+    _record = TestSynthesizePortfolioStrategicCoverage._record
+    _sa_dict = staticmethod(TestSynthesizePortfolioStrategicCoverage._sa_dict)
+    _holding = staticmethod(TestSynthesizePortfolioStrategicCoverage._holding)
+
+    def test_a_none_posture_from_synthesis_logs_at_warning(self, orchestrator, mocker):
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", return_value=None)
+        warning = mocker.patch.object(orchestrator.logger, "warning")
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL")]
+
+        assert orchestrator._synthesize_portfolio_strategic({"total_holdings": 1}, records=records, holdings=holdings) is None
+        assert any("posture" in str(call).lower() for call in warning.call_args_list)
+
+
 class TestIterEnrichedFiles:
     """_iter_enriched_files is the shared directory resolver (paths, not parsed dicts)."""
 

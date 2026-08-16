@@ -383,7 +383,51 @@ class TestFamilySectionSummarisesAndLinksOut:
         assert "<strong>durcissement</strong>" in html
         assert "<em>larges</em>" in html
 
-    def test_no_posture_renders_nothing(self) -> None:
+
+class TestMissingPostureIsVisibleToTheReader:
+    """A posture that failed this run must say so, not vanish.
+
+    Making macro_verdict/competitive_verdict/swot_verdict/strategic_score/
+    confidence required was the right call -- a posture built from nothing can
+    no longer report a confident midpoint by omission. But it also means a
+    truncated or partial model response now fails validation and loses the
+    *entire* posture, where before it produced a degraded one. Failing loudly is
+    correct; failing silently *to the reader* converts "wrong data" into "lost
+    data". The reader cannot otherwise distinguish "synthesis failed this run"
+    from "this report never had a posture".
+    """
+
+    def _section(self) -> str:
         from finwiz.reporting.section_generators import generate_strategic_posture_section
 
-        assert generate_strategic_posture_section(None) == ""
+        return generate_strategic_posture_section(None)
+
+    def test_no_posture_renders_a_visible_unavailable_block(self) -> None:
+        assert "indisponible" in self._section().lower()
+
+    def test_the_block_uses_the_reports_existing_warning_convention(self) -> None:
+        assert 'class="highlight warning"' in self._section()
+
+    def test_the_block_does_not_link_to_a_page_that_was_never_written(self) -> None:
+        """_write_posture_page returns early without a posture, so the companion
+        page does not exist. A link to it would be a dead link."""
+        assert "finwiz_posture_strategique.html" not in self._section()
+
+    def test_no_score_is_shown_without_a_posture(self) -> None:
+        """The block explains an absence; it must not print 0 % as if measured."""
+        section = self._section()
+
+        assert "%" not in section
+
+    def test_an_empty_dict_is_treated_the_same_as_none(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        assert "indisponible" in generate_strategic_posture_section({}).lower()
+
+    def test_a_real_posture_still_renders_no_unavailable_block(self) -> None:
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        html = generate_strategic_posture_section(_full_posture())
+
+        assert "indisponible" not in html.lower()
+        assert "finwiz_posture_strategique.html" in html
