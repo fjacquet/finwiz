@@ -50,6 +50,7 @@ allow-direct-references = true
 
 [tool.crewai]
 type = "flow"
+project_id = "6bdba4bf-05fb-4d05-a7b9-0c0c87fdd82c"
 
 [tool.deptry.per_rule_ignores]
 # Imported directly but intentionally not declared as top-level dependencies:
