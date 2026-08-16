@@ -156,15 +156,15 @@ def test_digest_falls_back_to_scores_only_floor_without_dropping_holdings(mocker
 def test_digest_one_includes_pestel_dimensions_only_when_asked():
     """The six PESTEL dimensions (political/economic/.../legal) are what the portfolio
     prompt asks the model to synthesize into cross-holding themes — Task 7 forwards
-    them, but only at the rung that explicitly requests them."""
+    them, but only at rungs that explicitly request them."""
     from finwiz.analysis.strategic_research import _digest_one
 
     sa = _rich_holding_with_dimensions()
 
-    without = _digest_one(sa, bullets=3, include_prose=True, include_dimensions=False)
+    without = _digest_one(sa, bullets=3, include_prose=True, include_pestel_dimensions=False)
     assert "dimensions" not in without["pestel"]
 
-    with_dims = _digest_one(sa, bullets=3, include_prose=True, include_dimensions=True)
+    with_dims = _digest_one(sa, bullets=3, include_prose=True, include_pestel_dimensions=True)
     assert with_dims["pestel"]["dimensions"]["political"] == sa.pestel.political[:3]
     assert with_dims["pestel"]["dimensions"]["economic"] == sa.pestel.economic[:3]
     assert with_dims["pestel"]["dimensions"]["social"] == sa.pestel.social[:3]
@@ -173,8 +173,23 @@ def test_digest_one_includes_pestel_dimensions_only_when_asked():
     assert with_dims["pestel"]["dimensions"]["legal"] == sa.pestel.legal[:3]
 
 
+def test_digest_one_can_drop_derived_summary_while_keeping_dimensions():
+    """key_threats/key_opportunities are the model's own summary of the six
+    dimensions -- derived evidence. The dimensions are the primary evidence a
+    Perplexity call was paid to produce. The ladder must be able to drop the
+    former while keeping the latter, not just toggle dimensions as a whole."""
+    from finwiz.analysis.strategic_research import _digest_one
+
+    sa = _rich_holding_with_dimensions()
+
+    out = _digest_one(sa, bullets=1, include_prose=True, include_pestel_summary=False, include_pestel_dimensions=True)
+    assert "threats" not in out["pestel"]
+    assert "opportunities" not in out["pestel"]
+    assert out["pestel"]["dimensions"]["political"] == sa.pestel.political[:1]
+
+
 def test_serialize_holdings_includes_dimensions_at_top_rung_for_a_small_portfolio(mocker):
-    """A small enough portfolio fits the dimensions-included rung 0 within budget."""
+    """A small enough portfolio fits the full-detail (dimensions-included) rung within budget."""
     from finwiz.analysis import strategic_research
 
     holdings = {f"T{i}": _rich_holding_with_dimensions() for i in range(5)}
@@ -187,25 +202,64 @@ def test_serialize_holdings_includes_dimensions_at_top_rung_for_a_small_portfoli
     assert parsed["T0"]["pestel"]["dimensions"]["political"] == ["p" * 200] * 3
 
 
-def test_serialize_holdings_drops_dimensions_first_when_budget_bites(mocker):
-    """Dimensions are the first thing shed by the ladder — dropped before bullet counts
-    shrink or prose is cut. A budget that fits rung 1 (no dimensions) but not rung 0
-    (with dimensions) must select rung 1, not degrade further."""
+def test_serialize_holdings_gets_dimensions_to_the_real_64_holding_portfolio():
+    """The regression this restructure fixes: an earlier, all-or-nothing dimensions
+    rung (tried only at bullets=3) measured ~461K chars for 64 holdings -- ~92% over
+    the 240K budget -- so it was always skipped and dimensions never reached the
+    prompt. Shrinking bullets while keeping both pestel fields gets a rung that
+    actually fits: 1 dimension bullet + 1 threat + 1 opportunity, ~200K chars."""
     from finwiz.analysis import strategic_research
 
     holdings = {f"T{i}": _rich_holding_with_dimensions() for i in range(64)}
-    rung0_size = len(strategic_research._serialize_holdings({t: sa for t, sa in list(holdings.items())[:5]}))  # sanity: rung 0 works at small scale
-    assert rung0_size > 0
-
-    # Budget sits between the measured rung-1 size (~219K) and rung-0 size
-    # (~461K) for 64 holdings: too small for dimensions, plenty for rung 1.
-    mocker.patch.object(strategic_research, "SYNTHESIS_PAYLOAD_BUDGET_CHARS", 300_000)
 
     payload = strategic_research._serialize_holdings(holdings)
     parsed = json.loads(payload)
 
     assert len(parsed) == 64
-    assert "dimensions" not in parsed["T0"]["pestel"]
-    # Still full rung-1 detail (not further degraded to rung 2/3).
-    assert len(parsed["T0"]["pestel"]["threats"]) == 3
-    assert "assessment" in parsed["T0"]["swot"]
+    assert len(payload) <= strategic_research.SYNTHESIS_PAYLOAD_BUDGET_CHARS
+    sample = parsed["T0"]
+    assert "dimensions" in sample["pestel"]
+    assert len(sample["pestel"]["dimensions"]["political"]) == 1
+    # Full bullet-count-1 detail: derived summary still present alongside dimensions.
+    assert len(sample["pestel"]["threats"]) == 1
+    assert len(sample["pestel"]["opportunities"]) == 1
+    assert "assessment" in sample["swot"]
+
+
+def test_serialize_holdings_drops_derived_summary_before_dimensions_when_budget_bites(mocker):
+    """Tighten the budget below the fullest bullets=1 rung (dims+summary, ~200K for this
+    fixture) but above the dims-only rung (~172K): the ladder must drop
+    key_threats/key_opportunities (derived) while keeping the PESTEL dimensions
+    (primary evidence) -- the opposite priority of the pre-restructure ladder."""
+    from finwiz.analysis import strategic_research
+
+    holdings = {f"T{i}": _rich_holding_with_dimensions() for i in range(64)}
+    mocker.patch.object(strategic_research, "SYNTHESIS_PAYLOAD_BUDGET_CHARS", 190_000)
+
+    payload = strategic_research._serialize_holdings(holdings)
+    parsed = json.loads(payload)
+
+    assert len(parsed) == 64
+    sample = parsed["T0"]
+    assert "dimensions" in sample["pestel"]
+    assert "threats" not in sample["pestel"]
+    assert "opportunities" not in sample["pestel"]
+    assert "assessment" in sample["swot"]  # prose still present at this rung
+
+
+def test_serialize_holdings_drops_prose_last_dimensions_still_present(mocker):
+    """Tighten further, below the dims-only-with-prose rung: prose goes next, but
+    dimensions -- the primary evidence -- survive even at the lowest non-floor rung."""
+    from finwiz.analysis import strategic_research
+
+    holdings = {f"T{i}": _rich_holding_with_dimensions() for i in range(64)}
+    mocker.patch.object(strategic_research, "SYNTHESIS_PAYLOAD_BUDGET_CHARS", 150_000)
+
+    payload = strategic_research._serialize_holdings(holdings)
+    parsed = json.loads(payload)
+
+    assert len(parsed) == 64
+    sample = parsed["T0"]
+    assert "dimensions" in sample["pestel"]
+    assert "assessment" not in sample["swot"]
+    assert "summary" not in sample["moat"]

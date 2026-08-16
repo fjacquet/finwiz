@@ -294,46 +294,77 @@ def synthesize_portfolio_posture_sync(
 SYNTHESIS_PAYLOAD_BUDGET_CHARS = 240_000
 """Char budget for the portfolio-synthesis payload (~60K tokens).
 
-Measured (2026-08-16, tests/unit/analysis/test_strategic_digest.py, fixture
-at the Task 3 caps): 64 holdings digest to 219,318 chars at rung 1 (max
-detail, no PESTEL dimensions) — a ~9% margin under this budget. Portfolios
-meaningfully larger than 64 — roughly 70+ holdings at similar detail density
-— will exceed the budget at rung 1 and degrade to rung 2, shedding one
-bullet per list. The ladder is not purely a guard-rail against pathological
-input; it is within reach of the current portfolio size.
+These figures are measured against a specific 64-holding fixture at the
+Task 3 field caps (see ``tests/unit/analysis/test_strategic_digest.py``) —
+approximate and fixture-dependent, not a promise about every real portfolio.
+A different mix of populated fields shifts every number below.
 
-Task 7 added a rung 0 ahead of rung 1 that also forwards the six raw PESTEL
-dimension bullets (political/economic/social/technological/environmental/
-legal) the portfolio prompt asks the model to synthesize into cross-holding
-themes — previously collected per-holding via a paid Perplexity call and then
-never sent to the one prompt that needed them. Measured at the same fixture:
-64 holdings at rung 0 digest to 461,110 chars — roughly double rung 1, and
-**over the 240,000 budget by ~92%**. For the current 64-holding portfolio
-this rung is therefore never actually selected in practice; the ladder falls
-straight through to rung 1 (no dimensions) every time, same as before Task 7.
-Rung 0 only fits within budget for portfolios of roughly 33 holdings or
-fewer at this detail density. This is a real, uncomfortable margin — noted
-here rather than fixed by silently raising the budget constant.
+Task 7 added the six raw PESTEL dimension bullets (political/economic/
+social/technological/environmental/legal) to the digest — the material the
+portfolio prompt asks the model to synthesize into cross-holding themes,
+previously collected per-holding via a paid Perplexity call and never sent
+to the one prompt that needed them. A first attempt gated the dimensions
+behind a single all-or-nothing rung tried only at full bullet count (3):
+that rung measured ~461K chars, ~92% over budget, so for the real portfolio
+it was *always* skipped and the dimensions never actually reached the
+prompt — the ladder fell straight through to the no-dimensions rung every
+time, silently inert.
+
+The ladder was restructured so dimensions shrink alongside bullet count
+instead of toggling off entirely, and — since ``key_threats``/
+``key_opportunities`` are the model's own summary of the six dimensions
+(derived evidence), while the dimensions themselves are the primary
+evidence a Perplexity call was paid to produce — the derived summary is
+shed *before* the dimensions, not the other way round. Measured for 64
+holdings at this fixture:
+
+| Rung | bullets | prose | pestel summary | pestel dims | chars | fits 240K? |
+|---|---|---|---|---|---|---|
+| 1 | 3 | yes | yes | yes | 461,110 | no |
+| 2 | 2 | yes | yes | yes | 330,550 | no |
+| 3 | 1 | yes | yes | yes | 199,990 | **yes** |
+| 4 | 1 | yes | no  | yes | 171,830 | yes |
+| 5 | 1 | no  | no  | yes | 118,518 | yes |
+
+Rung 3 is the one actually selected for the real 64-holding portfolio: the
+dimensions now reach the prompt, at 1 bullet per dimension plus 1 threat and
+1 opportunity — strictly more informative than the pre-restructure result
+(no dimensions at all), and with ~17% margin under budget. Rungs 4 and 5
+exist for portfolios dense or large enough that rung 3 doesn't fit; they are
+not expected to fire for the current portfolio size, but keep the ladder
+graceful rather than a hard cliff into the scores-only floor.
 """
 
 
-def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, include_dimensions: bool = False) -> dict[str, Any]:
+def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, include_pestel_dimensions: bool = False, include_pestel_summary: bool = True) -> dict[str, Any]:
     """One holding's contribution at a given detail level.
 
-    ``include_dimensions`` adds the six raw PESTEL dimensions (political/
-    economic/social/technological/environmental/legal) — the material the
-    portfolio prompt actually asks the model to synthesize into
-    "thèmes PESTEL transversaux". Without it, the synthesis call paid for a
-    Perplexity PESTEL run per holding and then withheld the six dimensions
-    from the one prompt that needed them, forwarding only key_threats/
-    key_opportunities. Reserved for the top rung only — it is the first
-    thing the degradation ladder sheds when the budget bites.
+    ``include_pestel_dimensions`` adds the six raw PESTEL dimensions
+    (political/economic/social/technological/environmental/legal) — the
+    material the portfolio prompt actually asks the model to synthesize into
+    "thèmes PESTEL transversaux". Before Task 7 these were never forwarded at
+    all: the synthesis call paid for a Perplexity PESTEL run per holding and
+    withheld the six dimensions from the one prompt that needed them,
+    sending only ``key_threats``/``key_opportunities``.
+
+    ``include_pestel_summary`` gates those ``key_threats``/``key_opportunities``
+    fields. They are the model's own *summary* of the six dimensions — derived
+    evidence, not primary evidence — so the degradation ladder in
+    :func:`_serialize_holdings` drops them (``include_pestel_summary=False``)
+    *before* it drops the dimensions themselves. An all-or-nothing dimensions
+    flag would mean dimensions are either included at full bullet count (too
+    large for the real portfolio) or never included at all; shrinking bullet
+    count while keeping both, then dropping the derived summary while keeping
+    the primary evidence, is what actually gets dimensions to the prompt.
     """
     out: dict[str, Any] = {}
     if sa.pestel:
-        out["pestel"] = {"score": sa.pestel.strategic_score, "threats": sa.pestel.key_threats[:bullets], "opportunities": sa.pestel.key_opportunities[:bullets]}
-        if include_dimensions:
-            out["pestel"]["dimensions"] = {
+        pestel: dict[str, Any] = {"score": sa.pestel.strategic_score}
+        if include_pestel_summary:
+            pestel["threats"] = sa.pestel.key_threats[:bullets]
+            pestel["opportunities"] = sa.pestel.key_opportunities[:bullets]
+        if include_pestel_dimensions:
+            pestel["dimensions"] = {
                 "political": sa.pestel.political[:bullets],
                 "economic": sa.pestel.economic[:bullets],
                 "social": sa.pestel.social[:bullets],
@@ -341,6 +372,7 @@ def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, inc
                 "environmental": sa.pestel.environmental[:bullets],
                 "legal": sa.pestel.legal[:bullets],
             }
+        out["pestel"] = pestel
     if sa.swot:
         out["swot"] = {"score": sa.swot.strategic_score, "strengths": sa.swot.strengths[:bullets], "threats": sa.swot.threats[:bullets]}
         if include_prose:
@@ -359,15 +391,36 @@ def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str
     operation this function can perform: the 2026-08-16 posture was synthesized
     from 1 of 64 holdings because the old implementation ended in ``[:30000]``.
 
-    The PESTEL dimension bullets (political/economic/.../legal) are the most
-    expendable detail: they're included only at the very first rung, and
-    dropped before bullet counts shrink or prose is cut — hence the extra
-    ``(3, True, True)`` rung ahead of the original ``(3, True)``.
+    Degradation order: full detail -> fewer bullets (dimensions and derived
+    summary shrink together) -> drop the PESTEL derived summary
+    (key_threats/key_opportunities) while keeping the PESTEL dimensions,
+    since the dimensions are the primary evidence a Perplexity call was paid
+    for and the derived summary is the model's own restatement of it -> drop
+    prose -> scores-only floor (see below), which drops the dimensions too.
+
+    An earlier version toggled dimensions on only at full bullet count (3)
+    and off everywhere else — all-or-nothing. For the real 64-holding
+    portfolio, "on" (~461K chars) always overflowed the 240K budget and "off"
+    was the only rung ever selected, so the dimensions never actually reached
+    the prompt. Shrinking bullets while keeping both fields, then shedding
+    the derived summary before the dimensions, is what gets them there.
     """
     import json
 
-    for bullets, include_prose, include_dimensions in ((3, True, True), (3, True, False), (2, True, False), (1, True, False), (1, False, False)):
-        compact = {ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose, include_dimensions=include_dimensions) for ticker, sa in holdings_strategic.items()}
+    rungs = (
+        (3, True, True, True),  # full detail
+        (2, True, True, True),  # fewer bullets, still both pestel fields
+        (1, True, True, True),  # fewest bullets, still both pestel fields
+        (1, True, False, True),  # drop the derived pestel summary, keep dimensions (primary evidence)
+        (1, False, False, True),  # drop prose too, dimensions still present
+    )
+    for bullets, include_prose, include_pestel_summary, include_pestel_dimensions in rungs:
+        compact = {
+            ticker: _digest_one(
+                sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions
+            )
+            for ticker, sa in holdings_strategic.items()
+        }
         payload = json.dumps(compact, ensure_ascii=False, default=str)
         if len(payload) <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
             return payload
