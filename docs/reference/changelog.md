@@ -2,6 +2,11 @@
 
 All notable changes to FinWiz are documented in this file.
 
+> **Note:** This changelog stops at `2.0.0` (2025-11-20). The project is
+> currently at `5.12.0` (see `pyproject.toml`) — everything since 2.0.0 is
+> undocumented here. Treat this file as a historical record of the 2.0.0
+> release, not a complete or current changelog.
+
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
@@ -34,8 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Low: 15% → 25%
   - Moderate: 25% → 35%
   - Semiconductors, industrials naturally more volatile
-- **Portfolio KEEP/SELL Threshold**: Aligned to 0.65 (C grade) from 0.55
-  - Grade D (0.50-0.65) now correctly triggers SELL
+- **Portfolio KEEP/SELL Threshold**: Documented here as aligned to 0.65
+  (C grade) from 0.55, but the current codebase has never had `KEEP_THRESHOLD`
+  at 0.65 — it is 0.55 in `portfolio_review_orchestrator.py` today and git
+  history shows no commit ever set it to 0.65. A D-grade holding around 0.60
+  is therefore still KEEP, not SELL as this entry claims.
   - Grade F (<0.50) remains strong SELL
   - Consistent with HOLD recommendation threshold
 
@@ -172,20 +180,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 **Configuration Changes**:
 
 - `VALIDATION_STRICTNESS`: Now defaults to `warn` (previously `off` in dev)
-- `KEEP_THRESHOLD`: Aligned to 0.65 in portfolio processor
+- `KEEP_THRESHOLD`: Currently 0.55 in the portfolio processor, not 0.65 —
+  see the correction above
 
 **Recommended Actions**:
 
 1. Re-run portfolio analysis to benefit from improved scoring
-2. Review any D-grade holdings (now correctly marked as SELL)
+2. Review any D-grade holdings (KEEP_THRESHOLD is 0.55, not 0.65 as
+   originally stated above, so most D-grade holdings are still KEEP)
 3. Check quality companies (ROE ≥20%, Debt ≤0.5, Margin ≥15%) for potential upgrades
 
 ## Links
 
 - [Documentation](../index.md)
-- [GitHub Repository](https://github.com/finwiz/finwiz)
-- [Issue Tracker](https://github.com/finwiz/finwiz/issues)
-- [Release Notes](https://github.com/finwiz/finwiz/releases)
+- [GitHub Repository](https://github.com/fjacquet/finwiz)
+- [Issue Tracker](https://github.com/fjacquet/finwiz/issues)
+- [Release Notes](https://github.com/fjacquet/finwiz/releases)
 
 ---
 
