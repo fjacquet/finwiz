@@ -221,11 +221,16 @@ async def gather_strategic_analysis(
     asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
-) -> StrategicAnalysis:
+) -> StrategicAnalysis | None:
     """Run PESTEL + SWOT + Porter in parallel for one holding.
 
-    Returns a :class:`StrategicAnalysis` even on partial failure — fields are
-    independently None so a failure of one framework does not break the others.
+    Returns a :class:`StrategicAnalysis` on *partial* failure — fields are
+    independently None so a failure of one framework does not break the
+    others, and one surviving framework is real evidence worth keeping.
+
+    Returns ``None`` when **all three** fail: no evidence at all must not be
+    dressed up as an analysis object. Callers already handle ``None``
+    (``analysis/stages/__init__.py`` guards ``if strategic is not None``).
 
     ``asset_class`` ("stock"/"etf"/"crypto") is forwarded to each prompt
     builder so the questions asked actually fit the asset — every asset
@@ -256,7 +261,16 @@ async def gather_strategic_analysis(
     pestel, swot, porter = await asyncio.gather(pestel_coro, swot_coro, porter_coro)
 
     if pestel is None and swot is None and porter is None:
-        logger.warning(f"All three strategic analyses failed for {ticker}")
+        # The absence of data must be representable. Returning
+        # StrategicAnalysis(pestel=None, swot=None, five_forces=None) here
+        # produced a truthy, schema-valid blob that survived every downstream
+        # check: `if ticker and sa`, `model_validate`, and the portfolio
+        # coverage set. A total provider outage therefore rendered
+        # "64 / 64 holdings · 100.0 %" in green above a score the model was
+        # forced to invent from `{"T0": {}, "T1": {}, ...}` -- the 2026-08-16
+        # defect with the numbers inverted, and harder to spot.
+        logger.warning(f"All three strategic analyses failed for {ticker}; returning None (no evidence, not an empty analysis)")
+        return None
 
     return StrategicAnalysis(pestel=pestel, swot=swot, five_forces=porter)
 
@@ -270,8 +284,12 @@ def gather_strategic_analysis_sync(
     asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
-) -> StrategicAnalysis:
-    """Synchronous wrapper for the async gather. Safe to call from non-async code paths."""
+) -> StrategicAnalysis | None:
+    """Synchronous wrapper for the async gather. Safe to call from non-async code paths.
+
+    Propagates the async gather's ``None`` unchanged — see
+    :func:`gather_strategic_analysis` for why all-three-failed is ``None``.
+    """
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:

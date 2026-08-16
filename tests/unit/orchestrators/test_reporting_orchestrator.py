@@ -860,6 +860,113 @@ class TestSynthesizePortfolioStrategicCoverage:
         assert result is None
 
 
+class TestEmptyStrategicAnalysisIsNotCoverage:
+    """An all-``None`` StrategicAnalysis is the absence of evidence, not coverage.
+
+    ``gather_strategic_analysis`` used to return
+    ``StrategicAnalysis(pestel=None, swot=None, five_forces=None)`` after all
+    three Perplexity calls failed. That blob is a truthy dict on disk, it
+    validates cleanly (all three fields are Optional), and it therefore entered
+    ``holdings_models`` and ``covered_tickers`` — so a total provider outage
+    rendered "64 / 64 holdings · 100.0 %" in green above a score the model was
+    forced to invent from ``{"T0": {}, "T1": {}, ...}``.
+
+    Layer 1 (returning ``None`` from the gather) stops new blobs being written.
+    This layer stops legacy ``*_enriched.json`` already on disk from counting.
+    The predicate is the one the codebase already trusts for this exact
+    question: ``StrategicAnalysis.composite_strategic_score is None`` — the same
+    guard ``stages/synthesize.py`` uses before recomputing a holding's grade.
+
+    The existing coverage tests above only ever use records where
+    ``strategic_analysis`` is *absent*; present-but-empty is the gap that let
+    this through.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _empty_record(ticker: str) -> tuple[str, dict]:
+        """What a fully-failed strategic gather wrote to disk."""
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": None, "swot": None, "five_forces": None}}})
+
+    @staticmethod
+    def _partial_record(ticker: str) -> tuple[str, dict]:
+        """One framework of three succeeded — real evidence, must still count."""
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": {"strategic_score": 0.62, "confidence": 0.7}, "swot": None, "five_forces": None}}})
+
+    _holding = staticmethod(TestSynthesizePortfolioStrategicCoverage._holding)
+    _mock_synthesize = TestSynthesizePortfolioStrategicCoverage._mock_synthesize
+
+    def test_total_outage_reports_zero_coverage_not_full_coverage(self, orchestrator, mocker):
+        """64 holdings, every strategic_analysis all-None: nothing is covered."""
+        self._mock_synthesize(mocker)
+        tickers = [f"T{i}" for i in range(64)]
+        records = [self._empty_record(t) for t in tickers]
+        holdings = [self._holding(t, eur_value=100.0) for t in tickers]
+
+        result = orchestrator._synthesize_portfolio_strategic({"total_holdings": 64}, records=records, holdings=holdings)
+
+        # No holding carries evidence, so there is nothing to synthesize a
+        # posture from. If a posture were produced anyway it must name all 64
+        # as uncovered and claim zero coverage — never 64/64 · 100 %.
+        if result is not None:
+            assert result["holdings_covered"] == 0
+            assert result["value_covered_pct"] == 0.0
+            assert sorted(result["uncovered_tickers"]) == sorted(tickers)
+
+    def test_total_outage_never_reaches_the_paid_synthesis_call(self, orchestrator, mocker):
+        """Zero evidence must not buy a synthesis call over 64 empty objects."""
+        synthesize = mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync")
+        tickers = [f"T{i}" for i in range(64)]
+        records = [self._empty_record(t) for t in tickers]
+        holdings = [self._holding(t, eur_value=100.0) for t in tickers]
+
+        assert orchestrator._synthesize_portfolio_strategic({"total_holdings": 64}, records=records, holdings=holdings) is None
+        synthesize.assert_not_called()
+
+    def test_empty_holdings_are_excluded_from_coverage_alongside_real_ones(self, orchestrator, mocker):
+        """Mixed run: one real blob, two empty ones. Coverage is 1/3, not 3/3."""
+        captured = self._mock_synthesize(mocker)
+        records = [self._partial_record("AAPL"), self._empty_record("MSFT"), self._empty_record("TSLA")]
+        holdings = [self._holding("AAPL", eur_value=900.0), self._holding("MSFT", eur_value=50.0), self._holding("TSLA", eur_value=50.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 3}, records=records, holdings=holdings)
+
+        assert captured["holdings_covered"] == 1
+        assert captured["holdings_total"] == 3
+        assert sorted(captured["uncovered_tickers"]) == ["MSFT", "TSLA"]
+        assert captured["value_covered_pct"] == pytest.approx(90.0)
+
+    def test_a_partial_strategic_analysis_still_counts_as_covered(self, orchestrator, mocker):
+        """Some frameworks present, some None: real evidence, real coverage.
+
+        Only *no* evidence must be excluded. Dropping partials would trade the
+        wrong-data failure for the lost-data one.
+        """
+        captured = self._mock_synthesize(mocker)
+        records = [self._partial_record("AAPL"), self._partial_record("MSFT")]
+        holdings = [self._holding("AAPL", eur_value=500.0), self._holding("MSFT", eur_value=500.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 2}, records=records, holdings=holdings)
+
+        assert captured["holdings_covered"] == 2
+        assert captured["uncovered_tickers"] == []
+        assert captured["value_covered_pct"] == pytest.approx(100.0)
+
+    def test_the_exclusion_is_logged_loudly(self, orchestrator, mocker):
+        """A holding dropped from coverage is a real degradation; it is not silent."""
+        self._mock_synthesize(mocker)
+        warning = mocker.patch.object(orchestrator.logger, "warning")
+        records = [self._partial_record("AAPL"), self._empty_record("MSFT")]
+        holdings = [self._holding("AAPL", eur_value=500.0), self._holding("MSFT", eur_value=500.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 2}, records=records, holdings=holdings)
+
+        assert any("MSFT" in str(call) for call in warning.call_args_list)
+
+
 class TestIterEnrichedFiles:
     """_iter_enriched_files is the shared directory resolver (paths, not parsed dicts)."""
 

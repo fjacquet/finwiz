@@ -439,11 +439,26 @@ class ReportEnrichmentMixin:
             holdings_models: dict[str, StrategicAnalysis] = {}
             for ticker, sa_dict in holdings_strategic_dicts.items():
                 try:
-                    holdings_models[ticker] = StrategicAnalysis.model_validate(sa_dict)
+                    model = StrategicAnalysis.model_validate(sa_dict)
                 except Exception as e:
                     self.logger.debug(f"Skipping {ticker} for portfolio synthesis (invalid schema): {e}")
+                    continue
+                # Validating is not the same as carrying evidence. All three
+                # framework fields are Optional, so an all-None blob -- what a
+                # fully-failed strategic gather used to write to disk, and what
+                # legacy *_enriched.json files still contain -- validates
+                # cleanly and would otherwise be counted as covered by count
+                # AND by value, named in no gap list. composite_strategic_score
+                # is None exactly when no framework produced a rating; it is
+                # the same predicate stages/synthesize.py uses before
+                # recomputing a holding's grade off strategic data.
+                if model.composite_strategic_score is None:
+                    self.logger.warning("Excluding %s from strategic coverage: no framework produced a rating (all-None strategic_analysis)", ticker)
+                    continue
+                holdings_models[ticker] = model
 
             if not holdings_models:
+                self.logger.warning("No holding carries usable strategic evidence; skipping portfolio posture synthesis rather than synthesizing one from empty objects")
                 return None
 
             holdings_covered, holdings_total, value_covered_pct, uncovered_tickers = self._strategic_coverage(holdings, set(holdings_models))
