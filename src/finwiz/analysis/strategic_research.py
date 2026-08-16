@@ -1,9 +1,14 @@
 """Strategic analysis research orchestrator.
 
-Three independent Perplexity calls (PESTEL/SWOT/Porter's Five Forces) per stock,
-plus a portfolio-level synthesis call. All run via direct Perplexity Sonar Pro
-with native ``response_format: json_schema`` — no CrewAI agent layer (single
-provider call + native structured output = no reasoning needed).
+Three independent Perplexity calls (PESTEL/SWOT/Porter's Five Forces) per
+holding, plus a portfolio-level synthesis call. Every asset class — stock,
+ETF, crypto — gets all three frameworks; each prompt builder takes an
+``asset_class`` and asks a question that actually fits the asset (moats and
+competitors for stocks, fees and concentration for ETFs, protocol economics
+and regulatory posture for crypto) while requesting the exact same output
+caps in every branch. All run via direct Perplexity Sonar Pro with native
+``response_format: json_schema`` — no CrewAI agent layer (single provider
+call + native structured output = no reasoning needed).
 
 Each framework is asked to self-rate its ``strategic_score`` and ``confidence``;
 Python only averages them into a composite — no item-counting heuristics.
@@ -66,13 +71,36 @@ def _date_preamble(current_date: str) -> str:
     return f"📅 Aujourd'hui : {current_date}. Toutes tes affirmations factuelles doivent être valides à cette date.\n\n"
 
 
-def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
+def _pestel_focus(asset_class: str) -> str:
+    """The dimensions to cover, tailored to what the asset class actually is."""
+    if asset_class == "etf":
+        return (
+            "Pour un ETF, traite les six dimensions à travers : régime réglementaire et "
+            "fiscal, concentration sectorielle et géographique, frais et qualité de "
+            "réplication, liquidité."
+        )
+    if asset_class == "crypto":
+        return (
+            "Pour un actif crypto, traite les six dimensions à travers : posture "
+            "réglementaire par juridiction, économie du protocole et émission, effets de "
+            "réseau et activité des développeurs, risque de conservation et de contrepartie."
+        )
+    return "Couvre les six dimensions PESTEL classiques (politique, économique, social, technologique, environnemental, légal) pour l'entreprise."
+
+
+def _pestel_caps_fragment(current_date: str) -> str:
+    """Output-budget language shared by every asset-class branch.
+
+    Interpolated from ``MAX_BULLETS_PESTEL``/``MAX_BULLET_CHARS`` — never
+    hardcoded — so the model's actual output budget always matches what
+    ``PestelAnalysis``'s validators will accept. Dropping this in any
+    per-asset-class branch is what let the model overrun its output limit
+    and return unparseable JSON, which opened the circuit breaker and killed
+    31 holdings.
+    """
     return (
-        _date_preamble(current_date) + f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
-        f"Description: {description or 'Non fournie'}\n\n"
-        f"Pour chacune des six dimensions (politique, économique, social, technologique, "
-        f"environnemental, légal) : au maximum {MAX_BULLETS_PESTEL} puces, chacune de "
-        f"{MAX_BULLET_CHARS} caractères maximum. Pas de paragraphes, pas de prose. "
+        f"Pour chacune des six dimensions : au maximum {MAX_BULLETS_PESTEL} puces, chacune "
+        f"de {MAX_BULLET_CHARS} caractères maximum. Pas de paragraphes, pas de prose. "
         f"Chaque puce cite une évolution des 12 mois précédant {current_date}. "
         f"Liste ensuite au maximum {MAX_BULLETS_PESTEL} menaces et {MAX_BULLETS_PESTEL} "
         f"opportunités, même format. "
@@ -80,30 +108,88 @@ def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, cu
     )
 
 
-def _swot_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
+def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
     return (
-        _date_preamble(current_date) + f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
+        _date_preamble(current_date) + f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        f"Liste au maximum {MAX_BULLETS_SWOT} puces par catégorie (forces, faiblesses, "
-        f"opportunités, menaces) reflétant la situation au {current_date}. Sois spécifique : "
-        f"chiffres, parts de marché, avantages produit, dépendances, risques concurrentiels "
-        f"— vérifiés via recherche web. Donne ensuite un strategic_assessment (≤ {MAX_PROSE_CHARS} "
-        f"caractères). Évalue strategic_score (équilibre S+O vs W+T) et confidence."
+        f"{_pestel_focus(asset_class)}\n\n"
+        f"{_pestel_caps_fragment(current_date)}"
     )
 
 
-def _porter_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str) -> str:
+def _swot_focus(asset_class: str) -> str:
+    """What to be specific about, tailored to what the asset class actually is."""
+    if asset_class == "etf":
+        return "Sois spécifique : concentration sectorielle/géographique, frais (TER), qualité de réplication, liquidité, risques de contrepartie — vérifiés via recherche web."
+    if asset_class == "crypto":
+        return (
+            "Sois spécifique : économie du protocole, activité des développeurs, effets de "
+            "réseau, posture réglementaire par juridiction, risques de conservation — "
+            "vérifiés via recherche web."
+        )
+    return "Sois spécifique : chiffres, parts de marché, avantages produit, dépendances, risques concurrentiels — vérifiés via recherche web."
+
+
+def _swot_caps_fragment(current_date: str) -> str:
+    """Output-budget language shared by every asset-class branch."""
+    return (
+        f"Liste au maximum {MAX_BULLETS_SWOT} puces par catégorie (forces, faiblesses, "
+        f"opportunités, menaces) reflétant la situation au {current_date}. "
+        f"Donne ensuite un strategic_assessment (≤ {MAX_PROSE_CHARS} caractères). "
+        f"Évalue strategic_score (équilibre S+O vs W+T) et confidence."
+    )
+
+
+def _swot_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
+    return (
+        _date_preamble(current_date) + f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
+        f"Description: {description or 'Non fournie'}\n\n"
+        f"{_swot_focus(asset_class)}\n\n"
+        f"{_swot_caps_fragment(current_date)}"
+    )
+
+
+def _porter_focus(asset_class: str) -> str:
+    """Which forces to rate, remapped to what actually competes in this asset class."""
+    if asset_class == "etf":
+        return (
+            "Pour un ETF, adapte les cinq forces à la concurrence entre émetteurs : menace "
+            "de nouveaux émetteurs/produits concurrents, pouvoir de négociation du "
+            "fournisseur d'indice, pouvoir de négociation des investisseurs (sensibilité aux "
+            "frais), menace des ETF ou fonds indiciels de substitution, intensité de la "
+            "guerre des frais entre émetteurs"
+        )
+    if asset_class == "crypto":
+        return (
+            "Pour un actif crypto, adapte les cinq forces à l'écosystème du protocole : "
+            "menace de nouveaux protocoles ou layer-2 entrants, pouvoir de négociation des "
+            "validateurs ou mineurs, pouvoir de négociation des plateformes d'échange et "
+            "fournisseurs de liquidité, menace des chaînes ou tokens de substitution, "
+            "intensité de la concurrence réglementaire et technique entre protocoles"
+        )
+    return (
+        "Pour chacune des cinq forces (menace de nouveaux entrants, pouvoir de négociation "
+        "des fournisseurs, pouvoir de négociation des clients, menace des produits de "
+        "substitution, intensité concurrentielle)"
+    )
+
+
+def _porter_caps_fragment(current_date: str) -> str:
+    """Output-budget language shared by every asset-class branch."""
+    return (
+        f"au {current_date}, attribue une intensité (LOW/MEDIUM/HIGH) où LOW = favorable, "
+        f"et fournis une rationale (≤ {MAX_RATIONALE_CHARS} caractères) avec preuves "
+        f"vérifiées (acteurs nommés actuels, parts de marché récentes). Termine par "
+        f"competitive_position_summary (≤ {MAX_PROSE_CHARS} caractères, force du moat "
+        f"actuel). Évalue strategic_score (1 = moat large, 0 = pas de moat) et confidence."
+    )
+
+
+def _porter_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
     return (
         _date_preamble(current_date) + f"Analyse des Cinq Forces de Porter pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
-        f"Pour chacune des cinq forces (menace de nouveaux entrants, pouvoir de négociation "
-        f"des fournisseurs, pouvoir de négociation des clients, menace des produits de "
-        f"substitution, intensité concurrentielle) au {current_date}, attribue une "
-        f"intensité (LOW/MEDIUM/HIGH) où LOW = favorable à l'entreprise, et fournis "
-        f"une rationale (≤ {MAX_RATIONALE_CHARS} caractères) avec preuves vérifiées "
-        f"(concurrents nommés actuels, parts de marché récentes). Termine par "
-        f"competitive_position_summary (≤ {MAX_PROSE_CHARS} caractères, force du moat actuel). "
-        f"Évalue strategic_score (1 = moat large, 0 = pas de moat) et confidence."
+        f"{_porter_focus(asset_class)} {_porter_caps_fragment(current_date)}"
     )
 
 
@@ -132,32 +218,37 @@ async def gather_strategic_analysis(
     sector: str = "",
     industry: str = "",
     description: str = "",
+    asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
 ) -> StrategicAnalysis:
-    """Run PESTEL + SWOT + Porter in parallel for one stock.
+    """Run PESTEL + SWOT + Porter in parallel for one holding.
 
     Returns a :class:`StrategicAnalysis` even on partial failure — fields are
     independently None so a failure of one framework does not break the others.
+
+    ``asset_class`` ("stock"/"etf"/"crypto") is forwarded to each prompt
+    builder so the questions asked actually fit the asset — every asset
+    class gets all three frameworks, just framed differently.
 
     ``current_date`` anchors the prompts so the model anchors its claims to today
     rather than its training cutoff (defaults to today in long French form).
     """
     date_anchor = current_date or _today_french()
     pestel_coro = perplexity_structured(
-        prompt=_pestel_prompt(ticker, sector, industry, description, date_anchor),
+        prompt=_pestel_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=PestelAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
     )
     swot_coro = perplexity_structured(
-        prompt=_swot_prompt(ticker, sector, industry, description, date_anchor),
+        prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=SwotAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
     )
     porter_coro = perplexity_structured(
-        prompt=_porter_prompt(ticker, sector, industry, description, date_anchor),
+        prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=FiveForcesAnalysis,
         system=SYSTEM_FR,
         timeout=timeout,
@@ -176,6 +267,7 @@ def gather_strategic_analysis_sync(
     sector: str = "",
     industry: str = "",
     description: str = "",
+    asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
 ) -> StrategicAnalysis:
@@ -190,6 +282,7 @@ def gather_strategic_analysis_sync(
         sector=sector,
         industry=industry,
         description=description,
+        asset_class=asset_class,
         timeout=timeout,
         current_date=current_date,
     )

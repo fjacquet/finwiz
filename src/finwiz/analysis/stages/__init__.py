@@ -16,7 +16,6 @@ from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
 from finwiz.analysis.stages.emit import _emit_pending, _pending_enriched, emit
 from finwiz.analysis.stages.emit import build_verdict as build_verdict
 from finwiz.analysis.stages.fact_pack import fact_pack
-from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel as _run_qualitative_and_strategic_in_parallel
 from finwiz.analysis.stages.qualify import qualify
 from finwiz.analysis.stages.quantify import calculate_quantitative as calculate_quantitative
 from finwiz.analysis.stages.quantify import quantify
@@ -88,20 +87,23 @@ def run_pipeline(
     stage_ctx.extras["fact_pack"] = fpr.payload  # FactPack with freshness in {"fresh","recent","stale"}
 
     # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
-    # Strategic Perplexity research runs independently for stocks (not via the legacy
-    # parallel helper, which silently swallows qualify failures).
+    # Strategic Perplexity research runs independently for every asset class (not
+    # via the legacy parallel helper, which silently swallowed qualify failures
+    # and has been removed — nothing called it).
     qr3 = qualify(stage_ctx, quant, raw_data)
     if qr3.payload is None:
         return _emit_pending(stage_ctx, reason=qr3.provenance.reason), _pending_enriched(stage_ctx, reason=qr3.provenance.reason)
     qual = qr3.payload
-    # Run strategic research independently for stocks.
+    # Run strategic research for every asset class — stock, ETF, crypto all get
+    # PESTEL/SWOT/Porter, framed to fit the asset (see strategic_research.py).
+    # The old stock-only gate excluded 38 of 64 holdings, which made full
+    # portfolio strategic-posture coverage structurally impossible.
     from finwiz.analysis.stages.qualify import _safe_strategic
 
-    do_strategic = ctx.asset_class == "stock"
     sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
     industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
     description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-    strategic = _safe_strategic(ctx.ticker, sector, industry, description) if do_strategic else None
+    strategic = _safe_strategic(ctx.ticker, sector, industry, description, asset_class=ctx.asset_class)
     if strategic is not None:
         qual = qual.model_copy(update={"strategic_analysis": strategic})
 

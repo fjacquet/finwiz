@@ -16,7 +16,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.analysis._helpers import _build_crew_inputs, _get_analysis_crew
 from finwiz.analysis.stages._qualify_fallbacks import (
-    _create_fallback_qualitative,
+    _create_fallback_qualitative,  # noqa: F401 — re-exported via deep_analysis_pipeline facade
     _create_python_qualitative,
 )
 from finwiz.analysis.stages._resilience import StageContext, stage
@@ -246,44 +246,7 @@ def generate_qualitative(
     return _generate_qualitative_inner(ctx, quant, raw_data)
 
 
-def _run_qualitative_and_strategic_in_parallel(
-    ctx: AnalysisContext,
-    quant: QuantitativeAnalysis,
-    raw_data: dict[str, Any],
-) -> tuple[QualitativeInsights, Any]:
-    """Run the qualitative crew and the strategic Perplexity research concurrently.
-
-    Strategic research is gated to stocks — PESTEL/SWOT/Porter were designed
-    for companies and adapt poorly to ETFs and crypto.
-    """
-    import concurrent.futures
-
-    do_strategic = ctx.asset_class == "stock"
-    sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
-    industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
-    description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-
-    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
-        qual_future = pool.submit(generate_qualitative, ctx, quant, raw_data)
-        strategic_future = pool.submit(_safe_strategic, ctx.ticker, sector, industry, description) if do_strategic else None
-
-        try:
-            qual = qual_future.result()
-        except Exception as exc:
-            logger.error(f"Qualitative generation failed for {ctx.ticker}: {exc}")
-            qual = _create_fallback_qualitative(ctx, quant, str(exc))
-
-        if strategic_future is None:
-            return qual, None
-        try:
-            strategic = strategic_future.result()
-        except Exception as exc:
-            logger.warning(f"Strategic research failed for {ctx.ticker}: {exc}")
-            strategic = None
-        return qual, strategic
-
-
-def _safe_strategic(ticker: str, sector: str, industry: str, description: str) -> Any:
+def _safe_strategic(ticker: str, sector: str, industry: str, description: str, *, asset_class: str = "stock") -> Any:
     """Wrapper that swallows import-time/runtime issues with the strategic module."""
     try:
         from finwiz.analysis.strategic_research import gather_strategic_analysis_sync
@@ -293,6 +256,7 @@ def _safe_strategic(ticker: str, sector: str, industry: str, description: str) -
             sector=sector,
             industry=industry,
             description=description,
+            asset_class=asset_class,
         )
     except Exception as exc:
         logger.warning(f"Strategic research skipped for {ticker}: {exc}")

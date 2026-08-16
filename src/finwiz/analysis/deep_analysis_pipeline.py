@@ -35,7 +35,6 @@ from finwiz.analysis.stages.qualify import (  # noqa: F401
     _create_python_qualitative,
     _extract_qualitative,
     _has_qualitative_content,
-    _run_qualitative_and_strategic_in_parallel,
     _safe_strategic,
     generate_qualitative,
 )
