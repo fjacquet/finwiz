@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- **Line length 180** — `pyproject.toml:61` `[tool.ruff] line-length = 180`.
+- **Line length 180** — `pyproject.toml:92` `line-length = 180` (under `[tool.ruff]` at :62).
 - **New files ≤300 lines** — enforced by `scripts/check_new_file_size.py:15` (`MAX_LINES = 300`) via `make check-file-size`.
 - **`unittest.mock` is BANNED.** Use pytest-mock's `mocker` only. Enforced by ruff `flake8-tidy-imports` (`pyproject.toml:141-147`) and `make check-unittest-mock` (`Makefile:147-157`).
 - **No network in unit tests.** `tests/conftest.py:56-73` installs an autouse pytest-socket guard allowing only `127.0.0.1`, `::1`, `localhost`. Mock the seam; never widen the allow-list.
@@ -20,7 +20,7 @@
 - **All Pydantic models live in `src/finwiz/schemas/`**, not in domain folders.
 - **AI Minimalism** — every change in this plan is deterministic Python. No task here adds an LLM call.
 - **Test command:** `make test` runs `uv run pytest --cov --cov-report=xml --cov-report=term-missing -m "not integration" -q -n auto --dist=loadscope` (`Makefile:75-76`).
-- **Target Python:** 3.13 (`pyproject.toml:61` `target-version = "py313"`).
+- **Target Python:** 3.13 (`pyproject.toml:96` `target-version = "py313"`).
 
 ## Known-Broken Ground (read before starting)
 

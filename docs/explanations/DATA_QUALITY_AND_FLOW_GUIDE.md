@@ -2,10 +2,10 @@
 
 ## Overview
 
-This document provides comprehensive guidance on FinWiz's data flow architecture, quality requirements, error handling, and troubleshooting. It addresses the critical data consumption gap that was fixed in the regression-diagnosis-and-fix specification.
+This document provides comprehensive guidance on FinWiz's data flow architecture, quality requirements, error handling, and troubleshooting. It addresses the critical data consumption gap fixed during the regression diagnosis work.
 
 **Last Updated**: 2025-01-18
-**Related Spec**: `.kiro/specs/regression-diagnosis-and-fix/`
+**Related Spec**: (none — the `.kiro/` directory this originally pointed at does not exist)
 
 ---
 
@@ -48,11 +48,11 @@ metrics.record_missing_data("alternatives")  # When expected data is missing
 metrics.record_successful_merge("AAPL")  # When data merge succeeds
 
 # Calculate overall quality score (0-1)
-quality_score = metrics.get_quality_score()
+quality_score = metrics.calculate_quality_score()
 print(f"Data Quality Score: {quality_score:.2%}")
 
 # Export metrics for monitoring
-metrics.export_to_file("data_quality_report.json")
+metrics.export_to_file(Path("output"))  # directory, returns the written Path
 ```
 
 ### Quality Thresholds
@@ -188,7 +188,7 @@ output/
 ```python
 from finwiz.validation.consolidation import DataConsolidationValidator
 
-validator = DataConsolidationValidator()
+validator = DataConsolidationValidator(registry_manager)  # RegistryManager is required
 
 try:
     # Validate all expected crew data exists
@@ -215,9 +215,8 @@ from finwiz.validation.report_data import ReportDataValidator
 validator = ReportDataValidator()
 
 try:
-    # Validate report inputs
-    validator.validate_report_inputs(crew_inputs)
-    validator.validate_portfolio_review_data(crew_inputs['portfolio_review'])
+    # ReportDataValidator has exactly one public method.
+    insights = validator.validate_qualitative_insights(crew_inputs["insights"])
 
     # Generate report with validated data
     report = generate_report(crew_inputs)
@@ -259,10 +258,12 @@ merger.merge_deep_analysis_into_holdings(holdings, deep_analysis)
 #### 3. Report Input Validation
 
 ```python
-# Fails if required fields missing or contain placeholders
-validator.validate_report_inputs(crew_inputs)
+# Fails if required fields are missing or contain placeholders
+validator.validate_qualitative_insights(insights)   # -> QualitativeInsights
 # Raises: ReportValidationError with field-level details
 ```
+
+`validate_report_inputs()` and `validate_portfolio_review_data()` do not exist.
 
 ### Error Messages
 
@@ -298,10 +299,11 @@ The system MAY continue with graceful degradation ONLY when:
 2. **Clearly marked**: Degraded sections marked with warnings in report
 3. **User notified**: Clear communication about degraded data quality
 
-```python
-# Enable graceful degradation (not recommended for production)
-os.environ["ALLOW_GRACEFUL_DEGRADATION"] = "true"
+`ALLOW_GRACEFUL_DEGRADATION` is not read anywhere in `src/` or `tests/` —
+setting it has no effect. Degradation is governed by the feature-flag registry
+(`config/features/definitions.py`) and by per-stage fallbacks instead.
 
+```python
 # Report will include warnings
 """
 ⚠️ WARNING: This section uses fallback data due to missing deep analysis.
@@ -393,10 +395,10 @@ grep -c "NOT PROVIDED" output/finwiz_family_financial_plan.html
 from finwiz.validation.quality_metrics import DataQualityMetrics
 
 # Load metrics from last run
-metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
+metrics = DataQualityMetrics.model_validate_json(Path("output/data_quality_report.json").read_text())
 
 # Get quality score
-score = metrics.get_quality_score()
+score = metrics.calculate_quality_score()
 print(f"Data Quality Score: {score:.2%}")
 
 # Expected: ≥ 90%
@@ -410,8 +412,8 @@ Set up continuous monitoring to track data quality over time:
 # In your CI/CD pipeline
 def test_data_quality_threshold():
     """Ensure data quality meets minimum threshold."""
-    metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
-    score = metrics.get_quality_score()
+    metrics = DataQualityMetrics.model_validate_json(Path("output/data_quality_report.json").read_text())
+    score = metrics.calculate_quality_score()
 
     assert score >= 0.90, f"Data quality score {score:.2%} below threshold 90%"
 ```
@@ -705,7 +707,7 @@ for field in required_fields:
    from finwiz.validation.url import URLValidator
 
    validator = URLValidator()
-   is_valid = validator.validate_url("https://www.sec.gov/...")
+   is_valid = validator.is_valid_url("https://www.sec.gov/...")
    print(f"URL valid: {is_valid}")
    ```
 
@@ -724,7 +726,7 @@ for field in required_fields:
 2. Verify data sources:
 
    ```python
-   from finwiz.integration.data_availability_tracker import DataAvailabilityTracker
+   from finwiz.integration.availability import DataAvailabilityTracker
 
    tracker = DataAvailabilityTracker()
    summary = tracker.get_availability_summary()
@@ -776,7 +778,7 @@ for field in required_fields:
    ```python
    from finwiz.validation.quality_metrics import DataQualityMetrics
 
-   metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
+   metrics = DataQualityMetrics.model_validate_json(Path("output/data_quality_report.json").read_text())
    print(metrics.get_summary())
    ```
 
@@ -879,10 +881,10 @@ Follow the [Manual Verification Steps](#manual-verification-steps) above after e
 # Track quality trends
 metrics_history = []
 for run in runs:
-    metrics = DataQualityMetrics.load_from_file(f"run_{run}_metrics.json")
+    metrics = DataQualityMetrics.model_validate_json(Path(f"run_{run}_metrics.json").read_text())
     metrics_history.append({
         "run": run,
-        "score": metrics.get_quality_score(),
+        "score": metrics.calculate_quality_score(),
         "fallback_grades": metrics.fallback_grades_count,
         "placeholder_urls": metrics.placeholder_urls_count
     })
@@ -897,10 +899,9 @@ plt.show()
 
 ### 4. Use Fail-Fast in Production
 
-```python
-# Never allow graceful degradation in production
-os.environ["ALLOW_GRACEFUL_DEGRADATION"] = "false"
-```
+Degradation is not switched off by an environment variable — there is no such
+switch. Set `VALIDATION_STRICTNESS=error` to make validation failures halt the
+run instead of warning.
 
 ### 5. Implement Continuous Monitoring
 
@@ -908,9 +909,9 @@ os.environ["ALLOW_GRACEFUL_DEGRADATION"] = "false"
 # In CI/CD pipeline
 def test_data_quality():
     """Ensure data quality meets standards."""
-    metrics = DataQualityMetrics.load_from_file("data_quality_report.json")
+    metrics = DataQualityMetrics.model_validate_json(Path("output/data_quality_report.json").read_text())
 
-    assert metrics.get_quality_score() >= 0.90
+    assert metrics.calculate_quality_score() >= 0.90
     assert metrics.fallback_grades_count == 0
     assert metrics.placeholder_urls_count == 0
     assert metrics.missing_data_count == 0

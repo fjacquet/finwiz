@@ -20,7 +20,7 @@ The run of 2026-08-15 09:34 produced `output/finwiz_family_financial_plan.html` 
 | 6 | `reporting/sections/discovery.py:220` | "0 New Opportunities Identified" presented as a finding |
 | 7 | `tools/alternative_finder_tool.py:179`, `orchestrators/extraction/engine.py:169,192` | All three read `output/discovery/discovery_latest.json`, which nothing writes |
 | 8 | `analysis/stages/fact_pack.py:74` | `RuntimeError` kills 22 of 64 holdings on Perplexity 429 / transport timeout |
-| 9 | `scoring/deep_analysis_scorer.py:445` | `CriticalFieldError: Missing critical fields: volatility` kills 3 more holdings |
+| 9 | `config/critical_fields_config.py:18,24,32` | `CriticalFieldError: Missing critical fields: volatility` kills 3 more holdings |
 | 10 | `discovery/universe_provider.py:89` | ETF universe = 11 tickers after excluding 71 holdings |
 | 11 | Report structure | 15 sections, 7 English headings / 8 French |
 
@@ -202,7 +202,7 @@ Rendering: family shows `verdict` plain with `detail` inside `<details><summary>
 - Cache warm survives across runs, so a rate-limited run degrades to stale rather than to nothing
 - `@stage(retries=1)` at line 76 retries after backoff, not immediately
 
-**4.2 volatility — 3 failures.** `scoring/deep_analysis_scorer.py:445` lists `volatility` among critical fields. The collect stage already pulls price history, from which volatility is derivable. Compute it in collect rather than failing in quantify. Where history genuinely does not exist (`XTSLA`, `UNI-USD`, `POL-USD`, `S-USD`, `IMX-USD`, `GRT-USD`, `COMP-USD` — all confirmed delisted in the log), the position is legitimately unanalyzable and is refused by name.
+**4.2 volatility — 3 failures.** `config/critical_fields_config.py` lists `volatility` in `CRITICAL_FIELDS` for all three asset classes (:18, :24, :32); `deep_analysis_scorer.py` only calls `validate_critical_fields` and re-raises. (`deep_analysis_scorer.py:468` is `_get_expected_fields()`, the data-quality list — a different thing.) The collect stage already pulls price history, from which volatility is derivable. Compute it in collect rather than failing in quantify. Where history genuinely does not exist (`XTSLA`, `UNI-USD`, `POL-USD`, `S-USD`, `IMX-USD`, `GRT-USD`, `COMP-USD` — all confirmed delisted in the log), the position is legitimately unanalyzable and is refused by name.
 
 **4.3 Discovery universe.** `discovery/universe_provider.py:89` returned 11 ETF tickers after excluding 71 holdings. Widen the dynamic universe so that **at least 50 candidates per asset class survive exclusion**; a universe that cannot meet that floor logs the shortfall rather than silently scanning a handful. The grade-C actionability threshold stays unchanged — noise stays out, and a genuinely empty result after a real search is a valid finding.
 

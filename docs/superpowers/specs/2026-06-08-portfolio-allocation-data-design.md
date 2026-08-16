@@ -2,8 +2,14 @@
 
 **Date:** 2026-06-08
 **Status:** Approved
-**Prerequisite for:** `docs/superpowers/plans/2026-06-08-report-freshness-and-portfolio-posture.md`
-(enables true allocation-weighted strategic posture, replacing the interim count-based weighting)
+**Prerequisite for:** allocation-weighted strategic posture, replacing the
+interim count-based weighting.
+
+> **Correction (2026-08-16):** this line previously pointed at
+> `docs/superpowers/plans/2026-06-08-report-freshness-and-portfolio-posture.md`.
+> That plan has never existed on `main` — it was authored on the unmerged
+> `fix/report-freshness-and-posture` branch, so the link was dead for every
+> reader from the day this spec landed.
 
 ## Problem
 
