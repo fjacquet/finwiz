@@ -6,6 +6,7 @@ risk-adjusted performance metrics, and validation criteria.
 """
 
 import json
+import logging
 from datetime import datetime
 
 import pandas as pd
@@ -162,76 +163,79 @@ class TestBacktestingResult:
         assert result.validation_passed is False  # Default value
 
 
+@pytest.fixture
+def backtesting_tool():
+    """Create BacktestingTool instance for testing."""
+    return BacktestingTool()
+
+
+@pytest.fixture
+def mock_backtest_result(mocker):
+    """Create mock backtest result."""
+    mock_result = mocker.MagicMock()
+    mock_result.strategy_name = "SimpleMovingAverageStrategy"
+    mock_result.total_return = 25.5
+    mock_result.annualized_return = 12.8
+    mock_result.benchmark_return = 18.5
+    mock_result.sharpe_ratio = 1.25
+    mock_result.max_drawdown = -8.5
+    mock_result.volatility = 16.2
+    mock_result.total_trades = 35
+    mock_result.win_rate = 0.65
+    mock_result.var_95 = -2.1
+    mock_result.cvar_95 = -3.2
+    mock_result.calmar_ratio = 1.51
+    mock_result.start_date = datetime(2019, 1, 1)
+    mock_result.end_date = datetime(2024, 1, 1)
+    mock_result.initial_capital = 100000.0
+    mock_result.final_value = 125500.0
+    mock_result.portfolio_values = {
+        "2019-01-01": 100000.0,
+        "2019-06-01": 105000.0,
+        "2020-01-01": 110000.0,
+        "2020-06-01": 115000.0,
+        "2021-01-01": 120000.0,
+        "2021-06-01": 125000.0,
+        "2022-01-01": 125500.0,
+    }
+    mock_result.trades = []
+    return mock_result
+
+
+@pytest.fixture
+def mock_benchmark_data():
+    """Create mock benchmark data for regime analysis."""
+    dates = pd.date_range(start="2019-01-01", end="2024-01-01", freq="D")
+    # Create data with different regimes
+    prices = []
+    base_price = 100.0
+
+    for i, _date in enumerate(dates):
+        # Simulate different market regimes
+        if i < len(dates) // 3:  # Bull market
+            daily_return = 0.0008  # ~20% annual
+        elif i < 2 * len(dates) // 3:  # Bear market
+            daily_return = -0.0004  # ~-10% annual
+        else:  # Sideways market
+            daily_return = 0.0001  # ~2.5% annual
+
+        base_price *= 1 + daily_return
+        prices.append(base_price)
+
+    return pd.DataFrame(
+        {
+            "Close": prices,
+            "Open": [p * 0.999 for p in prices],
+            "High": [p * 1.002 for p in prices],
+            "Low": [p * 0.998 for p in prices],
+            "Volume": [1000000] * len(prices),
+        },
+        index=dates,
+    )
+
+
 class TestBacktestingTool:
     """Test BacktestingTool functionality."""
-
-    @pytest.fixture
-    def backtesting_tool(self):
-        """Create BacktestingTool instance for testing."""
-        return BacktestingTool()
-
-    @pytest.fixture
-    def mock_backtest_result(self, mocker):
-        """Create mock backtest result."""
-        mock_result = mocker.MagicMock()
-        mock_result.strategy_name = "SimpleMovingAverageStrategy"
-        mock_result.total_return = 25.5
-        mock_result.annualized_return = 12.8
-        mock_result.benchmark_return = 18.5
-        mock_result.sharpe_ratio = 1.25
-        mock_result.max_drawdown = -8.5
-        mock_result.volatility = 16.2
-        mock_result.total_trades = 35
-        mock_result.win_rate = 0.65
-        mock_result.var_95 = -2.1
-        mock_result.cvar_95 = -3.2
-        mock_result.calmar_ratio = 1.51
-        mock_result.start_date = datetime(2019, 1, 1)
-        mock_result.end_date = datetime(2024, 1, 1)
-        mock_result.initial_capital = 100000.0
-        mock_result.final_value = 125500.0
-        mock_result.portfolio_values = {
-            "2019-01-01": 100000.0,
-            "2019-06-01": 105000.0,
-            "2020-01-01": 110000.0,
-            "2020-06-01": 115000.0,
-            "2021-01-01": 120000.0,
-            "2021-06-01": 125000.0,
-            "2022-01-01": 125500.0,
-        }
-        mock_result.trades = []
-        return mock_result
-
-    @pytest.fixture
-    def mock_benchmark_data(self):
-        """Create mock benchmark data for regime analysis."""
-        dates = pd.date_range(start="2019-01-01", end="2024-01-01", freq="D")
-        # Create data with different regimes
-        prices = []
-        base_price = 100.0
-
-        for i, date in enumerate(dates):
-            # Simulate different market regimes
-            if i < len(dates) // 3:  # Bull market
-                daily_return = 0.0008  # ~20% annual
-            elif i < 2 * len(dates) // 3:  # Bear market
-                daily_return = -0.0004  # ~-10% annual
-            else:  # Sideways market
-                daily_return = 0.0001  # ~2.5% annual
-
-            base_price *= 1 + daily_return
-            prices.append(base_price)
-
-        return pd.DataFrame(
-            {
-                "Close": prices,
-                "Open": [p * 0.999 for p in prices],
-                "High": [p * 1.002 for p in prices],
-                "Low": [p * 0.998 for p in prices],
-                "Volume": [1000000] * len(prices),
-            },
-            index=dates,
-        )
 
     def test_should_have_correct_tool_properties(self, backtesting_tool):
         """Test tool has correct name and description."""
@@ -486,6 +490,104 @@ class TestBacktestingTool:
         assert validation_score < 0.7  # Should fail validation threshold
         assert validation_passed is False
         assert len(validation_notes) > 1  # Should have multiple failure notes
+
+
+class TestBacktestingToolShortSeriesRefusal:
+    """A series too short to backtest must be refused by name, not by NoneType.
+
+    ``BacktestingEngine.run_strategy_backtest`` returns None when the fetched
+    series is shorter than the strategy's lookback plus warm-up buffer. Reading
+    attributes off that None raised AttributeError, which the tool's shared
+    except turned into "Error performing backtesting: 'NoneType' object has no
+    attribute 'strategy_name'" -- an internal detail in place of the reason.
+    """
+
+    def test_should_refuse_by_name_when_main_backtest_has_too_little_data(self, mocker, backtesting_tool):
+        # Arrange
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
+        mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_engine = mocker.MagicMock()
+        mock_engine.run_strategy_backtest.return_value = None
+        mock_backtesting_engine.return_value = mock_engine
+
+        # Act
+        result = backtesting_tool._run(symbol="AAPL", strategy="sma_crossover", include_regime_analysis=False)
+
+        # Assert
+        assert "NoneType" not in result
+        assert "Insufficient data" in result
+        assert "AAPL" in result
+        # long_period defaults to 50 inside the engine, plus a 10-bar warm-up buffer.
+        assert "60" in result
+
+    def test_should_omit_regimes_that_are_too_short_to_backtest(self, mocker, backtesting_tool, mock_backtest_result, mock_benchmark_data, caplog):
+        """Regimes are sub-periods of the window, so they are routinely too short.
+
+        A regime that cannot be backtested is dropped from the analysis and from
+        consistency scoring -- reporting a 0.0 return for it would present a
+        missing measurement as a real one. The per-regime except already dropped
+        it, so the payload was never corrupted here; what was wrong is the record
+        left behind, which logged a legitimate refusal as
+        "Error analyzing bull regime: 'NoneType' object has no attribute
+        'total_return'".
+        """
+        # Arrange
+        mock_data_manager_func = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
+        mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_dm = mocker.MagicMock()
+        mock_dm.fetch_historical_data.return_value = mock_benchmark_data
+        mock_data_manager_func.return_value = mock_dm
+
+        # The full-window backtest succeeds; every regime sub-period is too short.
+        mock_engine = mocker.MagicMock()
+        mock_engine.run_strategy_backtest.side_effect = [mock_backtest_result] + [None] * 50
+        mock_backtesting_engine.return_value = mock_engine
+
+        # Act
+        with caplog.at_level(logging.INFO, logger="finwiz.tools.backtesting_tool"):
+            result_json = backtesting_tool._run(symbol="AAPL", strategy="sma_crossover", include_regime_analysis=True)
+
+        # Assert — the holding still gets its full-window backtest, minus the regimes.
+        assert "NoneType" not in result_json
+        result = json.loads(result_json)
+        assert result["symbol"] == "AAPL"
+        assert result["total_return"] == approx(25.5)
+        assert result["regime_analysis"] == []
+        assert result["regime_consistency"] == approx(0.0)
+
+        # ...and the record says why, by name, instead of leaking an AttributeError.
+        assert [r.message for r in caplog.records if "NoneType" in r.message] == []
+        assert any("Insufficient data" in r.message and "regime" in r.message for r in caplog.records)
+
+    def test_should_keep_regimes_that_can_be_backtested(self, mocker, backtesting_tool, mock_backtest_result, mock_benchmark_data):
+        """A refused regime is dropped; the ones that ran are still reported."""
+        # Arrange
+        mock_data_manager_func = mocker.patch("finwiz.tools.backtesting_tool.get_historical_data_manager")
+        mock_backtesting_engine = mocker.patch("finwiz.quantitative.backtesting.get_backtesting_engine")
+        mocker.patch("finwiz.tools.backtesting_tool.get_performance_analyzer")
+
+        mock_dm = mocker.MagicMock()
+        mock_dm.fetch_historical_data.return_value = mock_benchmark_data
+        mock_data_manager_func.return_value = mock_dm
+
+        # Full window, then one refused regime, then successful ones.
+        mock_engine = mocker.MagicMock()
+        mock_engine.run_strategy_backtest.side_effect = [mock_backtest_result, None] + [mock_backtest_result] * 50
+        mock_backtesting_engine.return_value = mock_engine
+
+        # Act
+        result_json = backtesting_tool._run(symbol="AAPL", strategy="sma_crossover", include_regime_analysis=True)
+
+        # Assert
+        assert "NoneType" not in result_json
+        result = json.loads(result_json)
+        regimes_identified = len(backtesting_tool._identify_market_regimes(mock_benchmark_data))
+        assert len(result["regime_analysis"]) == regimes_identified - 1
+        assert all(r["strategy_return"] == approx(25.5) for r in result["regime_analysis"])
 
 
 class TestBacktestingToolFactory:

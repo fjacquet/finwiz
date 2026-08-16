@@ -33,12 +33,28 @@ __all__ = [
     "TradeStatus",
     "TradeType",
     "get_backtesting_engine",
+    "minimum_bars_required",
 ]
 
 logger = get_logger(__name__)
 
 # Suppress Backtrader warnings for cleaner output
 warnings.filterwarnings("ignore", category=UserWarning, module="backtrader")
+
+# Extra bars beyond the strategy's longest lookback, so its indicators have
+# reached minperiod and the backtest actually trades rather than warming up.
+_WARMUP_BARS = 10
+
+
+def minimum_bars_required(strategy_params: dict[str, Any] | None) -> int:
+    """Bars a strategy needs before it can be backtested: lookback + warm-up.
+
+    Shared with the callers of ``run_strategy_backtest`` so a refusal can name
+    the threshold it refused against without re-deriving (and drifting from)
+    this formula.
+    """
+    params = strategy_params or {}
+    return int(params.get("long_period", params.get("period", 50))) + _WARMUP_BARS
 
 
 class BacktestingEngine:
@@ -125,7 +141,7 @@ class BacktestingEngine:
             # try/except and discard technical and performance analysis that
             # had already succeeded independently (see
             # tools/quantitative_comprehensive_analyzer.py, Task 15).
-            min_data_points = strategy_params.get("long_period", strategy_params.get("period", 50)) + 10
+            min_data_points = minimum_bars_required(strategy_params)
             if len(data) < min_data_points:
                 self.logger.info(
                     f"Skipping backtest for {symbol}: {len(data)} bars, need at least {min_data_points} (strategy lookback + warm-up buffer). Short series, not an error.",

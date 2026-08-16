@@ -13,6 +13,7 @@ from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 
 # Lazy imports to avoid circular dependencies
+from finwiz.quantitative.backtesting import minimum_bars_required
 from finwiz.quantitative.data import get_historical_data_manager
 from finwiz.quantitative.performance import get_performance_analyzer
 from finwiz.schemas.tools import BacktestingInput
@@ -181,6 +182,20 @@ class BacktestingTool(BaseTool):
                 benchmark_symbol=input_data.benchmark_symbol,
             )
 
+            # A short series is a refusal, not a failure: the engine returns None
+            # because backtrader would never reach the strategy's minperiod. Say
+            # so by name -- reading attributes off the None instead produced
+            # "Error performing backtesting: 'NoneType' object has no attribute
+            # 'strategy_name'", which tells the reading agent nothing.
+            if backtest_result is None:
+                minimum_bars = minimum_bars_required(strategy_params)
+                refusal = (
+                    f"Insufficient data for {input_data.symbol}: {input_data.backtest_period_years}y of price history is shorter than the "
+                    f"{minimum_bars} bars {strategy_class.__name__} needs (lookback + warm-up buffer). No backtest performed."
+                )
+                logger.info(refusal)
+                return refusal
+
             # Calculate additional risk-adjusted metrics
             additional_metrics = self._calculate_additional_metrics(backtest_result)
 
@@ -344,6 +359,21 @@ class BacktestingTool(BaseTool):
                         strategy_params=strategy_params,
                         benchmark_symbol=benchmark_symbol,
                     )
+
+                    # Regimes are sub-periods of the backtest window, so they are
+                    # routinely shorter than the strategy's minimum -- this is the
+                    # most-hit refusal of the three. Drop the regime and say why:
+                    # the surrounding except used to catch the AttributeError from
+                    # reading the None and log it as an error, and inventing a 0.0
+                    # return instead would report a missing measurement as a real one.
+                    if regime_result is None:
+                        minimum_bars = minimum_bars_required(strategy_params)
+                        logger.info(
+                            f"Insufficient data for the {regime['type']} regime of {symbol} "
+                            f"({regime['start_date']} to {regime['end_date']}): shorter than the {minimum_bars} bars "
+                            f"{strategy_class.__name__} needs. Regime omitted from regime analysis and consistency scoring."
+                        )
+                        continue
 
                     # Calculate regime-specific metrics
                     regime_analysis = MarketRegime(
