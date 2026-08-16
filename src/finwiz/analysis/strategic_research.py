@@ -245,11 +245,52 @@ def synthesize_portfolio_posture_sync(
     return asyncio.run(coro)
 
 
+SYNTHESIS_PAYLOAD_BUDGET_CHARS = 240_000
+"""Char budget for the portfolio-synthesis payload (~60K tokens).
+
+With the Task 3 caps a 64-holding portfolio lands near 190K, so the degradation
+ladder below is a guard-rail rather than the normal path.
+"""
+
+
+def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool) -> dict[str, Any]:
+    """One holding's contribution at a given detail level."""
+    out: dict[str, Any] = {}
+    if sa.pestel:
+        out["pestel"] = {"score": sa.pestel.strategic_score, "threats": sa.pestel.key_threats[:bullets], "opportunities": sa.pestel.key_opportunities[:bullets]}
+    if sa.swot:
+        out["swot"] = {"score": sa.swot.strategic_score, "strengths": sa.swot.strengths[:bullets], "threats": sa.swot.threats[:bullets]}
+        if include_prose:
+            out["swot"]["assessment"] = sa.swot.strategic_assessment
+    if sa.five_forces:
+        out["moat"] = {"score": sa.five_forces.strategic_score}
+        if include_prose:
+            out["moat"]["summary"] = sa.five_forces.competitive_position_summary
+    return out
+
+
 def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str:
-    """Compact JSON of per-holding analyses for the portfolio prompt."""
+    """Compact JSON digest of every holding, fitted to the budget.
+
+    Detail degrades before the holding list does. Dropping a holding is not an
+    operation this function can perform: the 2026-08-16 posture was synthesized
+    from 1 of 64 holdings because the old implementation ended in ``[:30000]``.
+    """
     import json
 
-    compact: dict[str, Any] = {}
-    for ticker, sa in holdings_strategic.items():
-        compact[ticker] = sa.model_dump(mode="json", exclude_none=True)
-    return json.dumps(compact, ensure_ascii=False, indent=2)[:30000]
+    for bullets, include_prose in ((3, True), (2, True), (1, True), (1, False)):
+        compact = {ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose) for ticker, sa in holdings_strategic.items()}
+        payload = json.dumps(compact, ensure_ascii=False, default=str)
+        if len(payload) <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
+            return payload
+
+    # Floor: scores only. Still every holding.
+    scores = {
+        ticker: {
+            "pestel": sa.pestel.strategic_score if sa.pestel else None,
+            "swot": sa.swot.strategic_score if sa.swot else None,
+            "moat": sa.five_forces.strategic_score if sa.five_forces else None,
+        }
+        for ticker, sa in holdings_strategic.items()
+    }
+    return json.dumps(scores, ensure_ascii=False, default=str)
