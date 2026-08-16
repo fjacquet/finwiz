@@ -48,7 +48,7 @@ This document specifies the JSON export structures used throughout the Pure Pyth
 | `asset_class` | string | "stock", "etf", or "crypto" |
 | `analysis_timestamp` | string | ISO 8601 timestamp |
 | `composite_score` | float | Overall score (0.0-1.0) |
-| `grade` | string | Letter grade (A+, A, B, C, D, F) |
+| `grade` | string | Letter grade (A+, A, B+, B, C+, C, D, F — eight grades) |
 | `recommendation` | string | BUY, HOLD, or SELL |
 | `confidence` | float | Confidence level (0.0-1.0) |
 | `rationale` | string | Analysis rationale |
@@ -109,7 +109,12 @@ This document specifies the JSON export structures used throughout the Pure Pyth
 
 ### Location
 
-`output/aplus_discovery_{session_id}.json`
+**Nothing is written to disk.** `integrate_aplus_discovery_with_deep_analysis()`
+returns this structure as an in-memory dict only —
+`output/aplus_discovery_{session_id}.json` is never created by any module
+in the repo. The backtesting connector's fallback path checks for that
+filename, but nothing ever produces it. The structure below documents the
+function's return value, not a file on disk.
 
 ### Structure
 
@@ -171,10 +176,12 @@ This document specifies the JSON export structures used throughout the Pure Pyth
 
 ### Structure
 
+`backtesting_executed` and `candidates_count` are on the function's *return
+value*, not in the serialized file — the file itself contains only these
+five keys:
+
 ```json
 {
-  "backtesting_executed": true,
-  "candidates_count": 3,
   "candidates": [
     {
       "ticker": "NVDA",
@@ -205,13 +212,16 @@ This document specifies the JSON export structures used throughout the Pure Pyth
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `backtesting_executed` | boolean | Whether backtesting ran |
-| `candidates_count` | integer | Number of candidates tested |
 | `candidates` | array | List of candidate details |
 | `results` | array | List of backtesting results |
 | `execution_time_seconds` | float | Total execution time |
 | `session_id` | string | Session identifier |
 | `timestamp` | string | ISO 8601 timestamp |
+
+`connect_backtesting_to_discovery_results()`'s return value additionally
+includes `backtesting_executed` (boolean) and `candidates_count` (integer),
+plus `results_file` (path to the JSON file above) — but those three are
+never written to disk.
 
 ### Backtesting Result Structure
 
@@ -248,11 +258,9 @@ Examples:
 
 ### Discovery Files
 
-Pattern: `aplus_discovery_{session_id}.json`
-
-Examples:
-
-- `aplus_discovery_analysis_session_123.json`
+**No discovery file is written.** See "Discovery Results → Location" above
+— `integrate_aplus_discovery_with_deep_analysis()` returns its results
+in-memory only.
 
 ### Backtesting Files
 
@@ -281,7 +289,6 @@ output/
 │   ├── BTC_{session_id}.html
 │   └── ...
 ├── deep_analysis_consolidated_{session_id}.json
-├── aplus_discovery_{session_id}.json
 ├── backtesting_results_{session_id}.json
 └── finwiz_family_financial_plan.html
 ```
@@ -307,7 +314,7 @@ output/
     "ticker": {"type": "string"},
     "asset_class": {"enum": ["stock", "etf", "crypto"]},
     "composite_score": {"type": "number", "minimum": 0, "maximum": 1},
-    "grade": {"enum": ["A+", "A", "B", "C", "D", "F"]},
+    "grade": {"enum": ["A+", "A", "B+", "B", "C+", "C", "D", "F"]},
     "recommendation": {"enum": ["BUY", "HOLD", "SELL"]}
   }
 }
