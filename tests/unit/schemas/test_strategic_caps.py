@@ -220,6 +220,58 @@ def test_long_paragraph_still_clamped_through_pestel_dimension():
     assert len(pestel.political[0]) <= MAX_BULLET_CHARS
 
 
+class TestMultilineCoercionRespectsMaxItemsCap:
+    """A multiline string coerced by `_coerce_str_list` must still respect
+    the per-field max-item cap, not just the per-bullet char cap.
+
+    A 10-line string coerced into 10 bullets, when only MAX_BULLETS_PESTEL
+    (or MAX_BULLETS_SWOT) survive, is exactly the unbounded-list shape this
+    branch exists to prevent — the char-clamp alone does not stop it.
+    """
+
+    def test_pestel_dimension_multiline_string_is_capped_to_max_bullets_pestel(self):
+        lines = [f"factor {i}" for i in range(10)]
+        text = "\n".join(lines)
+
+        pestel = PestelAnalysis.model_validate({"political": text})
+
+        assert len(pestel.political) == MAX_BULLETS_PESTEL
+        assert pestel.political == lines[:MAX_BULLETS_PESTEL]
+
+    def test_swot_list_multiline_string_is_capped_to_max_bullets_swot(self):
+        lines = [f"strength {i}" for i in range(10)]
+        text = "\n".join(lines)
+
+        swot = SwotAnalysis.model_validate({"strengths": text})
+
+        assert len(swot.strengths) == MAX_BULLETS_SWOT
+        assert swot.strengths == lines[:MAX_BULLETS_SWOT]
+
+    def test_cap_tracks_the_constant_not_a_hardcoded_digit(self, mocker):
+        """Patch MAX_BULLETS_PESTEL/MAX_BULLETS_SWOT to distinctive values
+        and verify the multiline-coercion truncation follows — pins that
+        the cap is read from the constant at call time, not a hardcoded
+        3/4 baked in anywhere along the coercion path. A regression that
+        applied the wrong cap to the wrong framework would also be caught
+        here, since PESTEL and SWOT are patched to different values.
+        """
+        import finwiz.schemas.hybrid_analysis.strategic as strategic
+
+        mocker.patch.object(strategic, "MAX_BULLETS_PESTEL", 5)
+        mocker.patch.object(strategic, "MAX_BULLETS_SWOT", 6)
+
+        lines = [f"item {i}" for i in range(10)]
+        text = "\n".join(lines)
+
+        pestel = strategic.PestelAnalysis.model_validate({"political": text})
+        swot = strategic.SwotAnalysis.model_validate({"strengths": text})
+
+        assert len(pestel.political) == 5
+        assert pestel.political == lines[:5]
+        assert len(swot.strengths) == 6
+        assert swot.strengths == lines[:6]
+
+
 class TestPestelOldOnDiskShapeRegression:
     """Regression for the real data-loss path: `*_enriched.json` files
     written before PESTEL dimensions became `list[str]` stored each
