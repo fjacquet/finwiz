@@ -120,7 +120,9 @@ def _per_holding_table(holdings_strategic: dict[str, dict] | None) -> str:
     A section promising per-line detail with only a ticker in it is worse
     than no section — see the family artifact's own former "Par ligne". Each
     holding's PESTEL/SWOT/Porter ``strategic_score`` earns the section its
-    place instead.
+    place instead. The three column headers are untranslated analyst jargon,
+    so a one-sentence legend glosses what each score actually measures --
+    a glance-level explanation, not a tutorial.
     """
     if not holdings_strategic:
         return ""
@@ -130,7 +132,11 @@ def _per_holding_table(holdings_strategic: dict[str, dict] | None) -> str:
         analysis = holdings_strategic[ticker] or {}
         cells = "".join(_score_cell(analysis.get(key)) for _, key in _FRAMEWORK_COLUMNS)
         rows.append(f"<tr><td><strong>{escape(ticker)}</strong></td>{cells}</tr>")
-    return f'<section class="section"><h2>Par ligne</h2><table><thead><tr><th>Ticker</th>{header_cells}</tr></thead><tbody>{"".join(rows)}</tbody></table></section>'
+    legend = (
+        '<p class="muted small">PESTEL évalue l\'environnement macro-économique et réglementaire, '
+        "SWOT les forces et faiblesses internes, et Porter la solidité de l'avantage concurrentiel.</p>"
+    )
+    return f'<section class="section"><h2>Par ligne</h2>{legend}<table><thead><tr><th>Ticker</th>{header_cells}</tr></thead><tbody>{"".join(rows)}</tbody></table></section>'
 
 
 def _sources(citations: list[str] | None) -> str:

@@ -195,6 +195,21 @@ class TestPerHolding:
 
         assert "AAPL" in html
 
+    def test_table_has_a_plain_language_legend(self) -> None:
+        """PESTEL/SWOT/Porter as bare column headers teach a family reader
+        nothing -- a one-sentence gloss must explain what each score means."""
+        holdings_strategic = {"AAPL": {"pestel": {"strategic_score": 0.62}}}
+
+        html = generate_posture_page(_full_posture(), holdings_strategic=holdings_strategic)
+        table_section = html[html.index("Par ligne") :]
+
+        assert "PESTEL" in table_section
+        assert "SWOT" in table_section
+        assert "Porter" in table_section
+        # A glance-level gloss, not a tutorial: exactly one sentence.
+        legend = table_section[table_section.index("<p", table_section.index("</h2>")) : table_section.index("</p>") + len("</p>")]
+        assert legend.count(".") == 1
+
     def test_no_holdings_strategic_does_not_render_a_bare_ticker_list(self) -> None:
         html = generate_posture_page(_full_posture(), holdings_strategic=None)
 
