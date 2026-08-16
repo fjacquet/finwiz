@@ -55,15 +55,34 @@ def _get_timeout_failure_threshold() -> int:
     """Consecutive TIMEOUTS (own counter, see module note) before the breaker opens.
 
     A single slow ticker must never trip the breaker (2026-08-16 cascade,
-    Task 1's fix -- kept here). But a provider that hangs on *every* request
-    must still be detected: excluding timeouts from the failure counter
-    entirely means the breaker never opens for a hung upstream, and all 64
-    holdings each burn a full CREW_TIMEOUT (default 600s) before giving up.
+    Task 1's fix -- kept here), which is why timeouts get a counter of their
+    own instead of feeding circuit_breaker_threshold. Default 15, three times
+    circuit_breaker_threshold's default of 5: high enough that the common case
+    -- a couple of genuinely slow tickers among 64 -- never trips it.
 
-    Default 15, three times circuit_breaker_threshold's default of 5:
-    high enough that the common case -- a couple of genuinely slow tickers
-    among 64 -- never trips it, low enough to catch a systemic hang well
-    before the whole batch has each independently paid the full timeout.
+    What opening the breaker actually buys, honestly
+    ------------------------------------------------
+    It rate-limits a hung provider. It does NOT stop any holding from burning a
+    full CREW_TIMEOUT, and an earlier version of this docstring claimed it did.
+
+    Fail-fast was deliberately removed (Task 2): an open breaker no longer
+    raises, it only inserts a cooldown wait (`_wait_out_open_breaker`) and then
+    runs the crew anyway. That was the right trade -- fail-fast rejected every
+    queued holding in the same instant, which is how 31 holdings were lost on
+    2026-08-16 -- but it means the *only* effect of opening is added latency.
+
+    With shipped defaults (threshold 15, CREW_TIMEOUT 600 s,
+    circuit_breaker_recovery 120 s, _executor(max_workers=4)) a fully hung
+    provider needs ~15 timeouts x 600 s over 4 executor slots, roughly 40
+    minutes, to open the breaker at all; every holding queued during the
+    subsequent cooldown then waits 120 s AND still burns its own full 600 s.
+    Net effect of opening: +120 s for those holdings, zero timeouts avoided.
+
+    A short probe at a reduced timeout before committing another CREW_TIMEOUT
+    would make detection pay for itself, but it can fail a holding that a full
+    600 s would have completed -- losing data to save time, which is the trade
+    this codebase refuses. Not done. Budget for the wall clock instead: 64
+    holdings x 600 s over 4 slots is ~2.7 h against a hung provider.
     """
     return int(os.getenv("FINWIZ_CIRCUIT_BREAKER_TIMEOUT_THRESHOLD", "15"))
 
@@ -164,10 +183,12 @@ def _record_timeout_and_maybe_open(crew_name: str, timeout_failure_threshold: in
     Timeouts get a counter separate from _crew_failures/failure_threshold: a
     timeout is a per-holding event, not necessarily an upstream failure, so
     counting it against the failure threshold opens the breaker after just a
-    few slow tickers among 64 healthy ones. But excluding timeouts entirely
-    (the previous fix) means a provider that hangs on *every* request never
-    trips the breaker, and every holding burns the full CREW_TIMEOUT before
-    giving up. See _get_timeout_failure_threshold for the threshold choice.
+    few slow tickers among 64 healthy ones. Excluding timeouts entirely (the
+    previous fix) means a hung provider never trips the breaker at all and the
+    hang is invisible in the logs. See _get_timeout_failure_threshold for the
+    threshold choice -- and for what opening the breaker does and does not buy
+    (it rate-limits a hung provider; it does not prevent per-holding timeout
+    burn, because fail-fast was deliberately removed).
     """
     with _state_lock:
         _crew_timeout_failures[crew_name] = _crew_timeout_failures.get(crew_name, 0) + 1
