@@ -101,16 +101,18 @@ class _StubLogger:
         self.errors: list[str] = []
         self.debugs: list[str] = []
 
-    def warning(self, msg: str, *args: Any) -> None:
+    def warning(self, msg: str, *args: Any, **kwargs: Any) -> None:
+        # **kwargs absorbs exc_info/stack_info/etc. -- matching real
+        # logging.Logger's signature so a call site can pass exc_info=True.
         self.warnings.append(msg % args if args else msg)
 
-    def info(self, msg: str, *args: Any) -> None:
+    def info(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.infos.append(msg % args if args else msg)
 
-    def error(self, msg: str, *args: Any) -> None:
+    def error(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.errors.append(msg % args if args else msg)
 
-    def debug(self, msg: str, *args: Any) -> None:
+    def debug(self, msg: str, *args: Any, **kwargs: Any) -> None:
         self.debugs.append(msg % args if args else msg)
 
 

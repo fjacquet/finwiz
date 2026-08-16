@@ -100,30 +100,40 @@ class TestCoverageVisualDistinction:
 class TestDetailDisclosure:
     def test_detail_is_behind_a_disclosure(self) -> None:
         html = generate_posture_page(_full_posture())
+        # Search only the body: the page's own <style> block can legitimately
+        # contain the literal text "<details>" (a CSS comment, a doc block) --
+        # an unscoped search would pass even if the real element were missing.
+        body = html.split("</style>", 1)[1]
 
-        assert "<details>" in html
-        assert "<strong>Politique</strong>" in html  # markdown rendered, not literal
-        assert "**" not in html
+        assert "<details>" in body
+        assert "<strong>Politique</strong>" in body  # markdown rendered, not literal
+        assert "**" not in body
 
     def test_verdicts_are_visible_without_expanding(self) -> None:
         """Each theme's verdict precedes *its own* disclosure, not merely the
         page's first one — three theme blocks each pair a verdict with detail."""
         html = generate_posture_page(_full_posture())
+        body = html.split("</style>", 1)[1]
 
         for verdict in ("Environnement porteur.", "Moats solides.", "Équilibré."):
-            verdict_pos = html.index(verdict)
-            assert verdict_pos < html.index("<details>", verdict_pos)
+            verdict_pos = body.index(verdict)
+            assert verdict_pos < body.index("<details>", verdict_pos)
 
 
 class TestDominantThemes:
     def test_dominant_themes_render_near_the_top(self) -> None:
         html = generate_posture_page(_full_posture())
+        # Scoped to the body, not the whole document: the <style> block can
+        # legitimately contain the literal text "<details>" (e.g. in a CSS
+        # comment), which would otherwise resolve to the wrong occurrence and
+        # make this ordering assertion pass or fail for the wrong reason.
+        body = html.split("</style>", 1)[1]
 
-        assert "Résilience énergétique" in html
-        assert "IA générative" in html
-        assert "Consolidation bancaire" in html
+        assert "Résilience énergétique" in body
+        assert "IA générative" in body
+        assert "Consolidation bancaire" in body
         # Prominent: after coverage, before the analyst-length theme blocks.
-        assert html.index("Résilience énergétique") < html.index("<details>")
+        assert body.index("Résilience énergétique") < body.index("<details>")
 
     def test_missing_dominant_themes_does_not_crash(self) -> None:
         posture = _full_posture()

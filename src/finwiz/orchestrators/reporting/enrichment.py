@@ -123,10 +123,15 @@ class ReportEnrichmentMixin:
 
         Best-effort by design: the family report is the primary deliverable and
         must be returned regardless of whether this companion page could be
-        written. The failure is still logged at warning level rather than
-        swallowed silently -- a bare ``except Exception`` in this same mixin
-        once turned a `TypeError` into a silently missing posture section
-        (Task 7), and narrowing that gap was the whole point.
+        written. The failure is still logged -- at warning level, with the
+        traceback -- rather than swallowed silently: a bare ``except Exception``
+        in this same mixin once turned a `TypeError` into a silently missing
+        posture section (Task 7). Catching broadly here is deliberate (an
+        uncaught exception would propagate to the caller's outer handler and
+        fail the whole report, even though the family HTML is already on disk),
+        but catching broadly must not mean discarding the traceback -- without
+        it, a genuine programming error is a single log line with no way to
+        diagnose it from the log alone.
         """
         if not portfolio_strategic_posture:
             return
@@ -140,7 +145,7 @@ class ReportEnrichmentMixin:
             )
             self.logger.info("Posture page written: %s", posture_path)
         except Exception as e:
-            self.logger.warning("Failed to write posture page beside %s: %s", report_path, e)
+            self.logger.warning("Failed to write posture page beside %s: %s", report_path, e, exc_info=True)
 
     def _load_opportunity_shortlist(self) -> Any:
         """Return the gap-fill opportunity shortlist (state preferred, file fallback).
