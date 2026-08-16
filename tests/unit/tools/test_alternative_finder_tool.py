@@ -21,73 +21,74 @@ class TestAlternativeFinder:
 
     @pytest.fixture
     def sample_discovery_output(self, tmp_path):
-        """Create sample discovery crew output."""
+        """Create sample discovery output (consolidated_discovery.json, flat opportunities shape)."""
         discovery_dir = tmp_path / "discovery"
         discovery_dir.mkdir()
 
         discovery_data = {
-            "pydantic": {
-                "aplus_stocks": [
-                    {
-                        "ticker": "MSFT",
-                        "name": "Microsoft Corporation",
-                        "composite_score": 0.90,
-                        "grade": "A+",
-                        "risk_score": 2.0,
-                        "key_metrics": {"pe_ratio": 30, "growth_rate": 0.15},
-                        "thesis_bullets": ["Strong cloud growth", "AI leadership"],
-                        "citations": ["SEC 10-K", "Yahoo Finance"],
-                        "confidence_level": 0.90,
-                        "expected_annual_benefit": 0.12,
-                    },
-                    {
-                        "ticker": "GOOGL",
-                        "name": "Alphabet Inc.",
-                        "composite_score": 0.88,
-                        "grade": "A",
-                        "risk_score": 2.2,
-                        "key_metrics": {"pe_ratio": 25, "growth_rate": 0.12},
-                        "thesis_bullets": ["Search dominance", "Cloud growth"],
-                        "citations": ["SEC 10-K"],
-                        "confidence_level": 0.85,
-                    },
-                ],
-                "aplus_etfs": [
-                    {
-                        "ticker": "VTI",
-                        "name": "Vanguard Total Stock Market ETF",
-                        "composite_score": 0.92,
-                        "grade": "A+",
-                        "risk_score": 1.8,
-                        "expense_ratio": 0.03,
-                        "key_metrics": {"tracking_error": 0.02},
-                        "thesis_bullets": ["Low cost", "Broad diversification"],
-                        "citations": ["Vanguard"],
-                        "confidence_level": 0.95,
-                    },
-                ],
-                "aplus_cryptos": [
-                    {
-                        "ticker": "BTC",
-                        "name": "Bitcoin",
-                        "composite_score": 0.85,
-                        "grade": "A",
-                        "risk_score": 3.5,
-                        "market_cap": 1000000000000,
-                        "key_metrics": {"volume_24h": 50000000000},
-                        "thesis_bullets": ["Store of value", "Institutional adoption"],
-                        "citations": ["CoinMarketCap"],
-                        "confidence_level": 0.80,
-                    },
-                ],
-            }
+            "timestamp": "2026-08-15T00:00:00",
+            "total_opportunities": 4,
+            "opportunities": [
+                {
+                    "ticker": "MSFT",
+                    "name": "Microsoft Corporation",
+                    "asset_class": "stock",
+                    "composite_score": 0.90,
+                    "grade": "A+",
+                    "risk_score": 2.0,
+                    "key_metrics": {"pe_ratio": 30, "growth_rate": 0.15},
+                    "thesis_bullets": ["Strong cloud growth", "AI leadership"],
+                    "citations": ["SEC 10-K", "Yahoo Finance"],
+                    "confidence_level": 0.90,
+                    "expected_annual_benefit": 0.12,
+                },
+                {
+                    "ticker": "GOOGL",
+                    "name": "Alphabet Inc.",
+                    "asset_class": "stock",
+                    "composite_score": 0.88,
+                    "grade": "A",
+                    "risk_score": 2.2,
+                    "key_metrics": {"pe_ratio": 25, "growth_rate": 0.12},
+                    "thesis_bullets": ["Search dominance", "Cloud growth"],
+                    "citations": ["SEC 10-K"],
+                    "confidence_level": 0.85,
+                },
+                {
+                    "ticker": "VTI",
+                    "name": "Vanguard Total Stock Market ETF",
+                    "asset_class": "etf",
+                    "composite_score": 0.92,
+                    "grade": "A+",
+                    "risk_score": 1.8,
+                    "expense_ratio": 0.03,
+                    "key_metrics": {"tracking_error": 0.02},
+                    "thesis_bullets": ["Low cost", "Broad diversification"],
+                    "citations": ["Vanguard"],
+                    "confidence_level": 0.95,
+                },
+                {
+                    "ticker": "BTC",
+                    "name": "Bitcoin",
+                    "asset_class": "crypto",
+                    "composite_score": 0.85,
+                    "grade": "A",
+                    "risk_score": 3.5,
+                    "market_cap": 1000000000000,
+                    "key_metrics": {"volume_24h": 50000000000},
+                    "thesis_bullets": ["Store of value", "Institutional adoption"],
+                    "citations": ["CoinMarketCap"],
+                    "confidence_level": 0.80,
+                },
+            ],
+            "by_asset_class": {"stock": 2, "etf": 1, "crypto": 1},
         }
 
-        latest_file = discovery_dir / "discovery_latest.json"
-        with open(latest_file, "w") as f:
+        consolidated_file = discovery_dir / "consolidated_discovery.json"
+        with open(consolidated_file, "w") as f:
             json.dump(discovery_data, f)
 
-        return latest_file
+        return consolidated_file
 
     def test_should_find_no_alternatives_for_grade_b_or_above(self, finder):
         """Test that no alternatives are found for holdings graded B or above."""
@@ -234,8 +235,14 @@ class TestAlternativeFinder:
         assert "immédiatement" in msft_alt.transition_strategy.lower()
 
     def test_should_create_gradual_swap_timing_for_moderate_grade_improvement(self, finder, sample_discovery_output):
-        """Test gradual swap timing for moderate grade improvements (C to B+)."""
+        """Test gradual swap timing for moderate grade improvements (C+ to A)."""
         # Arrange
+        # GOOGL is grade A (value 9) in the base fixture; no discovery-output
+        # modification needed here. (Note: a B+ alternative can no longer be
+        # used to hit this bucket the way this test used to — B+ falls outside
+        # the A-band grade filter now applied to consolidated_discovery.json's
+        # opportunities list, so a B+ item would simply be excluded rather than
+        # surfaced with a smaller grade_improvement.)
         holding = HoldingProfile(
             ticker="OK.STOCK",
             name="OK Stock",
@@ -244,33 +251,29 @@ class TestAlternativeFinder:
             composite_score=0.60,
         )
 
-        # Modify discovery output to have B+ grade (value 8, improvement = 2)
-        discovery_dir = finder.discovery_output_dir
-        latest_file = discovery_dir / "discovery_latest.json"
-
-        with open(latest_file) as f:
-            data = json.load(f)
-
-        # Change GOOGL to B+ for gradual timing (improvement = 2)
-        data["pydantic"]["aplus_stocks"][1]["grade"] = "B+"
-
-        with open(latest_file, "w") as f:
-            json.dump(data, f)
-
         # Act
         alternatives = finder.find_alternatives(holding, max_alternatives=3)
 
         # Assert
-        # B+ (value 8) - C+ (value 6) = 2, should be gradual
+        # A (value 9) - C+ (value 6) = 3, should be gradual
         googl_alt = next((alt for alt in alternatives if alt.ticker == "GOOGL"), None)
         assert googl_alt is not None
         assert googl_alt.swap_timing == "gradual"
         assert "progressive" in googl_alt.transition_strategy.lower()
 
     def test_should_create_tax_optimized_swap_timing_for_small_grade_improvement(self, finder, sample_discovery_output):
-        """Test tax-optimized swap timing for small grade improvements."""
-        # Arrange - Create a holding with grade C+ (value 6)
-        # and modify discovery output to have a B+ alternative (value 8)
+        """Test tax-optimized swap timing for small grade improvements.
+
+        Note: with the A-band-only filter (grade in {"A+", "A"}, value >= 9)
+        applied to discovery opportunities, and alternatives only searched for
+        holdings graded below B (value <= 6), the minimum achievable
+        grade_improvement is 9 - 6 = 3 — always "gradual" or "immediate",
+        never "tax_optimized" (< 2). This was already true before this file's
+        A-band rewrite (the previous version of this test never actually
+        asserted a tax_optimized outcome either); kept as a smoke test that
+        the base fixture still yields alternatives at all.
+        """
+        # Arrange
         holding = HoldingProfile(
             ticker="DECENT.STOCK",
             name="Decent Stock",
@@ -279,30 +282,11 @@ class TestAlternativeFinder:
             composite_score=0.65,
         )
 
-        # Modify discovery output to have B+ grade
-        discovery_dir = finder.discovery_output_dir
-        latest_file = discovery_dir / "discovery_latest.json"
-
-        with open(latest_file) as f:
-            data = json.load(f)
-
-        # Change GOOGL to B+ for this test
-        data["pydantic"]["aplus_stocks"][1]["grade"] = "B+"
-        data["pydantic"]["aplus_stocks"][1]["ticker"] = "BPLUS.STOCK"
-
-        with open(latest_file, "w") as f:
-            json.dump(data, f)
-
         # Act
         alternatives = finder.find_alternatives(holding, max_alternatives=3)
 
         # Assert
-        # B+ (value 8) - C+ (value 6) = 2, should be gradual
-        # But if we want tax_optimized, need improvement < 2
-        # Let's check what we get
-        if alternatives:
-            # Just verify the logic works
-            assert len(alternatives) > 0
+        assert len(alternatives) > 0
 
     def test_should_include_french_transition_strategy(self, finder, sample_discovery_output):
         """Test that transition strategy is in French."""
@@ -440,10 +424,10 @@ class TestAlternativeFinder:
         # Arrange
         discovery_dir = tmp_path / "discovery"
         discovery_dir.mkdir()
-        latest_file = discovery_dir / "discovery_latest.json"
+        consolidated_file = discovery_dir / "consolidated_discovery.json"
 
         # Write corrupted JSON
-        with open(latest_file, "w") as f:
+        with open(consolidated_file, "w") as f:
             f.write("{invalid json")
 
         holding = HoldingProfile(
@@ -571,28 +555,28 @@ class TestAlternativeFinder:
         discovery_dir.mkdir()
 
         discovery_data = {
-            "pydantic": {
-                "aplus_stocks": [
-                    {
-                        "ticker": "MSFT",
-                        "name": "Microsoft",
-                        "composite_score": 0.90,
-                        "grade": "A+",
-                        "risk_score": 2.0,
-                    },
-                    {
-                        "ticker": "MSFT",  # Duplicate
-                        "name": "Microsoft",
-                        "composite_score": 0.90,
-                        "grade": "A+",
-                        "risk_score": 2.0,
-                    },
-                ],
-            }
+            "opportunities": [
+                {
+                    "ticker": "MSFT",
+                    "name": "Microsoft",
+                    "asset_class": "stock",
+                    "composite_score": 0.90,
+                    "grade": "A+",
+                    "risk_score": 2.0,
+                },
+                {
+                    "ticker": "MSFT",  # Duplicate
+                    "name": "Microsoft",
+                    "asset_class": "stock",
+                    "composite_score": 0.90,
+                    "grade": "A+",
+                    "risk_score": 2.0,
+                },
+            ],
         }
 
-        latest_file = discovery_dir / "discovery_latest.json"
-        with open(latest_file, "w") as f:
+        consolidated_file = discovery_dir / "consolidated_discovery.json"
+        with open(consolidated_file, "w") as f:
             json.dump(discovery_data, f)
 
         holding = HoldingProfile(
@@ -610,3 +594,78 @@ class TestAlternativeFinder:
         # Should only have one MSFT, not two
         tickers = [alt.ticker for alt in alternatives]
         assert tickers.count("MSFT") == 1
+
+    def test_should_exclude_opportunity_from_different_asset_class(self, finder, tmp_path):
+        """An A-band opportunity for a different asset class must not surface as an alternative.
+
+        Pins one of the two ways the consolidated_discovery.json filter can
+        silently pass everything: forgetting the asset_class check.
+        """
+        # Arrange
+        discovery_dir = tmp_path / "discovery"
+        discovery_dir.mkdir()
+        discovery_data = {
+            "opportunities": [
+                {
+                    "ticker": "VTI",
+                    "name": "Vanguard Total Stock Market ETF",
+                    "asset_class": "etf",  # holding below is a stock
+                    "composite_score": 0.92,
+                    "grade": "A+",
+                },
+            ],
+        }
+        with open(discovery_dir / "consolidated_discovery.json", "w") as f:
+            json.dump(discovery_data, f)
+
+        holding = HoldingProfile(
+            ticker="BAD.STOCK",
+            name="Bad Stock",
+            asset_class="stock",
+            grade="D",
+            composite_score=0.40,
+        )
+
+        # Act
+        alternatives = finder.find_alternatives(holding, max_alternatives=3)
+
+        # Assert
+        assert alternatives == []
+
+    def test_should_exclude_non_a_band_opportunity(self, finder, tmp_path):
+        """A same-asset-class opportunity below the A-band must not surface as an alternative.
+
+        Pins the other way the consolidated_discovery.json filter can silently
+        pass everything: forgetting the grade check (B+ and below are not
+        A-band, even though they're above the "actionable" C floor upstream).
+        """
+        # Arrange
+        discovery_dir = tmp_path / "discovery"
+        discovery_dir.mkdir()
+        discovery_data = {
+            "opportunities": [
+                {
+                    "ticker": "DECENT.STOCK",
+                    "name": "Decent Stock",
+                    "asset_class": "stock",
+                    "composite_score": 0.78,
+                    "grade": "B+",  # below A-band (A+/A)
+                },
+            ],
+        }
+        with open(discovery_dir / "consolidated_discovery.json", "w") as f:
+            json.dump(discovery_data, f)
+
+        holding = HoldingProfile(
+            ticker="BAD.STOCK",
+            name="Bad Stock",
+            asset_class="stock",
+            grade="D",
+            composite_score=0.40,
+        )
+
+        # Act
+        alternatives = finder.find_alternatives(holding, max_alternatives=3)
+
+        # Assert
+        assert alternatives == []

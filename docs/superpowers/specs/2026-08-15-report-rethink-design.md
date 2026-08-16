@@ -12,7 +12,7 @@ The run of 2026-08-15 09:34 produced `output/finwiz_family_financial_plan.html` 
 
 | # | Location | Symptom |
 |---|---|---|
-| 1 | `reporting/sections/portfolio_summary.py:127` | 700-word AI essay with raw markdown (`**bold**`, `- ` bullets) and unresolved citation markers (`[3]`, `[8]`, `[VAHN JSON]`) rendered via `escape()` into one `<p>` |
+| 1 | `reporting/sections/portfolio_summary.py:127` | 700-word AI essay with raw markdown (`**bold**`, `-` bullets) and unresolved citation markers (`[3]`, `[8]`, `[VAHN JSON]`) rendered via `escape()` into one `<p>` |
 | 2 | `reporting/sections/portfolio_summary.py:117` | Section titled "Posture Stratégique **du Portefeuille**" synthesized from 3 holdings (ORCL, VAHN, TSLA) |
 | 3 | `reporting/sections/analysis.py:41-55` | "45 Successful Analyses / 0 Failed / 100.0% Success Rate" on the same page as "Couverture: 39/64 (25 échoués)" |
 | 4 | `reporting/sections/analysis.py:84-102` | "0 LLM Calls / 0.0s Total Time / $0.00" — `metrics` dict never populated |
@@ -169,7 +169,7 @@ class QualitativeBlock(BaseModel):
 
 Validators make the essay structurally impossible rather than cleaned up after the fact:
 
-- `verdict`: reject `**`, `- `, `#`, newlines; enforce the 30-word cap
+- `verdict`: reject `**`, `-`, `#`, newlines; enforce the 30-word cap
 - both fields: reject unresolved `[n]` and `[TICKER JSON]` markers — they move to `sources` or are stripped
 - `detail`: enforce the 200-word cap; markdown bullets convert to a real list at build time
 

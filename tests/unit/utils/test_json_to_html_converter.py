@@ -373,3 +373,11 @@ class TestParseRawOutput:
         # Assert
         assert result["formula"] == "a=b+c"
         assert result["equation"] == "x=1"
+
+    def test_should_not_map_the_retired_discovery_latest_name(self, converter):
+        """discovery_latest.json has no writer anywhere; the mapping entry is dead (task-11, 11a)."""
+        assert "discovery_latest.json" not in converter.TEMPLATE_MAPPING
+
+    def test_should_still_map_discovery_output_glob_to_the_same_template(self, converter):
+        """The glob pattern discovery actually writes files under stays mapped."""
+        assert converter.TEMPLATE_MAPPING["discovery_output_*.json"] == "discovery_latest.html"

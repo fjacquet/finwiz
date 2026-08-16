@@ -5,7 +5,6 @@ This module orchestrates the extraction of A+ investment opportunities from
 discovery crew outputs, coordinating data parsing and opportunity extraction.
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -163,79 +162,27 @@ class ExtractionEngine:
         self.logger.info(f"Extracted {len(opportunities)} crypto A+ opportunities")
         return opportunities
 
+    # `market_context` and `validation_results` were written against the raw
+    # CrewAI discovery-crew kickoff shape (a `{"pydantic": {...}}` result). The
+    # pipeline actually wired into DiscoveryOrchestrator today is the
+    # deterministic NewcomerDiscoveryPipeline, whose only output file
+    # (consolidated_discovery.json) never carries either key — there is no
+    # file anywhere in this pipeline that has this data (task-11, Ruling 23).
+    # Returning None here would be indistinguishable from the "ran and found
+    # nothing" meaning None already carries elsewhere in this module, so an
+    # explicit, named marker is returned instead: callers can tell "this input
+    # does not exist in this pipeline" apart from "this input was empty".
+    _NO_PRODUCER_REASON = "no producer emits this field in the current discovery pipeline"
+
+    def _unavailable(self, field_name: str) -> dict[str, Any]:
+        """Build the 'no producer for this field' marker and log why."""
+        self.logger.info(f"{field_name} extraction skipped: {self._NO_PRODUCER_REASON}.")
+        return {"unavailable": True, "field": field_name, "reason": self._NO_PRODUCER_REASON}
+
     def _extract_market_context(self) -> dict[str, Any] | None:
-        """Extract market context from discovery_latest.json."""
-        try:
-            discovery_file = self.discovery_dir / "discovery_latest.json"
-            if not discovery_file.exists():
-                return None
-
-            content = discovery_file.read_text(encoding="utf-8")
-            # Fix Python-style numeric literals
-            content = self.parser.clean_json_content(content)
-            data = json.loads(content)
-
-            # Extract market context if available
-            market_context: dict[str, Any] = data.get("market_context", {})
-            if market_context:
-                self.logger.info("Market context extracted from discovery results")
-                return market_context
-
-            return None
-        except Exception as e:
-            self.logger.warning(f"Could not extract market context: {e}")
-            return None
+        """market_context has no producer in the current discovery pipeline."""
+        return self._unavailable("market_context")
 
     def _extract_backtesting_metrics(self) -> dict[str, Any] | None:
-        """Extract backtesting metrics from discovery_latest.json."""
-        try:
-            discovery_file = self.discovery_dir / "discovery_latest.json"
-            if not discovery_file.exists():
-                return None
-
-            content = discovery_file.read_text(encoding="utf-8")
-            # Fix Python-style numeric literals
-            content = self.parser.clean_json_content(content)
-            data = json.loads(content)
-
-            # Extract validation results which contain backtesting data
-            validation_results = data.get("validation_results", [])
-            if validation_results:
-                # Aggregate backtesting metrics
-                metrics = {
-                    "total_candidates_tested": len(validation_results),
-                    "candidates_with_backtests": sum(1 for v in validation_results if v.get("backtest_results")),
-                    "avg_sharpe_ratio": None,
-                    "avg_annual_return": None,
-                    "avg_max_drawdown": None,
-                }
-
-                # Calculate averages if backtest data exists
-                sharpe_ratios = []
-                annual_returns = []
-                max_drawdowns = []
-
-                for result in validation_results:
-                    backtest = result.get("backtest_results", {})
-                    if backtest:
-                        if "sharpe_ratio" in backtest:
-                            sharpe_ratios.append(backtest["sharpe_ratio"])
-                        if "annual_return" in backtest:
-                            annual_returns.append(backtest["annual_return"])
-                        if "max_drawdown" in backtest:
-                            max_drawdowns.append(backtest["max_drawdown"])
-
-                if sharpe_ratios:
-                    metrics["avg_sharpe_ratio"] = sum(sharpe_ratios) / len(sharpe_ratios)
-                if annual_returns:
-                    metrics["avg_annual_return"] = sum(annual_returns) / len(annual_returns)
-                if max_drawdowns:
-                    metrics["avg_max_drawdown"] = sum(max_drawdowns) / len(max_drawdowns)
-
-                self.logger.info(f"Backtesting metrics extracted: {metrics['candidates_with_backtests']} candidates with backtests")
-                return metrics
-
-            return None
-        except Exception as e:
-            self.logger.warning(f"Could not extract backtesting metrics: {e}")
-            return None
+        """backtesting_metrics (validation_results) has no producer in the current discovery pipeline."""
+        return self._unavailable("backtesting_metrics")

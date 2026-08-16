@@ -101,6 +101,53 @@ class TestDiscoveryOrchestrator:
         assert orchestrator.state.crypto_analysis_error == "Crypto analysis failed"
         orchestrator.availability_tracker.track_data_source.assert_called_once()
 
+    def test_should_report_crypto_pipeline_failure_honestly(self, orchestrator, mocker):
+        """A pipeline failure disguised as an empty result must not read as success.
+
+        analyze_crypto_opportunities() no longer raises on pipeline failure - it
+        returns an honestly-labelled empty dict (method == "newcomer_discovery_failed").
+        The orchestrator must not render this as a success tick / available source /
+        analysis_success=True.
+        """
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Crypto discovery unavailable this run: universe fetch exploded",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_failed",
+                "error": "universe fetch exploded",
+            },
+        }
+
+        result = orchestrator.check_crypto()
+
+        assert result["crypto_analysis_complete"] is True
+        assert orchestrator.state.crypto_analysis_success is False
+        assert orchestrator.state.crypto_analysis_error == "universe fetch exploded"
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "unavailable"
+
+    def test_should_report_crypto_pipeline_zero_result_as_success(self, orchestrator, mocker):
+        """A genuine zero-candidate run must still be reported as a successful run."""
+        mock_analyze = mocker.patch("finwiz.scoring.crypto_analyzer.analyze_crypto_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Discovered 0 crypto newcomer candidates",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_pipeline",
+            },
+        }
+
+        result = orchestrator.check_crypto()
+
+        assert result["crypto_analysis_complete"] is True
+        assert orchestrator.state.crypto_analysis_success is True
+        assert orchestrator.state.crypto_analysis_error is None
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "available"
+
     def test_should_execute_stock_discovery_successfully(self, orchestrator, mocker):
         """Test successful stock discovery execution."""
         # Arrange
@@ -139,6 +186,47 @@ class TestDiscoveryOrchestrator:
         assert orchestrator.state.stock_analysis_error == "Stock analysis failed"
         orchestrator.availability_tracker.track_data_source.assert_called_once()
 
+    def test_should_report_stock_pipeline_failure_honestly(self, orchestrator, mocker):
+        """A pipeline failure disguised as an empty result must not read as success."""
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Stock discovery unavailable this run: universe fetch exploded",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_failed",
+                "error": "universe fetch exploded",
+            },
+        }
+
+        result = orchestrator.check_stock()
+
+        assert result["stock_analysis_complete"] is True
+        assert orchestrator.state.stock_analysis_success is False
+        assert orchestrator.state.stock_analysis_error == "universe fetch exploded"
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "unavailable"
+
+    def test_should_report_stock_pipeline_zero_result_as_success(self, orchestrator, mocker):
+        """A genuine zero-candidate run must still be reported as a successful run."""
+        mock_analyze = mocker.patch("finwiz.scoring.stock_analyzer.analyze_stock_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Discovered 0 stock newcomer candidates",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_pipeline",
+            },
+        }
+
+        result = orchestrator.check_stock()
+
+        assert result["stock_analysis_complete"] is True
+        assert orchestrator.state.stock_analysis_success is True
+        assert orchestrator.state.stock_analysis_error is None
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "available"
+
     def test_should_execute_etf_discovery_successfully(self, orchestrator, mocker):
         """Test successful ETF discovery execution."""
         # Arrange
@@ -176,6 +264,47 @@ class TestDiscoveryOrchestrator:
         assert orchestrator.state.etf_analysis_success is False
         assert orchestrator.state.etf_analysis_error == "ETF analysis failed"
         orchestrator.availability_tracker.track_data_source.assert_called_once()
+
+    def test_should_report_etf_pipeline_failure_honestly(self, orchestrator, mocker):
+        """A pipeline failure disguised as an empty result must not read as success."""
+        mock_analyze = mocker.patch("finwiz.scoring.etf_analyzer.analyze_etf_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "ETF discovery unavailable this run: universe fetch exploded",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_failed",
+                "error": "universe fetch exploded",
+            },
+        }
+
+        result = orchestrator.check_etf()
+
+        assert result["etf_analysis_complete"] is True
+        assert orchestrator.state.etf_analysis_success is False
+        assert orchestrator.state.etf_analysis_error == "universe fetch exploded"
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "unavailable"
+
+    def test_should_report_etf_pipeline_zero_result_as_success(self, orchestrator, mocker):
+        """A genuine zero-candidate run must still be reported as a successful run."""
+        mock_analyze = mocker.patch("finwiz.scoring.etf_analyzer.analyze_etf_opportunities")
+        mock_analyze.return_value = {
+            "analysis_summary": "Discovered 0 etf newcomer candidates",
+            "opportunities": [],
+            "performance_metrics": {
+                "opportunities_found": 0,
+                "method": "newcomer_discovery_pipeline",
+            },
+        }
+
+        result = orchestrator.check_etf()
+
+        assert result["etf_analysis_complete"] is True
+        assert orchestrator.state.etf_analysis_success is True
+        assert orchestrator.state.etf_analysis_error is None
+        kwargs = orchestrator.availability_tracker.track_data_source.call_args.kwargs
+        assert kwargs["status"] == "available"
 
     def test_should_consolidate_discovery_results_successfully(self, orchestrator):
         """Test successful discovery result consolidation."""

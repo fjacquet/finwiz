@@ -11,6 +11,8 @@ from typing import Any
 
 import pandas as pd
 
+from finwiz.quantitative.risk.risk_metrics import calculate_volatility
+
 logger = logging.getLogger(__name__)
 
 
@@ -30,6 +32,8 @@ def calculate_missing_technical_indicators(data: dict[str, Any], price_history: 
         Updated data dictionary with calculated indicators
 
     """
+    fill_volatility(data, price_history)
+
     current_price = data.get("current_price")
 
     # Skip if no current price available
@@ -52,6 +56,30 @@ def calculate_missing_technical_indicators(data: dict[str, Any], price_history: 
         logger.debug("📊 Calculated beta fallback: 1.0 (neutral)")
 
     return data
+
+
+def fill_volatility(data: dict[str, Any], price_history: pd.Series | None) -> None:
+    """
+    Derive annualized volatility from price history when the quant tool did not supply it.
+
+    Mutates ``data`` in place. Never overwrites a value the quant tool already
+    produced, and stays silent when there is not enough history to be meaningful.
+
+    Public (not prefixed with ``_``) because this is called directly by
+    DeepAnalysisScorer._recover_derivable_fields, ahead of the critical-field gate — unlike
+    the beta fallback below, which is a hardcoded assumption and must only run after the gate.
+    """
+    if data.get("volatility") is not None:
+        return
+    if price_history is None or len(price_history) < 2:
+        return
+
+    returns = price_history.pct_change().dropna()
+    if returns.empty:
+        return
+
+    data["volatility"] = calculate_volatility(returns, annualize=True)
+    logger.debug(f"📊 Derived volatility={data['volatility']:.4f} from {len(returns)} return observations")
 
 
 def _calculate_moving_averages(data: dict[str, Any], prices: pd.Series, current_price: float) -> None:

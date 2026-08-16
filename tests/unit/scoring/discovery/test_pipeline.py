@@ -1,5 +1,6 @@
 """Unit tests for NewcomerDiscoveryPipeline."""
 
+import json
 import time
 
 import pytest
@@ -63,6 +64,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("test-session")
         tickers = [c.ticker for c in result.candidates]
@@ -78,6 +80,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("sess-123")
         assert isinstance(result, NewcomerDiscoveryResult)
@@ -93,6 +96,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
 
         mock_persist = mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
         pipeline.discover("test-session")
         mock_persist.assert_called_once()
 
@@ -135,6 +139,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("test-session")
         assert result.total_candidates == 0
@@ -145,6 +150,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("test-session")
         assert result.total_candidates == 0
@@ -161,6 +167,7 @@ class TestNewcomerDiscoveryPipeline:
             side_effect=lambda c: (c, 1, 0),  # attempted 1, succeeded 0
         )
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("test-session")
         assert result.total_candidates == 1
@@ -177,6 +184,7 @@ class TestNewcomerDiscoveryPipeline:
         mocker.patch.object(pipeline, "_score_candidates", side_effect=lambda c: c)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("test-session")
         scores = [c.composite_score for c in result.candidates]
@@ -447,12 +455,24 @@ class TestPortfolioAwareDiscovery:
         mocker.patch.object(pipeline, "_gather_portfolio_aware_candidates", return_value=graded)
         mocker.patch.object(pipeline, "_enrich_top_candidates", side_effect=lambda c: (c, 0, 0))
         mocker.patch.object(pipeline, "_persist_result")
+        mock_persist_scored = mocker.patch.object(pipeline, "_persist_scored")
 
         result = pipeline.discover("sess-filter")
         grades = {c.grade for c in result.candidates}
         tickers = {c.ticker for c in result.candidates}
         assert "D" not in grades and "F" not in grades
         assert tickers == {"STRONG", "MIDC"}
+
+        # _persist_scored must receive the FULL pre-filter set (including the
+        # dropped D/F candidates) -- this is the actual point of the task.
+        # Asserting only on result.candidates above would pass even if
+        # _persist_scored were wired to the post-filter list or dropped
+        # entirely, which is exactly the regression this test exists to catch.
+        mock_persist_scored.assert_called_once()
+        persisted_call = mock_persist_scored.call_args
+        persisted_tickers = {c.ticker for c in persisted_call.args[0]}
+        assert persisted_tickers == {"STRONG", "MIDC", "WEAKD", "WEAKF"}
+        assert persisted_call.kwargs["actionable_count"] == 2
 
     def test_signal_score_used_when_present(self, pipeline, mocker):
         """When a ticker trips a signal, its richer signal composite is the standalone factor."""
@@ -512,3 +532,23 @@ class TestEnrichment:
         result, attempted, succeeded = pipeline._enrich_top_candidates(candidates)
         assert attempted == 0
         assert succeeded == 0
+
+
+def test_scored_candidates_are_persisted_before_filtering(tmp_path, mocker, monkeypatch):
+    # NewcomerCandidate/NewcomerDiscoveryPipeline are already imported at module
+    # level above; pipeline.py itself only imports NewcomerCandidate under
+    # TYPE_CHECKING, so it is not reachable as a `pipeline` module attribute.
+    monkeypatch.chdir(tmp_path)
+    mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers", return_value=None)
+    pipeline = NewcomerDiscoveryPipeline("etf")
+
+    scored = [
+        NewcomerCandidate(ticker="AAA", asset_class="etf", composite_score=0.72, grade="C+"),
+        NewcomerCandidate(ticker="BBB", asset_class="etf", composite_score=0.40, grade="F"),
+    ]
+    pipeline._persist_scored(scored, actionable_count=1)
+
+    written = json.loads((tmp_path / "output" / "discovery" / "scored_etf.json").read_text(encoding="utf-8"))
+    assert len(written["scored"]) == 2
+    assert written["actionable_count"] == 1
+    assert {c["ticker"] for c in written["scored"]} == {"AAA", "BBB"}

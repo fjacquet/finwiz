@@ -90,7 +90,7 @@ Because status codes are not observable through that surface, this wrapper retri
 **Interfaces:**
 
 - Consumes: `perplexity_structured` from `crewai_custom_tools` (async, keyword-only: `prompt`, `schema`, `system`, `model`, `search_recency_filter`, `timeout`, `api_key`).
-- Produces: `async def perplexity_with_retry(*, prompt: str, schema: type[T], system: str, search_recency_filter: str | None = "month", timeout: float = 15.0, max_attempts: int = 4, base_delay: float = 1.0) -> T | None` and `PERPLEXITY_CONCURRENCY` / `get_perplexity_semaphore() -> asyncio.Semaphore`. Tasks 2 and 12 consume both.
+- Produces: `async def perplexity_with_retry(*, prompt: str, schema: type[T], system: str, search_recency_filter: str | None = "month", timeout: float = 15.0, max_attempts: int = 4, base_delay: float = 1.0) -> T | None` and `PERPLEXITY_CONCURRENCY` / `get_perplexity_semaphore() -> threading.BoundedSemaphore`. Tasks 2 and 12 consume both.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -176,8 +176,16 @@ async def test_missing_api_key_fails_fast_without_retrying(mocker, monkeypatch):
 
 def test_semaphore_is_a_process_singleton():
     assert get_perplexity_semaphore() is get_perplexity_semaphore()
-    assert isinstance(get_perplexity_semaphore(), asyncio.Semaphore)
 ```
+
+> **Corrected 2026-08-16.** This test originally asserted
+> `isinstance(get_perplexity_semaphore(), asyncio.Semaphore)` — the exact
+> property that made the throttle broken. Production runs one holding per
+> `ThreadPoolExecutor` worker, a worker has no running loop, so each holding
+> gets a fresh event loop; an `asyncio.Semaphore` binds to the first loop that
+> contends on it and raises on every other. Measured at production numbers,
+> 5 of 10 holdings were lost with no rate limit involved. The throttle must be
+> a loop-agnostic `threading.BoundedSemaphore`; do not assert the asyncio type.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -221,15 +229,20 @@ T = TypeVar("T", bound=BaseModel)
 # the account allows. This caps in-flight requests process-wide.
 PERPLEXITY_CONCURRENCY = int(os.getenv("PERPLEXITY_CONCURRENCY", "4"))
 
-_semaphore: asyncio.Semaphore | None = None
+_throttle: threading.BoundedSemaphore | None = None
 
 
-def get_perplexity_semaphore() -> asyncio.Semaphore:
-    """Return the process-wide Perplexity concurrency semaphore."""
-    global _semaphore
-    if _semaphore is None:
-        _semaphore = asyncio.Semaphore(PERPLEXITY_CONCURRENCY)
-    return _semaphore
+def get_perplexity_semaphore() -> threading.BoundedSemaphore:
+    """Return the process-wide Perplexity concurrency throttle.
+
+    A threading primitive, not an asyncio one: production gives each holding
+    its own event loop (one holding per ThreadPoolExecutor worker), and an
+    asyncio.Semaphore binds to the first loop that contends on it.
+    """
+    global _throttle
+    if _throttle is None:
+        _throttle = threading.BoundedSemaphore(PERPLEXITY_CONCURRENCY)
+    return _throttle
 
 
 def _has_api_key() -> bool:
@@ -1280,6 +1293,13 @@ Expected: PASS — 2 passed
 
 Append to `tests/unit/scoring/test_discovery_analyzers.py`:
 
+> **Corrected 2026-08-15.** This test originally listed `AAPL`, `BTC-USD` and
+> `ETH-USD` — tickers that never appeared in these modules. Written that way it
+> passes against fully intact fabrication, certifying the exact thing this task
+> removes. The three invented sets genuinely differ (etf `VTI`/`VXUS`/`BND`,
+> stock `MSFT`/`NVDA`/`GOOGL`, crypto `BTC`/`ETH`); read each module and pin its
+> own list rather than assuming they match.
+
 ```python
 import pytest
 
@@ -1287,8 +1307,8 @@ import pytest
 @pytest.mark.parametrize(
     ("module_name", "invented"),
     [
-        ("finwiz.scoring.stock_analyzer", ("AAPL", "MSFT", "NVDA")),
-        ("finwiz.scoring.crypto_analyzer", ("BTC-USD", "ETH-USD")),
+        ("finwiz.scoring.stock_analyzer", ("MSFT", "NVDA", "GOOGL")),
+        ("finwiz.scoring.crypto_analyzer", ("BTC", "ETH")),
     ],
 )
 def test_other_analyzers_have_no_hardcoded_tickers(module_name, invented):

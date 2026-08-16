@@ -11,7 +11,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from finwiz.analysis.fact_pack_research import fetch_fact_pack_sync
-from finwiz.analysis.stages._resilience import StageContext, stage
+from finwiz.analysis.stages._resilience import StageContext, TransientStageError, stage
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
@@ -47,7 +47,7 @@ def _fact_pack_inner(
            live fetch fails    → return cached (freshness=stale)
       3. Cache miss:
            live fetch succeeds → cache.put(new); return new
-           live fetch fails    → raise RuntimeError → @stage records FAILED
+           live fetch fails    → raise TransientStageError → @stage retries once, then records FAILED
 
     The freshness label on the returned payload is the only signal — the stage
     outcome is always OK or FAILED.
@@ -70,8 +70,10 @@ def _fact_pack_inner(
         logger.warning(f"fact_pack live fetch failed for {ticker}; using stale cache (fetched_at={cached.fetched_at})")
         return cached
 
-    # No cache and no live data — caller's @stage decorator records FAILED
-    raise RuntimeError(f"fact_pack unavailable for {ticker}: no cache and Perplexity fetch failed")
+    # No cache and no live data — TransientStageError (not plain RuntimeError) so the
+    # @stage decorator's declared retry can actually reach this failure; see
+    # _resilience._is_transient. Still recorded as FAILED once retries are exhausted.
+    raise TransientStageError(f"fact_pack unavailable for {ticker}: no cache and Perplexity fetch failed")
 
 
 @stage(name="fact_pack", timeout_s=60, retries=1)

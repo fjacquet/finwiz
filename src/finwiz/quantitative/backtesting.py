@@ -33,12 +33,28 @@ __all__ = [
     "TradeStatus",
     "TradeType",
     "get_backtesting_engine",
+    "minimum_bars_required",
 ]
 
 logger = get_logger(__name__)
 
 # Suppress Backtrader warnings for cleaner output
 warnings.filterwarnings("ignore", category=UserWarning, module="backtrader")
+
+# Extra bars beyond the strategy's longest lookback, so its indicators have
+# reached minperiod and the backtest actually trades rather than warming up.
+_WARMUP_BARS = 10
+
+
+def minimum_bars_required(strategy_params: dict[str, Any] | None) -> int:
+    """Bars a strategy needs before it can be backtested: lookback + warm-up.
+
+    Shared with the callers of ``run_strategy_backtest`` so a refusal can name
+    the threshold it refused against without re-deriving (and drifting from)
+    this formula.
+    """
+    params = strategy_params or {}
+    return int(params.get("long_period", params.get("period", 50))) + _WARMUP_BARS
 
 
 class BacktestingEngine:
@@ -82,7 +98,7 @@ class BacktestingEngine:
         end_date: datetime,
         strategy_params: dict[str, Any] | None = None,
         benchmark_symbol: str | None = None,
-    ) -> BacktestResult:
+    ) -> BacktestResult | None:
         """
         Execute comprehensive backtesting workflow with professional-grade tools.
 
@@ -95,7 +111,12 @@ class BacktestingEngine:
             benchmark_symbol: Optional benchmark symbol for comparison
 
         Returns:
-            Comprehensive backtest result
+            Comprehensive backtest result, or ``None`` when the fetched series
+            is shorter than the strategy's lookback window plus warm-up
+            buffer. That is a legitimate refusal, not an error: backtrader
+            would never reach ``minperiod`` for the strategy's indicators, so
+            the caller must treat ``None`` as "cannot backtest this series",
+            not as a bug to retry or paper over.
 
         """
         self.logger.info(f"Starting backtest for {strategy_class.__name__} on {symbol}")
@@ -113,10 +134,19 @@ class BacktestingEngine:
             if data.empty:
                 raise ValueError(f"No data available for {symbol}")
 
-            # Check if we have enough data for the strategy
-            min_data_points = strategy_params.get("long_period", strategy_params.get("period", 50)) + 10
+            # Check if we have enough data for the strategy's lookback window.
+            # A short series is a legitimate input, not an error -- refuse by
+            # returning None rather than raising. Raising here used to
+            # propagate out through the comprehensive analyzer's shared
+            # try/except and discard technical and performance analysis that
+            # had already succeeded independently (see
+            # tools/quantitative_comprehensive_analyzer.py, Task 15).
+            min_data_points = minimum_bars_required(strategy_params)
             if len(data) < min_data_points:
-                raise ValueError(f"Insufficient data for {symbol}: got {len(data)} rows, need at least {min_data_points} for strategy parameters")
+                self.logger.info(
+                    f"Skipping backtest for {symbol}: {len(data)} bars, need at least {min_data_points} (strategy lookback + warm-up buffer). Short series, not an error.",
+                )
+                return None
 
             # Convert to Backtrader data feed
             bt_data = create_backtrader_datafeed(data, symbol)
@@ -219,7 +249,8 @@ class BacktestingEngine:
         for strategy_class, params in strategies:
             try:
                 result = self.run_strategy_backtest(strategy_class, symbol, start_date, end_date, params)
-                results.append(result)
+                if result is not None:
+                    results.append(result)
             except Exception as e:
                 self.logger.error(f"Error backtesting {strategy_class.__name__}: {e}")
                 continue

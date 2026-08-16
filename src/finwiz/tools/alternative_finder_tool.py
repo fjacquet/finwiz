@@ -23,6 +23,14 @@ SwapTiming = Literal["immediate", "gradual", "tax_optimized"]
 
 logger = get_logger(__name__)
 
+# Grades eligible for "A-band" alternative sourcing from consolidated_discovery.json's
+# flat `opportunities` list. Matches the top two tiers of the Grade vocabulary that
+# finwiz.scoring.grading_system.score_to_grade actually emits (A+, A, B+, B, C+, C, D, F
+# — the sole grader behind discovery opportunities; see finwiz.discovery.candidate_scorer).
+# Broader than "A+ only" so this isn't perpetually empty: A+ alone requires a >=95%
+# composite score, which is rare in practice.
+_A_BAND_GRADES: frozenset[str] = frozenset({"A+", "A"})
+
 
 class HoldingProfile(BaseModel):
     """Profile of a holding for matching alternatives."""
@@ -172,58 +180,60 @@ class AlternativeFinder:
         return unique_alternatives
 
     def _find_aplus_alternatives(self, holding: HoldingProfile) -> list[Alternative]:
-        """Find A+ alternatives from discovery crew outputs."""
+        """Find A-band alternatives from the consolidated discovery output.
+
+        ``consolidated_discovery.json`` is the only file the discovery pipeline
+        actually writes (see ``discovery_orchestrator.py``). It holds a flat
+        ``opportunities`` list spanning every asset class and every grade —
+        unlike the array this reader used to look for, nothing pre-filters it
+        to A-band candidates, so filtering by asset class and grade happens here.
+        """
         alternatives = []
 
-        # Check for latest discovery output
-        latest_file = self.discovery_output_dir / "discovery_latest.json"
-        if not latest_file.exists():
-            self.logger.warning(f"No discovery crew output found at {latest_file}; A+ alternatives unavailable for this run.")
+        discovery_file = self.discovery_output_dir / "consolidated_discovery.json"
+        if not discovery_file.exists():
+            self.logger.warning(f"No discovery output found at {discovery_file}; A-band alternatives unavailable for this run.")
             return alternatives
 
         try:
-            with open(latest_file) as f:
+            with open(discovery_file) as f:
                 discovery_data = json.load(f)
 
-            # Extract A+ opportunities
-            pydantic_output = discovery_data.get("pydantic", {})
-            if not pydantic_output:
-                self.logger.warning(f"Discovery output exists but has no pydantic data. File: {latest_file}")
+            opportunities = discovery_data.get("opportunities", [])
+            if not opportunities:
+                self.logger.warning(f"Discovery output exists but has no opportunities. File: {discovery_file}")
                 return alternatives
 
-            # Look for A+ stocks/ETFs/crypto based on asset class
-            aplus_field = f"aplus_{holding.asset_class}s"  # aplus_stocks, aplus_etfs, aplus_cryptos
-            aplus_items = pydantic_output.get(aplus_field, [])
+            aplus_items = [item for item in opportunities if isinstance(item, dict) and item.get("asset_class") == holding.asset_class and item.get("grade") in _A_BAND_GRADES]
 
             if not aplus_items:
-                self.logger.info(f"No A+ {holding.asset_class}s found in discovery output. Field '{aplus_field}' is empty or missing.")
+                self.logger.info(f"No A-band {holding.asset_class}s found in discovery output for {holding.ticker}.")
                 return alternatives
 
-            self.logger.info(f"Found {len(aplus_items)} A+ {holding.asset_class}s in discovery output, filtering for alternatives to {holding.ticker}")
+            self.logger.info(f"Found {len(aplus_items)} A-band {holding.asset_class}s in discovery output, filtering for alternatives to {holding.ticker}")
 
             for item in aplus_items:
-                if isinstance(item, dict):
-                    ticker = item.get("ticker", "")
-                    if ticker and ticker != holding.ticker:
-                        alternative = self._create_alternative_from_aplus(
-                            item=item,
-                            holding=holding,
-                        )
-                        if alternative:
-                            alternatives.append(alternative)
-                            self.logger.info(f"Created alternative: {ticker} (grade: {item.get('grade', 'N/A')}) for {holding.ticker}")
-                    elif ticker == holding.ticker:
-                        self.logger.debug(f"Skipping {ticker} as it's the same as current holding")
+                ticker = item.get("ticker", "")
+                if ticker and ticker != holding.ticker:
+                    alternative = self._create_alternative_from_aplus(
+                        item=item,
+                        holding=holding,
+                    )
+                    if alternative:
+                        alternatives.append(alternative)
+                        self.logger.info(f"Created alternative: {ticker} (grade: {item.get('grade', 'N/A')}) for {holding.ticker}")
+                elif ticker == holding.ticker:
+                    self.logger.debug(f"Skipping {ticker} as it's the same as current holding")
 
             if not alternatives:
                 self.logger.warning(
-                    f"Found {len(aplus_items)} A+ {holding.asset_class}s but none are suitable alternatives for {holding.ticker} (all may be the same ticker or failed validation)"
+                    f"Found {len(aplus_items)} A-band {holding.asset_class}s but none are suitable alternatives for {holding.ticker} (all may be the same ticker or failed validation)"
                 )
 
         except Exception as e:
             self.logger.error(
-                f"Error reading discovery output from {latest_file}: {e}",
-                extra={"error": str(e), "file": str(latest_file)},
+                f"Error reading discovery output from {discovery_file}: {e}",
+                extra={"error": str(e), "file": str(discovery_file)},
                 exc_info=True,
             )
 

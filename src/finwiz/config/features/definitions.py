@@ -143,7 +143,7 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             enabled=get_env_bool("FF_NEWCOMER_DISCOVERY", True),
             strategy=FeatureFlagStrategy.BOOLEAN,
             fallback_strategy=FallbackStrategy.DEFAULT_VALUES,
-            description="Route stock/etf/crypto analyzers through NewcomerDiscoveryPipeline instead of legacy mocked data",
+            description="Retired: analyzers now always route through NewcomerDiscoveryPipeline unconditionally; this flag is no longer read anywhere",
         ),
         "portfolio_aware_discovery": FeatureFlagConfig(
             name="portfolio_aware_discovery",

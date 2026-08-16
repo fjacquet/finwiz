@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 from finwiz.analysis.stages._ledger import RunLedger
-from finwiz.analysis.stages._resilience import StageContext, stage
+from finwiz.analysis.stages._resilience import StageContext, TransientStageError, _is_transient, stage
 from finwiz.schemas.stage_contract import (
     StageOutcome,
     StageResult,
@@ -132,3 +132,34 @@ async def test_stage_async_retries_transient(tmp_path: Path) -> None:
     assert calls["n"] == 3
     assert result.provenance.outcome == StageOutcome.OK
     assert result.provenance.retries_used == 2
+
+
+def test_transient_stage_error_is_classified_transient() -> None:
+    assert _is_transient(TransientStageError("rate limited")) is True
+
+
+def test_plain_runtime_error_is_not_transient() -> None:
+    assert _is_transient(RuntimeError("bad state")) is False
+
+
+def test_stage_retries_transient_stage_error(tmp_path: Path) -> None:
+    """A sync stage body raising TransientStageError reaches its declared retry.
+
+    Regression guard for the fact_pack bug: before TransientStageError existed,
+    a plain RuntimeError from the stage body was classified non-transient, so
+    declared retries never fired (retries_used stayed 0 in the ledger).
+    """
+    calls = {"n": 0}
+
+    @stage(name="fact_pack", timeout_s=5, retries=1)
+    def _flaky(ctx: StageContext) -> _Payload:
+        calls["n"] += 1
+        if calls["n"] < 2:
+            raise TransientStageError("upstream unavailable")
+        return _Payload(value=3)
+
+    ctx = _ctx(tmp_path)
+    result = _flaky(ctx)
+    assert calls["n"] == 2
+    assert result.provenance.outcome == StageOutcome.OK
+    assert result.provenance.retries_used == 1

@@ -550,6 +550,73 @@ class TestBacktestingEngine:
         with pytest.raises(Exception, match="Network error"):
             engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date)
 
+    def test_should_return_none_for_series_shorter_than_strategy_lookback(self, mocker):
+        """A series shorter than the strategy's lookback window (+ warm-up
+        buffer) is a legitimate refusal, not an error: backtrader would
+        never reach minperiod for the strategy's indicators, so trying to
+        run it produces no usable result. The old behavior (raising
+        ValueError here) propagated up through the comprehensive analyzer's
+        shared try/except and discarded technical and performance analysis
+        that had already succeeded independently -- this is the actual
+        mechanism behind "drops the holding's entire quantitative payload"."""
+        # Arrange
+        config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
+        engine = BacktestingEngine(config)
+
+        dates = pd.date_range(start="2023-01-01", periods=30, freq="D")
+        short_data = pd.DataFrame(
+            {
+                "Open": [100.0] * 30,
+                "High": [101.0] * 30,
+                "Low": [99.0] * 30,
+                "Close": [100.0] * 30,
+                "Volume": [1000] * 30,
+            },
+            index=dates,
+        )
+        mock_data_manager_instance = mocker.MagicMock()
+        mock_data_manager_instance.fetch_historical_data.return_value = short_data
+        mock_data_manager.return_value = mock_data_manager_instance
+        engine.data_manager = mock_data_manager_instance
+
+        symbol = fake.pystr(min_chars=3, max_chars=5).upper()
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 1, 30)
+
+        # Act
+        result = engine.run_strategy_backtest(
+            SimpleMovingAverageStrategy,
+            symbol,
+            start_date,
+            end_date,
+            strategy_params={"short_period": 20, "long_period": 50},
+        )
+
+        # Assert -- refusal, not a crash and not a fabricated result
+        assert result is None
+
+    def test_should_still_raise_for_empty_or_unfetchable_data(self, mocker):
+        """Only the "fetched-but-too-short" case degrades to None. Data that
+        could not be fetched at all (empty frame, provider error) is a
+        different failure class and still raises -- that distinction is
+        preserved from the pre-existing tests above."""
+        config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
+        engine = BacktestingEngine(config)
+
+        mock_data_manager_instance = mocker.MagicMock()
+        mock_data_manager_instance.fetch_historical_data.return_value = pd.DataFrame()
+        mock_data_manager.return_value = mock_data_manager_instance
+        engine.data_manager = mock_data_manager_instance
+
+        symbol = fake.pystr(min_chars=3, max_chars=5).upper()
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 3, 31)
+
+        with pytest.raises(ValueError, match="No data available"):
+            engine.run_strategy_backtest(SimpleMovingAverageStrategy, symbol, start_date, end_date)
+
     def test_should_create_backtrader_datafeed_correctly(self, backtesting_engine, sample_ohlcv_data):
         """Test creation of Backtrader data feed."""
         # Arrange
@@ -663,6 +730,40 @@ class TestBacktestingEngine:
         assert all(isinstance(result, BacktestResult) for result in results)
         assert results[0].strategy_name == "SimpleMovingAverageStrategy"
         assert results[1].strategy_name == "SimpleMovingAverageStrategy"
+
+    def test_should_skip_none_results_in_multi_strategy_backtest(self, mocker):
+        """A strategy config whose lookback window doesn't fit the fetched
+        series returns None from run_strategy_backtest and must be skipped,
+        not appended -- the same way an outright exception is already
+        skipped, so callers never see a None mixed into the results list."""
+        config = BacktestConfig(initial_capital=100000.0)
+        mock_data_manager = mocker.patch("finwiz.quantitative.backtesting.HistoricalDataManager")
+        engine = BacktestingEngine(config)
+
+        dates = pd.date_range(start="2023-01-01", periods=30, freq="D")
+        short_data = pd.DataFrame(
+            {
+                "Open": [100.0] * 30,
+                "High": [101.0] * 30,
+                "Low": [99.0] * 30,
+                "Close": [100.0] * 30,
+                "Volume": [1000] * 30,
+            },
+            index=dates,
+        )
+        mock_data_manager_instance = mocker.MagicMock()
+        mock_data_manager_instance.fetch_historical_data.return_value = short_data
+        mock_data_manager.return_value = mock_data_manager_instance
+        engine.data_manager = mock_data_manager_instance
+
+        strategies = [(SimpleMovingAverageStrategy, {"short_period": 20, "long_period": 50})]
+        symbol = fake.pystr(min_chars=3, max_chars=5).upper()
+        start_date = datetime(2023, 1, 1)
+        end_date = datetime(2023, 1, 30)
+
+        results = engine.run_multi_strategy_backtest(strategies, symbol, start_date, end_date)
+
+        assert results == []
 
     def test_should_handle_plot_results_without_backtest(self, backtesting_engine):
         """Test plotting results when no backtest has been run."""
