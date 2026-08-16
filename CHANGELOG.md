@@ -56,6 +56,18 @@ data.
   silently writes inconsistent output.
 - Seed-ETF override is honored for ETFs; ticker hygiene applied to the mined
   universe.
+- A refused holding is no longer persisted as `C` / `0.5` / `HOLD`. When an
+  upstream stage failed, the pipeline returned a bare
+  `EnrichedAnalysis.model_construct()`, which took the schema defaults and wrote
+  them to `{TICKER}_enriched.json` — the artifact the report and every
+  downstream consumer read. A holding the pipeline had explicitly refused was
+  therefore recorded as a confident middling hold, with `ticker: ""` and both
+  analysis sections `null`, while the `DeepAnalysisResult` beside it correctly
+  said `N/A` / `0.0` / `WAIT`. The refusal is now built explicitly and carries
+  the upstream failure reason, and the schema's own defaults are a refusal
+  (`N/A` / `0.0` / `WAIT`) so a forgotten field can never again read as a
+  recommendation. Found by inspecting the 2026-08-16 run, where 24 holdings
+  were each written out as C/HOLD.
 - README badges: the CI badge pointed at a `quality.yml` workflow that does not
   exist, Python was listed as 3.12 against a `>=3.13,<3.14` floor, coverage was
   a stale hand-written 72%, and the MIT badge linked to a `LICENSE` file that
@@ -90,14 +102,6 @@ and are live in this release.
   already done. This inverts AI Minimalism: the $0 deterministic half is held
   hostage by the flaky AI half. The fix is to emit a partial verdict carrying
   the quantitative scores with the qualitative section marked unavailable.
-- **A refused holding is persisted as `C` / `0.5` / `HOLD`.** `_emit_pending`
-  returns `EnrichedAnalysis.model_construct()` with no arguments, and that
-  object is serialized to `{TICKER}_enriched.json`. Because the schema defaults
-  are `final_grade="C"`, `final_score=0.5`, `final_recommendation="HOLD"`
-  (`schemas/hybrid_analysis/enriched.py:76-78`), the artifact downstream
-  consumers read asserts a middling hold for a holding the pipeline explicitly
-  refused — with `ticker: ""` and both analysis sections `null`. The
-  `DeepAnalysisResult` beside it correctly says `N/A` / `0.0` / `WAIT`.
 - **The orchestrator counts placeholders as analyses**, logging
   `Deep analysis complete: 64/64 holdings analyzed` when 27 were pending
   placeholders.
