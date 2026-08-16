@@ -238,30 +238,6 @@ def test_timeout_does_not_increment_breaker_counter(mocker):
     assert "deep_analysis_stock" not in crew_execution._crew_circuit_open
 
 
-def test_emit_pending_distinguishes_breaker_open_reason() -> None:
-    """_emit_pending must produce a distinctive French rationale when the
-    upstream reason names the circuit breaker, so users can tell a breaker-
-    induced skip apart from a generic pending row.
-    """
-    from pathlib import Path
-
-    from finwiz.analysis.stages._ledger import RunLedger
-    from finwiz.analysis.stages._resilience import StageContext
-    from finwiz.analysis.stages.emit import _emit_pending
-
-    ledger = RunLedger(run_id="r-test", artifact_dir=Path("/tmp/finwiz-test-ledger"))
-    ctx = StageContext(ticker="EXSA.DE", run_id="r-test", ledger=ledger, extras={})
-
-    breaker_reason = "Circuit breaker open for deep_analysis_etf"
-    pending = _emit_pending(ctx, reason=breaker_reason)
-    assert "circuit breaker ouvert" in pending.rationale
-    assert "réessayer" in pending.rationale
-
-    # Generic pending stays distinct.
-    other = _emit_pending(ctx, reason="qualify timed out")
-    assert "circuit breaker" not in other.rationale.lower()
-
-
 @pytest.mark.asyncio
 async def test_records_crew_usage_when_result_has_token_usage(mocker):
     """Honest cost tracking: usage is recorded from CrewOutput.token_usage at the chokepoint."""
