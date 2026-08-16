@@ -221,7 +221,14 @@ class TestCryptoOpportunityExtractor:
         assert opportunities[1]["symbol"] == "ETH"
 
     def test_should_handle_missing_market_metrics_gracefully(self, extractor, valid_crypto_candidate):
-        """Test handling of missing market metrics."""
+        """Test handling of missing market metrics.
+
+        An entirely absent market_cap_usd/volume_24h_usd must not be defaulted to
+        0 -- a 0 reads as a real (and gate-failing) measurement, not as "unknown".
+        This used to assert key_metrics["market_cap_usd"] == 0, which was itself
+        the fabricated-zero bug: it pinned exactly the behavior that made a
+        genuinely unmeasured metric indistinguishable from a measured-and-zero one.
+        """
         # Arrange
         del valid_crypto_candidate["market_cap_usd"]
         del valid_crypto_candidate["volume_24h_usd"]
@@ -232,7 +239,16 @@ class TestCryptoOpportunityExtractor:
         # Assert
         assert opportunity is not None
         assert opportunity["composite_score"] >= 0
-        assert opportunity["key_metrics"]["market_cap_usd"] == 0
+        assert opportunity["key_metrics"]["market_cap_usd"] == {
+            "unavailable": True,
+            "field": "market_cap_usd",
+            "reason": extractor._NO_DATA_REASON,
+        }
+        assert opportunity["key_metrics"]["volume_24h_usd"] == {
+            "unavailable": True,
+            "field": "volume_24h_usd",
+            "reason": extractor._NO_DATA_REASON,
+        }
 
     def test_should_handle_missing_risk_assessment_gracefully(self, extractor, valid_crypto_candidate):
         """Test handling of missing risk assessment."""

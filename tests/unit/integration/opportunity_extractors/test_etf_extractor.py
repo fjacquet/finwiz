@@ -280,3 +280,24 @@ class TestETFOpportunityExtractor:
         assert opportunity is not None
         assert opportunity["symbol"] == "TEST"
         assert opportunity["composite_score"] >= 0
+
+    def test_malformed_candidate_does_not_zero_its_siblings(self, extractor, valid_etf_candidate):
+        """A single candidate that raises inside extract() must not wipe the whole batch.
+
+        cost_metrics: None is a candidate whose field is present but the wrong
+        type: `"ter" in None` raises TypeError from inside _should_include, which
+        the extraction loop does not catch per-candidate -- before the fix, that
+        exception escaped a single try wrapped around the *entire* loop in
+        OpportunityExtractor.extract() (orchestrators/discovery/extractors/base.py),
+        discarding every opportunity already built for every well-formed sibling
+        candidate in the same batch, not just the malformed one.
+        """
+        # Arrange
+        malformed_candidate = {"symbol": "BAD", "name": "Malformed ETF", "grade": "A+", "cost_metrics": None}
+
+        # Act
+        opportunities = extractor.extract([valid_etf_candidate, malformed_candidate])
+
+        # Assert
+        assert len(opportunities) == 1, "the malformed candidate must be skipped, not fatal to its well-formed sibling"
+        assert opportunities[0]["symbol"] == "VWCE"

@@ -98,14 +98,20 @@ class ETFOpportunityExtractor(OpportunityExtractor):
             else:
                 confidence = 0.90 if grade == "A+" else 0.80
 
-            # Extract cost metrics for key metrics (may not exist in all data formats)
+            # Extract cost metrics for key metrics. "cost_metrics" itself being
+            # absent (not merely {}) means this candidate's source never measured
+            # these -- distinct from an explicit {} (measured, found nothing).
+            has_cost_metrics = "cost_metrics" in candidate
             cost_metrics = candidate.get("cost_metrics", {})
-            ter = cost_metrics.get("ter", 0.0)
-            aum = cost_metrics.get("aum_usd", 0)
-            tracking_error = cost_metrics.get("tracking_error_3y", 0.0)
+            ter = cost_metrics.get("ter", 0.0) if has_cost_metrics else None
+            aum = cost_metrics.get("aum_usd", 0) if has_cost_metrics else None
+            tracking_error = cost_metrics.get("tracking_error_3y", 0.0) if has_cost_metrics else None
 
-            # Format AUM for display
-            if aum >= 1e9:
+            # Format AUM for display -- an unmeasured AUM must not render as "$0",
+            # which reads as a real (and oddly tiny) fund size, not as "unknown".
+            if aum is None:
+                aum_str: Any = self._unavailable("aum_formatted")
+            elif aum >= 1e9:
                 aum_str = f"${aum / 1e9:.1f}B"
             elif aum >= 1e6:
                 aum_str = f"${aum / 1e6:.1f}M"
@@ -116,20 +122,32 @@ class ETFOpportunityExtractor(OpportunityExtractor):
             risk_assessment = candidate.get("risk_assessment") or {}
             risk_score = risk_assessment.get("score", 3.0)
 
-            # Extract diversification as rationale using helper method
+            # Extract diversification as rationale using helper method, then append
+            # the writer's flat rationale/recommendation so neither is dropped.
+            # "diversification" itself being absent (not merely {}) means this
+            # candidate's source never measured it; _extract_diversification_info
+            # treats {} as "measured, found nothing" (its own tested contract), so
+            # the presence check has to happen here, before the call.
             from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 
             extractor = APlusDataExtractor()
-            diversification = candidate.get("diversification", {})
-            holdings_count, top_10_concentration, rationale = extractor._extract_diversification_info(diversification)
+            if "diversification" in candidate:
+                diversification = candidate["diversification"]
+                holdings_count, _top_10_concentration, rationale = extractor._extract_diversification_info(diversification)
+            else:
+                diversification = {}
+                holdings_count, rationale = None, []
+            rationale = self._passthrough_rationale(candidate, rationale)
 
-            # Build key metrics
+            # Build key metrics. An unmeasured metric is marked unavailable rather
+            # than defaulted to 0 -- e.g. ter: 0.0 reads as a real, excellent (and
+            # gate-passing) measurement, not as "unknown".
             key_metrics = {
-                "ter": ter,
-                "aum_usd": aum,
+                "ter": ter if ter is not None else self._unavailable("ter"),
+                "aum_usd": aum if aum is not None else self._unavailable("aum_usd"),
                 "aum_formatted": aum_str,
-                "tracking_error_3y": tracking_error,
-                "holdings_count": holdings_count,
+                "tracking_error_3y": tracking_error if tracking_error is not None else self._unavailable("tracking_error_3y"),
+                "holdings_count": holdings_count if holdings_count is not None else self._unavailable("holdings_count"),
             }
 
             # Return dict matching APlusOpportunity schema

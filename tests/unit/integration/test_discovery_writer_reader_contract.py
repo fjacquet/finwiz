@@ -101,3 +101,58 @@ class TestDiscoveryWriterReaderContract:
         assert collection.crypto_opportunities[0].symbol == "BTC"  # -USD suffix stripped by the extractor
 
         assert collection.discovery_summary != "No A+ opportunities identified in current market conditions."
+
+    def test_writer_rationale_and_recommendation_survive_into_the_collection(self, discovery_output_dir):
+        """The writer's flat rationale/recommendation must not be silently discarded.
+
+        _to_legacy_format emits candidate["rationale"] = "Strong fundamentals" and
+        candidate["recommendation"] = "BUY" (see _make_candidate above). Neither is
+        read by the moat/diversification/technology-derived structured rationale,
+        so before the fix both were dropped for every candidate this pipeline
+        produces -- confirmed by direct inspection before the fix: the extracted
+        opportunity's rationale was `[]` for stock and crypto candidates built from
+        this exact payload shape.
+        """
+        extractor = APlusDataExtractor(output_dir=discovery_output_dir)
+
+        collection = extractor.extract_aplus_opportunities()
+
+        assert collection is not None
+        for opportunities in (collection.stock_opportunities, collection.etf_opportunities, collection.crypto_opportunities):
+            assert len(opportunities) == 1
+            rationale = opportunities[0].rationale
+            assert "Strong fundamentals" in rationale, f"writer's rationale text missing from {rationale}"
+            assert "Recommendation: BUY" in rationale, f"writer's recommendation missing from {rationale}"
+
+    def test_unmeasured_key_metrics_are_marked_unavailable_not_zero(self, discovery_output_dir):
+        """A metric this pipeline never measures must not be reported as a real zero.
+
+        _to_legacy_format never emits fundamentals/cost_metrics/market_cap_usd/
+        technology for any candidate, so before the fix every one of these came
+        back as a fabricated 0 / 0.0 / "" / "$0" -- indistinguishable from a real
+        measurement (and, for ETF's ter/aum, reading as an excellent one on the
+        exact axis the TER gate exists to screen).
+        """
+        extractor = APlusDataExtractor(output_dir=discovery_output_dir)
+
+        collection = extractor.extract_aplus_opportunities()
+
+        assert collection is not None
+
+        stock_metrics = collection.stock_opportunities[0].key_metrics
+        assert stock_metrics["roe_3y_avg"] == {"unavailable": True, "field": "roe_3y_avg", "reason": stock_metrics["roe_3y_avg"]["reason"]}, (
+            "roe_3y_avg must be a named-unavailable marker, not a bare 0"
+        )
+        assert stock_metrics["roe_3y_avg"]["unavailable"] is True
+        assert stock_metrics["revenue_cagr_5y"]["unavailable"] is True
+        assert stock_metrics["debt_to_equity"]["unavailable"] is True
+        assert stock_metrics["market_cap_usd"]["unavailable"] is True, "0 for market_cap_usd reads as a real, tiny company, not 'unknown'"
+
+        etf_metrics = collection.etf_opportunities[0].key_metrics
+        assert etf_metrics["ter"]["unavailable"] is True, "an unmeasured TER must not read as a real 0.0 (which passes the gate)"
+        assert etf_metrics["aum_usd"]["unavailable"] is True
+        assert etf_metrics["aum_formatted"]["unavailable"] is True, 'an unmeasured AUM must not render as "$0"'
+
+        crypto_metrics = collection.crypto_opportunities[0].key_metrics
+        assert crypto_metrics["market_cap_usd"]["unavailable"] is True
+        assert crypto_metrics["volume_24h_usd"]["unavailable"] is True

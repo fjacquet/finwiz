@@ -79,29 +79,39 @@ class StockOpportunityExtractor(OpportunityExtractor):
             else:
                 confidence = 0.85 if grade == "A+" else 0.75
 
-            # Extract fundamentals for key metrics (may not exist in all data formats)
-            fundamentals = candidate.get("fundamentals", {})
-            roe = fundamentals.get("roe_3y_avg", 0)
-            revenue_growth = fundamentals.get("revenue_cagr_5y", 0)
-            debt_ratio = fundamentals.get("debt_to_equity", 0)
+            # Extract fundamentals for key metrics. "fundamentals" itself being
+            # absent (not merely {}) means this candidate's source never measured
+            # these -- distinct from an explicit {} (measured, found nothing).
+            if "fundamentals" in candidate:
+                fundamentals = candidate["fundamentals"]
+                roe = fundamentals.get("roe_3y_avg", 0)
+                revenue_growth = fundamentals.get("revenue_cagr_5y", 0)
+                debt_ratio = fundamentals.get("debt_to_equity", 0)
+            else:
+                roe = revenue_growth = debt_ratio = None
 
             # Extract risk assessment
             risk_assessment = candidate.get("risk_assessment") or {}
             risk_score = risk_assessment.get("score", 5.0)
 
-            # Extract moat analysis as rationale using helper method
+            # Extract moat analysis as rationale, then append the writer's flat
+            # rationale/recommendation -- NewcomerDiscoveryPipeline candidates carry
+            # their reasoning there, not in moat_analysis, so neither is dropped.
             from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 
             extractor = APlusDataExtractor()
             moat_analysis = candidate.get("moat_analysis", {})
             moat_type, moat_strength, rationale = extractor._extract_moat_info(moat_analysis)
+            rationale = self._passthrough_rationale(candidate, rationale)
 
-            # Extract key metrics from fundamentals
+            # Extract key metrics from fundamentals. An unmeasured metric is marked
+            # unavailable rather than defaulted to 0 -- a 0 reads as a real, often
+            # flattering measurement (e.g. debt_to_equity: 0), not as "unknown".
             key_metrics = {
-                "roe_3y_avg": roe,
-                "revenue_cagr_5y": revenue_growth,
-                "debt_to_equity": debt_ratio,
-                "market_cap_usd": candidate.get("market_cap_usd", 0),
+                "roe_3y_avg": roe if roe is not None else self._unavailable("roe_3y_avg"),
+                "revenue_cagr_5y": revenue_growth if revenue_growth is not None else self._unavailable("revenue_cagr_5y"),
+                "debt_to_equity": debt_ratio if debt_ratio is not None else self._unavailable("debt_to_equity"),
+                "market_cap_usd": candidate["market_cap_usd"] if "market_cap_usd" in candidate else self._unavailable("market_cap_usd"),
             }
 
             # Return dict matching APlusOpportunity schema

@@ -97,26 +97,33 @@ class CryptoOpportunityExtractor(OpportunityExtractor):
             else:
                 confidence = 0.85 if grade == "A+" else 0.75
 
-            # Extract market metrics for key metrics (may not exist in all data formats)
-            market_cap = candidate.get("market_cap_usd", 0)
-            volume_24h = candidate.get("volume_24h_usd", 0)
+            # Extract market metrics for key metrics. Each field's own absence (not
+            # merely a 0 value) means this candidate's source never measured it --
+            # distinct from an explicit 0 (measured, genuinely zero).
+            market_cap = candidate["market_cap_usd"] if "market_cap_usd" in candidate else None
+            volume_24h = candidate["volume_24h_usd"] if "volume_24h_usd" in candidate else None
 
             # Extract risk assessment
             risk_assessment = candidate.get("risk_assessment") or {}
             risk_score = risk_assessment.get("score", 6.0)  # Crypto typically higher risk
 
-            # Extract technology as rationale using helper method
+            # Extract technology as rationale using helper method, then append the
+            # writer's flat rationale/recommendation so neither is dropped.
             from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 
             extractor = APlusDataExtractor()
             technology = candidate.get("technology", {})
+            has_technology = "technology" in candidate
             consensus, use_case, rationale = extractor._extract_technology_info(technology)
+            rationale = self._passthrough_rationale(candidate, rationale)
 
-            # Build key metrics
+            # Build key metrics. An unmeasured metric is marked unavailable rather
+            # than defaulted to 0/"" -- market_cap_usd: 0 reads as a real, tiny
+            # (and gate-failing) measurement, not as "unknown".
             key_metrics = {
-                "market_cap_usd": market_cap,
-                "volume_24h_usd": volume_24h,
-                "consensus_mechanism": consensus,
+                "market_cap_usd": market_cap if market_cap is not None else self._unavailable("market_cap_usd"),
+                "volume_24h_usd": volume_24h if volume_24h is not None else self._unavailable("volume_24h_usd"),
+                "consensus_mechanism": consensus if has_technology else self._unavailable("consensus_mechanism"),
             }
 
             # Return dict matching APlusOpportunity schema
