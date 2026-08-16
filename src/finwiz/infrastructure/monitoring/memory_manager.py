@@ -3,7 +3,7 @@ Memory Management for Batch Processing.
 
 This module implements memory monitoring and management for batch data
 pre-fetching and crew execution to ensure memory usage stays within
-acceptable limits (< 500 MB total).
+acceptable limits (< 1024 MB total, see MAX_MEMORY_MB).
 
 Key Features:
 - Real-time memory usage monitoring
@@ -25,7 +25,9 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Memory constraint: 500 MB maximum (Requirement 17.74)
+# Memory ceiling enforced by this module. Hard-coded on purpose: it is not read
+# from the environment, so MAX_MEMORY_MB is the single source of truth. Keep the
+# prose below in step with it.
 MAX_MEMORY_MB = 1024
 MAX_MEMORY_BYTES = MAX_MEMORY_MB * 1024 * 1024
 
@@ -288,7 +290,7 @@ class MemoryManager:
         """
         Validate that memory usage is within constraints.
 
-        Checks if peak memory usage stayed within the 500 MB limit.
+        Checks if peak memory usage stayed within the MAX_MEMORY_MB limit (1024 MB).
         Used for final validation after Flow completion.
 
         Returns:
