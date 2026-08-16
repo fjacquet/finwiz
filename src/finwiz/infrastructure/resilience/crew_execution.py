@@ -154,11 +154,24 @@ async def execute_crew_with_timeout(
         # was driven by exactly this confounder.
         raise
 
-    except (TimeoutError, Exception) as exc:
+    except TimeoutError:
+        # A timeout is a per-holding event, not an upstream failure. Counting it
+        # opens the breaker, and because holdings run concurrently an open breaker
+        # fails every queued holding instantly — 31 lost in the 2026-08-16 run,
+        # each of which had already completed collect, quantify and fact_pack.
+        # Same reasoning as the ValidationError clause above.
+        logger.warning(f"Crew {crew_name} timed out after {effective_timeout}s (breaker counter unchanged)")
+        raise
+
+    except Exception as exc:
         # Track failure
         _crew_failures[crew_name] = _crew_failures.get(crew_name, 0) + 1
         failure_count = _crew_failures[crew_name]
-        logger.warning(f"Crew {crew_name} failed ({failure_count}/{failure_threshold}): {exc}")
+        # {exc!r} not {exc}: TimeoutError() stringifies to empty, which is why the
+        # 2026-08-16 run logged "Crew deep_analysis_stock failed (5/5):" with no
+        # reason. repr always shows the type. (This branch no longer sees
+        # TimeoutError, but keep repr for any other exception with an empty str().)
+        logger.warning(f"Crew {crew_name} failed ({failure_count}/{failure_threshold}): {exc!r}")
 
         # Open circuit breaker if threshold reached
         if failure_count >= failure_threshold:

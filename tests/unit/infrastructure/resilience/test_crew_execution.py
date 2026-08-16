@@ -1,5 +1,6 @@
 """Tests for crew execution wrapper with timeout and circuit breaker."""
 
+import asyncio
 import time
 
 import pytest
@@ -51,7 +52,13 @@ async def test_execute_crew_with_timeout_success(mocker):
 
 @pytest.mark.asyncio
 async def test_execute_crew_with_timeout_timeout(mocker):
-    """Crew that exceeds timeout raises TimeoutError and increments failure count."""
+    """Crew that exceeds timeout raises TimeoutError WITHOUT incrementing the
+    breaker counter.
+
+    A timeout is a per-holding event, not an upstream outage — see
+    test_timeout_does_not_increment_breaker_counter below for the full
+    rationale (2026-08-16 cascade).
+    """
 
     def slow_kickoff(inputs=None):
         time.sleep(2)
@@ -62,7 +69,8 @@ async def test_execute_crew_with_timeout_timeout(mocker):
     with pytest.raises(TimeoutError):
         await execute_crew_with_timeout("slow_crew", crew, {"ticker": "SLOW"}, timeout=0.1)
 
-    assert _crew_failures["slow_crew"] == 1
+    assert _crew_failures.get("slow_crew", 0) == 0
+    assert "slow_crew" not in _crew_circuit_open
 
 
 @pytest.mark.asyncio
@@ -167,6 +175,29 @@ async def test_validation_error_does_not_increment_breaker(mocker):
     # No counter increment, no breaker entry.
     assert _crew_failures.get("schema_thrash", 0) == 0
     assert "schema_thrash" not in _crew_circuit_open
+
+
+def test_timeout_does_not_increment_breaker_counter(mocker):
+    """A timeout is a per-holding event, not an upstream outage.
+
+    Five slow holdings must not blind 31 healthy ones. ValidationError already
+    bypasses the counter for the same reason (the 2026-04-28 ETF cascade); this
+    pins the timeout half of that lesson.
+    """
+    from finwiz.infrastructure.resilience import crew_execution
+
+    crew_execution.reset_circuit_breakers()
+    mocker.patch.object(crew_execution, "CREW_TIMEOUT", 0.01)
+
+    slow_crew = mocker.Mock()
+    slow_crew.kickoff = lambda inputs: time.sleep(1.0)
+
+    for _ in range(6):
+        with pytest.raises(TimeoutError):
+            asyncio.run(crew_execution.execute_crew_with_timeout("deep_analysis_stock", slow_crew, {}))
+
+    assert crew_execution._crew_failures.get("deep_analysis_stock", 0) == 0
+    assert "deep_analysis_stock" not in crew_execution._crew_circuit_open
 
 
 def test_emit_pending_distinguishes_breaker_open_reason() -> None:
