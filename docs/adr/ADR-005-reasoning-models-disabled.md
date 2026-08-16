@@ -1,8 +1,15 @@
 # ADR-005: Reasoning Models Disabled by Default
 
-- **Status:** Accepted
+- **Status:** Accepted, but **not reflected in the current codebase** — see note below
 - **Date:** 2025-03-01
 - **Deciders:** FinWiz Core Team
+
+> **2026-08 note:** This decision does not match current code.
+> `reasoning=True` is set on 27 agent definitions across six crews (vs. 6
+> `reasoning=False`), and reasoning effort is applied by default via
+> `LLM_REASONING_EFFORT` (default `"low"`, not disabled). Left as a
+> historical record of the original rationale; treat the "Decision" section
+> below as **not current**.
 
 ## Context
 
@@ -17,12 +24,17 @@ need for deep reasoning on most calls.
 
 Disable reasoning/thinking mode by default on all crew agents.
 
-- `reasoning=False` is set as the default on all crew agent configurations.
-- Thinking capability is configurable via `LLM_THINKING_LEVEL` environment variable
-  but remains disabled in production.
+- `reasoning=False` was intended as the default on all crew agent configurations.
+- Thinking capability is configurable via the `LLM_REASONING_EFFORT`
+  environment variable (`low`/`medium`/`high`/`none`; default `"low"`) — not
+  `LLM_THINKING_LEVEL`, which does not exist. Reasoning effort is applied by
+  default, not disabled.
 - `max_reasoning_attempts=3` acts as a safety guard when reasoning is explicitly enabled.
-- The LLM config layer detects thinking-capable models via `_is_thinking_capable()` and
-  applies parameters through `_get_thinking_params()`.
+- The LLM config layer resolves the effort level via `_resolve_reasoning_effort()`
+  and applies parameters through `_get_reasoning_params()` /
+  `_apply_reasoning_effort()` — not `_is_thinking_capable()` /
+  `_get_thinking_params()`, which don't exist in this file or anywhere else
+  in the codebase.
 
 ## Consequences
 
@@ -44,5 +56,5 @@ Disable reasoning/thinking mode by default on all crew agents.
 
 ## References
 
-- `src/finwiz/config/llm/llm_config.py` (`_is_thinking_capable`, `_get_thinking_params`)
+- `src/finwiz/config/llm/llm_config.py` (`_resolve_reasoning_effort`, `_get_reasoning_params`, `_apply_reasoning_effort`)
 - ADR-003 (AI Minimalism)
