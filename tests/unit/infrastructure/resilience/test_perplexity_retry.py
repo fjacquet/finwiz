@@ -17,6 +17,25 @@ class _Payload(BaseModel):
     value: str
 
 
+@pytest.fixture(autouse=True)
+def _placeholder_api_key(monkeypatch):
+    """Give every test in this module a placeholder Perplexity key.
+
+    ``perplexity_with_retry`` short-circuits before its first attempt when
+    neither PERPLEXITY_API_KEY nor PPLX_API_KEY is set, so the retry, backoff and
+    throttle tests all need one present. They used to inherit it from the
+    developer's ambient environment, which made this file red on any machine
+    without it -- CI, a fresh clone. Pinning both names here makes the module
+    independent of the environment in either direction: no real key is ever
+    needed, and an ambient one can never change what these tests exercise.
+
+    A test that wants the no-key path deletes these itself; ``monkeypatch`` is
+    the same function-scoped instance, so the test's own call wins.
+    """
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "test-perplexity-key")
+    monkeypatch.delenv("PPLX_API_KEY", raising=False)
+
+
 @pytest.mark.asyncio
 async def test_returns_payload_on_first_success(mocker):
     inner = mocker.patch(
@@ -127,7 +146,6 @@ def test_throttle_caps_concurrent_calls_across_independent_event_loops(mocker, m
     cap = 4  # PERPLEXITY_CONCURRENCY's production default.
     monkeypatch.setattr(perplexity_retry, "PERPLEXITY_CONCURRENCY", cap)
     monkeypatch.setattr(perplexity_retry, "_throttle", None)
-    monkeypatch.setenv("PERPLEXITY_API_KEY", "test-perplexity-key")
 
     thread_count = cap + 2
     lock = threading.Lock()
