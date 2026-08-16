@@ -909,8 +909,11 @@ class TestEmptyStrategicAnalysisIsNotCoverage:
         result = orchestrator._synthesize_portfolio_strategic({"total_holdings": 64}, records=records, holdings=holdings)
 
         # No holding carries evidence, so there is nothing to synthesize a
-        # posture from. If a posture were produced anyway it must name all 64
-        # as uncovered and claim zero coverage — never 64/64 · 100 %.
+        # posture from. Today layer 2 returns None before the synthesis call;
+        # this outer assertion keeps the test from going vacuous if that ever
+        # changes. If a posture were produced anyway it must name all 64 as
+        # uncovered and claim zero coverage — never 64/64 · 100 %.
+        assert result is None or result["holdings_covered"] == 0
         if result is not None:
             assert result["holdings_covered"] == 0
             assert result["value_covered_pct"] == 0.0

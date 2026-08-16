@@ -141,13 +141,16 @@ async def test_circuit_breaker_still_open_before_recovery(mocker):
 
     mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
     _crew_failures["still_open"] = FAILURE_THRESHOLD
-    _crew_circuit_open["still_open"] = time.time()  # Just opened
-
     crew = _make_crew(mocker, return_value="recovered_after_wait")
 
-    started = time.monotonic()
+    # Build the mock BEFORE stamping the breaker. _wait_out_open_breaker sleeps
+    # until opened_at + recovery, so anchoring the stopwatch anywhere after the
+    # stamp subtracts the setup time from the measurement -- a flaky assertion
+    # whose whole margin is asyncio.sleep's ~1ms overshoot.
+    opened_at = time.time()
+    _crew_circuit_open["still_open"] = opened_at  # Just opened
+
     result = await execute_crew_with_timeout("still_open", crew, {"ticker": "X"}, timeout=10)
-    elapsed = time.monotonic() - started
 
     assert result == "recovered_after_wait"
     crew.kickoff.assert_called_once()
@@ -155,7 +158,7 @@ async def test_circuit_breaker_still_open_before_recovery(mocker):
     # The cooldown must actually be *waited out*, not merely popped. Without
     # this, an implementation that cleared the breaker and returned
     # immediately would satisfy every other assertion here.
-    assert elapsed >= 0.2
+    assert time.time() - opened_at >= 0.2
 
 
 @pytest.mark.asyncio
@@ -165,24 +168,26 @@ async def test_open_breaker_waits_for_cooldown_then_retries(mocker):
 
     crew_execution.reset_circuit_breakers()
     mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: 0.2)
-    crew_execution._crew_circuit_open["deep_analysis_stock"] = time.time()
 
     good_crew = mocker.Mock()
     good_crew.kickoff = mocker.Mock(return_value="ok")
 
+    # Mocks first, then stamp: the sleep target is opened_at + recovery, so the
+    # stopwatch has to start at the stamp or the setup gap eats the margin.
+    opened_at = time.time()
+    crew_execution._crew_circuit_open["deep_analysis_stock"] = opened_at
+
     # NOTE: the task brief's snippet called execute_crew_with_timeout(good_crew,
     # "deep_analysis_stock", {}) — the real signature is
     # (crew_name, crew_instance, inputs, timeout=None). Using the real order below.
-    started = time.monotonic()
     result = await crew_execution.execute_crew_with_timeout("deep_analysis_stock", good_crew, {})
-    elapsed = time.monotonic() - started
 
     assert result == "ok"
     good_crew.kickoff.assert_called_once()
     # "Costs a holding time, not its analysis" is half a timing claim. Without
     # this assertion the test passes against an implementation that pops the
     # cooldown without ever sleeping.
-    assert elapsed >= 0.2
+    assert time.time() - opened_at >= 0.2
 
 
 @pytest.mark.asyncio
