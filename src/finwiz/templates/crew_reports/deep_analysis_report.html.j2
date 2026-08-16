@@ -260,12 +260,12 @@
     {% set p = _comp.pestel %}
     <h3>🌍 PESTEL — Environnement Macro</h3>
     <div class="metrics-grid">
-        {% if p.political %}<div class="metric-card"><h4>Politique</h4><p>{{ p.political }}</p></div>{% endif %}
-        {% if p.economic %}<div class="metric-card"><h4>Économique</h4><p>{{ p.economic }}</p></div>{% endif %}
-        {% if p.social %}<div class="metric-card"><h4>Social</h4><p>{{ p.social }}</p></div>{% endif %}
-        {% if p.technological %}<div class="metric-card"><h4>Technologique</h4><p>{{ p.technological }}</p></div>{% endif %}
-        {% if p.environmental %}<div class="metric-card"><h4>Environnemental</h4><p>{{ p.environmental }}</p></div>{% endif %}
-        {% if p.legal %}<div class="metric-card"><h4>Légal</h4><p>{{ p.legal }}</p></div>{% endif %}
+        {% if p.political %}<div class="metric-card"><h4>Politique</h4><ul>{% for b in p.political %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if p.economic %}<div class="metric-card"><h4>Économique</h4><ul>{% for b in p.economic %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if p.social %}<div class="metric-card"><h4>Social</h4><ul>{% for b in p.social %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if p.technological %}<div class="metric-card"><h4>Technologique</h4><ul>{% for b in p.technological %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if p.environmental %}<div class="metric-card"><h4>Environnemental</h4><ul>{% for b in p.environmental %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if p.legal %}<div class="metric-card"><h4>Légal</h4><ul>{% for b in p.legal %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
     </div>
     {% if p.key_opportunities %}<h4>Opportunités Clés</h4><ul>{% for o in p.key_opportunities %}<li>✅ {{ o }}</li>{% endfor %}</ul>{% endif %}
     {% if p.key_threats %}<h4>Menaces Clés</h4><ul>{% for t in p.key_threats %}<li>⚠️ {{ t }}</li>{% endfor %}</ul>{% endif %}

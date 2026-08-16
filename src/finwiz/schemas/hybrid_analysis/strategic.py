@@ -33,18 +33,39 @@ def _coerce_str_list(v: object) -> list[str]:
     return out
 
 
+MAX_BULLETS_PESTEL = 3
+MAX_BULLETS_SWOT = 4
+MAX_BULLET_CHARS = 200
+MAX_PROSE_CHARS = 400
+MAX_RATIONALE_CHARS = 250
+
+
+def _clamp_bullets(v: object, max_items: int) -> list[str]:
+    """Trim a model's bullet list to the contract.
+
+    Never raises: an over-long response is clamped, because rejecting it
+    would cost the holding entirely.
+    """
+    items = _coerce_str_list(v)
+    return [item[:MAX_BULLET_CHARS].rstrip() for item in items[:max_items]]
+
+
+def _clamp_prose(v: object, max_chars: int) -> str:
+    return _coerce_prose(v)[:max_chars].rstrip()
+
+
 Intensity = Literal["LOW", "MEDIUM", "HIGH"]
 
 
 class PestelAnalysis(BaseModel):
     """PESTEL macro-environmental analysis (Political/Economic/Social/Tech/Env/Legal)."""
 
-    political: str = Field(default="", description="Political factors: regulation, government stability, trade policy")
-    economic: str = Field(default="", description="Economic factors: inflation, interest rates, growth, FX")
-    social: str = Field(default="", description="Social factors: demographics, lifestyle, consumer behavior")
-    technological: str = Field(default="", description="Technological factors: innovation, disruption, R&D")
-    environmental: str = Field(default="", description="Environmental factors: climate, sustainability, ESG")
-    legal: str = Field(default="", description="Legal factors: laws, antitrust, IP, employment")
+    political: list[str] = Field(default_factory=list, description="Political factors: max 3 bullets")
+    economic: list[str] = Field(default_factory=list, description="Economic factors: max 3 bullets")
+    social: list[str] = Field(default_factory=list, description="Social factors: max 3 bullets")
+    technological: list[str] = Field(default_factory=list, description="Technological factors: max 3 bullets")
+    environmental: list[str] = Field(default_factory=list, description="Environmental factors: max 3 bullets")
+    legal: list[str] = Field(default_factory=list, description="Legal factors: max 3 bullets")
     key_threats: list[str] = Field(default_factory=list, description="Most material PESTEL-derived threats")
     key_opportunities: list[str] = Field(default_factory=list, description="Most material PESTEL-derived opportunities")
     strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall PESTEL favorability (0=hostile, 1=very favorable)")
@@ -52,13 +73,13 @@ class PestelAnalysis(BaseModel):
 
     @field_validator("political", "economic", "social", "technological", "environmental", "legal", mode="before")
     @classmethod
-    def _coerce_dimension(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_dimension(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 
     @field_validator("key_threats", "key_opportunities", mode="before")
     @classmethod
-    def _coerce_lists(cls, v: object) -> list[str]:
-        return _coerce_str_list(v)
+    def _clamp_key_lists(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -76,13 +97,13 @@ class SwotAnalysis(BaseModel):
 
     @field_validator("strengths", "weaknesses", "opportunities", "threats", mode="before")
     @classmethod
-    def _coerce_lists(cls, v: object) -> list[str]:
-        return _coerce_str_list(v)
+    def _clamp_lists(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_SWOT)
 
     @field_validator("strategic_assessment", mode="before")
     @classmethod
-    def _coerce_assessment(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_assessment(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PROSE_CHARS)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -95,8 +116,8 @@ class ForceRating(BaseModel):
 
     @field_validator("rationale", mode="before")
     @classmethod
-    def _coerce_rationale(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_rationale(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_RATIONALE_CHARS)
 
     @field_validator("intensity", mode="before")
     @classmethod
@@ -127,8 +148,8 @@ class FiveForcesAnalysis(BaseModel):
 
     @field_validator("competitive_position_summary", mode="before")
     @classmethod
-    def _coerce_summary(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_summary(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PROSE_CHARS)
 
     model_config = {"str_strip_whitespace": True}
 
