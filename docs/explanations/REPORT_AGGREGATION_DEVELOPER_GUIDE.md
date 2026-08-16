@@ -133,7 +133,7 @@ def generate_export_task(self) -> Task:
 Update the Flow to call Python HTML generation after crew execution:
 
 ```python
-# In src/finwiz/flows/flow_orchestrator.py
+# In src/finwiz/flows/orchestrator.py
 
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 

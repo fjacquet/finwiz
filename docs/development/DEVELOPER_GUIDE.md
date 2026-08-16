@@ -203,14 +203,14 @@ class DeepAnalysisCrew:
     def analyze_task(self) -> Task:
         return Task(
             description="Analyze {ticker}",
-            output_pydantic=DeepAnalysisExport,
+            output_pydantic=DeepAnalysisCrewExport,
             agent=self.analyst()
         )
 
 # Presentation (Python/Jinja2)
-from finwiz.reporting.deep_analysis_report_generator import HTMLReportGenerator
+from finwiz.reporting.deep_analysis_report_generator import DeepAnalysisReportGenerator
 
-generator = HTMLReportGenerator()
+generator = DeepAnalysisReportGenerator()
 html_path = generator.generate_crew_report(
     crew_name="deep_analysis",
     export_data=analysis_result.model_dump(),
@@ -234,13 +234,28 @@ src/finwiz/
 │   ├── investment_discovery_crew/ # A+ opportunity discovery
 │   └── portfolio_rebalancing_crew/
 │
+├── analysis/                       # Deep-analysis pipeline
+│   ├── deep_analysis_pipeline.py  # Facade only
+│   └── stages/                    # The six real stages
+│
 ├── flows/                          # CrewAI Flow Orchestration
-│   └── flow_orchestrator.py       # Main workflow coordination
+│   ├── orchestrator.py            # FinwizFlow — main workflow coordination
+│   ├── orchestrator_registry.py
+│   └── hybrid_analysis_synthesizer.py
 │
 ├── orchestrators/                  # Business Logic Coordination
-│   ├── portfolio_review.py        # Portfolio analysis orchestration
-│   ├── rebalancing_*.py           # Rebalancing logic components
-│   └── review_decisions.py        # Decision aggregation
+│   ├── portfolio_review_orchestrator.py  # module-level async run()
+│   ├── portfolio_review/          # decisions.py, merge.py
+│   ├── deep_analysis_orchestrator.py
+│   ├── discovery_orchestrator.py
+│   ├── gap_profile_orchestrator.py
+│   ├── portfolio_rebalancing.py
+│   └── reporting/                 # crew_html.py, data_loading.py, enrichment.py
+│
+├── discovery/                      # Universe mining and candidate signals
+│   ├── universe_provider.py
+│   ├── market_data.py
+│   └── momentum_scanner.py, breakout_detector.py, ipo_screener.py
 │
 ├── quantitative/                   # Quantitative Analysis
 │   ├── technical/                 # Technical analysis (modular)
@@ -252,20 +267,25 @@ src/finwiz/
 │   ├── backtesting.py             # Backtrader integration
 │   ├── optimization.py            # Portfolio optimization
 │   ├── derivatives.py             # QuantLib derivatives
-│   ├── screening.py               # Stock screening
+│   ├── screening_criteria.py      # Screening criteria
+│   ├── screening_filters.py       # Screening filters
 │   └── portfolio_*.py             # Portfolio management
 │
+├── data/                           # Data acquisition layer
+│   ├── data_source_orchestrator.py
+│   └── adapters/                  # yfinance, alpha_vantage, tiingo, eod, fred…
+│
 ├── integration/                    # Data Integration
-│   ├── data_accessor.py           # Core data access (Yahoo, Alpha Vantage)
-│   ├── data_validation.py         # Validation logic
-│   ├── data_cache.py              # Caching layer
-│   └── data_transformation.py     # Data transformation
+│   ├── accessor.py                # CrewDataAccessor
+│   ├── validation.py              # Validation logic
+│   ├── cache.py                   # Caching layer
+│   └── transformation.py          # Data transformation
 │
 ├── tools/                          # Custom Financial Tools
 │   ├── tool_factories.py          # Centralized tool initialization
 │   ├── quantitative_analysis_tool.py
 │   ├── standardized_sentiment_tool.py
-│   └── scoring/                   # Python scoring engines
+│   └── analysis/, etf/, rebalancing/, reporting/
 │
 ├── schemas/                        # Pydantic Data Models
 │   ├── crew_exports.py            # Export schemas per crew
@@ -275,12 +295,18 @@ src/finwiz/
 │   └── portfolio/                 # Portfolio models
 │
 ├── scoring/                        # Deterministic Scoring
-│   ├── deep_analysis_scorer.py    # Deep analysis scoring
-│   └── portfolio_scorer.py        # Portfolio-level scoring
+│   ├── deep_analysis_scorer.py    # Deep analysis scoring — assign_grade()
+│   ├── grading_system.py          # score_to_grade(), grade bands
+│   ├── fundamental_scorer.py, macro_scorer.py
+│   ├── asset_analyzers/
+│   └── discovery/                 # pipeline.py, portfolio_fit_scorer.py
 │
 ├── reporting/                      # Report Generation
+│   ├── python_report_generator.py # PRODUCTION report path
+│   ├── sections/                  # The real section generators
+│   ├── section_generators.py      # Facade re-exporting sections/
 │   ├── deep_analysis_report_generator.py
-│   └── portfolio_report_generator.py
+│   └── css_styles.py
 │
 ├── templates/                      # Jinja2 Templates
 │   ├── crew_reports/              # Crew-specific templates
@@ -288,22 +314,32 @@ src/finwiz/
 │   │   └── deep_analysis_report.html.j2
 │   └── static/                    # CSS, JavaScript
 │
-├── utils/                          # Utilities
-│   ├── agent_validators.py        # @final_reporter decorator
-│   ├── task_decorators.py         # @async_task, @sync_task
-│   ├── logging_helpers.py         # CrewLogger
-│   └── feature_flags.py           # Feature flag management
+├── infrastructure/                 # Cross-cutting infrastructure
+│   ├── decorators/                # agent_validators.py (@final_reporter),
+│   │                              #   task_decorators.py
+│   ├── caching/                   # manager.py, ttl_config.py
+│   ├── resilience/                # retry, Perplexity throttle
+│   ├── logging/, monitoring/, health/, json/, time/
+│
+├── config/                         # Configuration
+│   ├── features/flags.py          # is_feature_enabled() — feature flags
+│   ├── llm/llm_config.py
+│   └── performance/performance_config.py
 │
 └── validation/                     # Validation Infrastructure
-    ├── schema_registry.py         # Central schema registry
-    └── validation_manager.py      # Validation orchestration
+    ├── registry.py                # Central schema registry
+    └── manager.py                 # get_validation_manager()
 ```
+
+`src/finwiz/utils/` still exists as a directory but contains no Python — every
+`finwiz.utils.*` import path in older docs is dead. The decorators moved to
+`infrastructure/decorators/`, feature flags to `config/features/flags.py`.
 
 ## Development Setup
 
 ### Prerequisites
 
-- **Python 3.12** (3.13 not supported)
+- **Python 3.13** (`requires-python = ">=3.13,<3.14"`; 3.12 and 3.14 are not supported)
 - **uv** package manager (recommended) or **pip**
 - **Git** for version control
 - **Make** for build automation
@@ -399,8 +435,8 @@ class StockCrew:
         return Agent(
             config=self.agents_config["analyst"],
             tools=get_stock_crew_tools(
-                include_rag=True,
-                include_quantitative=True
+                include_quantitative=True,
+                include_valuation=True,
             ),
             reasoning=True,
             max_reasoning_attempts=3,
@@ -435,7 +471,7 @@ class StockCrew:
         """Generate final report."""
         return Task(
             config=self.tasks_config["report"],
-            output_pydantic=StockAnalysisExport,
+            output_pydantic=StockCrewExport,
             output_json=True,
             agent=self.reporter()
         )
@@ -521,7 +557,7 @@ report:
     - Clear recommendation
     - Risk disclosure
 
-  output_pydantic: "StockAnalysisExport"
+  output_pydantic: "StockCrewExport"
   output_json: true
   agent: reporter
   async_execution: false  # Final task must be sync
@@ -533,7 +569,7 @@ FinWiz uses CrewAI Flow for orchestration with Pydantic state management.
 
 #### Flow Implementation
 
-**File**: `src/finwiz/flows/flow_orchestrator.py`
+**File**: `src/finwiz/flows/orchestrator.py`
 
 ```python
 from crewai.flow.flow import Flow, listen, start
@@ -564,69 +600,54 @@ class FinwizFlow(Flow[FinwizState]):
         return {"session_id": session_id, "status": "initialized"}
 
     @listen(initialize)
-    def analyze_portfolio(self, data: dict[str, Any]) -> dict[str, Any]:
+    async def analyze_portfolio(self, data: dict[str, Any]) -> dict[str, Any]:
         """Analyze portfolio holdings."""
-        from finwiz.orchestrators.portfolio_review import PortfolioReviewOrchestrator
+        from finwiz.orchestrators import portfolio_review_orchestrator
 
-        orchestrator = PortfolioReviewOrchestrator()
+        # Module-level async run(), not a class. Returns the review's output Path.
+        review_path = await portfolio_review_orchestrator.run(self.state)
 
-        # Run portfolio analysis
-        results = orchestrator.run_portfolio_review(
-            stock_csv="data/stock.csv",
-            etf_csv="data/etf.csv",
-            session_id=self.state.session_id
-        )
-
-        # Update state
-        self.state.portfolio_review = results.model_dump()
-
-        return {
-            "holdings_analyzed": len(results.holdings),
-            "recommendations": results.summary
-        }
+        return {"review_path": str(review_path)}
 
     @listen(analyze_portfolio)
-    def generate_alternatives(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Generate alternatives for SELL recommendations."""
-        from finwiz.orchestrators.portfolio_review import generate_alternatives
-
-        sell_holdings = [
-            h for h in self.state.portfolio_review["holdings"]
-            if h["recommendation"] == "SELL"
-        ]
-
-        alternatives = generate_alternatives(
-            sell_holdings,
-            session_id=self.state.session_id
+    def match_alternatives(self, data: dict[str, Any]) -> dict[str, Any]:
+        """Match alternatives for holdings recommended for replacement."""
+        from finwiz.orchestrators.alternatives_matching_orchestrator import (
+            AlternativesMatchingOrchestrator,
         )
+
+        orchestrator = AlternativesMatchingOrchestrator()
+        alternatives = orchestrator.match_alternatives_for_holdings(...)
 
         return {"alternatives": alternatives}
 
-    @listen(generate_alternatives)
+    @listen(match_alternatives)
     def create_final_report(self, data: dict[str, Any]) -> dict[str, Any]:
         """Generate comprehensive final report."""
-        from finwiz.reporting.portfolio_report_generator import PortfolioReportGenerator
+        from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
 
-        generator = PortfolioReportGenerator()
+        orchestrator = ReportingOrchestrator(self.state)
+        result = orchestrator.generate_final_report(...)
 
-        report_path = generator.generate_report(
-            portfolio_data=self.state.portfolio_review,
-            alternatives=data["alternatives"],
-            session_id=self.state.session_id
-        )
-
-        return {
-            "report_path": report_path,
-            "status": "complete"
-        }
+        return {"report": result, "status": "complete"}
 ```
+
+Note what does **not** exist, despite appearing in older versions of this
+guide: there is no `PortfolioReviewOrchestrator` class (the package
+`finwiz.orchestrators.portfolio_review` exports only `assess_risk`,
+`build_citations`, `build_rationale`, `calculate_score`,
+`create_error_decision` and `merge_deep_analysis_from_flow_state`), no
+`generate_alternatives()` function, and no
+`finwiz.reporting.portfolio_report_generator` module.
 
 **CRITICAL Flow Rules**:
 
 1. ✅ Use `Flow[PydanticModel]` for type safety
 2. ✅ All Flow methods return `dict[str, Any]`
 3. ✅ Access state via `self.state.field_name`
-4. ✅ Direct crew instantiation (not factory patterns)
+4. ✅ Create crews through `CrewFactory`, never by direct instantiation — the
+   factory is the seam that carries error handling and fallback
+   (`flows/orchestrator.py:106`)
 5. ❌ NEVER use `self.inputs` (deprecated)
 
 ### Tool Factories Pattern
@@ -665,27 +686,29 @@ def get_stock_crew_tools(
     return tools
 
 def get_etf_crew_tools(
-    include_rag: bool = True,
-    include_quantitative: bool = False
-) -> List[Tool]:
+    include_quantitative: bool = True,
+    include_etf_analysis: bool = True,
+    prefetched_data: dict | None = None,
+) -> list[BaseTool]:
     """Get standardized tool set for ETF analysis."""
 
-    tools = []
+    tools: list[BaseTool] = []
 
-    from finwiz.tools.data_fetcher import DataFetcherTool
-    from finwiz.tools.etf_analyzer import ETFAnalyzerTool
+    tools.extend(get_etf_research_tools())
 
-    tools.extend([
-        DataFetcherTool(),
-        ETFAnalyzerTool()
-    ])
+    if include_quantitative:
+        tools.append(get_quantitative_analysis_tool())
 
-    if include_rag:
-        from finwiz.tools.rag_search import RAGSearchTool
-        tools.append(RAGSearchTool(collection_name="finwiz_etf"))
+    if include_etf_analysis:
+        tools.append(get_etf_analysis_tool())
 
     return tools
 ```
+
+There is no `include_rag` parameter on any factory, and no `DataFetcherTool`,
+`ETFAnalyzerTool` or `RAGSearchTool` class anywhere in the tree. Each factory
+also accepts `prefetched_data`, which lets a bulk prefetch feed the crew
+instead of every tool refetching.
 
 ## Core Patterns
 
@@ -773,7 +796,7 @@ All crew outputs use Pydantic schemas for validation.
 from pydantic import BaseModel, Field, field_validator
 from typing import Literal
 
-class DeepAnalysisExport(BaseModel):
+class DeepAnalysisCrewExport(BaseModel):
     """Deep analysis export schema."""
 
     ticker: str = Field(..., description="Ticker symbol")
@@ -803,12 +826,12 @@ class DeepAnalysisExport(BaseModel):
 def analysis_task(self) -> Task:
     return Task(
         description="Analyze ticker",
-        output_pydantic=DeepAnalysisExport,
+        output_pydantic=DeepAnalysisCrewExport,
         agent=self.analyst()
     )
 
 # Save to file
-export = DeepAnalysisExport(...)
+export = DeepAnalysisCrewExport(...)
 export_path = f"output/reports/{session_id}/analysis.json"
 with open(export_path, 'w') as f:
     f.write(export.model_dump_json(indent=2))
@@ -824,7 +847,7 @@ Use Jinja2 templates (NO AI) for report generation.
 from jinja2 import Environment, FileSystemLoader
 from pathlib import Path
 
-class HTMLReportGenerator:
+class DeepAnalysisReportGenerator:
     """Generate HTML reports from analysis data."""
 
     def __init__(self):
@@ -968,7 +991,7 @@ class MyCustomCrew:
         """Primary analyst agent."""
         return Agent(
             config=self.agents_config["analyst"],
-            tools=get_stock_crew_tools(include_rag=True),
+            tools=get_stock_crew_tools(),
             reasoning=True,
             max_reasoning_attempts=3,
             allow_delegation=False,
@@ -1118,7 +1141,7 @@ def test_agents_configuration(mocker):
 def test_crew_execution(mocker):
     """Test crew executes successfully."""
     # Mock expensive operations
-    mocker.patch('finwiz.tools.data_fetcher.DataFetcherTool._run')
+    mocker.patch('finwiz.tools.tool_factories.get_stock_crew_tools')
 
     crew = MyCustomCrew()
 
@@ -1135,7 +1158,7 @@ def test_crew_execution(mocker):
 
 #### 7. Integrate with Flow
 
-**File**: `src/finwiz/flows/flow_orchestrator.py` (modify)
+**File**: `src/finwiz/flows/orchestrator.py` (modify)
 
 ```python
 @listen(some_trigger)
@@ -1285,19 +1308,21 @@ def test_invalid_asset_class(scorer, stock_data):
             data=stock_data
         )
 
+# Real bands: A+ >= 0.95, A >= 0.85, B+ >= 0.80, B >= 0.75,
+#             C+ >= 0.70, C >= 0.65, D >= 0.50, F < 0.50
 @pytest.mark.parametrize("score,expected_grade", [
     (0.98, "A+"),
     (0.88, "A"),
-    (0.78, "B+"),
-    (0.68, "B"),
-    (0.58, "C+"),
-    (0.48, "C"),
-    (0.38, "D"),
+    (0.82, "B+"),
+    (0.78, "B"),
+    (0.72, "C+"),
+    (0.68, "C"),
+    (0.55, "D"),
     (0.28, "F"),
 ])
 def test_grade_mapping(scorer, score, expected_grade):
     """Test score to grade conversion."""
-    grade = scorer._score_to_grade(score)
+    grade = scorer.assign_grade(score)
     assert grade == expected_grade
 ```
 
@@ -1305,47 +1330,43 @@ def test_grade_mapping(scorer, score, expected_grade):
 
 ```python
 import pytest
-from finwiz.integration.data_accessor import DataAccessor
+from finwiz.integration.accessor import CrewDataAccessor
 
-def test_fetch_stock_data(mocker):
-    """Test stock data fetching with mocked API."""
-    # Mock yfinance
-    mock_ticker = mocker.Mock()
-    mock_ticker.info = {
-        "symbol": "AAPL",
-        "currentPrice": 175.50,
-        "marketCap": 2_800_000_000_000
-    }
+def test_get_stock_data(mocker, tmp_path):
+    """Read a crew's persisted output, with the on-disk artifact mocked."""
+    mocker.patch.object(
+        CrewDataAccessor,
+        "get_crew_data",
+        return_value={"symbol": "AAPL", "currentPrice": 175.50},
+    )
 
-    mocker.patch('yfinance.Ticker', return_value=mock_ticker)
-
-    # Test data accessor
-    accessor = DataAccessor()
-    data = accessor.fetch_stock_data("AAPL")
+    accessor = CrewDataAccessor(tmp_path)
+    data = accessor.get_stock_data()
 
     assert data["symbol"] == "AAPL"
     assert data["currentPrice"] == 175.50
 
-def test_api_error_handling(mocker):
-    """Test handling of API errors."""
-    # Mock API failure
-    mocker.patch(
-        'yfinance.Ticker',
-        side_effect=Exception("API Error")
-    )
+def test_missing_data_returns_none(tmp_path):
+    """A crew that never wrote its artifact reads back as None, not as zeros."""
+    accessor = CrewDataAccessor(tmp_path)
 
-    accessor = DataAccessor()
-
-    with pytest.raises(Exception, match="API Error"):
-        accessor.fetch_stock_data("INVALID")
+    assert accessor.get_crew_data("stock_crew") is None
 ```
+
+`CrewDataAccessor` reads crew artifacts already written under `output/` — it
+does not call market APIs, so there is nothing here to mock at the yfinance
+level. Its accessors are `get_crew_data(crew_name, max_age_hours)`,
+`get_stock_data()`, `get_discovery_data()`, `get_consolidated_data()` and the
+`check_data_availability()` / `get_stale_data_warnings()` freshness helpers.
+Note that a missing artifact returns `None` rather than an empty dict, so
+callers can distinguish "not produced" from "produced but empty".
 
 #### Testing Crews
 
 ```python
 import pytest
 from finwiz.crews.stock_crew.stock_crew import StockCrew
-from finwiz.schemas.crew_exports import StockAnalysisExport
+from finwiz.schemas.crew_exports import StockCrewExport
 
 def test_stock_crew_initialization():
     """Test stock crew initializes correctly."""
@@ -1371,7 +1392,7 @@ def test_agents_have_correct_tools(mocker):
 def test_crew_execution_full(mocker):
     """Test full crew execution (integration test)."""
     # Mock expensive API calls
-    mocker.patch('finwiz.tools.data_fetcher.DataFetcherTool._run')
+    mocker.patch('finwiz.tools.tool_factories.get_stock_crew_tools')
     mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
 
     crew = StockCrew()
@@ -1385,7 +1406,7 @@ def test_crew_execution_full(mocker):
     assert result is not None
 
     # Validate export schema
-    export = StockAnalysisExport(**result.model_dump())
+    export = StockCrewExport(**result.model_dump())
     assert export.ticker == "AAPL"
     assert export.asset_class == "stock"
     assert 0.0 <= export.composite_score <= 1.0
@@ -1583,10 +1604,10 @@ ruff check --fix src/
 
 ### Type Hints
 
-All public functions must have type hints (Python 3.12+ syntax):
+All public functions must have type hints (Python 3.13 syntax):
 
 ```python
-# ✅ CORRECT: Python 3.12+ syntax
+# ✅ CORRECT: Python 3.13 syntax
 def analyze_stock(ticker: str, data: dict[str, Any]) -> dict[str, Any]:
     """Analyze stock with type hints."""
     return {"ticker": ticker}
@@ -1707,7 +1728,7 @@ config(setup): configure project settings - @documentation-specialist @infrastru
 **Dockerfile**:
 
 ```dockerfile
-FROM python:3.12-slim
+FROM docker.io/library/python:3.13-slim
 
 WORKDIR /app
 
@@ -1804,49 +1825,29 @@ grep "duration" logs/finwiz.log | tail -n 20
 
 ### Continuous Integration
 
-**GitHub Actions** (`.github/workflows/quality.yml`):
+**GitHub Actions** (`.github/workflows/ci.yml`):
+
+CI is not a hand-rolled workflow — it calls a shared reusable workflow from
+`fjacquet/ci`, so the lint/type-check/test/coverage steps live there rather
+than in this repo:
 
 ```yaml
 name: CI
-
 on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main]
-
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+permissions:
+  contents: read
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
-
-      - name: Install uv
-        run: pip install uv
-
-      - name: Install dependencies
-        run: uv sync
-
-      - name: Run linting
-        run: make lint
-
-      - name: Run type checking
-        run: make mypy
-
-      - name: Run tests
-        run: make test
-
-      - name: Upload coverage
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./coverage.xml
+  ci:
+    uses: fjacquet/ci/.github/workflows/python-ci.yml@v1.3.0
+    with: { python-version: "3.13" }
+    secrets:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 ```
+
+The repo's other workflows are `docs.yml`, `extra-checks.yml`, `release.yml`,
+`security.yml` and `dependabot-automerge.yml`. There is no `quality.yml`.
 
 ---
 
