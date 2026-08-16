@@ -1,5 +1,7 @@
 """CSS/JS asset files load correctly through the legacy function APIs."""
 
+import re
+
 from finwiz.reporting.css.css_elements import (
     get_action_styles,
     get_base_styles,
@@ -52,6 +54,53 @@ class TestTrustBannerCss:
         # Every state must resolve to its own rule body -- no two states may
         # share a verbatim block, or they'd be indistinguishable at a glance.
         assert len(set(blocks.values())) == 4
+
+
+def _classes_in(html: str) -> set[str]:
+    """Every space-separated token that ever appears inside a `class="..."` attribute."""
+    classes: set[str] = set()
+    for attr_value in re.findall(r'class="([^"]+)"', html):
+        classes.update(attr_value.split())
+    return classes
+
+
+class TestPostureAndBannerClassesAreStyled:
+    """A class emitted in the markup with no matching CSS rule is an invisible
+    signal -- exactly the trust-banner-* and .verdict defects this test exists
+    to catch before the next one ships (Task 10/11 review)."""
+
+    def test_every_class_on_the_posture_page_and_trust_banner_has_a_css_rule(self):
+        from finwiz.reporting.python_report_generator import render_trust_banner
+        from finwiz.reporting.sections.posture_page import generate_posture_page
+        from finwiz.schemas.run_ledger import CoverageSummary, TrustBanner
+
+        css = get_report_css()
+
+        posture_html = generate_posture_page(
+            {
+                "holdings_covered": 26,
+                "holdings_total": 64,
+                "value_covered_pct": 38.2,
+                "uncovered_tickers": ["TSLA"],
+                "macro_verdict": "Environnement porteur.",
+                "competitive_verdict": "Moats solides.",
+                "swot_verdict": "Équilibré.",
+                "strategic_score": 0.71,
+                "confidence": 0.83,
+                "macro_environment_summary": "- Politique : durcissement",
+                "dominant_themes": ["Résilience énergétique"],
+                "portfolio_strengths": ["Moats larges"],
+            },
+            holdings_strategic={"AAPL": {"pestel": {"strategic_score": 0.6}}},
+        )
+        banner_html = "".join(
+            render_trust_banner(TrustBanner.from_coverage(CoverageSummary(analyzed=a, degraded=d, failed=f, total=5))) for a, d, f in [(5, 0, 0), (4, 1, 0), (1, 0, 4), (0, 0, 0)]
+        )
+
+        classes = _classes_in(posture_html) | _classes_in(banner_html)
+        missing = sorted(cls for cls in classes if f".{cls}" not in css)
+
+        assert not missing, f"classes with no matching CSS rule: {missing}"
 
 
 class TestCssElementsAssets:
