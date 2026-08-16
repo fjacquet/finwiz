@@ -229,7 +229,7 @@ def render_markdown_fragment(text: str, *, citations: list[str] | None = None) -
 - **Escape everything first**, then apply the allowlist. Injection-safe by construction: a
   `<script>` in model output renders as visible text, never as markup. No raw-HTML
   passthrough, no model-supplied links.
-- **Allowlist:** `**bold**`, `*italic*`, `- ` lists, paragraph breaks. Nothing else.
+- **Allowlist:** `**bold**`, `*italic*`, dash-prefixed lists, paragraph breaks. Nothing else.
 - **Citations:** `[n]` becomes a superscript anchor into the page's source list when
   `citations[n-1]` exists; when it does not, the marker is **removed**, not left dangling.
 
