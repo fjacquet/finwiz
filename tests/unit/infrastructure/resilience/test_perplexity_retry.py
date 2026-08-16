@@ -1,6 +1,7 @@
 """Tests for the Perplexity retry wrapper."""
 
 import asyncio
+import importlib
 import threading
 
 import pytest
@@ -11,6 +12,20 @@ from finwiz.infrastructure.resilience.perplexity_retry import (
     get_perplexity_semaphore,
     perplexity_with_retry,
 )
+
+
+def _reload_with_env(monkeypatch, value: str | None) -> None:
+    """Reload perplexity_retry with PERPLEXITY_CONCURRENCY set to `value` (or unset).
+
+    PERPLEXITY_CONCURRENCY is computed once at import time, so observing how a
+    given env value resolves requires re-executing the module -- following the
+    same pattern as test_timeout_headroom.py's CREW_TIMEOUT reload.
+    """
+    if value is None:
+        monkeypatch.delenv("PERPLEXITY_CONCURRENCY", raising=False)
+    else:
+        monkeypatch.setenv("PERPLEXITY_CONCURRENCY", value)
+    importlib.reload(perplexity_retry)
 
 
 class _Payload(BaseModel):
@@ -118,6 +133,40 @@ async def test_missing_api_key_fails_fast_without_retrying(mocker, monkeypatch):
 
     assert result is None
     assert inner.await_count == 0
+
+
+class TestConcurrencyFloor:
+    """PERPLEXITY_CONCURRENCY must never resolve to a value that breaks the throttle.
+
+    0 makes BoundedSemaphore(0).acquire(blocking=False) always return False, so
+    _throttle_slot()'s poll loop spins forever with no timeout. A negative value
+    raises ValueError out of BoundedSemaphore's own constructor, which the retry
+    wrapper's broad `except Exception` launders into a generic per-holding
+    failure instead of surfacing the real (config) cause. Both must be floored
+    to 1 instead.
+    """
+
+    def test_zero_is_floored_to_one(self, monkeypatch):
+        try:
+            _reload_with_env(monkeypatch, "0")
+            assert perplexity_retry.PERPLEXITY_CONCURRENCY == 1
+        finally:
+            _reload_with_env(monkeypatch, None)
+
+    def test_negative_is_floored_to_one(self, monkeypatch):
+        try:
+            _reload_with_env(monkeypatch, "-3")
+            assert perplexity_retry.PERPLEXITY_CONCURRENCY == 1
+        finally:
+            _reload_with_env(monkeypatch, None)
+
+    def test_default_is_unaffected(self, monkeypatch):
+        """A sane value (including the unset default) is not clamped away."""
+        try:
+            _reload_with_env(monkeypatch, None)
+            assert perplexity_retry.PERPLEXITY_CONCURRENCY == 4
+        finally:
+            _reload_with_env(monkeypatch, None)
 
 
 def test_throttle_is_a_loop_agnostic_process_singleton():

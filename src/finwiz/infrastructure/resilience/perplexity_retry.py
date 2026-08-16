@@ -39,7 +39,14 @@ logger = get_logger(__name__)
 
 # Perplexity rate-limits aggressively; a full portfolio fans out far wider than
 # the account allows. This caps in-flight requests process-wide.
-PERPLEXITY_CONCURRENCY = int(os.getenv("PERPLEXITY_CONCURRENCY", "4"))
+#
+# Floored at 1: an unfloored 0 would make ``BoundedSemaphore(0).acquire(blocking=False)``
+# always return False, so ``_throttle_slot()``'s poll loop would spin forever with
+# no timeout -- a config typo hanging the whole run instead of failing loudly. A
+# negative value would raise ``ValueError`` out of ``BoundedSemaphore``'s own
+# constructor, which ``perplexity_with_retry``'s broad ``except Exception`` would
+# launder into four generic per-holding failures, hiding the real cause.
+PERPLEXITY_CONCURRENCY = max(1, int(os.getenv("PERPLEXITY_CONCURRENCY", "4")))
 
 # Ceiling for the exponential backoff, matching the default already used by
 # PerplexityFallbackManager.calculate_backoff_delay elsewhere in the codebase.
@@ -52,6 +59,8 @@ _MAX_BACKOFF_DELAY = 60.0
 _SLOT_POLL_INTERVAL = 0.01
 
 _throttle: threading.BoundedSemaphore | None = None
+# Guards _throttle's lazy init below -- see the race note in get_perplexity_semaphore().
+_throttle_init_lock = threading.Lock()
 
 
 def get_perplexity_semaphore() -> threading.BoundedSemaphore:
@@ -71,10 +80,20 @@ def get_perplexity_semaphore() -> threading.BoundedSemaphore:
     ``RuntimeError`` but deliver no throttle at all here: each holding owns its
     own loop, so a per-loop cap of 4 admits 4 x (number of loops) concurrent
     calls -- precisely the self-inflicted 429 storm the cap exists to prevent.
+
+    The lazy init is double-checked-locked rather than a bare check-then-assign.
+    Production drives this from a ThreadPoolExecutor (default 10 workers), so
+    without the lock, two threads racing the cold start could both observe
+    ``_throttle is None``, each construct their own ``BoundedSemaphore``, and
+    each hand its own instance to a caller -- two semaphores each capping
+    ``PERPLEXITY_CONCURRENCY`` concurrent calls is exactly the doubled-cap 429
+    storm this throttle exists to prevent.
     """
     global _throttle
     if _throttle is None:
-        _throttle = threading.BoundedSemaphore(PERPLEXITY_CONCURRENCY)
+        with _throttle_init_lock:
+            if _throttle is None:
+                _throttle = threading.BoundedSemaphore(PERPLEXITY_CONCURRENCY)
     return _throttle
 
 
