@@ -17,17 +17,34 @@ The quantitative analysis framework consists of several interconnected modules:
 
 ### Core Modules
 
+`src/finwiz/quantitative/` is not the nine-file tree previously documented
+here — it has grown to 48 `.py` modules plus four subpackages
+(`etf/`, `risk/`, `stress_testing/`, `technical/`). Notably, `technical.py`
+and `screening.py` don't exist as single files: technical analysis is the
+`technical/` subpackage (`engine.py`, `technical_indicators.py`,
+`technical_models.py`), and screening is split across
+`screening_criteria.py` and `screening_filters.py`. A representative subset:
+
 ```
 src/finwiz/quantitative/
-├── __init__.py              # Module exports and factory functions
-├── config.py                # Configuration classes and settings
-├── data.py                  # Historical data management
-├── backtesting.py           # Backtrader-based backtesting engine
-├── technical.py             # TA-Lib technical analysis engine
-├── performance.py           # Performance analytics and optimization
-├── derivatives.py           # QuantLib derivatives pricing
-├── optimization.py          # Portfolio optimization algorithms
-└── screening.py             # Stock screening and filtering
+├── __init__.py                  # Module exports and factory functions
+├── config.py                    # Configuration classes and settings (re-exports config_defaults)
+├── config_manager.py            # Env-var driven configuration manager
+├── data.py                      # Historical data management
+├── backtesting.py               # Backtrader-based backtesting engine
+├── performance.py               # Performance analytics
+├── derivatives.py                # QuantLib derivatives pricing
+├── optimization.py              # Portfolio optimization algorithms
+├── screening_criteria.py        # Stock screening criteria
+├── screening_filters.py         # Stock screening filters
+├── technical/                    # TA-Lib technical analysis engine (subpackage)
+│   ├── engine.py
+│   ├── technical_indicators.py
+│   └── technical_models.py
+├── risk/                         # Risk analytics (subpackage)
+├── stress_testing/               # Stress-test scenarios (subpackage)
+├── etf/                           # ETF-specific quantitative analysis (subpackage)
+└── ... (30+ additional modules for rebalancing, cost analysis, monitoring, etc.)
 ```
 
 ### Integration Points
@@ -35,7 +52,7 @@ src/finwiz/quantitative/
 The quantitative framework integrates with the existing FinWiz architecture through:
 
 1. **QuantitativeAnalysisTool**: CrewAI tool for crew integration
-2. **Quantitative Schemas**: Pydantic models in `src/finwiz/schemas/quantitative.py`
+2. **Quantitative Schemas**: Pydantic models in the `src/finwiz/schemas/quantitative/` package (a package, not a single `quantitative.py` file)
 3. **Configuration System**: Environment variables and config classes
 4. **Caching Layer**: Intelligent caching for expensive computations
 
@@ -114,8 +131,13 @@ class CustomStrategy(StrategyFramework):
 
 ### Signal Generation
 
+`TechnicalIndicator` is not exported by `finwiz.quantitative.technical` — it
+lives in `finwiz.quantitative.config_defaults` (re-exported by
+`finwiz.quantitative.config`), so it must be imported from there separately:
+
 ```python
-from finwiz.quantitative.technical import TechnicalAnalysisEngine, TechnicalIndicator
+from finwiz.quantitative.config import TechnicalIndicator
+from finwiz.quantitative.technical import TechnicalAnalysisEngine
 
 engine = TechnicalAnalysisEngine()
 
@@ -299,22 +321,30 @@ print(f"Min volatility portfolio risk: {frontier.min_volatility_portfolio.volati
 
 ### Environment Variables
 
+Most of the variable names previously documented here are not read anywhere
+in the codebase. `QuantitativeConfigManager` (`src/finwiz/quantitative/config_manager.py`)
+reads exactly these:
+
 ```bash
 # Quantitative analysis configuration
-QUANTITATIVE_ENABLED=true
+FF_QUANTITATIVE_ANALYSIS=true      # feature flag that gates the whole framework, default True
+QUANT_PRIMARY_DATA_PROVIDER=yfinance
+QUANT_LOOKBACK_DAYS=252
+QUANT_RISK_FREE_RATE=0.02          # NOT "RISK_FREE_RATE" — that's a separate, unrelated
+                                    # Black-Scholes risk-free rate (default 0.045) used by
+                                    # options-implied scenario probabilities
 BACKTEST_INITIAL_CAPITAL=100000
-BACKTEST_COMMISSION=0.001
-RISK_FREE_RATE=0.02
+BACKTEST_COMMISSION_PCT=0.001      # NOT "BACKTEST_COMMISSION"
+BACKTEST_FRAMEWORK=backtrader
 
-# Data provider settings
-YFINANCE_ENABLED=true
-DATA_CACHE_TTL=3600
-
-# Optional library features
-QUANTLIB_ENABLED=false
-PYPFOPT_ENABLED=false
-PLOTLY_ENABLED=false
+# Stock screening
+SCREENER_MIN_MARKET_CAP=1000000000
+SCREENER_MAX_RESULTS=50
 ```
+
+`QUANTITATIVE_ENABLED`, `YFINANCE_ENABLED`, `QUANTLIB_ENABLED`,
+`PYPFOPT_ENABLED`, `PLOTLY_ENABLED` and `DATA_CACHE_TTL` do not exist —
+`grep -rn` for each of them across `src/` returns no matches.
 
 ### Configuration Classes
 
@@ -363,13 +393,15 @@ result = quantitative_tool.run(
 
 ### Enhanced Schemas
 
-The quantitative framework provides enhanced schemas for crew outputs:
+The quantitative framework provides enhanced schemas for crew outputs. None
+of the three classes below are exported by the `finwiz.schemas.quantitative`
+package — they live in the separate module `finwiz.schemas.quantitative_crew`:
 
 ```python
-from finwiz.schemas.quantitative import (
+from finwiz.schemas.quantitative_crew import (
     EnhancedStockAnalysis,
     QuantitativeRecommendation,
-    QuantitativeBacktestResult
+    QuantitativeBacktestResult,
 )
 
 # Enhanced stock analysis with quantitative data
@@ -401,10 +433,13 @@ uv run pytest tests/unit/quantitative/test_performance.py -v
 
 ### Integration Tests
 
-```bash
-# Run quantitative integration tests
-uv run pytest tests/integration/test_quantitative_analysis_integration.py -v
-```
+`tests/integration/test_quantitative_analysis_integration.py` does not
+exist. The quantitative framework is currently covered only by the unit
+tests above; `tests/integration/` contains `test_ai_output_validation.py`,
+`test_data_source_orchestrator.py`, `test_deep_analysis_crew_integration.py`,
+`test_fact_pack_cache.py`, `test_fx_rates_live.py`,
+`test_orchestrator_integration.py` and the `analysis/` subpackage — none of
+which is quantitative-specific.
 
 ### Test Structure
 
