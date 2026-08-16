@@ -294,21 +294,53 @@ def synthesize_portfolio_posture_sync(
 SYNTHESIS_PAYLOAD_BUDGET_CHARS = 240_000
 """Char budget for the portfolio-synthesis payload (~60K tokens).
 
-Measured (2026-08-16, tests/unit/analysis/test_strategic_digest.py): 64
-holdings at max detail per the Task 3 caps digest to 219,126 chars at rung 1
-(~9% margin under this budget). Portfolios meaningfully larger than 64 —
-roughly 70+ holdings at similar detail density — will exceed the budget at
-rung 1 and degrade to rung 2, shedding one bullet per list. The ladder is not
-purely a guard-rail against pathological input; it is within reach of the
-current portfolio size.
+Measured (2026-08-16, tests/unit/analysis/test_strategic_digest.py, fixture
+at the Task 3 caps): 64 holdings digest to 219,318 chars at rung 1 (max
+detail, no PESTEL dimensions) — a ~9% margin under this budget. Portfolios
+meaningfully larger than 64 — roughly 70+ holdings at similar detail density
+— will exceed the budget at rung 1 and degrade to rung 2, shedding one
+bullet per list. The ladder is not purely a guard-rail against pathological
+input; it is within reach of the current portfolio size.
+
+Task 7 added a rung 0 ahead of rung 1 that also forwards the six raw PESTEL
+dimension bullets (political/economic/social/technological/environmental/
+legal) the portfolio prompt asks the model to synthesize into cross-holding
+themes — previously collected per-holding via a paid Perplexity call and then
+never sent to the one prompt that needed them. Measured at the same fixture:
+64 holdings at rung 0 digest to 461,110 chars — roughly double rung 1, and
+**over the 240,000 budget by ~92%**. For the current 64-holding portfolio
+this rung is therefore never actually selected in practice; the ladder falls
+straight through to rung 1 (no dimensions) every time, same as before Task 7.
+Rung 0 only fits within budget for portfolios of roughly 33 holdings or
+fewer at this detail density. This is a real, uncomfortable margin — noted
+here rather than fixed by silently raising the budget constant.
 """
 
 
-def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool) -> dict[str, Any]:
-    """One holding's contribution at a given detail level."""
+def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, include_dimensions: bool = False) -> dict[str, Any]:
+    """One holding's contribution at a given detail level.
+
+    ``include_dimensions`` adds the six raw PESTEL dimensions (political/
+    economic/social/technological/environmental/legal) — the material the
+    portfolio prompt actually asks the model to synthesize into
+    "thèmes PESTEL transversaux". Without it, the synthesis call paid for a
+    Perplexity PESTEL run per holding and then withheld the six dimensions
+    from the one prompt that needed them, forwarding only key_threats/
+    key_opportunities. Reserved for the top rung only — it is the first
+    thing the degradation ladder sheds when the budget bites.
+    """
     out: dict[str, Any] = {}
     if sa.pestel:
         out["pestel"] = {"score": sa.pestel.strategic_score, "threats": sa.pestel.key_threats[:bullets], "opportunities": sa.pestel.key_opportunities[:bullets]}
+        if include_dimensions:
+            out["pestel"]["dimensions"] = {
+                "political": sa.pestel.political[:bullets],
+                "economic": sa.pestel.economic[:bullets],
+                "social": sa.pestel.social[:bullets],
+                "technological": sa.pestel.technological[:bullets],
+                "environmental": sa.pestel.environmental[:bullets],
+                "legal": sa.pestel.legal[:bullets],
+            }
     if sa.swot:
         out["swot"] = {"score": sa.swot.strategic_score, "strengths": sa.swot.strengths[:bullets], "threats": sa.swot.threats[:bullets]}
         if include_prose:
@@ -326,11 +358,16 @@ def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str
     Detail degrades before the holding list does. Dropping a holding is not an
     operation this function can perform: the 2026-08-16 posture was synthesized
     from 1 of 64 holdings because the old implementation ended in ``[:30000]``.
+
+    The PESTEL dimension bullets (political/economic/.../legal) are the most
+    expendable detail: they're included only at the very first rung, and
+    dropped before bullet counts shrink or prose is cut — hence the extra
+    ``(3, True, True)`` rung ahead of the original ``(3, True)``.
     """
     import json
 
-    for bullets, include_prose in ((3, True), (2, True), (1, True), (1, False)):
-        compact = {ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose) for ticker, sa in holdings_strategic.items()}
+    for bullets, include_prose, include_dimensions in ((3, True, True), (3, True, False), (2, True, False), (1, True, False), (1, False, False)):
+        compact = {ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose, include_dimensions=include_dimensions) for ticker, sa in holdings_strategic.items()}
         payload = json.dumps(compact, ensure_ascii=False, default=str)
         if len(payload) <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
             return payload
