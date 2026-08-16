@@ -9,15 +9,21 @@ Le plugin `pymdownx.snippets` est déjà activé et permet d'importer du code de
 ### Syntaxe de base
 
 ```markdown
---8<-- "src/finwiz/tools/yahoo_finance_tool.py"
+--8<-- "src/finwiz/tools/portfolio_price_service.py"
 ```
 
 Cela importe tout le fichier avec coloration syntaxique automatique.
 
+> **Note** : l'outil Yahoo Finance lui-même vit désormais dans le paquet
+> central `crewai_custom_tools` (`YahooFinanceTickerInfoTool`), et non plus
+> dans `src/finwiz/tools/`. Pour illustrer un extrait de code source du
+> dépôt, préférez un fichier qui existe réellement dans `src/finwiz/`, comme
+> `portfolio_price_service.py` qui consomme cet outil.
+
 ### Importer des lignes spécifiques
 
 ```markdown
---8<-- "src/finwiz/tools/yahoo_finance_tool.py:10:25"
+--8<-- "src/finwiz/tools/portfolio_price_service.py:1:20"
 ```
 
 Importe les lignes 10 à 25 du fichier.
@@ -33,7 +39,7 @@ Importe les lignes 10 à 25 du fichier.
 
 ```markdown
 ```python
---8<-- "src/finwiz/tools/yahoo_finance_tool.py:10:25"
+--8<-- "src/finwiz/tools/portfolio_price_service.py:1:20"
 \```
 ```
 
@@ -64,7 +70,7 @@ Voici l'implémentation complète:
 ## Schéma TenKInsight
 
 ```python
---8<-- "src/finwiz/schemas/stock_schemas.py:10:30"
+--8<-- "src/finwiz/schemas/stock.py:11:27"
 \```
 ```
 
@@ -76,7 +82,7 @@ La configuration dans `mkdocs.yml`:
 markdown_extensions:
   - pymdownx.snippets:
       auto_append:
-        - includes/mkdocs.md
+        - includes/abbreviations.md
 ```
 
 ## Documentation officielle

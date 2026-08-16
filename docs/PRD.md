@@ -45,11 +45,11 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 | Requirement | Target | Rationale |
 |-------------|--------|-----------|
 | Token budget | <100K tokens per crew run | LiteLLM alert threshold; prevents cost explosion |
-| LLM response cap | max_tokens per model type (1024-4096) | Prevents unbounded output; configurable via `LLM_MAX_TOKENS` |
+| LLM response cap | max_tokens per model type (10240-40960) | Prevents unbounded output; configurable via `LLM_MAX_TOKENS` |
 | Cost per ticker | <$0.10 for deep analysis | Python handles deterministic work for $0 |
 | Execution time | 10-30s per deep analysis (Python); 5-10min per discovery crew (AI) | Acceptable for batch portfolio analysis |
 | Test coverage | 65% minimum | Enforced by pytest-cov |
-| Python version | >=3.12, <3.13 | Required by CrewAI and TA-Lib |
+| Python version | >=3.13, <3.14 | Required by CrewAI and TA-Lib |
 | Line length | 180 characters | Configured in ruff |
 | File size | 300 lines max | Enforced by `make check-file-size` |
 | Trust banner accuracy | 0 false positives on silent failure | Regression test guards v0.3.0 silent-success class; TrustBanner derived from RunLedger, not self-reported crew status |

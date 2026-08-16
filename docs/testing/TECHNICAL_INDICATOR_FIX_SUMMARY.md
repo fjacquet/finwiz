@@ -24,7 +24,9 @@ Before:
 
 ### 1. Enhanced Data Flattening ✅
 
-**File**: `src/finwiz/orchestrators/deep_analysis_orchestrator.py`
+**File**: `src/finwiz/orchestrators/deep_analysis_data_collector.py` (this
+flattening logic has since moved out of `deep_analysis_orchestrator.py`,
+where it originally lived)
 
 **Before**:
 
@@ -32,21 +34,19 @@ Before:
 critical_tech_fields = ["rsi", "macd", "macd_signal"]
 ```
 
-**After**:
+**After** (current code, `deep_analysis_data_collector.py:484`):
 
 ```python
-tech_fields = [
-    "rsi",
-    "macd",
-    "macd_signal",
-    "moving_avg_50",
-    "moving_avg_200",
-    "sma_50",  # Alternative naming
-    "sma_200",  # Alternative naming
-    "beta",
-    "current_price",
-]
+for field in ["rsi", "macd", "macd_signal", "moving_avg_50", "moving_avg_200", "sma_50", "sma_200"]:
+    if field in indicators and indicators[field] is not None:
+        flattened[field] = indicators[field]
 ```
+
+`beta` and `current_price` are not part of this list — they're populated
+separately: `beta` from the `performance_metrics` block, with a
+benchmark-regression fallback further down
+(`deep_analysis_data_collector.py:475-478`, `:496-503`), and
+`current_price` from elsewhere in the flattening pipeline.
 
 **Features**:
 

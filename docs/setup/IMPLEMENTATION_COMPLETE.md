@@ -86,7 +86,7 @@ crewai flow kickoff
 
 ## AI Minimalism Compliance
 
-All fixes follow **AI Minimalism** principles from `.kiro/steering/ai-minimalism.md`:
+All fixes follow **AI Minimalism** principles (`.kiro/steering/ai-minimalism.md` no longer exists; this guidance now lives in the `ai-minimalism` Claude Code skill and in `CLAUDE.md`):
 
 ✅ **Using Python (Good)**:
 

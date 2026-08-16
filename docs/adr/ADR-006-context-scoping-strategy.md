@@ -4,6 +4,15 @@
 - **Date:** 2025-02-15
 - **Deciders:** FinWiz Core Team
 
+> **Correction note (2026-08-16):** Item 6 of the Decision below and the
+> related Positive consequence describe a token-threshold alert that was
+> never implemented as described. `litellm_callback.py` only records
+> per-crew token/cost usage (`log_success_event`, `record_usage`,
+> `get_cost_summary`); it contains no 100K-token threshold or alert logic,
+> and `enable_token_monitoring()` creates the singleton without registering
+> it as a litellm callback. This is left as originally written below per
+> ADR convention (historical record), not edited in place.
+
 ## Context
 
 CrewAI injects the full raw output of upstream tasks into downstream task prompts via the
@@ -45,5 +54,5 @@ Apply multiple context scoping strategies to control token usage in crew inputs.
 
 ## References
 
-- `src/finwiz/analysis/deep_analysis_pipeline.py` (`_build_crew_inputs`, `_summarize_metrics`, `_truncate_text`)
+- `src/finwiz/analysis/_helpers.py` (`_build_crew_inputs`, `_summarize_metrics`, `_truncate_text`) — `deep_analysis_pipeline.py` is now a 99-line facade defining only `analyze_holding`; these helpers live in `_helpers.py`
 - `src/finwiz/infrastructure/monitoring/litellm_callback.py`

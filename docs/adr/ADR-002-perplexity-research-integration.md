@@ -39,6 +39,14 @@ Integrate Perplexity API for real-time research, gated behind a feature flag.
 - Rate limiting under heavy load (66+ holdings queried in rapid succession).
 - Perplexity API contract changes could break integration.
 
+## Correction Note (2026-08-16)
+
+The feature flag name in the Decision above does not match the code and never has: the
+flag is registered as `perplexity_research` and is driven by the env var
+`FF_PERPLEXITY_RESEARCH` (default `True`), not `PERPLEXITY_RESEARCH_ENABLED`. The circuit
+breaker thresholds are also configurable via `FF_PERPLEXITY_BREAKER_THRESHOLD` and
+`FF_PERPLEXITY_BREAKER_TIMEOUT`. See `src/finwiz/config/features/definitions.py:178-186`.
+
 ## References
 
 - `src/finwiz/tools/perplexity_analysis_integration.py`

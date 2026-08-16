@@ -43,6 +43,26 @@ The Python analysis pipeline is strictly synchronous. Async is used only where a
 - Sequential processing is mitigated by batch data prefetch at the collection stage.
 - If portfolio size grows significantly, may need to revisit with per-holding parallelism.
 
+## Correction Note (2026-08-16)
+
+The implementation has diverged from the "synchronous-first" decision described above;
+this note records the drift without editing the original decision text.
+
+- **Async is no longer confined to the CrewAI task level.** The qualify stage runs the
+  qualitative crew and the strategic Perplexity research concurrently on a
+  `ThreadPoolExecutor(max_workers=2)`, and each crew call itself is dispatched via
+  `asyncio.run` (or a thread pool when a loop is already running).
+  See `src/finwiz/analysis/stages/qualify.py:97-112,266-268`.
+- **Holdings are not processed sequentially.** The production path,
+  `DeepAnalysisOrchestrator.run_deep_analysis_concurrent`, analyzes holdings concurrently
+  on an asyncio loop with a `Semaphore(max_workers)` over a
+  `ThreadPoolExecutor(max_workers * 2)`, where `max_workers` comes from
+  `DEEP_ANALYSIS_BATCH_SIZE` (default 5). See
+  `src/finwiz/orchestrators/deep_analysis_orchestrator.py:248,443,476,504`.
+
+The "Negative" consequence and the "No parallelism" framing above should be read as
+historical context for the original decision, not as a description of current behavior.
+
 ## References
 
 - `src/finwiz/analysis/deep_analysis_pipeline.py`

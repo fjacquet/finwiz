@@ -20,7 +20,7 @@ This document describes the memory management system for batch data pre-fetching
 
 ## Overview
 
-The memory management system ensures that batch processing stays within acceptable memory limits (< 500 MB total) by:
+The memory management system ensures that batch processing stays within acceptable memory limits (< 1024 MB total) by:
 
 1. **Monitoring memory usage** during pre-fetch and execution
 2. **Logging memory metrics** for performance analysis
@@ -32,7 +32,7 @@ The memory management system ensures that batch processing stays within acceptab
 - **17.70**: Monitor memory usage during pre-fetch and execution
 - **17.71**: Implement cache cleanup after Flow completion
 - **17.72**: Add memory usage logging to metrics
-- **17.73**: Validate memory constraints (< 500 MB total)
+- **17.73**: Validate memory constraints (< 1024 MB total)
 - **17.74**: Memory limit enforcement and warnings
 
 ## Architecture
@@ -228,15 +228,15 @@ Each monitoring point captures:
 - **memory_bytes**: Current memory usage in bytes
 - **delta_mb**: Change from initial memory in MB
 - **peak_mb**: Peak memory usage so far in MB
-- **within_limit**: Whether memory is within 500 MB limit
+- **within_limit**: Whether memory is within 1024 MB limit
 
 ## Memory Constraints
 
 ### Limits
 
-- **Maximum memory**: 500 MB (configurable via `MAX_MEMORY_MB` in `memory_manager.py`)
-- **Warning threshold**: 80% of maximum (400 MB)
-- **Error threshold**: 100% of maximum (500 MB)
+- **Maximum memory**: 1024 MB (configurable via `MAX_MEMORY_MB` in `memory_manager.py`)
+- **Warning threshold**: 80% of maximum (~819 MB)
+- **Error threshold**: 100% of maximum (1024 MB)
 
 ### Warnings and Errors
 
@@ -293,9 +293,9 @@ cleanup_result = memory_manager.cleanup_cache()
     "peak_memory_mb": 150.0,
     "final_memory_mb": 120.0,
     "memory_increase_mb": 20.0,
-    "max_memory_limit_mb": 500,
+    "max_memory_limit_mb": 1024,
     "within_limit": True,
-    "peak_usage_percent": 30.0,
+    "peak_usage_percent": 14.6,
     "samples": [
         {
             "stage": "pre-fetch-start",
@@ -462,7 +462,7 @@ def test_batch_prefetch_with_memory_management():
     # Check memory metrics
     metrics = prefetcher.get_memory_metrics()
     assert metrics["within_limit"]
-    assert metrics["peak_memory_mb"] < 500
+    assert metrics["peak_memory_mb"] < 1024
 
     # Validate constraints
     assert prefetcher.validate_memory_constraints()

@@ -275,7 +275,7 @@ Use backticks for inline code elements:
 
 ```bash
 # Install documentation dependencies
-make docs-install
+uv sync --group docs
 
 # Start development server on custom port
 mkdocs serve --dev-addr 127.0.0.1:8080

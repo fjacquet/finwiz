@@ -1,9 +1,13 @@
 # FinWiz Test Suite - Status Report
 
-**Date**: 2025-11-21
-**Total Tests**: ~3,216 tests
-**Total Test Files**: 192 files
-**Total Lines**: 69,679 lines (~362 lines/file)
+**Date**: 2026-08-16 (counts refreshed; earlier figures below were stale)
+**Total Tests**: 4,869 tests collected (4,823 after deselection)
+**Total Test Files**: 300 files
+**Total Lines**: 90,730 lines (~302 lines/file)
+
+> Counts verified via `uv run pytest --collect-only -q` and
+> `find tests -name 'test_*.py' | wc -l`. The previous figures in this
+> document (~3,216 tests, 192 files, 69,679 lines) were stale.
 
 ---
 
@@ -13,18 +17,17 @@
 
 | Category | Files | Percentage |
 |----------|-------|------------|
-| **unit** | 179 files | 93.2% |
-| **property** | 8 files | 4.2% |
-| **tools** | 3 files | 1.6% |
-| **root** | 2 files | 1.0% |
+| **unit** | 279 files | 93.0% |
+| **integration** | 7 files | 2.3% |
+| **property** | 9 files | 3.0% |
+| **tools** | 3 files | 1.0% |
+| **regression** | 2 files | 0.7% |
 
 ### By Type
 
-- **Unit tests**: 179 files (fast, no external dependencies)
-- **Integration tests**: 3 files (requires API keys, slower)
-- **Property-based tests**: 8 files (hypothesis/property testing)
-- **Skipped tests**: 12 files (intentionally disabled)
-- **Expected failures**: 0 files
+- **Unit tests**: 279 files (fast, no external dependencies)
+- **Integration tests**: 7 files (requires API keys, slower)
+- **Property-based tests**: 9 files (hypothesis/property testing)
 
 ---
 
@@ -160,18 +163,19 @@ tests/unit/orchestrators/test_deep_analysis_data_collection.py::
 
 **Action**: Review and simplify
 
-#### **7. Property-Based Tests** (8 files)
+#### **7. Property-Based Tests** (9 files)
 
-**Status**: QUESTIONABLE
-
-- Missing `pytest.mark.property` registration (warnings)
-- Unknown if these provide value vs maintenance cost
+**Status**: `property` marker is registered in `pyproject.toml` (in the
+`markers` list, alongside `--strict-markers` in `addopts`), so this is no
+longer a warning source. Whether these tests provide value vs. maintenance
+cost is still an open question.
 
 **Example**:
 
-- `tests/property/test_file_size_properties.py` (unknown marker)
+- `tests/property/test_file_size_properties.py`
 
-**Action**: Either register marker properly or remove
+**Action**: Assess value vs. maintenance cost; the marker registration
+itself needs no further action.
 
 #### **8. Mock/Fixture Heavy Tests** (~10 files)
 
@@ -208,17 +212,16 @@ tests/unit/orchestrators/test_deep_analysis_data_collection.py::
 
 #### ⚠️ **Weaknesses**
 
-1. **Unknown Markers**: `pytest.mark.property` not registered in `pyproject.toml`
-2. **Test Class with `__init__`**:
+1. **Test Class with `__init__`**:
 
    ```
    tests/unit/utils/test_json_error_handlers.py:27
    cannot collect test class 'TestSchema' because it has a __init__ constructor
    ```
 
-3. **Failing Tests**: 4+ tests failing (need fixes)
-4. **Missing Faker?**: Some tests may have hardcoded data instead of using Faker
-5. **Crew Execution Tests**: Some tests may be testing full crew execution (slow, unreliable)
+2. **Failing Tests**: 4+ tests failing (need fixes)
+3. **Missing Faker?**: Some tests may have hardcoded data instead of using Faker
+4. **Crew Execution Tests**: Some tests may be testing full crew execution (slow, unreliable)
 
 ---
 
@@ -234,16 +237,8 @@ tests/unit/orchestrators/test_deep_analysis_data_collection.py::
    uv run pytest tests/unit/orchestrators/test_deep_analysis_data_collection.py -v
    ```
 
-2. **Register Property Marker**
-
-   ```toml
-   # pyproject.toml
-   [tool.pytest.ini_options]
-   markers = [
-       "property: marks tests as property-based tests",
-       # ... existing markers
-   ]
-   ```
+2. ~~**Register Property Marker**~~ Already done — `pyproject.toml`'s
+   `markers` list includes a `property` entry.
 
 3. **Fix Test Class with `__init__`**
 
@@ -256,8 +251,9 @@ tests/unit/orchestrators/test_deep_analysis_data_collection.py::
 
 ### Short-Term Actions (This Month)
 
-1. **Audit Property Tests** (8 files)
-   - Decide: Keep (with proper marker) or Remove
+1. **Audit Property Tests** (9 files) — marker is already registered, so
+   this is purely a value-vs-maintenance-cost decision now
+   - Decide: Keep or Remove
    - If keep: Add documentation on property testing strategy
 
 2. **Review Crew Tests** (~30 files)
@@ -388,7 +384,7 @@ uv run pytest tests/ -n 8
 ## 🎯 Next Steps
 
 1. ✅ **Fix failing tests** (4 known) - **COMPLETED 2025-11-21**
-2. ⏳ **Register property marker**
+2. ✅ **Register property marker** - already present in `pyproject.toml`'s `markers` list
 3. ⏳ **Fix TestSchema collection warning**
 4. ⏳ **Run full suite uninterrupted**
 5. ⏳ **Measure actual coverage**

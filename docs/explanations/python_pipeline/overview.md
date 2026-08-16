@@ -61,7 +61,13 @@ Automatically executes backtesting when A+ candidates are available.
 
 ### 4. Python Report Generator
 
-Generates comprehensive HTML reports using Jinja2 templates (no AI).
+Generates the consolidated family financial plan HTML report (no AI).
+`python_report_generator.py` does not use Jinja2 — it builds the document
+from a single f-string HTML literal and inlines CSS from
+`assets/report_styles.css` via `css_styles.get_report_css()`. (Per-crew
+report generators like `deep_analysis_report_generator.py` do use Jinja2
+via `create_report_jinja_env()`; only this consolidated generator does
+not.)
 
 - Template-based HTML generation
 - Portfolio statistics calculation
@@ -115,7 +121,7 @@ Portfolio Holdings
 
 ```python
 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis  # not finwiz.integration — moved
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 from finwiz.reporting.python_report_generator import generate_python_report
 

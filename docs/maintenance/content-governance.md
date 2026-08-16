@@ -240,177 +240,18 @@ When author disagrees with reviewer feedback:
 
 ## Style Guide and Standards
 
-### Writing Style Standards
-
-#### Voice and Tone
-
-- **Active voice**: "Configure the API" not "The API should be configured"
-- **Present tense**: "The system validates" not "The system will validate"
-- **Direct address**: "You can configure" not "One can configure"
-- **Professional but approachable**: Authoritative yet friendly
-
-#### Language Guidelines
-
-**Clarity**:
-
-- Use simple, common words when possible
-- Keep sentences under 20 words
-- Be specific and precise
-- Avoid jargon without explanation
-
-**Consistency**:
-
-- Use the same terms throughout documentation
-- Follow established terminology in glossary
-- Maintain consistent formatting patterns
-- Apply style rules uniformly
-
-**Inclusivity**:
-
-- Use gender-neutral language
-- Consider non-native English speakers
-- Avoid cultural references and idioms
-- Use accessible language for technical level
-
-### Technical Standards
-
-#### Code Examples
-
-```markdown
-# Always specify language
-```python
-def example_function():
-    return "Hello, World!"
-```
-
-# Include comments for clarity
-
-```bash
-# Start the development server
-make docs-serve
-```
-
-# Show expected output when helpful
-
-```
-Expected output:
-Server started at http://127.0.0.1:8000
-```
-
-```
-
-#### Links and References
-
-```markdown
-# Internal links (relative paths)
-[Setup Guide](../how-to/setup.md)
-
-# External links (full URLs)
-[MkDocs Documentation](https://www.mkdocs.org/)
-
-# Section links within same page
-[Installation](#installation)
-```
-
-#### Images and Media
-
-```markdown
-# Always include alt text
-![Screenshot of the dashboard](../assets/dashboard.png)
-
-# Include captions when helpful
-*Figure 1: The main dashboard showing key metrics*
-
-# Optimize file sizes (< 500KB recommended)
-```
-
-### Formatting Standards
-
-#### Headings
-
-```markdown
-# H1: Page Title (only one per page)
-## H2: Major sections
-### H3: Subsections
-#### H4: Sub-subsections (use sparingly)
-```
-
-#### Lists and Tables
-
-```markdown
-# Unordered lists for non-sequential items
-- Item 1
-- Item 2
-- Item 3
-
-# Ordered lists for sequential steps
-1. First step
-2. Second step
-3. Third step
-
-# Tables for structured data
-| Column 1 | Column 2 | Column 3 |
-|----------|----------|----------|
-| Data 1   | Data 2   | Data 3   |
-```
+Writing style, language guidelines, and technical/formatting standards (code
+examples, links, images, headings, lists and tables) are maintained in one
+place: [Style Guide](style-guide.md). That document is the single source of
+truth for these rules — update it directly rather than duplicating its
+content here, so reviewers always check one authoritative reference.
 
 ## Content Audit and Update Schedule
 
-### Regular Audit Schedule
-
-#### Monthly Audits
-
-**Scope**: High-traffic and critical content
-**Focus Areas**:
-
-- Accuracy of code examples
-- Currency of external links
-- User feedback and reported issues
-- Analytics data review
-
-**Process**:
-
-1. Review analytics for top 20 pages
-2. Check for reported issues or user feedback
-3. Validate external links and references
-4. Update outdated information
-5. Schedule comprehensive review if needed
-
-#### Quarterly Audits
-
-**Scope**: Complete content inventory
-**Focus Areas**:
-
-- Content relevance and usefulness
-- Structural organization and navigation
-- Compliance with current standards
-- Gap analysis for missing content
-
-**Process**:
-
-1. Complete content inventory and categorization
-2. User journey analysis and pain point identification
-3. Content performance analysis (engagement, bounce rate)
-4. Competitive analysis and best practice review
-5. Strategic recommendations for improvements
-
-#### Annual Reviews
-
-**Scope**: Comprehensive governance assessment
-**Focus Areas**:
-
-- Overall content strategy effectiveness
-- Governance process improvements
-- Technology and tooling updates
-- Team structure and role definitions
-
-**Process**:
-
-1. Stakeholder feedback collection
-2. Process efficiency analysis
-3. Technology stack review and updates
-4. Governance framework refinement
-5. Strategic planning for next year
+The regular (weekly/monthly/quarterly/annual) audit schedule — scope, focus
+areas, process, and deliverables for each cadence — is maintained in one
+place: [Content Audit and Update Schedule](content-audit-schedule.md). Update
+that document directly rather than duplicating its schedule here.
 
 ### Update Triggers
 
