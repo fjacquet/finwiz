@@ -14,6 +14,14 @@ date: "2025-10-26"
 
 This tutorial walks you through running your first investment analysis with FinWiz, from setup to interpreting results.
 
+> **Note:** FinWiz has no single-ticker CLI mode. `main.py` accepts no
+> command-line arguments — it always runs the whole portfolio configured in
+> `data/stock.csv` / `data/etf.csv` / `data/crypto.csv` via
+> `crewai flow kickoff`. Every `--ticker`/`--asset-class` command shown
+> below in a previous version of this tutorial was silently ignored and
+> ran the full portfolio flow instead. To analyze "just AAPL," put AAPL
+> alone in `data/stock.csv` before running.
+
 ## What You'll Learn
 
 By the end of this tutorial, you'll know how to:
@@ -49,8 +57,8 @@ Open your terminal and navigate to the FinWiz directory:
 ```bash
 cd finwiz
 
-# Analyze Apple stock
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+# Put AAPL in data/stock.csv (see the Prerequisites note above), then:
+crewai flow kickoff
 ```
 
 **What happens next:**
@@ -164,14 +172,19 @@ Risk Factors:
 
 ### Grade System
 
+Eight grades exist, not six — B+ and C+ were missing, and the D/F cutoffs
+were wrong (a 0.52 composite score is graded D by the code, not F):
+
 | Grade | Score Range | Meaning | Action |
 |-------|-------------|---------|--------|
 | **A+** | 0.95-1.00 | Exceptional | Strong buy |
 | **A** | 0.85-0.94 | Excellent | Buy |
-| **B** | 0.75-0.84 | Good | Hold/Buy |
-| **C** | 0.65-0.74 | Average | Hold |
-| **D** | 0.55-0.64 | Below Average | Consider selling |
-| **F** | 0.00-0.54 | Poor | Sell |
+| **B+** | 0.80-0.84 | Very Good | Buy |
+| **B** | 0.75-0.79 | Good | Hold/Buy |
+| **C+** | 0.70-0.74 | Above Average | Hold |
+| **C** | 0.65-0.69 | Average | Hold |
+| **D** | 0.50-0.64 | Below Average | Consider selling |
+| **F** | 0.00-0.49 | Poor | Sell |
 
 ### What Influences the Grade
 
@@ -229,7 +242,7 @@ to `true`). For a stock ticker, that's `FF_STOCK_ANALYSIS` (see
 ```bash
 # Explicitly enable stock analysis (on by default)
 export FF_STOCK_ANALYSIS=true
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+crewai flow kickoff
 ```
 
 **Deep analysis includes:**
@@ -242,18 +255,21 @@ uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
 
 ### Compare Multiple Assets
 
+There's no way to run several separate single-ticker analyses — every run
+processes the whole portfolio at once. To compare AAPL, MSFT, and GOOGL,
+list all three in `data/stock.csv` and run once:
+
 ```bash
-# Analyze multiple stocks
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
-uv run python src/finwiz/main.py --ticker MSFT --asset-class stock
-uv run python src/finwiz/main.py --ticker GOOGL --asset-class stock
+crewai flow kickoff
 ```
 
 ### ETF Analysis
 
+Add SPY to `data/etf.csv` alongside your stock holdings — one run analyzes
+all asset classes together:
+
 ```bash
-# Analyze an ETF
-uv run python src/finwiz/main.py --ticker SPY --asset-class etf
+crewai flow kickoff
 ```
 
 **ETF analysis includes:**
@@ -294,12 +310,13 @@ uv run python src/finwiz/main.py --ticker SPY --asset-class etf
 ### "Ticker not found" Error
 
 ```bash
-# Check ticker symbol spelling
-uv run python src/finwiz/main.py --ticker APLE --asset-class stock
+# Check the ticker spelling in your CSV — e.g. a typo like "APLE" in
+# data/stock.csv instead of "AAPL"
+crewai flow kickoff
 # Error: Ticker APLE not found
 
-# Correct spelling
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+# Fix the spelling in data/stock.csv, then re-run
+crewai flow kickoff
 ```
 
 ### API Rate Limit Errors

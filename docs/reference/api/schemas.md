@@ -85,7 +85,7 @@ Schemas for investment discovery and opportunity identification.
 
 Results from A+ investment discovery process.
 
-**Location**: `src/finwiz/schemas/aplus_discovery_result.py`
+**Location**: `src/finwiz/schemas/investment_discovery.py`
 
 **Purpose**: A+ investment opportunities
 
@@ -93,37 +93,39 @@ Results from A+ investment discovery process.
 
 ```python
 class APlusDiscoveryResult(BaseModel):
-    # Discovery metadata
-    discovery_date: datetime
-    asset_class: str = Field(..., pattern="^(stock|etf|crypto)$")
+    asset_type: Literal["etf", "stock", "crypto"]
+    total_screened: int = Field(default=0, ge=0)
+    candidates_found: int = Field(default=0, ge=0)
+    discovery_criteria: APlusCriteria = Field(default_factory=APlusCriteria)
+    market_context: MarketRegime
+    discovery_timestamp: datetime = Field(default_factory=datetime.now)
 
-    # Discovered opportunities
-    opportunities: List[InvestmentCandidate] = []
-    total_opportunities: int = Field(..., ge=0)
+    # A+ candidates with detailed analysis
+    a_plus_candidates: list[APlusAnalysis] = Field(default_factory=list)
+
+    # Summary statistics
+    average_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    grade_distribution: dict[Grade, int] = Field(default_factory=dict)
+    a_plus_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
+
+    # UCITS compliance for ETFs (European investors)
+    ucits_compliant_count: int | None = None
+    ucits_compliant_symbols: list[str] = Field(default_factory=list)
+
+    # Recommendations
+    top_recommendations: list[str] = Field(default_factory=list)
+    implementation_notes: list[str] = Field(default_factory=list)
 
     # Quality metrics
-    avg_composite_score: float = Field(..., ge=0.0, le=1.0)
-    score_distribution: Dict[str, int] = {}
-
-    # Screening criteria
-    screening_criteria: Dict[str, Any] = {}
-    total_screened: int = Field(..., ge=0)
-    pass_rate: float = Field(..., ge=0.0, le=1.0)
-
-    # Market context
-    market_conditions: str = Field(..., description="Current market environment")
-    sector_distribution: Dict[str, int] = {}
-
-    # Metadata
-    session_id: str
-    data_sources: List[str] = []
+    high_confidence_count: int = Field(default=0)
+    screening_efficiency: float = Field(default=0.0, ge=0.0, le=100.0)
 ```
 
 #### InvestmentCandidate
 
 Individual investment opportunity from discovery process.
 
-**Location**: `src/finwiz/schemas/investment_candidate.py`
+**Location**: `src/finwiz/schemas/investment_discovery.py`
 
 **Purpose**: Discovered investment opportunity
 
@@ -131,36 +133,19 @@ Individual investment opportunity from discovery process.
 
 ```python
 class InvestmentCandidate(BaseModel):
-    # Basic information
-    ticker: str = Field(..., description="Asset ticker symbol")
-    name: str = Field(..., description="Asset name")
-    asset_class: str = Field(..., pattern="^(stock|etf|crypto)$")
-
-    # Quality assessment
-    grade: str = Field(..., pattern="^(A\\+|A|B|C|D|F)$")
-    composite_score: float = Field(..., ge=0.0, le=1.0)
-
-    # Key metrics
-    fundamental_score: float = Field(..., ge=0.0, le=1.0)
-    technical_score: float = Field(..., ge=0.0, le=1.0)
-    risk_score: int = Field(..., ge=1, le=10)
-
-    # Investment thesis
-    investment_thesis: str = Field(..., min_length=100)
-    key_strengths: List[str] = []
-    potential_catalysts: List[str] = []
-
-    # Financial metrics (asset-class specific)
-    price_target: Optional[float] = None
-    upside_potential: Optional[float] = None
-
-    # Risk considerations
-    risk_factors: List[str] = []
-
-    # Discovery metadata
-    discovery_rank: int = Field(..., ge=1)
-    confidence: float = Field(..., ge=0.0, le=1.0)
-    data_freshness: str = Field(..., description="Data age assessment")
+    symbol: str = Field(..., description="Investment symbol (e.g., AAPL, SPY, BTC-USD)")
+    name: str = Field(..., description="Full name of the investment")
+    asset_type: Literal["etf", "stock", "crypto"]
+    current_price: float = Field(..., gt=0)
+    market_cap: float | None = None
+    preliminary_score: float = Field(..., ge=0.0, le=1.0, description="Initial A+ score")
+    final_score: float = Field(..., ge=0.0, le=1.0, description="Final A+ score after validation")
+    grade: Grade = Field(..., description="Letter grade from FinWiz grading system (A+ to F)")
+    grade_description: str
+    recommended_action: str
+    discovery_date: datetime = Field(default_factory=datetime.now)
+    data_source: str
+    risk_assessment: RiskAssessmentStandardized | None = None
 ```
 
 ### Validation Schemas
@@ -171,78 +156,58 @@ Schemas for data validation and quality assurance.
 
 Ticker validation results.
 
-**Location**: `src/finwiz/schemas/validated_ticker.py`
+**Location**: `src/finwiz/schemas/validation.py`
 
-**Purpose**: Ticker symbol validation
+**Purpose**: Ticker symbol validation. Mirrors the output of
+`TickerExistenceValidationTool` (`crewai_custom_tools.tools.finance.enhanced`).
 
 **Fields**:
 
 ```python
 class ValidatedTicker(BaseModel):
-    # Input ticker
-    ticker: str = Field(..., description="Input ticker symbol")
-
-    # Validation results
-    is_valid: bool = Field(..., description="Whether ticker is valid")
-    normalized_ticker: str = Field(..., description="Normalized ticker format")
-
-    # Asset information
-    asset_type: str = Field(..., pattern="^(stock|etf|crypto|unknown)$")
-    exchange: Optional[str] = None
-    currency: Optional[str] = None
-
-    # Market status
-    is_tradeable: bool = Field(..., description="Whether asset is tradeable")
-    market_status: str = Field(..., pattern="^(OPEN|CLOSED|PRE_MARKET|AFTER_HOURS)$")
-
-    # Data availability
-    has_fundamental_data: bool = False
-    has_price_data: bool = False
-    has_volume_data: bool = False
-
-    # Validation metadata
-    validation_date: datetime
-    data_source: str = Field(..., description="Validation data source")
-    confidence: float = Field(..., ge=0.0, le=1.0)
-
-    # Error information (if invalid)
-    error_message: Optional[str] = None
-    suggestions: List[str] = []
+    symbol: str = Field(min_length=1, max_length=15)
+    asset_class: Literal["stock", "etf", "crypto"]
+    valid: bool
+    reason: str | None = None
+    meta: dict[str, Any] = Field(default_factory=dict)
 ```
 
 #### ValidationResult
 
 Generic validation result for various data types.
 
-**Location**: `src/finwiz/schemas/validation_result.py`
+**Location**: `src/finwiz/validation/result.py`. This is the generic
+validation-error/warning container used across the codebase; note that three
+other, purpose-specific `ValidationResult` classes also exist
+(`schemas/integration/models.py`, `schemas/investment_discovery.py`,
+`validation/int_manager.py`) — check the import path in the code you're
+reading before assuming this is the one in scope.
 
 **Purpose**: Generic validation results
 
 **Fields**:
 
 ```python
+class ValidationError(BaseModel):
+    field_path: str = Field(..., description="Dot-separated path to the field that failed validation")
+    error_type: str
+    message: str
+    input_value: Any = None
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
+class ValidationWarning(BaseModel):
+    field_path: str
+    message: str
+    input_value: Any = None
+    context: dict[str, Any] = Field(default_factory=dict)
+
+
 class ValidationResult(BaseModel):
-    # Validation status
-    is_valid: bool = Field(..., description="Overall validation result")
-    validation_type: str = Field(..., description="Type of validation performed")
-
-    # Validation details
-    passed_checks: List[str] = []
-    failed_checks: List[str] = []
-    warnings: List[str] = []
-
-    # Data quality
-    quality_score: float = Field(..., ge=0.0, le=1.0)
-    completeness: float = Field(..., ge=0.0, le=1.0)
-    freshness_score: float = Field(..., ge=0.0, le=1.0)
-
-    # Validation metadata
-    validation_date: datetime
-    validator_version: str = Field(default="FinWiz Validator v2.0")
-
-    # Remediation
-    remediation_suggestions: List[str] = []
-    can_proceed: bool = Field(..., description="Whether to proceed despite issues")
+    is_valid: bool = Field(..., description="Whether validation passed")
+    errors: list[ValidationError] = Field(default_factory=list)
+    warnings: list[ValidationWarning] = Field(default_factory=list)
+    sanitized_data: dict[str, Any] | None = Field(default=None, description="Cleaned/sanitized data if validation passed")
 ```
 
 ## Schema Validation

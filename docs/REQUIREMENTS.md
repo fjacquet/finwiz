@@ -40,14 +40,24 @@ A single, unified `DeepAnalysisCrew` shall be created to handle in-depth analysi
 
 The main execution flow shall be re-architected to follow the logical business sequence.
 
-- **3.2.1. Correct Sequence:** The flow must execute in the following order:
+- **3.2.1. Correct Sequence:** The flow executes in the following order —
+  note that Phases 2 and 3 below are reversed from the original requirement
+  text: `analyze_and_update_portfolio` (`@listen("validate_data_integration")`)
+  runs *before* `check_portfolio` (`@listen("analyze_and_update_portfolio")`),
+  not after:
     1. **Phase 1: Validation**: `validate_data_integration`
-    2. **Phase 2: Portfolio Analysis**: `check_portfolio` (Analyze what you own)
-    3. **Phase 3: Deep Analysis & Update**: `analyze_and_update_portfolio` (Grade holdings, find needs)
+    2. **Phase 2: Deep Analysis & Update**: `analyze_and_update_portfolio` (Grade holdings, find needs)
+    3. **Phase 3: Portfolio Analysis**: `check_portfolio` (Analyze what you own)
     4. **Phase 4: Discovery**: `check_stock`, `check_etf`, `check_crypto` -> `check_investment_discovery` (Find A+ solutions)
     5. **Phase 5: Rebalancing**: `check_portfolio_rebalancing` (Optimize allocations)
     6. **Phase 6: Reporting**: `report` (Present final recommendations)
-- **3.2.2. Atomic Portfolio Update:** A single, consolidated flow method, `analyze_and_update_portfolio()`, shall perform deep analysis, match underperforming holdings with alternatives, and update the portfolio review in one atomic operation. This prevents the portfolio from being generated twice.
+- **3.2.2. Atomic Portfolio Update:** `analyze_and_update_portfolio()`
+  performs deep analysis and updates the portfolio review, but it does
+  **not** match underperforming holdings with alternatives — alternative
+  matching is a separate step, `match_alternatives_after_discovery`
+  (`@listen("check_investment_discovery")`), that runs much later, after
+  discovery completes. This prevents the portfolio from being generated
+  twice.
 - **3.2.3. Logical Dependency:** Discovery crews must run *after* portfolio analysis to ensure they can find A+ alternatives for identified needs. Rebalancing must run *after* discovery to incorporate new opportunities.
 
 ---
@@ -85,7 +95,7 @@ The main execution flow shall be re-architected to follow the logical business s
 - **4.4.1. CrewAI Pattern Compliance:** All crews, including the new `DeepAnalysisCrew`, must adhere to standard CrewAI patterns, using `@agent`, `@task`, `@crew` decorators and YAML configurations.
 - **4.4.2. Report Crew Tool Restriction:** The final `ReportCrew` must have its tool list explicitly empty and validated, ensuring it only consolidates data from upstream and makes no external API calls.
 - **4.4.3. Test Framework Standardization:** The entire test suite shall be migrated to use `pytest-mock` exclusively, removing all usage of `unittest.mock`. Tests requiring fake data shall use the `Faker` library.
-- **4.4.4. Codebase Refactoring:** All Python files exceeding 400 lines shall be refactored into smaller, single-responsibility modules.
+- **4.4.4. Codebase Refactoring:** All Python files exceeding 300 lines shall be refactored into smaller, single-responsibility modules (enforced by `make check-file-size`, which reads `MAX_LINES = 300` for new files — see [PRD.md](PRD.md)).
 - **4.4.5. Secure HTML Generation:** All HTML generation must be migrated to use the `BeautifulSoup` (bs4) library to prevent manual string concatenation and mitigate XSS risks.
 - **4.4.6. Structured Flow State:** The entire flow orchestrator state shall be migrated from an unstructured dictionary (`self.inputs`) to a comprehensive Pydantic model (`self.state`) to ensure type safety and maintainability.
 

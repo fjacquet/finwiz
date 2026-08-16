@@ -338,7 +338,18 @@ class TestGenerateDeepAnalysisSection:
         html = generate_deep_analysis_section(None)
         assert "Deep Analysis" in html
         assert "not available" in html
-        assert "DEEP_PORTFOLIO_ANALYSIS=true" in html
+
+    def test_should_not_offer_the_removed_kill_switch_as_a_remedy(self):
+        """An empty result means the phase failed, not that a switch was off.
+
+        The section used to tell the reader to set ``DEEP_PORTFOLIO_ANALYSIS=true``.
+        That kill switch was removed — deep analysis always runs — so the advice
+        sent readers to change an environment variable that does nothing while the
+        real failure went uninvestigated.
+        """
+        html = generate_deep_analysis_section(None)
+        assert "DEEP_PORTFOLIO_ANALYSIS" not in html
+        assert "logs" in html.lower()
 
     def test_should_generate_stats_when_results_available(self):
         """Test generation of stats when results are available."""

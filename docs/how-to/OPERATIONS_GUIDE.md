@@ -16,7 +16,7 @@ Complete guide for deploying, operating, and migrating FinWiz.
 
 **System Requirements**:
 
-- Python 3.12+
+- Python 3.13 (`requires-python = ">=3.13,<3.14"`)
 - `uv` package manager (recommended) or `pip`
 - Linux, macOS, or Windows with WSL
 - Minimum 2GB RAM (4GB+ recommended)
@@ -306,11 +306,12 @@ result = crew.crew().kickoff(inputs={
 
 ### Configuration
 
-**Enable Deep Portfolio Analysis:**
+**Deep portfolio analysis has no on/off switch.** It always runs. The
+`DEEP_PORTFOLIO_ANALYSIS` variable is still parsed into
+`PortfolioAnalysisConfig` for API stability, but it gates nothing.
 
 ```bash
 # In .env file
-DEEP_PORTFOLIO_ANALYSIS=true
 PORTFOLIO_CACHE_TTL_HOURS=24
 ```
 
@@ -334,10 +335,12 @@ The crew returns a `DeepAnalysisResult` with:
 
 - A+ ≥ 0.95 (Exceptional)
 - A ≥ 0.85 (Excellent)
+- B+ ≥ 0.80 (Good+)
 - B ≥ 0.75 (Good)
+- C+ ≥ 0.70 (Fair+)
 - C ≥ 0.65 (Fair)
-- D ≥ 0.55 (Poor)
-- F < 0.55 (Failing)
+- D ≥ 0.50 (Poor)
+- F < 0.50 (Failing)
 
 ### Integration with Portfolio Analysis
 
@@ -349,9 +352,14 @@ The DeepAnalysisCrew integrates into the 6-phase flow:
    - Grade each holding
    - Match alternatives for underperformers
    - Update portfolio review (ONCE)
-4. **Phase 4: Discovery** - Find A+ opportunities
-5. **Phase 5: Rebalancing** - Optimize allocations
+4. **Phase 4: Discovery** - Find A+ opportunities (always runs)
+5. **Phase 5: Alternative Matching** - Match replacements for underperformers
 6. **Phase 6: Reporting** - Present recommendations
+
+Rebalancing is not a numbered phase in the sequential workflow. Two
+sub-phases also run between 3 and 4: Phase 3.5 stress testing (when deep
+analysis produced results) and Phase 3.6, which builds the portfolio gap
+profile that discovery scores candidates against.
 
 ### Performance
 
@@ -494,12 +502,19 @@ FINWIZ_RETRY_BASE_DELAY=2               # Base delay in seconds (default: 2)
 FINWIZ_RETRY_MAX_DELAY=60               # Maximum delay in seconds (default: 60)
 
 # Timeout Configuration
-FINWIZ_HOLDING_TIMEOUT=300              # Per-holding timeout in seconds (default: 300 = 5 min)
+# Two layers. The OUTER per-holding budget must exceed the INNER per-crew
+# budget plus retry time, or a retry is killed before it can finish — so the
+# orchestrator auto-raises holding_timeout to FINWIZ_CREW_TIMEOUT + 300s when
+# it is set lower.
+FINWIZ_CREW_TIMEOUT=600                 # Inner per-crew-attempt budget (default: 600 = 10 min)
+FINWIZ_HOLDING_TIMEOUT=900              # Outer per-holding budget (default: 900 = 15 min)
 FINWIZ_FLOW_TIMEOUT=7200                # Global flow timeout in seconds (default: 7200 = 2 hours)
 
 # Resume Configuration
-FINWIZ_AUTO_RESUME=false                # Automatically resume on restart (default: false)
-FINWIZ_STATE_MAX_AGE_HOURS=24           # Maximum age of resumable state (default: 24 hours)
+# NOTE: FINWIZ_AUTO_RESUME and FINWIZ_STATE_MAX_AGE_HOURS are parsed into
+# ResilienceConfig but no consumer reads them. There is no resume behaviour.
+FINWIZ_AUTO_RESUME=false                # No-op
+FINWIZ_STATE_MAX_AGE_HOURS=24           # No-op
 
 # Parallelization Configuration
 FINWIZ_PARALLEL_LIMIT=10                # General parallel operations limit (default: 10)
@@ -542,84 +557,18 @@ INFO: Analyzing AAPL (attempt 2/3)
 INFO: Successfully analyzed AAPL on attempt 2
 ```
 
-### Progress Checkpointing
+### Progress Checkpointing and Resume — NOT IMPLEMENTED
 
-The system uses CrewAI's native `@persist()` decorator to automatically save progress after each flow method:
+There is no flow-level persistence and no resume capability.
 
-**What Gets Saved:**
+`FinwizFlow` is a plain `Flow[FinwizState]` with no `@persist()` decorator —
+the decorator appears nowhere in the codebase. Nothing writes `.finwiz/state/`
+or `.finwiz/metrics/`. `FINWIZ_AUTO_RESUME` and `FINWIZ_STATE_MAX_AGE_HOURS`
+are parsed into `ResilienceConfig` but no consumer ever reads them.
 
-- Portfolio analysis results
-- Deep analysis results for each holding
-- Alternative recommendations
-- Error tracking and retry counts
-- Progress metrics (holdings processed, remaining)
-- Timing information (start time, estimated completion)
-
-**Checkpoint Location:**
-
-- Stored in `.finwiz/state/{flow_uuid}/` directory
-- Each flow execution has a unique UUID
-- State files are JSON format for easy inspection
-
-**Automatic Checkpointing:**
-
-```python
-# Checkpoints are saved automatically after each method
-@persist()  # Class-level persistence
-class FinwizFlow(Flow[FinwizState]):
-    @start()
-    def validate_data_integration(self):
-        # State saved automatically after this method
-        pass
-
-    @listen("validate_data_integration")
-    def check_portfolio(self):
-        # State saved automatically after this method
-        pass
-```
-
-### Resume Capability
-
-If a flow is interrupted (crash, network failure, manual stop), you can resume from the last checkpoint:
-
-**Manual Resume:**
-
-```python
-from finwiz.flows.flow_orchestrator import FinwizFlow
-
-# Create flow with existing UUID to resume
-flow = FinwizFlow()
-# CrewAI automatically loads persisted state if available
-result = flow.kickoff()
-```
-
-**Automatic Resume (Optional):**
-
-```bash
-# Enable automatic resume on restart
-export FINWIZ_AUTO_RESUME=true
-
-# Run flow - will automatically resume if state exists
-uv run python src/finwiz/main.py
-```
-
-**Resume Behavior:**
-
-- Checks for persisted state less than 24 hours old (configurable)
-- Skips already-completed holdings
-- Continues from last successful checkpoint
-- Merges new results with persisted results
-- Logs which holdings are being skipped vs analyzed
-
-**Example Log Output:**
-
-```
-INFO: Found persisted state from 2025-03-10 14:30:00 (2 hours ago)
-INFO: Resume: Portfolio already analyzed, skipping
-INFO: Resume: 45/66 holdings already analyzed
-INFO: Continuing with remaining 21 holdings
-INFO: Progress: 46/66 (69.7%) - Success: 44, Failed: 2
-```
+An interrupted run must be restarted from the beginning. What *does* survive a
+crash is the per-holding output already written under `output/` — which is why
+a re-run can appear to skip work it is in fact redoing.
 
 ### Timeout Management
 
@@ -764,9 +713,10 @@ The system exports comprehensive metrics for monitoring:
 
 **Metrics Location:**
 
-- Exported to `.finwiz/metrics/{flow_uuid}.json`
-- JSON format for easy integration with dashboards
-- Includes all resilience-related metrics
+There is no `.finwiz/metrics/` export — nothing in the codebase writes that
+path. Run metrics are emitted to the logs, and per-stage records go to the
+`RunLedger` JSONL under `output/`. The JSON shape below describes the metrics
+the run tracks, not a file you can read.
 
 **Example Metrics File:**
 
@@ -855,8 +805,8 @@ Solution: Check error classification and remediation:
 # Review error logs
 grep "ERROR" logs/finwiz.log | tail -n 50
 
-# Check metrics file
-cat .finwiz/metrics/latest.json | jq '.error_breakdown'
+# Check the per-stage run ledger
+ls output/**/run_ledger*.jsonl
 
 # Common fixes:
 # - Verify API keys are valid
@@ -937,34 +887,32 @@ tail -f logs/finwiz.log | grep "Progress:"
 
 **Custom Retry Strategy:**
 
-```python
-from finwiz.config.resilience_config import ResilienceConfig
+`ResilienceConfig` is a dataclass with **13 required fields and no defaults** —
+partial construction raises `TypeError`. Configure it through the environment
+and read it back via `get_resilience_config()` rather than constructing it:
 
-config = ResilienceConfig(
-    max_retries=5,              # More aggressive retries
-    retry_base_delay=1,         # Faster initial retry
-    retry_max_delay=30,         # Lower max delay
-    holding_timeout=600,        # 10 minute timeout
-    flow_timeout=14400          # 4 hour timeout
-)
+```bash
+export FINWIZ_MAX_RETRIES=5
+export FINWIZ_RETRY_BASE_DELAY=1
+export FINWIZ_RETRY_MAX_DELAY=30
+export FINWIZ_CREW_TIMEOUT=600
+export FINWIZ_HOLDING_TIMEOUT=900
+export FINWIZ_FLOW_TIMEOUT=14400
 ```
 
-**Selective Persistence:**
-
 ```python
-# Only persist after important methods
-class CustomFlow(Flow[MyState]):
-    @start()
-    def init(self):
-        # Not persisted
-        pass
+from finwiz.config.resilience_config import get_resilience_config
 
-    @persist()  # Method-level persistence
-    @listen("init")
-    def important_step(self):
-        # Persisted after this method
-        pass
+config = get_resilience_config()   # singleton, built from the environment
 ```
+
+If you do construct one directly, all 13 fields are required: `max_retries`,
+`retry_base_delay`, `retry_max_delay`, `holding_timeout`, `flow_timeout`,
+`auto_resume`, `state_max_age_hours`, `parallel_limit`,
+`deep_analysis_parallel_limit`, `circuit_breaker_threshold`,
+`circuit_breaker_recovery`, `cleanup_state_on_success`,
+`state_cleanup_max_age_days`. Note that `validate()` rejects a
+`holding_timeout` greater than or equal to `flow_timeout`.
 
 **Custom Error Handling:**
 
@@ -1042,7 +990,7 @@ uv run pytest -m "not integration"
 uv run pytest -m integration
 
 # Verify installation
-uv run python -c "from finwiz.validation import get_validation_manager; print('✅ Migration successful')"
+uv run python -c "from finwiz.validation.manager import get_validation_manager; print('✅ Migration successful')"
 ```
 
 **Step 5: Update Portfolio Data**
@@ -1076,7 +1024,7 @@ Microsoft Corporation,MSFT,USD
 **Validation System**:
 
 ```python
-from finwiz.validation import get_validation_manager
+from finwiz.validation.manager import get_validation_manager
 
 manager = get_validation_manager()
 result = manager.validate_crew_output(data, "stock", "analysis")
@@ -1204,84 +1152,17 @@ Complete guide for FinWiz system operations including feedback learning, portfol
 5. [Feature Flags & Configuration](#feature-flags--configuration)
 6. [Integration Configuration](#integration-configuration)
 
-## Feedback Learning System
+## Feedback Learning System — NOT IMPLEMENTED
 
-### Overview
+This subsystem does not exist. `src/finwiz/services/` contains only an
+`__init__.py` holding a one-line docstring; there is no `feedback_service`
+module, no `get_feedback_service()`, and none of the documented
+`submit_feedback()` / `track_performance()` / `get_learning_insights()`
+methods appear anywhere in the tree.
 
-The Feedback Learning System continuously improves investment discovery by collecting user feedback, tracking performance, and automatically adjusting criteria based on real-world results.
-
-### Components
-
-**1. Feedback Collection**:
-
-- Recommendation acceptance/rejection tracking
-- Sentiment analysis (very positive to very negative)
-- Confidence ratings (1-5 scale)
-- Detailed reasoning collection
-- User comments for qualitative insights
-
-**2. Performance Tracking**:
-
-- Alpha calculation vs benchmarks
-- Grade maintenance monitoring (A+ retention)
-- Risk-adjusted returns (Sharpe, Sortino ratios)
-- Drawdown analysis and volatility tracking
-- Market regime performance analysis
-
-**3. Learning Engine**:
-
-- Adaptive criteria adjustment based on feedback patterns
-- Asset-specific learning for ETFs, stocks, and crypto
-- Market regime adaptation
-- Statistical significance testing
-- Backtesting validation before implementation
-
-### Usage
-
-**Collect Feedback**:
-
-```python
-from finwiz.services.feedback_service import get_feedback_service
-
-service = get_feedback_service()
-
-# Submit feedback
-await service.submit_feedback(
-    recommendation_id="rec_123",
-    user_id="user_456",
-    accepted=True,
-    sentiment="positive",
-    confidence=4,
-    reasoning="Strong fundamentals and low expense ratio"
-)
-```
-
-**Track Performance**:
-
-```python
-# Track investment performance
-await service.track_performance(
-    symbol="VTI",
-    asset_type="etf",
-    performance_data={
-        "total_return": 0.12,
-        "alpha": 0.02,
-        "sharpe_ratio": 1.5,
-        "max_drawdown": -0.08
-    }
-)
-```
-
-**Get Learning Insights**:
-
-```python
-# Get learning insights
-insights = await service.get_learning_insights()
-
-print(f"Total feedback: {insights['total_feedback']}")
-print(f"Acceptance rate: {insights['acceptance_rate']:.2%}")
-print(f"Criteria adjustments: {len(insights['criteria_adjustments'])}")
-```
+The section previously described feedback collection, performance tracking
+and an adaptive learning engine in full working detail — API surface,
+parameters and all. None of it was ever built.
 
 ## Portfolio Monitoring
 
@@ -1315,11 +1196,18 @@ from finwiz.quantitative.portfolio_monitor import MonitoringRule
 rule = MonitoringRule(
     rule_id="portfolio_monitor",
     rule_name="Standard Portfolio Monitoring",
-    max_deviation_threshold=0.08,  # 8% threshold
-    check_frequency_minutes=60,
-    alert_urgency="MEDIUM"
+    max_deviation_threshold=0.08,     # 8% threshold
+    min_check_interval_hours=1,       # 1-168
+    alert_on_deviation=True,
+    alert_on_multiple_positions=True,
+    min_positions_for_alert=2,
 )
 ```
+
+`MonitoringRule` is declared `extra="forbid"`, so any field name not listed
+above raises a `ValidationError` rather than being ignored. There is no
+`check_frequency_minutes` and no `alert_urgency`. Only `rule_id` and
+`rule_name` are required; everything else has a default.
 
 ### Usage
 
@@ -1330,18 +1218,19 @@ from finwiz.quantitative.portfolio_monitor import PortfolioMonitor
 
 monitor = PortfolioMonitor()
 
-# Start monitoring
+# Start monitoring — portfolio_id is required and positional-first
 await monitor.start_monitoring(
+    portfolio_id,
     portfolio_config=config,
-    monitoring_rule=rule
+    monitoring_rule=rule,
 )
 ```
 
 **Get Health Dashboard**:
 
 ```python
-# Get portfolio health
-dashboard = await monitor.get_health_dashboard(portfolio_config)
+# Get portfolio health — the method is generate_health_dashboard
+dashboard = await monitor.generate_health_dashboard(portfolio_id, portfolio_config)
 
 print(f"Health Score: {dashboard.health_score}/10")
 print(f"Status: {dashboard.status}")
@@ -1614,13 +1503,16 @@ FF_FEAR_GREED_BREAKER_THRESHOLD=3
 FF_FEAR_GREED_BREAKER_TIMEOUT=600
 
 # Percentage-rollout features
+# Rollout values are PERCENTAGES on a 0-100 scale, not fractions. The evaluator
+# compares a 0-99 hash against the value, so 1.0 means a 1% rollout — it turns
+# the feature off for ~99% of runs. Use 100.0 for full rollout.
 FF_QUANTITATIVE_ANALYSIS=true
-FF_QUANTITATIVE_ANALYSIS_ROLLOUT=1.0  # 0.0-1.0
+FF_QUANTITATIVE_ANALYSIS_ROLLOUT=100.0  # 0-100
 FF_INVESTMENT_DISCOVERY=true
-FF_INVESTMENT_DISCOVERY_ROLLOUT=1.0
+FF_INVESTMENT_DISCOVERY_ROLLOUT=100.0
 FF_PORTFOLIO_REBALANCING=false
 FF_PORTFOLIO_REBALANCING_ROLLOUT=0.0
-FF_STRICT_VALIDATION_ROLLOUT=1.0
+FF_STRICT_VALIDATION_ROLLOUT=100.0
 ```
 
 #### API Key Configuration

@@ -62,7 +62,7 @@ uv sync --all-groups
 uv run python -c "import finwiz; print('✅ Installation successful')"
 
 # Check version
-uv run python -c "import finwiz; print(f'FinWiz version: {finwiz.__version__}')"
+uv run python -c "import finwiz; print('FinWiz import OK')"
 ```
 
 ## Environment Configuration
@@ -145,7 +145,7 @@ FF_PORTFOLIO_REBALANCING=false
 RISK_ASSESSMENT_USE_MINI=true    # Use gpt-4o-mini for faster risk assessment
 USE_MINIMAL_RISK_TOOLS=true      # Use minimal tool set for risk assessor
 BATCH_PREFETCH_ENABLED=true      # Enable batch data prefetching
-DEEP_ANALYSIS_BATCH_SIZE=5       # Concurrent analysis batch size
+DEEP_ANALYSIS_BATCH_SIZE=10       # Concurrent analysis batch size
 ```
 
 ## Environment Types
@@ -162,9 +162,8 @@ CACHE_BACKEND=memory
 FF_PERPLEXITY_RESEARCH=false
 ENABLE_ALPHA_VANTAGE=false
 
-# Run in development mode
-export FINWIZ_ENV=development
-uv run python src/finwiz/main.py
+# Run it
+crewai flow kickoff
 ```
 
 ### Staging Environment
@@ -179,9 +178,8 @@ CACHE_BACKEND=hybrid
 FF_PERPLEXITY_RESEARCH=false
 ENABLE_ALPHA_VANTAGE=false
 
-# Run in staging mode
-export FINWIZ_ENV=staging
-uv run python src/finwiz/main.py
+# Run it
+crewai flow kickoff
 ```
 
 ### Production Environment
@@ -196,9 +194,8 @@ CACHE_BACKEND=hybrid
 FF_PERPLEXITY_RESEARCH=true
 ENABLE_ALPHA_VANTAGE=true
 
-# Run in production mode
-export FINWIZ_ENV=production
-uv run python src/finwiz/main.py
+# Run it
+crewai flow kickoff
 ```
 
 ## Directory Structure
@@ -297,7 +294,7 @@ except Exception as e:
 
 ```bash
 # Run a simple analysis to test everything works
-uv run python src/finwiz/main.py --ticker AAPL --asset-class stock
+crewai flow kickoff
 ```
 
 ## Advanced Configuration
@@ -322,10 +319,13 @@ YAHOO_FINANCE_RATE_LIMIT=60   # Yahoo Finance calls per minute
 
 ### 3. Memory Management
 
+`MAX_MEMORY_MB` is a hard-coded module constant (1024, at
+`infrastructure/monitoring/memory_manager.py:29`) — it is never read from the
+environment. `MEMORY_WARNING_THRESHOLD` does not exist at all; the warning
+fires at a hard-coded 80% of the limit. Setting either variable does nothing.
+
 ```bash
 # Memory settings
-MAX_MEMORY_MB=500             # Maximum memory usage
-MEMORY_WARNING_THRESHOLD=400  # Warning threshold
 BATCH_PREFETCH_MIN_HOLDINGS=10 # Minimum holdings for batch mode
 ```
 
@@ -345,7 +345,6 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 
 | Variable                | Default       | Description        |
 | ----------------------- | ------------- | ------------------ |
-| `FINWIZ_ENV`            | `development` | Environment type   |
 | `LOG_LEVEL`             | `INFO`        | Logging level      |
 | `VALIDATION_STRICTNESS` | `warn`        | Validation mode    |
 | `CACHE_BACKEND`         | `hybrid`      | Cache backend type |
@@ -368,7 +367,7 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | `RISK_ASSESSMENT_USE_MINI` | `true`  | Use gpt-4o-mini for risk |
 | `USE_MINIMAL_RISK_TOOLS`   | `true`  | Minimal tool set         |
 | `BATCH_PREFETCH_ENABLED`   | `true`  | Enable batch processing  |
-| `DEEP_ANALYSIS_BATCH_SIZE` | `5`     | Concurrent batch size    |
+| `DEEP_ANALYSIS_BATCH_SIZE` | `10`    | Concurrent batch size    |
 | `RISK_FREE_RATE`           | `0.045` | US risk-free rate used in Black-Scholes for options-implied scenario probabilities |
 
 ### Feature Flags
@@ -413,7 +412,7 @@ uv pip install --force-reinstall .
 env | grep -E "(OPENAI|SERPER|ALPHA_VANTAGE)_API_KEY"
 
 # Test API connectivity
-uv run python scripts/test_api_connections.py
+# (no such script — check API keys by running the flow and reading the logs)
 ```
 
 **Issue: Permission errors**
@@ -449,7 +448,7 @@ print(f'FinWiz: {finwiz.__version__}')
 "
 
 # Test configuration
-uv run python scripts/validate_environment.py
+# (no such script — `make check` is the closest equivalent)
 ```
 
 ### Log Analysis
@@ -512,16 +511,15 @@ echo "Deploying FinWiz to production..."
 # Install production dependencies
 uv pip install .
 
-# Set production environment
-export FINWIZ_ENV=production
+# Set production environment (there is no FINWIZ_ENV switch — it is read nowhere)
 export LOG_LEVEL=INFO
 export VALIDATION_STRICTNESS=error
 
 # Validate configuration
-uv run python scripts/validate_production_config.py
+# (no such script — `make check` is the closest equivalent)
 
 # Start application
-uv run python src/finwiz/main.py
+crewai flow kickoff
 ```
 
 ## Next Steps

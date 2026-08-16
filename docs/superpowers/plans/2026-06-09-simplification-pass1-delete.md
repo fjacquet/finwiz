@@ -198,6 +198,15 @@ rtk git add -A && rtk git commit -m "chore: delete orphaned portfolio_review_enh
 
 ### Task 4: Purge orphaned scripts/
 
+> **Correction (2026-08-16):** the delete list below names
+> `scripts/check_stage_contract.py` among the "unwired" scripts. That was false
+> when this plan was written, not merely stale — the script was wired into
+> `make check` on 2026-04-28 (commit `ba82cb8c`, v5.1 Trust Spine), six weeks
+> earlier, and deleting it would have removed a live quality gate. It still
+> exists and `make check` still invokes it. `scripts/invalidate_fact_pack.py`
+> and `scripts/verify_html_reports.py` also survive. Step 1's mechanical
+> verification is what caught this; keep it.
+
 **Files:**
 
 - Keep (wired into Makefile/CI/pre-commit — verified): `scripts/analyze_test_failures.py`, `scripts/check_new_file_size.py`, `scripts/cleanup_temp_files.py`, `scripts/cleanup_master.py`, `scripts/fix_csv_currencies.py`, `scripts/generate_html_reports.py`, `scripts/generate_demo.py`, `scripts/validate_docs.py`, `scripts/__init__.py`

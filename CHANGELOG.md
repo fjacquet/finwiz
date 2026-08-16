@@ -7,6 +7,137 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.12.0] - 2026-08-16
+
+Pipeline coverage pass (PR #130) + repository hygiene. 16 tasks, 39 commits,
+whole-branch review and five rounds of CodeRabbit triage. Test suite 4802 →
+4924 passing.
+
+**Not yet validated against a live run.** The coverage claim below is backed by
+unit tests and code review, not by a `crewai flow kickoff` against real market
+data.
+
+### Added
+
+- Perplexity retry wrapper with exponential backoff and a concurrency cap. The
+  throttle is a `threading.BoundedSemaphore`, not an `asyncio.Semaphore`:
+  production gives each holding its own event loop (one holding per
+  `ThreadPoolExecutor` worker) and an asyncio primitive binds to the first loop
+  that contends on it — which silently dropped 5 of 10 holdings and deadlocked a
+  worker, with no rate limit involved.
+- Volatility is derived from real price history in the technical fallback,
+  before the critical-field gate, so a recoverable holding is no longer refused
+  for a field the pipeline already had the inputs to compute.
+- `output/discovery/scored_*.json` persists the full scored candidate list
+  *before* filtering, so a zero-opportunity run is auditable rather than opaque.
+- Minimum universe size (50) with an explicit shortfall log.
+
+### Fixed
+
+- Fact-pack unavailability is classified transient, so the declared retry
+  actually runs; the stale-cache window widened to 90 days so an older fact pack
+  can rescue a rate-limited run.
+- A successful discovery run no longer renders as "No A+ opportunities
+  identified". Three layered extraction seams, each only visible once the
+  previous was fixed: the `opportunities` key was not accepted as a candidate
+  container, `ticker` was not accepted as a `symbol` fallback, and absent
+  `cost_metrics.ter` / `market_cap_usd` were read as zeros.
+- A malformed candidate no longer zeroes its whole asset class — the `try` moved
+  from the extraction loop to the individual candidate.
+- Percent-scaled volatility is normalized rather than rejected as absurd;
+  non-finite values (`NaN`, `inf`) are refused. A fabricated `0.0` previously
+  defeated three defenses in sequence and scored an unanalysable holding as the
+  safest in the portfolio.
+- Percent-scaled `max_drawdown` no longer leaks into the risk scorer.
+- Technical, backtest, and performance analysis are isolated, so one failure no
+  longer drops the entire payload.
+- Cache metadata is snapshotted before serialization (`default=str`): the
+  C-accelerated JSON encoder does not raise on mid-serialize mutation, it
+  silently writes inconsistent output.
+- Seed-ETF override is honored for ETFs; ticker hygiene applied to the mined
+  universe.
+- A refused holding is no longer persisted as `C` / `0.5` / `HOLD`. When an
+  upstream stage failed, the pipeline returned a bare
+  `EnrichedAnalysis.model_construct()`, which took the schema defaults and wrote
+  them to `{TICKER}_enriched.json` — the artifact the report and every
+  downstream consumer read. A holding the pipeline had explicitly refused was
+  therefore recorded as a confident middling hold, with `ticker: ""` and both
+  analysis sections `null`, while the `DeepAnalysisResult` beside it correctly
+  said `N/A` / `0.0` / `WAIT`. The refusal is now built explicitly and carries
+  the upstream failure reason, and the schema's own defaults are a refusal
+  (`N/A` / `0.0` / `WAIT`) so a forgotten field can never again read as a
+  recommendation. Found by inspecting the 2026-08-16 run, where 24 holdings
+  were each written out as C/HOLD.
+- README badges: the CI badge pointed at a `quality.yml` workflow that does not
+  exist, Python was listed as 3.12 against a `>=3.13,<3.14` floor, coverage was
+  a stale hand-written 72%, and the MIT badge linked to a `LICENSE` file that
+  was never committed.
+
+### Removed
+
+- Hardcoded A+ fabrication in the ETF, stock, and crypto analyzers. A failed
+  newcomer discovery now returns `method: "newcomer_discovery_failed"` with an
+  `error` key instead of inventing opportunities.
+- `discovery_latest.json` dead template mapping.
+- 31 obsolete documentation files, including the `investment_discovery/` and
+  `portfolio_rebalancing/` trees, with mkdocs nav and inbound links repaired.
+
+### Added (packaging)
+
+- `LICENSE` (MIT) and the corresponding `license` / `license-files` metadata in
+  `pyproject.toml`. Both were missing despite the README advertising MIT since
+  the first release.
+
+### Known limitations
+
+Three of these were found by inspecting a live `crewai flow kickoff` on
+2026-08-16. That run executed a pre-merge build, so it did not exercise the
+fixes above — but the defects below were confirmed against the merged source
+and are live in this release.
+
+- **A Perplexity failure discards completed Python work.** When `fact_pack`
+  fails, `stages/__init__.py` short-circuits the whole holding to pending, even
+  though `collect` and `quantify` had already succeeded. In the observed run 24
+  of 61 holdings were lost this way while their deterministic scoring was
+  already done. This inverts AI Minimalism: the $0 deterministic half is held
+  hostage by the flaky AI half. The fix is to emit a partial verdict carrying
+  the quantitative scores with the qualitative section marked unavailable.
+- **The orchestrator counts placeholders as analyses**, logging
+  `Deep analysis complete: 64/64 holdings analyzed` when 27 were pending
+  placeholders.
+- **Perplexity transport errors log an empty message**
+  (`Perplexity transport error for _FactPackRaw:`), so a failing run gives no
+  indication of why.
+- Discovery still surfaces few or no opportunities. `composite_score =
+  standalone_factor × portfolio_fit` uses fit as a full-range multiplier, but
+  fit's practical ceiling is ~0.75 (its diversification term is `1 − max_corr`,
+  and cross-asset correlation is rarely below 0.3). Every candidate is therefore
+  deflated ~25% before any gate: a +30% six-month performer in an unheld sector
+  at 0.70 correlation scores 0.579 and is dropped as grade D. Task 13 recalibrated
+  `factor`; the composition itself is an open `portfolio_fit_scorer` design
+  question.
+
+## [5.11.0] - 2026-08-10
+
+Dependency and supply-chain maintenance. Released without a changelog entry or
+a `pyproject.toml` version bump; recorded here retroactively.
+
+### Fixed
+
+- 10 Dependabot alerts cleared across two passes (GitPython 3.1.58,
+  cryptography, lxml) plus a full `uv.lock` upgrade.
+- Dockerfile installs `git` so the `crewai-custom-tools` git dependency
+  resolves; base image names fully qualified for Podman.
+
+### Changed
+
+- Dependency floors raised: crewai >=1.15.12, pandas >=3.0.5, numpy >=2.5.1,
+  scipy >=1.18.0, litellm >=1.94.1, aiohttp >=3.14.3, ta-lib >=0.7.1,
+  quantlib >=1.43, gnews >=0.8.2, pymdown-extensions >=11.0.1, and the
+  langchain-core / pyportfolioopt / mypy / faker / types-requests /
+  scipy-stubs / cyclonedx-bom dev floors.
+- Dependabot auto-merge uses rebase instead of squash.
+
 ## [5.10.0] - 2026-07-16
 
 Deep-analysis latency pass (PR #100) + post-migration documentation cleanup (PR #101).

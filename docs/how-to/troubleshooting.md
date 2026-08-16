@@ -146,19 +146,21 @@ CrewAI outputs use nested structure:
 
 Templates looking for data at root level instead of inside `pydantic` field.
 
-**Solution**: Extract data from `pydantic` field in template renderer
+**Solution**: Extract data from the `pydantic` field before use. There is
+no `template_renderer.py` or `render_discovery_latest` method in the
+codebase — the real unwrapping logic lives in
+`src/finwiz/orchestrators/reporting/data_loading.py:78-94`, which
+branches on cache format (`{"analysis": {...}}`), CrewAI format
+(`{"pydantic": {...}}`), and direct/enriched format:
 
 ```python
-# In template_renderer.py
-def render_discovery_latest(self, json_data: dict[str, Any]) -> str:
-    # Extract from pydantic field if present (CrewAI output format)
-    if "pydantic" in json_data and json_data["pydantic"]:
-        data = json_data["pydantic"]
-    else:
-        data = json_data
-
-    # Now use 'data' for template rendering
-    return self.template.render(data=data)
+# src/finwiz/orchestrators/reporting/data_loading.py (actual code, condensed)
+if "analysis" in data and isinstance(data["analysis"], dict):
+    analysis_data = data["analysis"]  # cache format
+elif "pydantic" in data and isinstance(data["pydantic"], dict):
+    analysis_data = data["pydantic"]  # CrewAI format
+else:
+    analysis_data = data  # direct or enriched format
 ```
 
 **Field Mapping Fixes**:
@@ -191,13 +193,23 @@ jinja2.exceptions.UndefinedError: 'PythonDeepAnalysisResult object' has no attri
 
 **Root Cause**: Templates trying to access nested objects that don't exist in Python schemas
 
-**Schema Differences**:
+**Schema Differences** (corrected — the class/field names below were
+wrong in an earlier version of this doc):
+
+`TenKInsight` (`src/finwiz/schemas/stock.py`) has no `risk_assessment`
+field at all — its fields are `schema_version`, `ticker`, `filing_url`,
+`filed_at`, `section`, `excerpt`, `sec_citation` (and it's
+`extra="forbid"`, so an unlisted field would be rejected outright, not
+silently absent). The schema that actually carries a `risk_assessment`
+field is the crew export schema (e.g. `StockCrewExport`,
+`DeepAnalysisCrewExport` in `src/finwiz/schemas/crew_exports.py`):
 
 ```python
-# CrewAI Schema (TenKInsight)
-class TenKInsight(BaseModel):
+# Crew export schema (e.g. StockCrewExport, DeepAnalysisCrewExport)
+class StockCrewExport(CrewExportBase):
     risk_assessment: RiskAssessmentStandardized  # Nested object
-    # risk_assessment.risk_score is 0-10 scale
+    # RiskAssessmentStandardized.score is 0-5 scale, not 0-10 (see
+    # src/finwiz/schemas/common.py:41 — there is no `risk_score` attribute)
 
 # Python Schema (PythonDeepAnalysisResult)
 class PythonDeepAnalysisResult(BaseModel):
@@ -214,14 +226,14 @@ class PythonDeepAnalysisResult(BaseModel):
 <div class="metric-card">
     <h4>Risque</h4>
     {% if analysis.risk_assessment is defined and analysis.risk_assessment %}
-    <!-- CrewAI schema: nested object, 0-10 scale -->
-    <div class="metric-value risk-{{ 'low' if analysis.risk_assessment.risk_score <= 3 else ('medium' if analysis.risk_assessment.risk_score <= 6 else 'high') }}">
-        {{ analysis.risk_assessment.risk_score }}/10
+    <!-- CrewAI schema: nested object, 0-5 scale (RiskAssessmentStandardized.score) -->
+    <div class="metric-value risk-{{ 'low' if analysis.risk_assessment.score <= 1.5 else ('medium' if analysis.risk_assessment.score <= 3 else 'high') }}">
+        {{ analysis.risk_assessment.score }}/5
     </div>
     {% elif analysis.risk_score is defined and analysis.risk_score is not none %}
-    <!-- Python schema: direct field, 0-1 scale, convert to 0-10 -->
+    <!-- Python schema: direct field, 0-1 scale, convert to 0-5 to match the CrewAI scale above -->
     <div class="metric-value risk-{{ 'low' if analysis.risk_score <= 0.3 else ('medium' if analysis.risk_score <= 0.6 else 'high') }}">
-        {{ "%.1f"|format(analysis.risk_score * 10) }}/10
+        {{ "%.1f"|format(analysis.risk_score * 5) }}/5
     </div>
     {% else %}
     <!-- Fallback if neither exists -->
@@ -236,7 +248,7 @@ class PythonDeepAnalysisResult(BaseModel):
 
 1. **Conditional checks**: {% raw %}`{% if field is defined %}`{% endraw %}
 2. **Fallback logic**: {% raw %}`{% elif alternative_field %}`{% endraw %}
-3. **Scale conversion**: `risk_score * 10` (0-1 → 0-10)
+3. **Scale conversion**: `risk_score * 5` (0-1 → 0-5, matching `RiskAssessmentStandardized.score`)
 4. **Graceful degradation**: Show "N/A" if data unavailable
 
 ---
@@ -270,36 +282,18 @@ class PythonDeepAnalysisResult(BaseModel):
 
 {% endraw %}
 
-**Smart Rationale Generation**:
+**Smart Rationale Generation — NOT IMPLEMENTED**:
 
-```python
-# In template_renderer.py
-def _generate_rationale(candidate: dict) -> str:
-    """Generate rationale from different data structures."""
-
-    # For stocks: combine moat + growth + valuation
-    if 'competitive_moat' in candidate:
-        parts = []
-        if candidate.get('competitive_moat'):
-            parts.append(f"Moat: {candidate['competitive_moat']}")
-        if candidate.get('growth_prospects'):
-            parts.append(f"Growth: {candidate['growth_prospects']}")
-        if candidate.get('valuation'):
-            parts.append(f"Valuation: {candidate['valuation']}")
-        return " | ".join(parts)
-
-    # For crypto: combine tokenomics + utility
-    elif 'tokenomics_summary' in candidate:
-        parts = []
-        if candidate.get('tokenomics_summary'):
-            parts.append(f"Tokenomics: {candidate['tokenomics_summary']}")
-        if candidate.get('utility_summary'):
-            parts.append(f"Utility: {candidate['utility_summary']}")
-        return " | ".join(parts)
-
-    # Fallback to direct rationale
-    return candidate.get('rationale', 'No rationale available')[:500]
-```
+An earlier version of this document showed a `_generate_rationale()`
+function in a `template_renderer.py` that combined per-asset-class fields
+(`competitive_moat`, `tokenomics_summary`, etc.) into a rationale string.
+Neither that file nor that function exists anywhere in `src/` or `tests/`
+— this was aspirational, not real. Rationale strings for discovery
+candidates come from elsewhere in the pipeline (see
+`src/finwiz/orchestrators/discovery/extractors/base.py` and
+`src/finwiz/orchestrators/portfolio_review/decisions.py:build_rationale`
+for the actual rationale-building code, which does not do this
+moat/tokenomics field-combining).
 
 ---
 

@@ -66,7 +66,7 @@ The pipeline processes data through four sequential stages, with each stage prod
 │   - Discovery opportunities                                 │
 │   - Backtesting metrics                                     │
 │        ↓                                                     │
-│ Render Jinja2 template                                      │
+│ Assemble HTML from f-string templates (no Jinja2 — see below)│
 │        ↓                                                     │
 │ Output: Final HTML report                                   │
 └─────────────────────────────────────────────────────────────┘
@@ -127,12 +127,18 @@ For each holding:
 3. **Consolidation**
    - Combines opportunities across asset classes
    - Removes duplicate tickers
-   - Sorts by composite score
+   - **Does not sort.** `aplus_holdings` is built by appending in
+     directory-glob order and returned as-is — there is no `sort`/`sorted`
+     call anywhere in `aplus_discovery_integrator.py`.
 
 ### Output
 
-- **Discovery results**: `output/aplus_discovery_{session_id}.json`
-- Contains:
+`integrate_aplus_discovery_with_deep_analysis()` returns a dict — **it never
+writes `output/aplus_discovery_{session_id}.json` to disk.** The
+backtesting connector's fallback path checks for that filename, but nothing
+ever creates it.
+
+- Return value contains:
   - `has_a_plus_analysis`: Boolean
   - `total_opportunities_found`: Count
   - `aplus_holdings`: List of opportunities
@@ -152,13 +158,15 @@ For each holding:
    - Falls back to reading discovery JSON if needed
    - Removes duplicate candidates
 
-2. **Backtesting Execution**
-   - For each A+ candidate:
-     - Executes backtesting strategy
-     - Calculates annual return
-     - Calculates Sharpe ratio
-     - Calculates maximum drawdown
-     - Calculates win rate
+2. **Backtesting Execution — currently simulated, not real**
+   - `connect_backtesting_to_discovery_results` does not execute a strategy
+     or load historical price data. For each A+ candidate it assigns
+     constant/formula-derived placeholder values: `annual_return` (0.12,
+     +0.05 if grade A+), `sharpe_ratio` (1.2, +0.3 if grade A+),
+     `max_drawdown` (fixed -0.15), `win_rate` (fixed 0.65). The module's own
+     comment says a real implementation "would" load price data, execute a
+     trading strategy, and calculate performance metrics — that part isn't
+     built yet.
 
 3. **Results Aggregation**
    - Combines all backtesting results
@@ -196,9 +204,10 @@ For each holding:
    - Grade distribution
    - Recommendation breakdown
 
-3. **Template Rendering**
-   - Loads Jinja2 template
-   - Renders with consolidated data
+3. **HTML Assembly — not Jinja2**
+   - `PythonReportGenerator._generate_html_report` assembles the document
+     from an f-string and inlines CSS from `assets/report_styles.css` via
+     `_get_css_styles()`. The module has no Jinja2 import or usage at all.
    - Applies CSS styling
    - Generates responsive HTML
 
@@ -247,10 +256,10 @@ output/
 
 ### Discovery Files
 
-```
-output/
-└── aplus_discovery_{session_id}.json
-```
+No discovery output file is written. `integrate_aplus_discovery_with_deep_analysis()`
+returns its results as an in-memory dict only — nothing writes
+`output/aplus_discovery_{session_id}.json` (the backtesting connector's
+fallback path checks for that filename, but it's never created).
 
 ### Backtesting Files
 

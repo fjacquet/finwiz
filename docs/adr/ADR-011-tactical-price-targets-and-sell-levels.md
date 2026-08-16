@@ -51,7 +51,7 @@ Wiring path (each step is one short edit):
 2. `orchestrators/portfolio_review/merge.py` copies `quantitative.price_targets` onto `HoldingDecision.price_targets` for both the success and N/A branches.
 3. `reporting/section_generators.py` adds two compact columns to the holdings table (target with `±%` delta, sell-level with `−%` delta) and renders a "🎯 Targets" detail panel inside each ticker's per-holding HTML report (`output/{asset_class}/{ticker}_report.html`) showing target, sell-level, and a one-sentence French rationale per number with a confidence badge (high/medium/low).
 
-Confidence is high when the resistance/support level and the volatility-drift number agree directionally (within 10%), medium when they differ by ≤10%, low when they differ by more than 10% or when price history covers fewer than 120 trading days.
+Confidence is high when the resistance/support level and the volatility-drift number agree within 10%, medium when they differ by more than 10% but at most 20%, and low when they differ by more than 20% or when price history covers fewer than 120 trading days (`_confidence()` in `quantitative/tactical_pricing.py:68-79`; a 15% divergence is medium, not low).
 
 DCF and P/E primitives are deliberately **not** used in this scope: they revert on multi-year cycles and don't fit a 3-6 month horizon. The existing helpers stay available for a future "12-month strategic target" addition.
 

@@ -427,8 +427,9 @@ Error: Build process exceeded time limit
 1. **Optimize build process**:
 
    ```bash
-   # Use fast build for testing
-   make docs-build-fast
+   # There is no `make docs-build-fast` target — the only build targets are
+   # docs-build and docs-build-strict
+   make docs-build
 
    # Optimize images
    find docs -name "*.png" -exec optipng {} \;
@@ -705,7 +706,7 @@ Error: Package not found
    # Ensure compatible Python version
    python --version
 
-   # Should be 3.8 or higher
+   # Must be 3.13.x — pyproject.toml pins requires-python = ">=3.13,<3.14"
    ```
 
 ### Development Server Issues

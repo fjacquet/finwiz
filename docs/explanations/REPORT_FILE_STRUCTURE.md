@@ -1,14 +1,15 @@
 # Report File Structure Documentation
 
-This document describes the output directory structure, file naming conventions, and manifest format for FinWiz's report aggregation architecture.
+This document describes the output directory structure and file naming conventions for FinWiz's report aggregation architecture.
+
+> **Note:** An earlier version of this document also described a `manifest.json` file tracking all generated files per session. No such manifest exists in the codebase — nothing writes, reads, or validates one. That section has been removed.
 
 ## Table of Contents
 
 1. [Directory Structure](#directory-structure)
 2. [File Naming Conventions](#file-naming-conventions)
-3. [Manifest Format](#manifest-format)
-4. [File Management](#file-management)
-5. [Examples](#examples)
+3. [File Management](#file-management)
+4. [Examples](#examples)
 
 ## Directory Structure
 
@@ -44,10 +45,19 @@ output/reports/{session_id}/
 ├── rebalancing_crew/
 │   ├── rebalancing_export.json   # No ticker (portfolio-level)
 │   └── rebalancing_report.html
-├── consolidated_report.json       # Python consolidation
-├── final_report.html              # Python template rendering
-└── manifest.json                  # File tracking metadata
 ```
+
+**None of `consolidated_report.json`, `final_report.html`, or
+`manifest.json` are written here.** `consolidated_report.json` is only
+produced by `ReportConsolidator`, which has no caller anywhere in `src/`.
+`final_report.html` is a Jinja2 template *name* inside the unused
+`final_report_generator.py`, not an output path anything writes to. There
+is no manifest of any kind — `manifest` doesn't appear anywhere in `src/`
+or `tests/`. The actual final report is written outside this per-session
+tree entirely, at `output/finwiz_family_financial_plan.html`
+(`PythonReportGenerator`'s default `output_dir` is `"output"`, and
+`report_crew/config/tasks.yaml:924` confirms the same path). See "Manifest
+Format" below for more detail on what doesn't exist.
 
 ### Session ID Format
 
@@ -82,262 +92,63 @@ Each crew has its own subdirectory under the session:
 
 ### Export JSON Files
 
-**Pattern:** `{ticker}_{timestamp}_export.json`
+**Pattern:** `{ticker}_export.json` — **no timestamp is embedded** in
+per-ticker filenames, unlike a previous version of this doc claimed. The
+directory tree above already shows the correct pattern
+(`AAPL_export.json`), which contradicted the timestamped pattern
+documented here.
 
 **Components:**
 
 - `{ticker}`: Asset ticker symbol (uppercase, e.g., AAPL, SPY, BTC)
-- `{timestamp}`: ISO 8601 timestamp (YYYYMMDD_HHMMSS)
 - `_export.json`: Fixed suffix indicating Pydantic export
 
 **Examples:**
 
 ```
-AAPL_20250125_143022_export.json
-SPY_20250125_143045_export.json
-BTC_20250125_143108_export.json
+AAPL_export.json
+SPY_export.json
+BTC_export.json
 ```
 
-**Special Cases:**
-
-For portfolio-level crews (no specific ticker):
-
-```
-discovery_20250125_143022_export.json
-rebalancing_20250125_143022_export.json
-```
+(Source: `src/finwiz/scoring/crew_export_generator.py:77-78`;
+`src/finwiz/crews/etf_crew/config/tasks.yaml:308,311`;
+`src/finwiz/reporting/stock_report_generator.py:100-101`.)
 
 ### Report HTML Files
 
-**Pattern:** `{ticker}_{timestamp}_report.html`
-
-**Components:**
-
-- `{ticker}`: Asset ticker symbol (uppercase)
-- `{timestamp}`: ISO 8601 timestamp (YYYYMMDD_HHMMSS)
-- `_report.html`: Fixed suffix indicating HTML report
+**Pattern:** `{ticker}_report.html` — again, no timestamp.
 
 **Examples:**
 
 ```
-AAPL_20250125_143022_report.html
-SPY_20250125_143045_report.html
-BTC_20250125_143108_report.html
+AAPL_report.html
+SPY_report.html
+BTC_report.html
 ```
 
-**Special Cases:**
+### Consolidated Files — mostly do not exist
 
-For portfolio-level crews:
+- **`consolidated_report.json`**: Only produced by `ReportConsolidator`,
+  which has no caller anywhere in `src/` — it's effectively dead code.
+- **`final_report.html`**: Not a real output path. It's a Jinja2 template
+  *name* referenced inside the unused `final_report_generator.py`.
+- **`manifest.json`**: Does not exist. `manifest` doesn't appear anywhere
+  in `src/` or `tests/` — nothing writes, reads, or validates a manifest.
 
-```
-discovery_20250125_143022_report.html
-rebalancing_20250125_143022_report.html
-```
+**The actual final report** is written to
+`output/finwiz_family_financial_plan.html`, outside the per-session
+`output/reports/{session_id}/` tree entirely.
 
-### Consolidated Files
+## Manifest Format — NOT IMPLEMENTED
 
-**Consolidated JSON:**
-
-```
-consolidated_report.json
-```
-
-**Final HTML Report:**
-
-```
-final_report.html
-```
-
-**Manifest:**
-
-```
-manifest.json
-```
-
-These files are always at the session root level (no timestamp in filename).
-
-## Manifest Format
-
-### Purpose
-
-The manifest tracks all generated files with metadata for:
-
-- File discovery and validation
-- Status tracking (completed/failed)
-- Metadata aggregation
-- Debugging and auditing
-
-### Schema
-
-```json
-{
-  "session_id": "20250125_143022",
-  "created_at": "2025-01-25T14:30:22Z",
-  "updated_at": "2025-01-25T14:35:45Z",
-  "crews": {
-    "stock_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "AAPL",
-          "asset_class": "stock",
-          "status": "completed",
-          "export_path": "stock_crew/AAPL_20250125_143022_export.json",
-          "html_path": "stock_crew/AAPL_20250125_143022_report.html",
-          "grade": "A",
-          "composite_score": 0.85,
-          "recommendation": "BUY",
-          "created_at": "2025-01-25T14:30:22Z"
-        },
-        {
-          "ticker": "MSFT",
-          "asset_class": "stock",
-          "status": "completed",
-          "export_path": "stock_crew/MSFT_20250125_143030_export.json",
-          "html_path": "stock_crew/MSFT_20250125_143030_report.html",
-          "grade": "A+",
-          "composite_score": 0.92,
-          "recommendation": "BUY",
-          "created_at": "2025-01-25T14:30:30Z"
-        }
-      ]
-    },
-    "etf_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "SPY",
-          "asset_class": "etf",
-          "status": "completed",
-          "export_path": "etf_crew/SPY_20250125_143045_export.json",
-          "html_path": "etf_crew/SPY_20250125_143045_report.html",
-          "grade": "A",
-          "composite_score": 0.88,
-          "recommendation": "BUY",
-          "created_at": "2025-01-25T14:30:45Z"
-        }
-      ]
-    },
-    "crypto_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "BTC",
-          "asset_class": "crypto",
-          "status": "completed",
-          "export_path": "crypto_crew/BTC_20250125_143108_export.json",
-          "html_path": "crypto_crew/BTC_20250125_143108_report.html",
-          "grade": "B",
-          "composite_score": 0.75,
-          "recommendation": "HOLD",
-          "created_at": "2025-01-25T14:31:08Z"
-        }
-      ]
-    },
-    "discovery_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "N/A",
-          "asset_class": "mixed",
-          "status": "completed",
-          "export_path": "discovery_crew/discovery_20250125_143200_export.json",
-          "html_path": "discovery_crew/discovery_20250125_143200_report.html",
-          "opportunities_count": 5,
-          "created_at": "2025-01-25T14:32:00Z"
-        }
-      ]
-    },
-    "rebalancing_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "N/A",
-          "asset_class": "portfolio",
-          "status": "completed",
-          "export_path": "rebalancing_crew/rebalancing_20250125_143300_export.json",
-          "html_path": "rebalancing_crew/rebalancing_20250125_143300_report.html",
-          "trades_count": 3,
-          "created_at": "2025-01-25T14:33:00Z"
-        }
-      ]
-    }
-  },
-  "consolidated": {
-    "status": "completed",
-    "path": "consolidated_report.json",
-    "created_at": "2025-01-25T14:34:00Z"
-  },
-  "final_report": {
-    "status": "completed",
-    "path": "final_report.html",
-    "created_at": "2025-01-25T14:35:00Z"
-  },
-  "summary": {
-    "total_analyses": 5,
-    "completed_analyses": 5,
-    "failed_analyses": 0,
-    "total_crews": 5,
-    "completed_crews": 5,
-    "failed_crews": 0
-  }
-}
-```
-
-### Manifest Fields
-
-#### Root Level
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `session_id` | string | Unique session identifier (YYYYMMDD_HHMMSS) |
-| `created_at` | string | ISO 8601 timestamp of manifest creation |
-| `updated_at` | string | ISO 8601 timestamp of last update |
-| `crews` | object | Map of crew names to crew metadata |
-| `consolidated` | object | Consolidated report metadata |
-| `final_report` | object | Final report metadata |
-| `summary` | object | Aggregate statistics |
-
-#### Crew Metadata
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `status` | string | Crew execution status: "completed", "failed", "pending" |
-| `analyses` | array | List of analysis metadata objects |
-
-#### Analysis Metadata
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `ticker` | string | Asset ticker symbol (or "N/A" for portfolio-level) |
-| `asset_class` | string | Asset class: "stock", "etf", "crypto", "mixed", "portfolio" |
-| `status` | string | Analysis status: "completed", "failed" |
-| `export_path` | string | Relative path to JSON export |
-| `html_path` | string | Relative path to HTML report |
-| `grade` | string | Analysis grade: "A+", "A", "B", "C", "D", "F" (optional) |
-| `composite_score` | number | Composite score 0.0-1.0 (optional) |
-| `recommendation` | string | Investment recommendation: "BUY", "HOLD", "SELL" (optional) |
-| `created_at` | string | ISO 8601 timestamp of analysis creation |
-
-#### Summary Statistics
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `total_analyses` | integer | Total number of analyses |
-| `completed_analyses` | integer | Number of completed analyses |
-| `failed_analyses` | integer | Number of failed analyses |
-| `total_crews` | integer | Total number of crews |
-| `completed_crews` | integer | Number of completed crews |
-| `failed_crews` | integer | Number of failed crews |
-
-### Manifest Updates
-
-The manifest is updated at key points during execution:
-
-1. **Session Start**: Create manifest with session metadata
-2. **Crew Completion**: Add crew metadata and analysis entries
-3. **Consolidation**: Add consolidated report metadata
-4. **Final Report**: Add final report metadata and update summary
+There is no manifest of any kind in this codebase. The schema, update
+points, and worked examples that previously followed this heading (a
+`manifest.json` supposedly tracking file status, updated at session start,
+crew completion, consolidation, and final report) describe a feature that
+was never built. If file-tracking/manifest functionality is added in the
+future, document it here — until then, treat any reference elsewhere in
+this repo's docs to a manifest as aspirational, not real.
 
 ## File Management
 
@@ -357,29 +168,27 @@ def ensure_directory(file_path: str) -> None:
 
 Standardized helper functions for generating file paths:
 
+These illustrative helpers are not real functions in the codebase — they
+show the naming convention the actual per-crew, per-ticker paths follow
+(see `src/finwiz/scoring/crew_export_generator.py:77-78`). There is no
+`get_consolidated_path`, `get_final_report_path`, or `get_manifest_path`
+equivalent in `src/`, because none of those three files are written by
+anything (see "Consolidated Files" above).
+
 ```python
 def get_export_path(session_id: str, crew_name: str, ticker: str) -> str:
-    """Get path for crew export JSON."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"output/reports/{session_id}/{crew_name}/{ticker}_{timestamp}_export.json"
+    """Get path for crew export JSON. No timestamp — see File Naming Conventions above."""
+    return f"output/reports/{session_id}/{crew_name}/{ticker}_export.json"
 
 def get_html_path(session_id: str, crew_name: str, ticker: str) -> str:
-    """Get path for crew HTML report."""
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    return f"output/reports/{session_id}/{crew_name}/{ticker}_{timestamp}_report.html"
-
-def get_consolidated_path(session_id: str) -> str:
-    """Get path for consolidated report."""
-    return f"output/reports/{session_id}/consolidated_report.json"
-
-def get_final_report_path(session_id: str) -> str:
-    """Get path for final HTML report."""
-    return f"output/reports/{session_id}/final_report.html"
-
-def get_manifest_path(session_id: str) -> str:
-    """Get path for manifest file."""
-    return f"output/reports/{session_id}/manifest.json"
+    """Get path for crew HTML report. No timestamp — see File Naming Conventions above."""
+    return f"output/reports/{session_id}/{crew_name}/{ticker}_report.html"
 ```
+
+The one file that *is* always produced — the family financial plan HTML —
+lives outside this per-session tree entirely, at
+`output/finwiz_family_financial_plan.html` (see "Consolidated Files"
+above).
 
 ### File Validation
 
@@ -429,39 +238,13 @@ find output/reports -name "*.tar.gz" -mtime +90 -delete
 
 ```
 output/reports/20250125_143022/
-├── stock_crew/
-│   ├── AAPL_20250125_143022_export.json
-│   └── AAPL_20250125_143022_report.html
-├── consolidated_report.json
-├── final_report.html
-└── manifest.json
+└── stock_crew/
+    ├── AAPL_export.json
+    └── AAPL_report.html
 ```
 
-**Manifest:**
-
-```json
-{
-  "session_id": "20250125_143022",
-  "created_at": "2025-01-25T14:30:22Z",
-  "crews": {
-    "stock_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "AAPL",
-          "asset_class": "stock",
-          "status": "completed",
-          "export_path": "stock_crew/AAPL_20250125_143022_export.json",
-          "html_path": "stock_crew/AAPL_20250125_143022_report.html",
-          "grade": "A",
-          "composite_score": 0.85,
-          "recommendation": "BUY"
-        }
-      ]
-    }
-  }
-}
-```
+There is no `consolidated_report.json`, `final_report.html`, or
+`manifest.json` alongside it — see "Consolidated Files" above.
 
 ### Example 2: Full Portfolio Analysis
 
@@ -470,88 +253,44 @@ output/reports/20250125_143022/
 ```
 output/reports/20250125_143022/
 ├── stock_crew/
-│   ├── AAPL_20250125_143022_export.json
-│   ├── AAPL_20250125_143022_report.html
-│   ├── MSFT_20250125_143030_export.json
-│   └── MSFT_20250125_143030_report.html
+│   ├── AAPL_export.json
+│   ├── AAPL_report.html
+│   ├── MSFT_export.json
+│   └── MSFT_report.html
 ├── etf_crew/
-│   ├── SPY_20250125_143045_export.json
-│   └── SPY_20250125_143045_report.html
+│   ├── SPY_export.json
+│   └── SPY_report.html
 ├── crypto_crew/
-│   ├── BTC_20250125_143108_export.json
-│   └── BTC_20250125_143108_report.html
+│   ├── BTC_export.json
+│   └── BTC_report.html
 ├── deep_analysis_crew/
-│   ├── IBM_20250125_143130_export.json
-│   └── IBM_20250125_143130_report.html
+│   ├── IBM_export.json
+│   └── IBM_report.html
 ├── discovery_crew/
-│   ├── discovery_20250125_143200_export.json
-│   └── discovery_20250125_143200_report.html
-├── rebalancing_crew/
-│   ├── rebalancing_20250125_143300_export.json
-│   └── rebalancing_20250125_143300_report.html
-├── consolidated_report.json
-├── final_report.html
-└── manifest.json
+│   ├── discovery_export.json
+│   └── discovery_report.html
+└── rebalancing_crew/
+    ├── rebalancing_export.json
+    └── rebalancing_report.html
 ```
 
-### Example 3: Failed Analysis
-
-**Manifest with Failed Crew:**
-
-```json
-{
-  "session_id": "20250125_143022",
-  "crews": {
-    "stock_crew": {
-      "status": "failed",
-      "error": "API rate limit exceeded",
-      "analyses": []
-    },
-    "etf_crew": {
-      "status": "completed",
-      "analyses": [
-        {
-          "ticker": "SPY",
-          "status": "completed",
-          "export_path": "etf_crew/SPY_20250125_143045_export.json",
-          "html_path": "etf_crew/SPY_20250125_143045_report.html"
-        }
-      ]
-    }
-  },
-  "summary": {
-    "total_analyses": 1,
-    "completed_analyses": 1,
-    "failed_analyses": 0,
-    "total_crews": 2,
-    "completed_crews": 1,
-    "failed_crews": 1
-  }
-}
-```
+The family financial plan HTML for this run is written separately, at
+`output/finwiz_family_financial_plan.html` — not inside this session
+directory.
 
 ## Best Practices
 
 ### File Naming
 
 1. **Always use uppercase** for ticker symbols (AAPL, not aapl)
-2. **Include timestamps** for versioning and chronological sorting
-3. **Use consistent suffixes** (_export.json,_report.html)
-4. **Avoid special characters** in filenames (use only alphanumeric, underscore, hyphen)
+2. **Use consistent suffixes** (_export.json,_report.html) — no timestamp is embedded in the filename itself; chronological ordering comes from the session ID directory
+3. **Avoid special characters** in filenames (use only alphanumeric, underscore, hyphen)
 
 ### Directory Organization
 
 1. **One crew per subdirectory** for clear organization
-2. **Session-level consolidation** at root for easy access
-3. **Manifest at root** for quick status checks
-4. **No nested subdirectories** within crew folders (flat structure)
-
-### Manifest Management
-
-1. **Update atomically** using temporary files and rename
-2. **Include timestamps** for all operations
-3. **Track failures** with error messages
-4. **Aggregate statistics** for quick summaries
+2. **Session ID as the top-level directory** for grouping a run's per-crew exports
+3. **No nested subdirectories** within crew folders (flat structure)
 
 ### Error Handling
 
@@ -565,10 +304,11 @@ output/reports/20250125_143022/
 The file structure provides:
 
 - ✅ **Clear Organization**: Crew-based subdirectories with consistent naming
-- ✅ **Easy Discovery**: Manifest tracks all files with metadata
-- ✅ **Chronological Sorting**: Timestamp-based naming for version tracking
-- ✅ **Status Tracking**: Manifest includes completion status and errors
+- ✅ **Chronological Sorting**: Timestamp-based session ID for run ordering
 - ✅ **Filesystem-Safe**: No special characters, consistent conventions
+
+There is no manifest and no consolidated/final-report file inside the
+per-session tree — see "Consolidated Files" above.
 
 Follow these conventions to maintain consistency across the codebase.
 

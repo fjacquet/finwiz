@@ -59,9 +59,13 @@ Bitcoin,BTC,USD
 
 ### Basic Analysis
 
+`crewai flow kickoff` is the sole production entry point — `main.py` takes no
+CLI arguments (`kickoff()` runs with no options), so there is no `--mode` or
+`--asset-class` flag:
+
 ```bash
 # Run complete portfolio analysis
-uv run python src/finwiz/main.py --mode portfolio_review
+crewai flow kickoff
 ```
 
 ### Advanced Options
@@ -69,11 +73,12 @@ uv run python src/finwiz/main.py --mode portfolio_review
 ```bash
 # Enable deep analysis for detailed grading
 export DEEP_PORTFOLIO_ANALYSIS=true
-uv run python src/finwiz/main.py --mode portfolio_review
-
-# Analyze specific asset classes only
-uv run python src/finwiz/main.py --mode portfolio_review --asset-class stock
+crewai flow kickoff
 ```
+
+There is no built-in way to restrict a run to a single asset class from the
+CLI — Phase 4 (Discovery) and the deep-analysis pipeline always process every
+holding in the portfolio.
 
 ## Understanding Your Portfolio Report
 
@@ -82,17 +87,26 @@ uv run python src/finwiz/main.py --mode portfolio_review --asset-class stock
 The top section shows your portfolio overview:
 
 - **📊 Total Holdings**: Number of assets in your portfolio
-- **🎯 Grade Distribution**: Breakdown of A+, A, B, C, D, F grades
+- **🎯 Grade Distribution**: Breakdown across all eight grades (A+, A, B+, B, C+, C, D, F)
 - **💎 A+ Opportunities**: Number of A+ rated alternatives available
-- **📈 Portfolio Health Score**: Overall portfolio quality (0-100)
+
+There is no "Portfolio Health Score" tile in the report — the report
+generator emits no such field. A 0-100 health score does not exist anywhere
+in the codebase; the only "health score" concept belongs to the separate
+rebalancing/monitoring subsystem, and it's on a 0-10 scale
+(`quantitative/portfolio_monitor.py`), not 0-100.
 
 ### Grade System
+
+The scoring engine produces eight grades, not six:
 
 | Grade | Meaning | Action |
 |-------|---------|--------|
 | **A+** 🌟 | Exceptional quality | Keep, consider adding more |
 | **A** ✅ | High quality | Keep |
+| **B+** 👍 | Good quality | Keep, monitor |
 | **B** 👍 | Good quality | Keep, monitor |
+| **C+** ⚠️ | Average quality | Keep, monitor |
 | **C** ⚠️ | Average quality | Consider alternatives |
 | **D** 🔻 | Below average | Review for replacement |
 | **F** ❌ | Poor quality | Exit position |
@@ -173,7 +187,10 @@ Rationale: Below key support, invalidates thesis
 
 ### When Alternatives Are Suggested
 
-Alternatives appear for holdings graded **below B** (C+, C, D, or F). The system identifies better investment options by:
+Alternatives appear for holdings graded **C, D, or F**. C+ holdings are
+skipped (the orchestrator only gates on the grade set `["C", "D", "F"]`), so
+a C+ holding is treated the same as a B or above. The system identifies
+better investment options by:
 
 1. **Prioritizing A+ Candidates**: First checks for A+ rated alternatives
 2. **Matching Asset Class**: Ensures alternatives are in the same asset class
@@ -284,8 +301,10 @@ Target Portfolio Composition:
 • D/F Holdings: 0% ⬇️ (-5%)
 
 Expected Annual Benefit: +$3,400/year
-Portfolio Health Score: 85/100 (from 62/100)
 ```
+
+(The report has no "Portfolio Health Score" field — see the note under
+Portfolio Dashboard above.)
 
 ## Position Sizing Recommendations
 
@@ -330,14 +349,16 @@ Reason: Grade F, better alternatives available
 
 ### Concentration Limits
 
-The system enforces prudent concentration limits:
+The system defines concentration limits in two separate `ConcentrationLimits`
+config classes, which don't fully agree with each other, and there is no
+"High-Risk Asset" or "Total Alternatives" limit anywhere in the codebase:
 
 | Limit Type | Maximum | Purpose |
 |------------|---------|---------|
-| Single Stock | 10% | Avoid company-specific risk |
-| Single Sector | 35% | Diversify across economy |
-| High-Risk Asset | 3% | Limit speculative exposure |
-| Total Alternatives | 5% | Control experimental positions |
+| Single Stock | 20% (`quantitative/risk_metrics.py`) or 10% (`schemas/quantitative/risk.py`) | Avoid company-specific risk |
+| Single Sector | 30% | Diversify across economy |
+| Top 5 Positions | 60% (`risk_metrics.py` only) | Avoid concentration in a handful of holdings |
+| Minimum Positions | 5 (`risk_metrics.py`) or 10 (`schemas/quantitative/risk.py`) | Ensure baseline diversification |
 
 ## Taking Action on Recommendations
 

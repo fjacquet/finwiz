@@ -34,7 +34,11 @@ composite_score = (
 
 ### Quality Company Detection
 
-A company qualifies as "quality" when it meets **at least 2 of 3 criteria**:
+A company must first clear a **mandatory gate**: `fundamental_score >= 0.80`.
+A company hitting all three criteria below but scoring 0.79 on fundamentals is
+not treated as quality and gets the standard 40/30/30 weights.
+
+Past that gate, it qualifies when it meets **at least 2 of 3 criteria**:
 
 | Criterion | Threshold | Rationale |
 |-----------|-----------|-----------|
@@ -56,7 +60,7 @@ Evaluates long-term financial health and business quality.
 
 | Metric | Excellent | Very Good | Good | Acceptable | Poor | Score Formula |
 |--------|-----------|-----------|------|------------|------|---------------|
-| **ROE** | ≥30% | 20-30% | 15-20% | 10-15% | <10% | 1.0 / 0.8 / 0.6 / 0.4 / 0.2 |
+| **ROE** | ≥20% | 15-20% | 10-15% | 5-10% | <5% | 1.0 / 0.8 / 0.6 / 0.4 / 0.2 |
 | **Debt/Equity** | ≤0.3 | 0.3-0.5 | 0.5-1.0 | 1.0-2.0 | >2.0 | 1.0 / 0.8 / 0.6 / 0.4 / 0.2 |
 | **Revenue Growth** | ≥20% | 12-20% | 5-12% | 0-5% | <0% | 1.0 / 0.8 / 0.6 / 0.4 / 0.2 |
 | **Profit Margin** | ≥20% | 15-20% | 10-15% | 5-10% | <5% | 1.0 / 0.8 / 0.6 / 0.4 / 0.2 |
@@ -65,10 +69,10 @@ Evaluates long-term financial health and business quality.
 
 ```python
 fundamental_score = (
-    0.25 * roe_score +
-    0.25 * debt_score +
-    0.25 * growth_score +
-    0.25 * margin_score
+    0.40 * roe_score +
+    0.30 * debt_score +
+    0.20 * growth_score +
+    0.10 * margin_score
 )
 ```
 
@@ -96,8 +100,8 @@ Evaluates price momentum, trends, and market sentiment.
 ```python
 technical_score = (
     0.40 * rsi_score +
-    0.30 * trend_score +
-    0.30 * momentum_score
+    0.40 * trend_score +
+    0.20 * momentum_score
 )
 ```
 
@@ -117,24 +121,24 @@ Evaluates volatility, downside risk, and market sensitivity.
 | Metric | Very Low Risk | Low Risk | Moderate Risk | High Risk | Very High Risk |
 |--------|---------------|----------|---------------|-----------|----------------|
 | **Volatility** | ≤15% | 15-25% | 25-35% | 35-50% | >50% |
-| **Max Drawdown** | ≤10% | 10-20% | 20-30% | 30-40% | >40% |
-| **Beta** | 0.7-1.0 | 0.5-0.7, 1.0-1.2 | 0.3-0.5, 1.2-1.5 | 0-0.3, >1.5 | Negative |
+| **Max Drawdown** | ≤10% | 10-20% | 20-35% | 35-50% | >50% |
+| **Beta** (scored on \|beta − 1.0\|) | ≤0.20 | ≤0.40 | ≤0.60 | ≤1.00 | >1.00 |
 
 ### Risk Score Calculation
 
 ```python
 risk_score = (
-    0.35 * volatility_score +
-    0.35 * drawdown_score +
-    0.30 * beta_score
+    0.50 * volatility_score +
+    0.30 * drawdown_score +
+    0.20 * beta_score
 )
 ```
 
 ### Key Adjustments
 
 1. **Cyclical Sectors**: Volatility thresholds raised 5% (semiconductors, industrials naturally more volatile)
-2. **Market Correlation**: Beta 0.8-1.2 considered normal (not penalized)
-3. **Downside Focus**: Max drawdown weighted equally with volatility
+2. **Market Correlation**: beta is scored on *deviation from 1.0*, not on an absolute range — a beta of 0.85 and one of 1.15 score identically
+3. **Volatility leads**: volatility carries strictly more weight (0.50) than max drawdown (0.30)
 
 ## Grading Scale
 
@@ -142,8 +146,8 @@ risk_score = (
 |-------|-------------|----------------|-------------|
 | **A+** | 0.95 - 1.00 | **BUY** | Exceptional opportunity - all metrics excellent |
 | **A** | 0.85 - 0.95 | **BUY** | Strong buy - excellent fundamentals and technicals |
-| **B+** | 0.80 - 0.85 | **BUY** | Good buy - solid across all dimensions |
-| **B** | 0.75 - 0.80 | **BUY** | Attractive - minor weaknesses acceptable |
+| **B+** | 0.80 - 0.85 | **HOLD** | Good - solid across all dimensions |
+| **B** | 0.75 - 0.80 | **HOLD** | Attractive - minor weaknesses acceptable |
 | **C+** | 0.70 - 0.75 | **HOLD** | Hold - mixed signals, monitor closely |
 | **C** | 0.65 - 0.70 | **HOLD** | Hold - significant concerns in 1-2 areas |
 | **D** | 0.50 - 0.65 | **SELL** | Sell - multiple red flags |
@@ -344,13 +348,13 @@ DEEP_ANALYSIS_BATCH_SIZE=5
 
 ### Scoring Thresholds
 
-Configurable in `src/finwiz/scoring/scoring_thresholds.py`:
+Configurable in `src/finwiz/scoring/thresholds.py`:
 
 ```python
 @dataclass
 class ScoringThresholds:
     # Fundamental thresholds
-    roe_excellent: float = 0.30
+    roe_excellent: float = 0.20
     roe_very_good: float = 0.20
     # ... more thresholds
 

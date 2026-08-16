@@ -70,4 +70,3 @@ grade_info = score_to_grade(result.composite_score)
 - `finwiz.analysis` — Uses scorer in deep analysis pipeline
 - `finwiz.schemas.crew_exports` — Export schemas with scores
 - `finwiz.quantitative` — Quantitative calculations feeding scorers
-- `finwiz.tools.deep_analysis_scoring_tool` — Tool wrapper for crews

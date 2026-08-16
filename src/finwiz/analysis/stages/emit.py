@@ -97,6 +97,33 @@ def _emit_pending(ctx: StageContext, reason: str | None = None) -> DeepAnalysisR
     )
 
 
+def _pending_enriched(ctx: StageContext, reason: str | None = None) -> EnrichedAnalysis:
+    """Build the EnrichedAnalysis that accompanies a pending verdict.
+
+    ``{TICKER}_enriched.json`` is serialized from this object, and it is what the
+    report renderer and every downstream consumer read. It therefore has to state
+    a refusal explicitly rather than fall back to the schema's defaults.
+
+    This exists because it previously did not: the pipeline returned a bare
+    ``EnrichedAnalysis.model_construct()``, which took the defaults and wrote
+    ``final_grade="C"``, ``final_score=0.5``, ``final_recommendation="HOLD"`` to
+    disk — with ``ticker=""`` and both analysis sections ``None`` — for a holding
+    the pipeline had just refused to analyse. A reader of that file saw a
+    confident middling hold where the truth was "we don't know".
+    """
+    return EnrichedAnalysis(
+        ticker=ctx.ticker,
+        quantitative=None,
+        qualitative=None,
+        final_grade="N/A",
+        final_score=0.0,
+        final_recommendation="WAIT",
+        recommendation_confidence="LOW",
+        executive_summary="Analyse en attente — ne pas décider sur ce holding.",
+        investment_rationale=(f"Analyse incomplète : {reason}" if reason else "Analyse incomplète : échec d'une étape amont."),
+    )
+
+
 # Legacy shim — callers outside run_pipeline continue to work unchanged.
 def build_verdict(
     ctx: AnalysisContext,

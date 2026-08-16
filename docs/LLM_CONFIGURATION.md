@@ -37,11 +37,14 @@ Each model type has a default `max_tokens` cap to prevent unbounded output:
 
 | Model Type | Default max_tokens | Use Case |
 |------------|-------------------|----------|
-| mini | 1024 | Fast, high-volume operations |
-| manager | 1024 | Crew coordination |
-| standard | 2048 | General analysis |
-| planning | 2048 | Strategic planning |
-| baseline | 4096 | Quality benchmarking |
+| mini | 10240 | Fast, high-volume operations |
+| manager | 10240 | Crew coordination |
+| standard | 20480 | General analysis |
+| planning | 20480 | Strategic planning |
+| baseline | 40960 | Quality benchmarking |
+
+An unrecognized model type falls back to 20480. Source:
+`src/finwiz/config/llm/llm_config.py:359`.
 
 Override globally via environment variable:
 
@@ -52,18 +55,12 @@ LLM_MAX_TOKENS=3000  # Override default for all model types
 Override per-call in code:
 
 ```python
-llm = get_configured_llm(model_type="standard", max_tokens=4096)
+llm = get_configured_llm(model_type="standard", max_tokens=20480)
 ```
 
-The deep analysis crew uses `max_tokens=4096` because its structured JSON output requires 1500-2000 words.
-
-### Pre-call Token Guard
-
-A configurable guard logs errors when estimated prompt tokens exceed the threshold:
-
-```bash
-MAX_PROMPT_TOKENS=100000  # Default: 100K tokens
-```
+The deep analysis crew overrides the default upward because its structured JSON
+output is long: 40960 in speed mode (`mini`) and 61440 in standard mode
+(`src/finwiz/crews/deep_analysis/deep_analysis.py:244-245`).
 
 ## Supported Model Formats
 
@@ -271,4 +268,5 @@ llm = get_configured_llm(model_type="standard")
 
 ## See Also
 
-- CrewAI Standards (.kiro/steering/crewai-standards.md in project root)
+- CrewAI standards: the `crewai` skill under `.claude/skills/crewai/`, plus the
+  Critical Rules section of `CLAUDE.md` in the project root

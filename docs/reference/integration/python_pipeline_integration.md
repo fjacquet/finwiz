@@ -4,7 +4,7 @@
 
 This reference documents the integration modules that connect the Pure Python Pipeline components together.
 
-## Module: `aplus_discovery_integrator.py`
+## Module: `orchestrators/discovery/aplus_discovery_integrator.py`
 
 ### Function: `integrate_aplus_discovery_with_deep_analysis`
 
@@ -33,7 +33,7 @@ def integrate_aplus_discovery_with_deep_analysis(session_id: str) -> dict[str, A
 **Example:**
 
 ```python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
 discovery_results = integrate_aplus_discovery_with_deep_analysis(
     session_id="analysis_session_123"
@@ -133,7 +133,7 @@ if backtesting_results["backtesting_executed"]:
 - Logs errors and continues processing
 - Includes error details in return value
 
-## Module: `aplus_extractor.py`
+## Module: `orchestrators/extraction/aplus.py`
 
 ### Class: `APlusDataExtractor`
 
@@ -168,7 +168,7 @@ def extract_aplus_opportunities(self) -> APlusOpportunityCollection | None
 **Example:**
 
 ```python
-from finwiz.integration.aplus_extractor import APlusDataExtractor
+from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 
 extractor = APlusDataExtractor()
 collection = extractor.extract_aplus_opportunities()
@@ -251,7 +251,7 @@ Execute all pipeline components in sequence:
 
 ```python
 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
-from finwiz.integration.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
+from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 from finwiz.reporting.python_report_generator import generate_python_report
 

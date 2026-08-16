@@ -43,8 +43,11 @@ Retrieves comprehensive ticker information from Yahoo Finance.
 
 **Example**:
 
+There is no `finwiz/tools/yahoo_finance_ticker_info_tool.py` — this tool
+comes from the central `crewai_custom_tools` package:
+
 ```python
-from finwiz.tools.yahoo_finance_ticker_info_tool import YahooFinanceTickerInfoTool
+from crewai_custom_tools import YahooFinanceTickerInfoTool
 
 tool = YahooFinanceTickerInfoTool()
 info = tool.run("AAPL")
@@ -201,40 +204,15 @@ print(f"VaR: {analysis['var_95']}")
 - `beta`: Market beta coefficient
 - `alpha`: Jensen's alpha
 
-#### TechnicalIndicatorsTool
+#### TechnicalIndicatorsTool — NOT IMPLEMENTED
 
-Calculates technical indicators for price analysis.
-
-**Purpose**: Generate technical analysis indicators
-
-**Input**: Ticker symbol and timeframe
-
-**Output**: Dictionary with technical indicators
-
-**Example**:
-
-```python
-from finwiz.tools.technical_indicators_tool import TechnicalIndicatorsTool
-
-tool = TechnicalIndicatorsTool()
-indicators = tool.run({
-    "ticker": "AAPL",
-    "timeframe": "1d",
-    "period": 252  # 1 year of daily data
-})
-
-print(f"RSI: {indicators['rsi']}")
-print(f"MACD: {indicators['macd']}")
-```
-
-**Output Fields**:
-
-- `rsi`: Relative Strength Index
-- `macd`: MACD indicator
-- `bollinger_bands`: Bollinger Bands (upper, middle, lower)
-- `moving_averages`: SMA and EMA (20, 50, 200 periods)
-- `stochastic`: Stochastic oscillator
-- `williams_r`: Williams %R
+There is no `TechnicalIndicatorsTool` class or `finwiz/tools/technical_indicators_tool.py`
+module anywhere in the codebase (`grep -rn 'class TechnicalIndicatorsTool' src/`
+finds no matches). Technical indicator calculation instead lives in the
+`finwiz.quantitative.technical` subpackage — see
+`TechnicalAnalysisEngine.analyze_symbol()` in
+`src/finwiz/quantitative/technical/engine.py`, documented in
+[Quantitative Analysis Framework](../quantitative_analysis.md).
 
 ### Risk Assessment Tools
 
@@ -266,38 +244,22 @@ print(f"Risk Score: {risk['risk_score']}")
 print(f"Risk Factors: {risk['risk_factors']}")
 ```
 
-#### VolatilityAnalysisTool
+#### VolatilityAnalysisTool — NOT IMPLEMENTED
 
-Specialized volatility analysis and forecasting.
-
-**Purpose**: Analyze price volatility patterns and trends
-
-**Input**: Price history and analysis parameters
-
-**Output**: Volatility analysis results
-
-**Example**:
-
-```python
-from finwiz.tools.volatility_analysis_tool import VolatilityAnalysisTool
-
-tool = VolatilityAnalysisTool()
-volatility = tool.run({
-    "ticker": "AAPL",
-    "lookback_days": 252
-})
-
-print(f"Current Volatility: {volatility['current_volatility']}")
-print(f"Volatility Trend: {volatility['volatility_trend']}")
-```
+There is no `VolatilityAnalysisTool` class or
+`finwiz/tools/volatility_analysis_tool.py` module anywhere in the codebase.
+Volatility metrics are produced as part of `QuantitativeAnalysisTool`'s
+output (see above), not by a standalone tool.
 
 ### Web Research Tools
 
 Tools for gathering news, sentiment, and market research.
 
-#### StandardizedSentimentTool
+#### StandardizedSentimentAnalysisTool
 
-Analyzes market sentiment from news and social media.
+Analyzes market sentiment from news and social media. The class is named
+`StandardizedSentimentAnalysisTool`, not `StandardizedSentimentTool`
+(that name does not exist and importing it raises `ImportError`).
 
 **Purpose**: Gauge market sentiment for investment decisions
 
@@ -308,50 +270,33 @@ Analyzes market sentiment from news and social media.
 **Example**:
 
 ```python
-from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentTool
+from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 
-tool = StandardizedSentimentTool()
+tool = StandardizedSentimentAnalysisTool()
 sentiment = tool.run("AAPL")
 
-print(f"Sentiment Score: {sentiment['sentiment_score']}")
-print(f"News Count: {sentiment['news_count']}")
+print(f"Mean Score: {sentiment['mean_score']}")
+print(f"Counts: {sentiment['counts']}")
 ```
 
-**Output Schema**: `MarketSentiment`
+**Output Schema**: `MarketSentiment` (`src/finwiz/schemas/stock.py:81`)
 
-**Output Fields**:
+**Output Fields** (the real model, not the sentiment_score/category/
+news_count/social_mentions/trend/themes shape previously documented here):
 
-- `sentiment_score`: Overall sentiment (-1 to 1)
-- `sentiment_category`: Categorical sentiment
-- `news_count`: Number of news articles analyzed
-- `social_mentions`: Social media mention count
-- `sentiment_trend`: Sentiment trend direction
-- `key_themes`: Main sentiment themes
+- `schema_version`: Schema version integer
+- `ticker`: Ticker symbol
+- `mean_score`: Aggregated sentiment score (-1.0 to 1.0)
+- `counts`: Dict of `pos`/`neu`/`neg` article counts
+- `top_pos`: Top positive headlines (`SentimentItem` list)
+- `top_neg`: Top negative headlines (`SentimentItem` list)
 
-#### NewsAnalysisTool
+#### NewsAnalysisTool — NOT IMPLEMENTED
 
-Comprehensive news analysis and impact assessment.
-
-**Purpose**: Analyze news impact on investment prospects
-
-**Input**: Ticker symbol and date range
-
-**Output**: News analysis summary
-
-**Example**:
-
-```python
-from finwiz.tools.news_analysis_tool import NewsAnalysisTool
-
-tool = NewsAnalysisTool()
-news = tool.run({
-    "ticker": "AAPL",
-    "days_back": 30
-})
-
-print(f"News Impact: {news['impact_score']}")
-print(f"Key Headlines: {news['key_headlines']}")
-```
+There is no `NewsAnalysisTool` class or `finwiz/tools/news_analysis_tool.py`
+module anywhere in the codebase. News-driven analysis is covered by
+`StandardizedSentimentAnalysisTool` above and by
+`AlphaVantageNewsSentimentTool` (from `crewai_custom_tools`).
 
 ### Validation Tools
 
@@ -390,31 +335,11 @@ print(f"Exchange: {validation['exchange']}")
 - `currency`: Trading currency
 - `market_status`: Market status (open/closed)
 
-#### DataQualityTool
+#### DataQualityTool — NOT IMPLEMENTED
 
-Assesses data quality and freshness for analysis.
-
-**Purpose**: Ensure data meets quality standards for analysis
-
-**Input**: Data source and quality parameters
-
-**Output**: Data quality assessment
-
-**Example**:
-
-```python
-from finwiz.tools.data_quality_tool import DataQualityTool
-
-tool = DataQualityTool()
-quality = tool.run({
-    "data_source": "yahoo_finance",
-    "ticker": "AAPL",
-    "required_fields": ["price", "volume", "market_cap"]
-})
-
-print(f"Quality Score: {quality['quality_score']}")
-print(f"Missing Fields: {quality['missing_fields']}")
-```
+There is no `DataQualityTool` class or `finwiz/tools/data_quality_tool.py`
+module anywhere in the codebase. Data-quality validation instead lives in
+`finwiz.quantitative.data_validators` and the `finwiz.validation` package.
 
 ## Tool Configuration
 
@@ -457,16 +382,20 @@ tool = QuantitativeAnalysisTool(
 
 ### Tool Factories
 
-Use tool factories for standardized tool sets:
+Use tool factories for standardized tool sets. `get_stock_crew_tools` only
+accepts `include_quantitative`, `include_valuation`, and `prefetched_data` —
+passing `include_rag` or `collection_suffix` raises `TypeError`.
+`get_minimal_risk_tools` is not in `tool_factories` at all; it lives in
+`finwiz.crews.helpers.tool_routing` (re-exported from `finwiz.crews.helpers`):
 
 ```python
 from finwiz.tools.tool_factories import get_stock_crew_tools
+from finwiz.crews.helpers import get_minimal_risk_tools
 
 # Get complete tool set for stock analysis
 tools = get_stock_crew_tools(
-    include_rag=True,
     include_quantitative=True,
-    collection_suffix="stock"
+    include_valuation=True,
 )
 
 # Get minimal tool set for risk assessment
@@ -587,9 +516,9 @@ Choose appropriate tools for your analysis needs:
 
 - **Basic company info**: `YahooFinanceTickerInfoTool`
 - **Fundamental analysis**: `EnhancedSECAnalysisTool`
-- **Technical analysis**: `QuantitativeAnalysisTool` + `TechnicalIndicatorsTool`
-- **Risk assessment**: `StandardizedRiskScoringTool` + `VolatilityAnalysisTool`
-- **Market sentiment**: `StandardizedSentimentTool`
+- **Technical analysis**: `QuantitativeAnalysisTool` (`TechnicalIndicatorsTool` does not exist — see `finwiz.quantitative.technical` instead)
+- **Risk assessment**: `StandardizedRiskScoringTool` (`VolatilityAnalysisTool` does not exist)
+- **Market sentiment**: `StandardizedSentimentAnalysisTool`
 
 ### Input Validation
 
@@ -697,13 +626,9 @@ if validation_tool.run(ticker)['is_valid']:
 
 **Issue**: Missing data fields
 
-```python
-# Solution: Check data quality and use fallbacks
-quality_tool = DataQualityTool()
-quality = quality_tool.run({"ticker": ticker})
-if quality['quality_score'] < 0.8:
-    logger.warning("Low data quality detected")
-```
+`DataQualityTool` does not exist. Data-quality validation lives in
+`finwiz.quantitative.data_validators` and `finwiz.validation` — use those
+modules directly rather than a crew tool.
 
 ## Related Documentation
 

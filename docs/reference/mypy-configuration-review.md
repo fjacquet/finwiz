@@ -122,7 +122,7 @@ disallow_incomplete_defs = False
 
 ```toml
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 # Comprehensive warning flags
 # Enhanced output configuration
 # Caching with SQLite
@@ -233,11 +233,12 @@ Success: no issues found in 1 source file
 2. **Remove mypy.ini**: Can be deleted once team confirms no dependencies
 3. **Enable strict checking incrementally**: Add modules to Phase 3 as they're refactored
 4. **Run mypy in CI/CD**: Add to pre-commit hooks and GitHub Actions
-5. **Document type hints**: Use the mypy-standards.md steering document
+5. **Document type hints**: Follow the strictness flags and per-module overrides in `pyproject.toml`'s `[tool.mypy]` section
 
 ## Related Files
 
-- `.kiro/steering/mypy-standards.md` - Comprehensive mypy standards and best practices
+There is no `.kiro/` directory in this repository — that steering document doesn't exist.
+
 - `pyproject.toml` - Primary mypy configuration (use this)
 - `mypy.ini` - Deprecated configuration (backwards compatibility only)
 

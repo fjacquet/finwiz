@@ -7,7 +7,7 @@ from typing import Any
 
 from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.analysis.stages._resilience import StageContext
-from finwiz.analysis.stages.emit import _emit_pending, emit
+from finwiz.analysis.stages.emit import _emit_pending, _pending_enriched, emit
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis
 from finwiz.schemas.stage_contract import StageOutcome
@@ -89,6 +89,51 @@ def test_emit_pending_returns_na_grade(tmp_path: Path) -> None:
     assert pending.grade == "N/A"
     assert pending.composite_score == 0.0
     assert "Analyse en attente" in pending.rationale
+
+
+def test_pending_enriched_does_not_fabricate_a_hold(tmp_path: Path) -> None:
+    """A refused holding must not be persisted as a middling hold.
+
+    ``{TICKER}_enriched.json`` is what the report and every downstream consumer
+    reads. The pending path used to write ``EnrichedAnalysis.model_construct()``
+    with no arguments, which took the schema defaults — grade "C", score 0.5,
+    recommendation "HOLD" — and wrote them to disk for a holding the pipeline had
+    explicitly refused. Observed live on 2026-08-16: 24 holdings, every one
+    persisted as C/0.5/HOLD with an empty ticker and both analysis sections null.
+    """
+    ctx = StageContext(
+        ticker="AAPL",
+        run_id="r1",
+        ledger=RunLedger(run_id="r1", artifact_dir=tmp_path),
+    )
+    enriched = _pending_enriched(ctx, reason="no cache and Perplexity fetch failed")
+
+    assert enriched.final_grade != "C"
+    assert enriched.final_score != 0.5
+    assert enriched.final_recommendation != "HOLD"
+
+    # It must say what it is, and for which holding.
+    assert enriched.ticker == "AAPL"
+    assert enriched.final_grade == "N/A"
+    assert enriched.final_score == 0.0
+    assert enriched.final_recommendation == "WAIT"
+    assert enriched.quantitative is None
+    assert enriched.qualitative is None
+    assert "no cache and Perplexity fetch failed" in enriched.investment_rationale
+
+
+def test_enriched_analysis_defaults_are_a_refusal_not_a_hold() -> None:
+    """The schema's own defaults must fail safe.
+
+    These defaults are the root cause: any construction site that forgets the
+    verdict fields silently produces a confident "C / HOLD". A forgotten field
+    should read as "no answer", never as a recommendation someone might act on.
+    """
+    blank = EnrichedAnalysis.model_construct()
+
+    assert blank.final_grade == "N/A"
+    assert blank.final_score == 0.0
+    assert blank.final_recommendation == "WAIT"
 
 
 def test_emit_failure_becomes_failed(tmp_path: Path, mocker: Any) -> None:

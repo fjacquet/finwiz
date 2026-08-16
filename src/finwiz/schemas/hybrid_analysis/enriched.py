@@ -73,9 +73,13 @@ class EnrichedAnalysis(BaseModel):
     qualitative: QualitativeInsights | None = Field(default=None, description="AI-generated insights")
 
     # Final synthesis (hybrid)
-    final_grade: str = Field(default="C", description="Final grade (from Python)")
-    final_score: float = Field(default=0.5, ge=0.0, le=1.0, description="Final score (from Python)")
-    final_recommendation: str = Field(default="HOLD", description="Final recommendation (BUY/HOLD/SELL)")
+    # Defaults are a REFUSAL, not a verdict. A construction site that forgets these
+    # fields must produce "no answer", never a confident middling hold someone
+    # might act on. The previous defaults ("C" / 0.5 / "HOLD") were written to
+    # {TICKER}_enriched.json for every holding the pipeline refused.
+    final_grade: str = Field(default="N/A", description="Final grade (from Python); N/A when no verdict was produced")
+    final_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Final score (from Python); 0.0 when no verdict was produced")
+    final_recommendation: str = Field(default="WAIT", description="Final recommendation (BUY/HOLD/SELL); WAIT when no verdict was produced")
     recommendation_conflict: str | None = Field(default=None, description="Conflict note when Python and AI recommendations differ (Python wins)")
     recommendation_confidence: str = Field(default="MEDIUM", description="AI confidence assessment (LOW/MEDIUM/HIGH)")
 

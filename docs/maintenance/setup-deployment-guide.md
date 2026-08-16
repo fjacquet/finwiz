@@ -6,7 +6,7 @@ This guide provides comprehensive instructions for setting up, maintaining, and 
 
 ### System Requirements
 
-- **Python**: 3.8 or higher
+- **Python**: 3.13 (the project pins `requires-python = ">=3.13,<3.14"`; the docs CI job also runs Python 3.13)
 - **uv**: Python package manager (recommended)
 - **Git**: Version control
 - **Node.js**: For additional tooling (optional)
@@ -26,17 +26,19 @@ This guide provides comprehensive instructions for setting up, maintaining, and 
 2. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/finwiz/finwiz.git
+   git clone https://github.com/fjacquet/finwiz.git
    cd finwiz
    ```
 
 3. **Install dependencies**:
 
    ```bash
-   make docs-install
-   # or manually:
    uv sync --group docs
    ```
+
+   (There is no `make docs-install` target — the Makefile only defines
+   `docs-serve`, `docs-build`, `docs-build-strict`, `docs-deploy`,
+   `docs-lint`, `docs-validate`, and `docs-clean`.)
 
 ## Local Development
 
@@ -66,6 +68,11 @@ The documentation will be available at `http://127.0.0.1:8000` with hot reload e
 
 ### File Structure
 
+`docs/assets/` does not exist — there is no dedicated images/icons
+directory. The real top level (`ls docs/`) also has several directories not
+shown here: `adr/`, `development/`, `maintenance/`, `schemas/`, `setup/`,
+`superpowers/`, `testing/`, `tests/`.
+
 ```
 docs/
 ├── index.md                    # Homepage
@@ -73,7 +80,6 @@ docs/
 ├── how-to/                    # Problem-solving guides
 ├── reference/                 # Information-oriented content
 ├── explanations/              # Understanding-oriented content
-├── assets/                    # Images, icons, etc.
 ├── stylesheets/              # Custom CSS
 ├── javascripts/              # Custom JavaScript
 ├── overrides/                # Theme customizations
@@ -122,28 +128,27 @@ To add interactive schema documentation:
 
 ### Local Build
 
+The Makefile defines exactly seven `docs-*` targets — `docs-serve`,
+`docs-build`, `docs-build-strict`, `docs-deploy`, `docs-lint`,
+`docs-validate`, `docs-clean`. Everything below that isn't one of those
+seven (production/fast builds, strict/build validation variants, staging or
+production deployment, zero-downtime deploys, status checks, rollback) is
+**NOT IMPLEMENTED** — there is no staging environment and no rollback
+tooling in this repo, and running any of those commands fails with "No rule
+to make target".
+
 ```bash
 # Standard build
 make docs-build
 
-# Production build (optimized)
-make docs-build-production
-
-# Fast build (no optimization)
-make docs-build-fast
+# Strict build — fails on broken refs, missing pages, etc. (used by CI)
+make docs-build-strict
 ```
 
 ### Build Validation
 
 ```bash
-# Standard validation
-make docs-validate
-
-# Strict validation (fails on warnings)
-make docs-validate-strict
-
-# Validate built site
-make docs-validate-build
+make docs-validate   # runs docs-lint, then checks links/references
 ```
 
 ### Build Artifacts
@@ -159,54 +164,18 @@ make docs-validate-build
 **Automatic deployment** via GitHub Actions:
 
 1. **Push to main branch** triggers automatic deployment
-2. **Site URL**: `https://finwiz.github.io/finwiz/`
+2. **Site URL**: `https://fjacquet.github.io/finwiz`
 3. **Custom domain**: Configure in repository settings
 
 **Manual deployment**:
 
 ```bash
-# Deploy to GitHub Pages
+# Deploy to GitHub Pages (runs `mkdocs gh-deploy --clean`, prompts for confirmation)
 make docs-deploy
-
-# Force deployment
-make docs-deploy-force
 ```
 
-### Production Deployment
-
-```bash
-# Deploy to production
-make docs-deploy-production
-
-# Zero-downtime deployment
-make docs-deploy-zero-downtime
-
-# Check deployment status
-make docs-status
-```
-
-### Staging Deployment
-
-```bash
-# Deploy to staging
-make docs-deploy-staging
-
-# Zero-downtime staging deployment
-make docs-deploy-zero-downtime-staging
-
-# Check staging status
-make docs-status-staging
-```
-
-### Rollback Procedures
-
-```bash
-# Rollback production
-make docs-rollback
-
-# Rollback staging
-make docs-rollback-staging
-```
+There is no production/staging split, no zero-downtime deploy flag, no
+`docs-status` command, and no rollback tooling — see the note above.
 
 ## Configuration Management
 
@@ -217,7 +186,7 @@ Key configuration sections:
 ```yaml
 site_name: FinWiz Documentation
 site_description: AI-powered financial analysis platform documentation
-site_url: https://finwiz-docs.example.com
+site_url: https://fjacquet.github.io/finwiz
 
 theme:
   name: material
@@ -256,7 +225,7 @@ export DOCS_DOMAIN="docs.finwiz.com"
 - **Custom CSS**: `docs/stylesheets/extra.css`
 - **Custom JavaScript**: `docs/javascripts/`
 - **Theme overrides**: `docs/overrides/`
-- **Assets**: `docs/assets/`
+- **Assets**: no `docs/assets/` directory exists
 
 ## Performance Optimization
 

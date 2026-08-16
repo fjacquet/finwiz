@@ -48,9 +48,12 @@ FinWiz employs a **quantitative, rules-based investment methodology** that combi
 **Key Metrics**:
 
 - **ROE (Return on Equity)**: Capital efficiency and profitability
-  - Excellent: ≥30% (1.0 score)
-  - Acceptable: 10-30% (0.4-0.8 score)
-  - Poor: <10% (0.2 score)
+  - ≥20% → 1.0 score (not ≥30% as previously stated)
+  - ≥15% → 0.8 score
+  - ≥10% → 0.6 score
+  - ≥5% → 0.4 score
+  - <5% → 0.2 score
+  - (A 25% ROE scores 1.0 in code — the old "10-30% → 0.4-0.8" table would have scored it ~0.8)
 
 - **Debt-to-Equity Ratio**: Financial leverage and risk
   - Excellent: ≤0.3 (1.0 score)
@@ -118,7 +121,11 @@ FinWiz employs a **quantitative, rules-based investment methodology** that combi
 
 ### Detection Criteria
 
-A company qualifies as "quality" when meeting **2 of 3 criteria**:
+A company must first clear a **mandatory gate**: `fundamental_score >= 0.80`.
+A company hitting all three criteria below but scoring 0.79 on fundamentals
+is not treated as quality and gets the standard weights instead.
+
+Past that gate, it qualifies as "quality" when meeting **2 of 3 criteria**:
 
 1. **High ROE** (≥20%) - Superior capital efficiency
 2. **Low Debt** (Debt/Equity ≤0.5) - Financial stability
@@ -320,7 +327,7 @@ For portfolios with 10+ holdings:
 ### Data Pre-fetching
 
 - Fetch all ticker data upfront (2-5 seconds)
-- Cache results with TTL (45 minutes default)
+- Cache results with per-data-type TTLs (15 min to 7 days — see below)
 - Parallel API calls where possible
 
 ### Caching Strategy
@@ -331,8 +338,19 @@ For portfolios with 10+ holdings:
 2. File cache (fast, persistent across sessions)
 3. Hybrid cache (best of both)
 
-# TTL configuration
-CACHE_TTL=2700  # 45 minutes (covers typical portfolio analysis)
+# TTL configuration — there is no single CACHE_TTL variable; overrides are
+# per-data-type via CACHE_TTL_{TYPE} (CacheTTLRegistry in
+# infrastructure/caching/ttl_config.py). Defaults:
+CACHE_TTL_MARKET_DATA=900        # 15 minutes
+CACHE_TTL_FUNDAMENTALS=86400     # 24 hours
+CACHE_TTL_STATIC_REFERENCE=604800  # 7 days
+CACHE_TTL_CREW_OUTPUT=86400      # 24 hours
+CACHE_TTL_ANALYSIS_RESULT=1800   # 30 minutes
+CACHE_TTL_VALIDATION=86400       # 24 hours
+CACHE_TTL_FACT_PACK=604800       # 7 days
+
+# Separately, portfolio-level caching uses its own variable:
+PORTFOLIO_CACHE_TTL_HOURS=24     # hours, not seconds (config/portfolio_analysis_config.py)
 ```
 
 ## Limitations and Future Enhancements

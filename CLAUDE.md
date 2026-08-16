@@ -18,7 +18,7 @@ make test
 make check
 
 # Run a single test
-uv run pytest tests/unit/tools/test_yahoo_finance_tool.py::test_name -v -s
+uv run pytest tests/unit/data/adapters/test_base_adapter.py::test_name -v -s
 
 # Code quality
 make lint                              # ruff check --fix + ruff format
@@ -110,7 +110,9 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 
 - Fixtures use Faker for data generation (`tests/fixtures/`)
 - Shared fixtures in `tests/conftest.py` (stock_data, etf_data, crypto_data, etc.)
-- `tests/conftest_unittest_blocker.py` blocks unittest.mock imports at runtime
+- The unittest.mock ban is enforced statically — by ruff and by
+  `make check-unittest-mock`. (`tests/conftest_unittest_blocker.py` exists but
+  nothing loads it; pytest auto-loads only files named exactly `conftest.py`.)
 - Markers: `integration`, `unit`, `slow`, `asyncio`, `performance`, `benchmark`, `crew`, `flow`
 - Default pytest run excludes integration tests (`-m "not integration"`)
 - Coverage reports to `htmlcov/`, minimum 65%
@@ -121,9 +123,12 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 OPENAI_API_KEY=...              # Required
 SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
-# Feature flags: DEEP_PORTFOLIO_ANALYSIS, FF_PERPLEXITY_RESEARCH (full registry: config/features/definitions.py)
+# Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
+#   (full registry: config/features/definitions.py)
 # Investment Discovery (Phase 4) runs unconditionally; the
 # INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
+# DEEP_PORTFOLIO_ANALYSIS is NOT a feature flag and gates nothing — deep
+#   analysis always runs. The var is still parsed for API stability only.
 # Validation: VALIDATION_STRICTNESS=off|warn|error
 # Scenario probabilities: RISK_FREE_RATE=0.045  (Black-Scholes risk-free rate for options-implied probabilities)
 ```

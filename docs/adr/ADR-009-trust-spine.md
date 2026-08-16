@@ -71,7 +71,7 @@ Introduce a **trust spine** — a set of structural guarantees that make silent 
 - **92% file-size shrink** — `deep_analysis_pipeline.py` went from 1,209 → 99 lines; complexity is distributed across focused single-responsibility modules.
 - **TrustBanner honesty** — The report banner is computed from ledger data, not from self-reported crew status. A crew cannot claim success if its `StageResult` says `FAILED`.
 - **Amber badge for partial results** — Users see "Insight IA indisponible" when AI returned nothing; they can still trust the Python quantitative scores, just not the narrative.
-- **Regression test** — v0.3.0 silent-success class is pinned as a failing test (`tests/regression/test_v030_silent_success.py`); any future regression will be caught immediately.
+- **Regression test** — v0.3.0 silent-success class is pinned as a failing test (`tests/regression/test_trust_crisis_v030.py`); any future regression will be caught immediately.
 
 ### Negative
 

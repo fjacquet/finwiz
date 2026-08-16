@@ -22,10 +22,13 @@ class DeepAnalysisScorer:
 
     def calculate_composite_score(self, data: dict) -> float:
         """Calculate weighted composite score (0.0-1.0)."""
-        fundamental = self.calculate_fundamental_score(data) * 0.40
-        technical = self.calculate_technical_score(data) * 0.30
-        risk = (5 - self.calculate_risk_score(data)) / 5 * 0.30
-        return fundamental + technical + risk
+        # calculate_risk_score returns (score, details) where the score is
+        # already 0.0-1.0 with 1.0 = LOW risk. It enters the composite directly;
+        # there is no 0-5 scale and no inversion.
+        fundamental, _ = self.calculate_fundamental_score(data)
+        technical, _ = self.calculate_technical_score(data)
+        risk, _ = self.calculate_risk_score(data)
+        return 0.40 * fundamental + 0.30 * technical + 0.30 * risk
 ```
 
 ### Portfolio Analyzer
@@ -47,13 +50,16 @@ class PortfolioDeepAnalyzer:
 ```python
 # src/finwiz/reporting/python_report_generator.py
 class PythonReportGenerator:
-    """Template-based HTML report generation (NO AI)."""
+    """French HTML report generation (NO AI)."""
 
     def generate_family_financial_plan(self, data: dict) -> str:
-        """Generate professional French reports using Jinja2."""
-        # Use templates for consistent formatting
-        # Complete generation in milliseconds
-        # Support light/dark mode and responsive design
+        """Generate the family report.
+
+        NOT Jinja2 — this module imports no template engine and loads no
+        template file. `_generate_html_report` assembles the page from a Python
+        f-string plus `self._get_css_styles()` and the `_generate_*_section()`
+        helpers (see also finwiz/reporting/sections/).
+        """
 ```
 
 ## Scoring Methodology
@@ -163,12 +169,14 @@ Grades are assigned based on composite score thresholds:
 
 | Grade | Score Range | Description |
 |-------|-------------|-------------|
-| A+ | 0.85 - 1.00 | Exceptional opportunity |
-| A | 0.75 - 0.84 | Strong buy candidate |
-| B | 0.65 - 0.74 | Good investment |
-| C | 0.55 - 0.64 | Average performance |
-| D | 0.45 - 0.54 | Below average |
-| F | 0.00 - 0.44 | Poor investment |
+| A+ | >= 0.95 | Exceptional opportunity |
+| A | 0.85 - 0.95 | Strong buy candidate |
+| B+ | 0.80 - 0.85 | Good, solid across dimensions |
+| B | 0.75 - 0.80 | Attractive, minor weaknesses |
+| C+ | 0.70 - 0.75 | Mixed signals |
+| C | 0.65 - 0.70 | Minimum acceptable |
+| D | 0.50 - 0.65 | Below average |
+| F | < 0.50 | Poor investment |
 
 ### Recommendation Logic
 
@@ -191,13 +199,17 @@ def generate_recommendation(self, composite_score: float, grade: str) -> str:
 
 The Python scoring engine integrates with CrewAI Flow through convenience functions:
 
-```python
-# Integration functions in src/finwiz/scoring/__init__.py
+`scoring/__init__.py` exports exactly three names: `DeepAnalysisScorer`,
+`PortfolioDeepAnalyzer` and `analyze_portfolio_with_python`.
+`generate_python_report` is not among them — it lives in
+`finwiz.reporting.python_report_generator`.
 
-def analyze_portfolio_with_python(portfolio_data: dict) -> dict:
+```python
+# src/finwiz/scoring/__init__.py
+def analyze_portfolio_with_python(holdings: list[HoldingDecision], session_id: str) -> dict:
     """Convenience function for Flow integration."""
     analyzer = PortfolioDeepAnalyzer()
-    return analyzer.analyze_portfolio_holdings(portfolio_data)
+    return analyzer.analyze_portfolio_holdings(holdings)
 
 def generate_python_report(analysis_data: dict) -> str:
     """Convenience function for report generation."""
@@ -231,27 +243,28 @@ graph TB
 
 ### Performance Optimization
 
-#### Concurrent Processing
+#### Sequential Processing
+
+`analyze_portfolio_holdings` iterates holdings in a plain `for` loop. There is
+no ThreadPoolExecutor — `portfolio_deep_analyzer.py` never imports
+`concurrent.futures`, and nothing under `src/finwiz/scoring/` does. Scoring is
+pure Python arithmetic on already-collected data, so it is fast enough
+sequentially; the parallelism in this pipeline is at the deep-analysis
+orchestrator level, where each holding gets its own thread and event loop.
 
 ```python
-def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
-    """Analyze holdings concurrently for maximum performance."""
-    with ThreadPoolExecutor(max_workers=5) as executor:
-        futures = []
-        for holding in portfolio.holdings:
-            future = executor.submit(self._analyze_single_holding, holding)
-            futures.append((holding.ticker, future))
+def analyze_portfolio_holdings(self, holdings: list[HoldingDecision]) -> dict:
+    """Analyze holdings sequentially."""
+    results = {}
+    for holding in holdings:
+        try:
+            data = self._extract_holding_data(holding)
+            results[holding.ticker] = self._analyze_single_holding(data)
+        except Exception as e:
+            logger.error(f"Analysis failed for {holding.ticker}: {e}")
+            results[holding.ticker] = self._create_error_result(holding.ticker, str(e))
 
-        # Collect results as they complete
-        results = {}
-        for ticker, future in futures:
-            try:
-                results[ticker] = future.result(timeout=30)
-            except Exception as e:
-                logger.error(f"Analysis failed for {ticker}: {e}")
-                results[ticker] = self._create_error_result(ticker, str(e))
-
-        return results
+    return results
 ```
 
 #### Memory Management
@@ -299,26 +312,14 @@ def analyze_portfolio_holdings(self, portfolio: Portfolio) -> dict:
 ### ✅ Completed Components
 
 - **DeepAnalysisScorer**: Complete Python scoring engine
-- **PortfolioDeepAnalyzer**: Concurrent portfolio analyzer
-- **PythonReportGenerator**: Template-based report generation
+- **PortfolioDeepAnalyzer**: Sequential portfolio analyzer
+- **PythonReportGenerator**: f-string HTML report generation
 - **Integration Functions**: Flow-compatible convenience functions
-- **Demonstration Script**: End-to-end validation script
-
-### ❌ Critical Integration Gaps
-
-- **Flow Integration**: Flow still calls AI crews instead of Python functions
-- **JSON Export Structure**: Proper output directory organization
-- **A+ Discovery Integration**: Connect discovery to analysis results
-- **Backtesting Pipeline**: Connect backtesting to discovery results
-- **Final Report Generation**: Ensure templates are used instead of AI
-
-### 🎯 Next Steps
-
-1. Update Flow to call `analyze_portfolio_with_python()` instead of AI crews
-2. Fix JSON export directory structure and accessibility
-3. Integrate A+ discovery with deep analysis results
-4. Connect backtesting pipeline to discovery results
-5. Ensure final report uses Python templates exclusively
+- **Flow Integration**: `FinwizFlow` Phase 3 calls
+  `deep_analysis_orch.analyze_and_update_portfolio()`, which drives the
+  deterministic collect/quantify stages. The AI crew runs only as the
+  qualitative stage — the Python-first integration this document once listed as
+  a gap has been closed.
 
 ## Benefits and Trade-offs
 

@@ -250,7 +250,7 @@ open output/finwiz_family_financial_plan.html
 
 ## References
 
-- **AI Minimalism**: `.kiro/steering/ai-minimalism.md`
+- **AI Minimalism**: `.claude/skills/ai-minimalism/SKILL.md` (there is no `.kiro/` directory in this repo)
 - **CLAUDE.md**: Main project documentation
 - **Templates**: `src/finwiz/templates/`
 - **Template Renderer**: `src/finwiz/reporting/rebalancing/template_renderers.py`

@@ -36,7 +36,12 @@ Comprehensive analysis of individual stocks using fundamental and technical anal
 }
 ```
 
-**Output Schema**: `TenKInsight`
+**Output Schema**: `EnrichedAnalysis` — the final task in the chain
+(`output_pydantic: EnrichedAnalysis`, `stock_crew/config/tasks.yaml:359`).
+`TenKInsight` is not a task output anywhere in this crew; the earlier tasks
+in the chain emit `SecAnalysisInsights`, `FundamentalContextInsights`,
+`TechnicalStrategyInsights`, `ContextualRiskInsights`, and
+`InvestmentSynthesis`.
 
 **Example Usage**:
 
@@ -50,19 +55,21 @@ print(f"Recommendation: {result.recommendation}")
 print(f"Grade: {result.grade}")
 ```
 
-**Agents**:
+**Agents** (6, not 4 — `stock_crew/config/agents.yaml`):
 
-- **Stock Analyst**: Performs fundamental analysis
-- **Technical Analyst**: Conducts technical analysis
-- **Risk Assessor**: Evaluates investment risks
-- **Investment Reporter**: Consolidates findings
+- **sec_analyst**
+- **fundamental_analyst**
+- **technical_analyst**
+- **risk_analyst**
+- **investment_strategist**
+- **investment_reporter**
 
 **Tools Used**:
 
 - `YahooFinanceTickerInfoTool`
 - `EnhancedSECAnalysisTool`
 - `QuantitativeAnalysisTool`
-- `StandardizedSentimentTool`
+- `StandardizedSentimentAnalysisTool`
 - `TickerExistenceValidationTool`
 
 ### ETF Crew
@@ -81,7 +88,9 @@ Specialized analysis of Exchange-Traded Funds (ETFs) including expense ratios, h
 }
 ```
 
-**Output Schema**: `ETFFactsheet`
+**Output Schema**: `ETFCrewExport` — the final task
+(`output_pydantic: ETFCrewExport`, `etf_crew/config/tasks.yaml:343`).
+`ETFFactsheet` is not a task output anywhere in this crew.
 
 **Example Usage**:
 
@@ -95,12 +104,12 @@ print(f"Expense Ratio: {result.expense_ratio}")
 print(f"Tracking Error: {result.tracking_error}")
 ```
 
-**Agents**:
+**Agents** (3, not 4 — `etf_crew/config/agents.yaml`; there is no cost or
+performance analyst):
 
-- **ETF Analyst**: Analyzes fund structure and holdings
-- **Cost Analyst**: Evaluates fees and expenses
-- **Performance Analyst**: Assesses tracking and returns
-- **ETF Reporter**: Generates comprehensive report
+- **market_etf_analyst**
+- **risk_assessor**
+- **investment_reporter**
 
 **Tools Used**:
 
@@ -125,7 +134,9 @@ Analysis of cryptocurrencies including market dynamics, technology assessment, a
 }
 ```
 
-**Output Schema**: `CryptoThesis`
+**Output Schema**: `CryptoCrewExport` — the final task
+(`output_pydantic: CryptoCrewExport`, `crypto_crew/config/tasks.yaml:367`).
+`CryptoThesis` is not a task output anywhere in this crew.
 
 **Example Usage**:
 
@@ -139,19 +150,33 @@ print(f"Market Cap: {result.market_cap}")
 print(f"Technology Score: {result.technology_score}")
 ```
 
-**Agents**:
+**Agents** (6, not 4 — `crypto_crew/config/agents.yaml`; there is no
+dedicated regulatory analyst):
 
-- **Crypto Analyst**: Analyzes blockchain and tokenomics
-- **Market Analyst**: Evaluates market dynamics
-- **Regulatory Analyst**: Assesses regulatory risks
-- **Crypto Reporter**: Consolidates analysis
+- **market_analyst**
+- **technical_analyst**
+- **risk_assessor**
+- **investment_strategist**
+- **research_director**
+- **investment_reporter**
 
-**Tools Used**:
+**Tools Used**: `CoinMarketCapTool` does not exist anywhere in the codebase.
+The real tool set (`get_crypto_research_tools()` in
+`src/finwiz/tools/finance_tools.py`):
 
-- `CoinMarketCapTool`
-- `EnhancedCryptoAnalysisTool`
-- `QuantitativeAnalysisTool`
+- `YahooFinanceHistoryTool`
+- `YahooFinanceNewsTool`
+- `YahooFinanceTickerInfoTool`
+- `KrakenTickerInfoTool`
 - `TickerExistenceValidationTool`
+- `EnhancedCryptoAnalysisTool`
+- `DeFiMetricsTool`
+- `RegulatoryComplianceTool`
+- `StandardizedRiskScoringTool`
+- `StandardizedSentimentAnalysisTool`
+- `AlphaVantageNewsSentimentTool`
+- `ChartImgTool`
+- `TwelveDataIndicatorTool` (optional, initialized only if configured)
 
 ### Deep Analysis Crew
 
@@ -187,11 +212,14 @@ print(f"Grade: {result.grade}")
 print(f"Composite Score: {result.composite_score}")
 ```
 
-**Agents**:
+**Agents** (1, not 3 — `deep_analysis/config/agents.yaml`):
 
-- **Deep Analyst**: Performs comprehensive analysis
-- **Risk Assessor**: Detailed risk evaluation
-- **Grading Specialist**: Assigns grades and scores
+- **asset_analyst**: Qualitative-only agent ("Financial Analyst (Qualitative)").
+  A second `investment_reporter` agent was deliberately removed — Python's
+  `synthesize_enriched_analysis()` now handles consolidation for $0, which
+  is why there's no separate reporter or grading agent here. Quantitative
+  scoring and grading happen in Python (`DeepAnalysisScorer`), not in this
+  crew.
 
 **Dynamic Tool Routing**:
 
@@ -216,7 +244,14 @@ Consolidates analysis results from multiple crews into comprehensive reports.
 }
 ```
 
-**Output Schema**: `ConsolidatedReport`
+**Output Schema**: No single `ConsolidatedReport` class exists (`grep -rn
+'class ConsolidatedReport' src/` finds only the unrelated
+`ConsolidatedReportExport` in `crew_exports.py`). The report crew's tasks
+each output their own schema:
+
+- `ReporterInput` (`report_crew/config/tasks.yaml:205`)
+- `PortfolioConfiguration` (`:288`)
+- `RiskAssessmentStandardized` (`:383`)
 
 **Example Usage**:
 
@@ -230,14 +265,19 @@ result = crew.crew().kickoff(inputs={
 })
 ```
 
-**Agents**:
+**Agents** (4, not 2 — `report_crew/config/agents.yaml`):
 
-- **Report Analyst**: Consolidates findings
-- **Investment Reporter**: Generates final report
+- **financial_integration_analyst**: Integrates Stock/ETF/Crypto analyses into a unified narrative
+- **portfolio_allocator**: Proposes optimal cross-asset portfolio allocations
+- **risk_manager**: Identifies and mitigates portfolio and market risks
+- **investment_reporter**: `@final_reporter`, formats the consolidated HTML report
 
-**Tools Used**:
-
-- No external tools (consolidation only)
+**Tools Used**: Only `investment_reporter` has `tools=[]`. The other three
+agents are all constructed with `tools=self.tools`, which
+`ReportCrew._get_tools()` populates with `DirectoryReadTool` instances for
+every `output/` subdirectory (stock, etf, crypto, portfolio, discovery,
+deep_analysis, report) plus `docs/schemas` and `docs/schemas/examples`, and
+five `FileReadTool` instances for specific schema/example JSON files.
 
 ## Crew Configuration
 

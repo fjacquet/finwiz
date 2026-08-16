@@ -73,20 +73,25 @@ composite_score = (
 
 | Score Range | Grade | Description         |
 | ----------- | ----- | ------------------- |
-| 0.85 - 1.00 | A+    | Exceptional quality |
-| 0.75 - 0.84 | A     | High quality        |
-| 0.65 - 0.74 | B     | Good quality        |
-| 0.55 - 0.64 | C     | Average quality     |
-| 0.45 - 0.54 | D     | Below average       |
-| 0.00 - 0.44 | F     | Poor quality        |
+| ≥ 0.95      | A+    | Exceptional quality |
+| 0.85 - 0.95 | A     | High quality        |
+| 0.80 - 0.85 | B+    | Good+ quality       |
+| 0.75 - 0.80 | B     | Good quality        |
+| 0.70 - 0.75 | C+    | Fair+ quality       |
+| 0.65 - 0.70 | C     | Minimum acceptable  |
+| 0.50 - 0.65 | D     | Below average       |
+| < 0.50      | F     | Poor quality        |
 
 ### Recommendation Logic
 
-| Composite Score       | Recommendation | Rationale                                 |
-| --------------------- | -------------- | ----------------------------------------- |
-| ≥ 0.70 (A- or better) | BUY            | Strong fundamentals and favorable outlook |
-| 0.50 - 0.69 (B to C)  | HOLD           | Mixed signals, monitor developments       |
-| < 0.50 (Below C)      | SELL           | Weak fundamentals or elevated risks       |
+| Composite Score  | Recommendation | Rationale                                 |
+| ---------------- | -------------- | ----------------------------------------- |
+| ≥ 0.85 (A or A+) | BUY            | Strong fundamentals and favorable outlook |
+| 0.65 - 0.85      | HOLD           | Mixed signals, monitor developments       |
+| ≤ 0.65           | SELL           | Weak fundamentals or elevated risks       |
+
+`buy_threshold` is 0.85 and `sell_threshold` is 0.65
+(`scoring/thresholds.py:46-47`). A 0.70 holding is a HOLD.
 
 ## Asset-Specific Scoring
 
@@ -122,10 +127,10 @@ else:               score = 0.2  # <5%
 
 **Fundamental Analysis Components:**
 
-- **Expense Ratio** - 40% of fundamental score
+- **Expense Ratio** - 50% of fundamental score
   - Target: ≤0.25% (Excellent: ≤0.10%)
   - Lower fees improve long-term returns
-- **Tracking Error** - 40% of fundamental score
+- **Tracking Error** - 30% of fundamental score
   - Target: ≤0.50% (Excellent: ≤0.20%)
   - Measures how closely ETF follows benchmark
 - **Assets Under Management (AUM)** - 20% of fundamental score
@@ -136,7 +141,7 @@ else:               score = 0.2  # <5%
 
 **Fundamental Analysis Components:**
 
-- **Market Capitalization** - 50% of fundamental score
+- **Market Capitalization** - 40% of fundamental score
   - Target: ≥$1B (Excellent: ≥$100B)
   - Higher market cap indicates stability and adoption
 - **24-Hour Volume** - 30% of fundamental score
@@ -145,6 +150,9 @@ else:               score = 0.2  # <5%
 - **Age/Maturity** - 20% of fundamental score
   - Target: ≥2 years (Excellent: ≥5 years)
   - Older projects have proven track records
+- **Supply Metrics** - 10% of fundamental score
+  - Circulating vs max supply
+  - Constrains future dilution
 
 ### Technical Analysis (30% Weight)
 
@@ -318,20 +326,26 @@ print(f"Technical indicators: {detailed['technical_indicators']}")
 
 ### Custom Scoring Thresholds
 
-```python
-# Customize grade thresholds
-scorer.GRADE_THRESHOLDS = {
-    0.90: "A+",  # Stricter A+ requirement
-    0.80: "A",   # Stricter A requirement
-    0.70: "B",
-    0.60: "C",
-    0.50: "D",
-    0.0: "F"
-}
+Thresholds are **injected, not assigned**. `DeepAnalysisScorer` has no
+`GRADE_THRESHOLDS`, `BUY_THRESHOLD` or `SELL_THRESHOLD` attribute — setting
+those names on the instance is a silent no-op that changes nothing. Build a
+`ScoringThresholds` and pass it to the constructor:
 
-# Customize recommendation thresholds
-scorer.BUY_THRESHOLD = 0.75   # Stricter buy requirement
-scorer.SELL_THRESHOLD = 0.45  # More aggressive sell threshold
+```python
+from dataclasses import replace
+
+from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
+from finwiz.scoring.thresholds import get_thresholds
+
+custom = replace(
+    get_thresholds(),
+    grade_a_plus=0.97,        # stricter A+
+    grade_a=0.90,             # stricter A
+    buy_threshold=0.90,       # stricter buy
+    sell_threshold=0.55,      # more aggressive sell
+)
+
+scorer = DeepAnalysisScorer(thresholds=custom)
 ```
 
 ## Data Preservation
@@ -436,7 +450,7 @@ The Python scoring engine has comprehensive unit test coverage:
 ```python
 # Test fundamental scoring
 def test_should_calculate_stock_fundamental_score_with_excellent_metrics():
-    scorer = DeepAnalysisScorer()
+    scorer = FundamentalScorer()
     data = {
         "roe": 0.25,              # 25% ROE -> 1.0 score
         "debt_to_equity": 0.2,    # Low debt -> 1.0 score
@@ -444,7 +458,8 @@ def test_should_calculate_stock_fundamental_score_with_excellent_metrics():
         "profit_margin": 0.25     # 25% margin -> 1.0 score
     }
 
-    score, details = scorer._calculate_stock_fundamental_score(data, {})
+    # Public entry point; delegates to the per-asset analyzers.
+    score, details = scorer.calculate_fundamental_score("stock", data)
 
     # Weighted: 0.4*1.0 + 0.3*1.0 + 0.2*1.0 + 0.1*1.0 = 1.0
     assert score == 1.0

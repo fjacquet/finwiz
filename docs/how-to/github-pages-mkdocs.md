@@ -14,25 +14,35 @@ GitHub Pages automatically runs Jekyll on all repositories by default. This caus
 
 To disable Jekyll processing, we create a `.nojekyll` file in the root of the built site. This tells GitHub Pages to serve the files as-is without Jekyll processing.
 
-### Automatic Creation
+### Automatic Creation — not currently done locally
 
-The `.nojekyll` file is automatically created during the build process:
-
-**In `Makefile`:**
+`make docs-build` does **not** create a `.nojekyll` file. The real target
+is:
 
 ```makefile
 docs-build:
- uv run mkdocs build --clean
- touch site/.nojekyll
+    uv run mkdocs build
 ```
+
+No `--clean` flag and no `touch site/.nojekyll`. If a `.nojekyll` file ends
+up in the deployed site, it's produced by the GitHub Actions workflow
+below, not by the local Makefile target.
 
 ### GitHub Actions Workflow
 
-The `.github/workflows/deploy-docs.yml` workflow is already configured correctly:
+There is no `.github/workflows/deploy-docs.yml`. The real workflow is
+`.github/workflows/docs.yml`, a 14-line file that defines no build/upload/
+deploy jobs of its own — it delegates entirely to a reusable workflow:
 
-1. **Build job**: Builds the site with `.nojekyll` file included
-2. **Upload artifact**: Uploads the entire `site/` directory (including `.nojekyll`)
-3. **Deploy job**: Deploys to GitHub Pages using `actions/deploy-pages@v4`
+```yaml
+jobs:
+  docs:
+    uses: fjacquet/ci/.github/workflows/docs-publish.yml@v1.3.0
+    with: { python-version: "3.13" }
+```
+
+The actual build/upload/deploy steps (including whether `actions/deploy-pages@v4`
+is used) live in that external `fjacquet/ci` repo, not in this repository.
 
 ## Verification
 
@@ -48,30 +58,39 @@ After deployment, verify that GitHub Pages is serving MkDocs correctly:
 ### Local Build
 
 ```bash
-# Standard build (includes .nojekyll)
+# Standard build (does not create .nojekyll)
 make docs-build
 
-# Production build with optimization
-make docs-build-production
+# Strict build — fails on broken refs/missing pages (used by CI)
+make docs-build-strict
 ```
+
+There is no `make docs-build-production` target — the Makefile defines only
+`docs-serve`, `docs-build`, `docs-build-strict`, `docs-deploy`, `docs-lint`,
+`docs-validate`, and `docs-clean`.
 
 ### Manual Deployment
 
 ```bash
-# Deploy to GitHub Pages
+# Deploy to GitHub Pages (runs `mkdocs gh-deploy --clean`, prompts for confirmation)
 make docs-deploy
-
-# Deploy to production with validation
-make docs-deploy-production
 ```
+
+There is no `make docs-deploy-production` target and no staging environment
+in this repo.
 
 ### Automatic Deployment
 
-The documentation is automatically deployed when:
+Per `.github/workflows/docs.yml`, the `docs` job (delegated to
+`fjacquet/ci/.github/workflows/docs-publish.yml@v1.3.0`) runs on:
 
-- **Push to main**: Triggers production deployment
-- **Pull request**: Triggers staging deployment with preview URL
-- **Manual trigger**: Use GitHub Actions workflow dispatch
+- **Push to `main`** (when `docs/**`, `mkdocs.yml`, or the workflow file change)
+- **Pull requests to `main`** (same path filters)
+- **Manual `workflow_dispatch`**
+
+Whether pull-request runs produce a preview URL or a "staging" deployment
+is determined inside the external `fjacquet/ci` reusable workflow, not
+visible in this repository — don't assume a staging environment exists.
 
 ## Troubleshooting
 
@@ -79,14 +98,13 @@ The documentation is automatically deployed when:
 
 **Symptom**: CSS, JavaScript, or images return 404 errors
 
-**Solution**: Verify `.nojekyll` file exists in deployed site:
+**Solution**: A local `make docs-build` will never produce `site/.nojekyll`
+(see "Automatic Creation" above), so checking for it locally isn't a useful
+diagnostic. Check the deployed site instead — if this returns 404, Jekyll
+processing may be interfering with the deployed output:
 
 ```bash
-# Check locally
-ls -la site/.nojekyll
-
-# Check deployed site
-curl -I https://your-username.github.io/finwiz/.nojekyll
+curl -I https://fjacquet.github.io/finwiz/.nojekyll
 ```
 
 ### Search Not Working

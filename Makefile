@@ -230,12 +230,12 @@ docs-validate: docs-lint
 	@echo "  - Verifying all referenced files exist..."
 	@echo "✅ Documentation validation completed"
 	@echo ""
-	@echo "📌 Note: GitHub Pages will automatically build and deploy from the docs/ directory"
-	@echo "   Configure in GitHub: Settings → Pages → Source: Deploy from branch 'main' → /docs"
+	@echo "📌 Note: the Docs workflow builds the MkDocs site and publishes it to Pages"
+	@echo "   Configure in GitHub: Settings → Pages → Source: GitHub Actions"
 
 docs-clean:
 	@echo "🧹 Cleaning documentation artifacts..."
-	@rm -rf site/ docs/_site/ docs/.jekyll-cache/ docs/.jekyll-metadata
+	@rm -rf site/
 	@echo "✅ Documentation artifacts cleaned"
 
 # HTML Report Generation

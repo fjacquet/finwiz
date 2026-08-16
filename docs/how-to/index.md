@@ -32,10 +32,6 @@ How-to guides are **problem-oriented** recipes that show you how to accomplish s
 - **[Deep Analysis Troubleshooting](deep_analysis_troubleshooting.md)** - Fix deep analysis issues
 - **[Template Configuration](template_configuration.md)** - Customize report templates
 
-### Portfolio Management
-
-- **[Risk Management](risk_management.md)** - Configure risk assessment
-
 ### Development
 
 - **[Testing](../development/DEVELOPER_GUIDE.md#testing)** - Test FinWiz components
@@ -62,7 +58,6 @@ Advanced usage guides:
 1. [Batch Processing](BATCH_PROCESSING.md)
 2. [Python Scoring Engine](PYTHON_SCORING_ENGINE.md)
 3. [Performance Configuration](PERFORMANCE_CONFIGURATION.md)
-4. [Risk Management](risk_management.md)
 
 #### Developers
 
@@ -113,7 +108,6 @@ Each guide follows this structure:
 
 ### Reference
 
-- [CLI Commands](../reference/cli_commands.md) - Command reference
 - [API Reference](../reference/api/index.md) - API documentation
 
 ### Explanations

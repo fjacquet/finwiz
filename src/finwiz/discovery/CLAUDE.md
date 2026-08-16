@@ -6,12 +6,17 @@ Individual discovery components for finding newcomer investment candidates.
 
 ```
 discovery/
-├── __init__.py                # Exports all 5 discovery classes
+├── __init__.py                # Exports the discovery classes
 ├── universe_provider.py       # DynamicUniverseProvider: ETF holdings via yfinance + static fallback
 ├── ipo_screener.py            # IPOScreener: SEC EDGAR EFTS API for S-1/S-1A filings
 ├── breakout_detector.py       # BreakoutDetector: Price/volume breakout signals ($200M-$50B cap)
 ├── momentum_scanner.py        # MomentumScanner: RSI + volume anomaly + ROC via TA-Lib
-└── candidate_scorer.py        # CandidateScorer: Grades candidates using ScreeningRanking + score_to_grade()
+├── candidate_scorer.py        # CandidateScorer: Grades candidates using ScreeningRanking + score_to_grade()
+├── market_data.py             # Bulk returns/sectors download; factor_score_from_returns()
+├── fundamentals_adapter.py    # Fundamentals lookup for candidates
+├── signal_curves.py           # Signal-to-score curves
+├── ticker_hygiene.py          # Ticker cleanup for the mined universe
+└── ticker_utils.py            # Symbol normalization helpers
 ```
 
 ## Entry Points

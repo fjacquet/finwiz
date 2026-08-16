@@ -1,13 +1,13 @@
 # FinWiz: AI-Powered Financial Analysis Platform
 
-[![CI](https://github.com/fjacquet/finwiz/actions/workflows/quality.yml/badge.svg)](https://github.com/fjacquet/finwiz/actions/workflows/quality.yml)
+[![CI](https://github.com/fjacquet/finwiz/actions/workflows/ci.yml/badge.svg)](https://github.com/fjacquet/finwiz/actions/workflows/ci.yml)
 [![Docs](https://github.com/fjacquet/finwiz/actions/workflows/docs.yml/badge.svg)](https://github.com/fjacquet/finwiz/actions/workflows/docs.yml)
-[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/)
-[![Coverage](https://img.shields.io/badge/coverage-72%25-yellow.svg)](htmlcov/index.html)
+[![Security](https://github.com/fjacquet/finwiz/actions/workflows/security.yml/badge.svg)](https://github.com/fjacquet/finwiz/actions/workflows/security.yml)
+[![Release](https://img.shields.io/github/v/release/fjacquet/finwiz?sort=semver)](https://github.com/fjacquet/finwiz/releases/latest)
+[![Python](https://img.shields.io/badge/python-3.13-blue.svg)](https://www.python.org/)
+[![Coverage](https://img.shields.io/badge/coverage-77%25%20(gate%2065%25)-brightgreen.svg)](https://github.com/fjacquet/finwiz/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-success)](https://pre-commit.com/)
-[![CI](https://github.com/fjacquet/finwiz/actions/workflows/ci.yml/badge.svg)](https://github.com/fjacquet/finwiz/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/fjacquet/finwiz?sort=semver)](https://github.com/fjacquet/finwiz/releases/latest)
 
 FinWiz analyzes portfolios of stocks, ETFs, and crypto using a hybrid approach: deterministic Python scoring ($0, <100ms) for quantitative analysis and CrewAI crews for qualitative insights only. Each holding is graded A+ to F with a composite score (40% fundamental, 30% technical, 30% risk) and an honest trust banner that shows exactly how much of the analysis succeeded.
 

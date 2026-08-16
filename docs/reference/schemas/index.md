@@ -2,48 +2,6 @@
 
 Comprehensive documentation for FinWiz's data schemas, validation models, and type definitions. All schemas are implemented using Pydantic v2 with strict validation.
 
-## Schema Categories
-
-### Analysis Schemas
-
-Core schemas for financial analysis results:
-
-- **[Analysis Schemas](analysis_schemas.md)** - Primary analysis outputs
-  - `TenKInsight` - Comprehensive stock analysis
-  - `ETFFactsheet` - ETF analysis and metrics
-  - `CryptoThesis` - Cryptocurrency analysis
-  - `MarketSentiment` - Market sentiment analysis
-  - `RiskAssessmentStandardized` - Standardized risk scoring
-
-### Portfolio Management
-
-Schemas for portfolio analysis and management:
-
-- **[Portfolio Schemas](portfolio_schemas.md)** - Portfolio management
-  - `PortfolioReview` - Complete portfolio analysis
-  - `HoldingDecision` - Individual holding recommendations
-  - `Alternative` - Alternative investment suggestions
-  - `OptimizationResult` - Portfolio optimization results
-
-### Investment Discovery
-
-Schemas for finding new investment opportunities:
-
-- **[Discovery Schemas](discovery_schemas.md)** - Investment discovery
-  - `APlusDiscoveryResult` - A+ investment opportunities
-  - `InvestmentCandidate` - Potential investments
-  - `APlusOpportunitySection` - Categorized opportunities
-  - `APlusImprovementSuggestion` - Portfolio improvements
-
-### Validation and Input
-
-Schemas for input validation and error handling:
-
-- **[Validation Schemas](validation_schemas.md)** - Input validation
-  - `ValidatedTicker` - Ticker symbol validation
-  - `ValidationResult` - Validation outcomes
-  - `ReporterInput` - Report generation inputs
-
 ## Schema Relationships
 
 ```mermaid
@@ -227,7 +185,7 @@ def validate_price_target(cls, v: Optional[float]) -> Optional[float]:
 ### Validation Manager
 
 ```python
-from finwiz.validation import get_validation_manager
+from finwiz.validation.manager import get_validation_manager
 
 manager = get_validation_manager()
 result = manager.validate_crew_output(data, "stock", "analysis")
@@ -242,7 +200,7 @@ else:
 ### Schema Registry
 
 ```python
-from finwiz.validation import get_registry
+from finwiz.validation.registry import get_registry
 
 registry = get_registry()
 schema = registry.get_schema("TenKInsight")

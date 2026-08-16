@@ -46,7 +46,7 @@ graph TB
 ### Python Scoring Engine (Primary)
 
 - **DeepAnalysisScorer**: Deterministic financial scoring (10-20x faster than AI)
-- **PortfolioDeepAnalyzer**: Concurrent portfolio analysis with Python calculations
+- **PortfolioDeepAnalyzer**: Sequential portfolio analysis with Python calculations (holdings are processed one at a time in a `for` loop; concurrency across holdings lives in `DeepAnalysisOrchestrator`, not here)
 - **Asset-Specific Analyzers**: Stock, ETF, and Crypto specialized scoring
 - **Performance**: 10-30 seconds per ticker vs 5-10 minutes with AI
 
@@ -131,17 +131,19 @@ graph TB
 ### ✅ Completed Components
 
 - **Python Scoring Engine**: Complete deterministic scoring system
-- **Portfolio Analyzer**: Concurrent analysis with Python calculations
+- **Portfolio Analyzer**: Sequential analysis with Python calculations (per-holding concurrency lives in `DeepAnalysisOrchestrator`)
 - **Report Generator**: Template-based HTML generation
 - **Integration Functions**: Flow-compatible convenience functions
 - **Batch Processing**: Optimized data pre-fetching system
 
-### 🔄 Integration in Progress
+### ✅ Integration (Completed)
 
-- **Flow Integration**: Connecting Python components to CrewAI Flow
-- **A+ Discovery**: Integrating discovery with analysis results
-- **Backtesting Pipeline**: Connecting backtesting to opportunities
-- **Final Report Assembly**: Template-based consolidation
+These items, previously tracked as in progress, have since shipped:
+
+- **Flow Integration**: `FinwizFlow` delegates every phase to its orchestrator (`src/finwiz/flows/orchestrator.py:192-295`)
+- **A+ Discovery**: `integrate_aplus_discovery_with_deep_analysis()` connects discovery to analysis results (`src/finwiz/orchestrators/discovery/aplus_discovery_integrator.py`)
+- **Backtesting Pipeline**: `connect_backtesting_to_discovery_results()` connects backtesting to opportunities (`src/finwiz/integration/backtesting_pipeline_connector.py`)
+- **Final Report Assembly**: `ReportingOrchestrator.report()` assembles the consolidated report (`src/finwiz/orchestrators/reporting_orchestrator.py`)
 
 ### 📊 Performance Achievements
 

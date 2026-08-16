@@ -76,14 +76,38 @@ quantitative/
 
 ## Usage
 
+Backtesting is per-symbol and date-bounded; optimization takes a
+`PortfolioInputs` object, not a ticker list.
+
 ```python
 from finwiz.quantitative import BacktestingEngine, PortfolioOptimizer, RiskManager
+from finwiz.quantitative.objective_functions import ObjectiveFunction
+from finwiz.quantitative.config import OptimizationMethod
 
 engine = BacktestingEngine()
-result = engine.run(strategy=strategy, tickers=["AAPL", "GOOGL"])
+result = engine.run_strategy_backtest(
+    strategy_class=MyStrategy,
+    symbol="AAPL",
+    start_date=start,
+    end_date=end,
+    strategy_params={...},          # optional
+    benchmark_symbol="SPY",         # optional
+)                                    # -> BacktestResult | None
+
+# Several strategies over one symbol
+results = engine.run_multi_strategy_backtest(
+    strategies=[(MyStrategy, {...}), (OtherStrategy, {...})],
+    symbol="AAPL",
+    start_date=start,
+    end_date=end,
+)
 
 optimizer = PortfolioOptimizer()
-weights = optimizer.optimize(tickers=tickers, objective="max_sharpe")
+result = optimizer.optimize_portfolio(
+    inputs=portfolio_inputs,
+    objective=ObjectiveFunction.MAX_SHARPE,
+    method=OptimizationMethod.MEAN_VARIANCE,
+)                                    # -> OptimizationResult
 ```
 
 ## Related Modules

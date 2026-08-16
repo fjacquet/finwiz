@@ -16,9 +16,16 @@ FinWiz uses a simplified three-tier recommendation system:
 
 | Recommendation | Composite Score | Grade Range | Meaning |
 |----------------|-----------------|-------------|---------|
-| **BUY** | ≥ 0.85 | A+, A, B+, B | Strong opportunity - acquire or add to position |
-| **HOLD** | 0.65 - 0.85 | C+, C | Mixed signals - maintain position, monitor closely |
+| **BUY** | ≥ 0.85 | A+, A | Strong opportunity - acquire or add to position |
+| **HOLD** | 0.65 - 0.85 | B+, B, C+, C | Mixed signals - maintain position, monitor closely |
 | **SELL** | < 0.65 | D, F | Weak fundamentals or elevated risk - reduce or exit position |
+
+> **Correction**: An earlier version of this table put B+ and B in the BUY
+> grade range. `buy_threshold = 0.85` in
+> `src/finwiz/scoring/thresholds.py:46` (comment: "BUY recommendation (A or
+> better)"), so B+ (0.80-0.85) and B (0.75-0.80) both fall in the HOLD
+> band — this matches `docs/explanations/investment_methodology.md:175`
+> ("HOLD: Score 0.65-0.85 (B+ to C)").
 
 ### Decision Logic
 
@@ -61,8 +68,8 @@ else:
 |-------|-------------|----------------|--------|-----------|
 | **A+** | 0.95-1.00 | BUY | Strong buy - maximum conviction | Exceptional across all dimensions |
 | **A** | 0.85-0.95 | BUY | Buy - high conviction | Excellent fundamentals and technicals |
-| **B+** | 0.80-0.85 | BUY | Buy - moderate conviction | Solid opportunity, minor weaknesses |
-| **B** | 0.75-0.80 | BUY | Buy - acceptable | Good overall, some concerns |
+| **B+** | 0.80-0.85 | HOLD | Hold - upper range | Solid opportunity, but below the BUY threshold |
+| **B** | 0.75-0.80 | HOLD | Hold - acceptable | Good overall, some concerns |
 | **C+** | 0.70-0.75 | HOLD | Hold - monitor closely | Mixed signals, watch for changes |
 | **C** | 0.65-0.70 | HOLD | Hold - significant concerns | Minimum acceptable quality |
 | **D** | 0.50-0.65 | SELL | Sell - multiple red flags | Below acceptable standards |
@@ -70,12 +77,16 @@ else:
 
 ### Conviction Levels
 
-**BUY Recommendations** have varying conviction levels:
+**BUY Recommendations** (score ≥ 0.85) have varying conviction levels:
 
 - **Score 0.95+**: Maximum conviction - Core portfolio position
 - **Score 0.85-0.95**: High conviction - Significant allocation
-- **Score 0.80-0.85**: Moderate conviction - Standard position size
-- **Score 0.75-0.80**: Acceptable - Smaller position, more monitoring
+
+**HOLD Recommendations** in the upper range (0.75-0.85, B+/B grades) are
+below the BUY threshold but stronger than the rest of the HOLD band:
+
+- **Score 0.80-0.85**: Moderate - Maintain position, reassess on next upgrade
+- **Score 0.75-0.80**: Acceptable - Maintain position, monitor more closely
 
 ## Recommendation Rationale Generation
 
@@ -119,7 +130,13 @@ def generate_conclusion(composite_score: float, grade: str, recommendation: str)
 
 ## Real-World Examples
 
-### Example 1: BUY Recommendation (ASML)
+### Example 1: HOLD Recommendation (ASML)
+
+> **Correction**: An earlier version of this example labeled this **BUY**.
+> A composite score of 0.765 is below `buy_threshold = 0.85`, so per the
+> decision logic above this is a **HOLD** (B grade, upper range), not a
+> BUY — regardless of quality-company adaptive weighting, which affects
+> the composite score itself, not the threshold it's compared against.
 
 **Score Breakdown:**
 
@@ -130,17 +147,18 @@ def generate_conclusion(composite_score: float, grade: str, recommendation: str)
 
 **Quality Company**: Yes (3/3 criteria) → Adaptive weights (50/25/25)
 
-**Recommendation**: **BUY**
+**Recommendation**: **HOLD**
 
 **Rationale**:
-> "ASML receives a B grade with a composite score of 0.77. Fundamental analysis (score: 0.84) shows ROE of 53.9%, debt-to-equity of 0.14, and revenue growth of 2.6%. Technical analysis (score: 0.72) indicates sideways trend with RSI at 50.0. Risk assessment (score: 0.58) shows 38.9% volatility and maximum drawdown of -23.4%. Despite high volatility typical of semiconductor sector, excellent fundamentals and quality company status justify a BUY recommendation."
+> "ASML receives a B grade with a composite score of 0.77. Fundamental analysis (score: 0.84) shows ROE of 53.9%, debt-to-equity of 0.14, and revenue growth of 2.6%. Technical analysis (score: 0.72) indicates sideways trend with RSI at 50.0. Risk assessment (score: 0.58) shows 38.9% volatility and maximum drawdown of -23.4%. Despite high volatility typical of semiconductor sector, excellent fundamentals and quality company status keep this in the upper HOLD range, just short of the BUY threshold."
 
 **Key Decision Factors**:
 
 - ✓ Exceptional fundamentals (ROE 53.9%, Margins 29.4%, Low debt 0.14)
-- ✓ Quality company detection triggered adaptive weighting
+- ✓ Quality company detection triggered adaptive weighting, raising the composite score
 - ✓ High volatility acceptable for cyclical semiconductor sector
 - ✓ Strong competitive moat (ASML is monopoly in EUV lithography)
+- ⚠ Composite score (0.765) still below the 0.85 BUY threshold
 
 ### Example 2: SELL Recommendation (GES)
 
@@ -198,7 +216,7 @@ Quality companies with 2+ of the following criteria receive adaptive 50/25/25 we
 
 This adjustment recognizes that short-term volatility is less relevant for companies with durable competitive advantages and strong fundamentals.
 
-**Impact**: A company scoring 0.77 with standard weights might score 0.82 with adaptive weights, potentially pushing it from HOLD to BUY territory.
+**Impact**: A company scoring 0.77 with standard weights might score 0.82 with adaptive weights — still HOLD (below the 0.85 BUY threshold), but further up the HOLD range. A company closer to the threshold, e.g. 0.83 with standard weights, could cross into BUY territory (≥0.85) with adaptive weights.
 
 ### Sector-Specific Adjustments
 
@@ -225,16 +243,37 @@ Recommendations should be contextualized with market conditions:
 
 ## Confidence Levels
 
-Each recommendation includes a confidence level based on data quality and completeness:
+Each recommendation includes a confidence level based on data quality and completeness.
+
+> **Correction**: An earlier version of this document showed confidence as
+> a weighted sum of per-component confidences (0.3/0.3/0.2/0.2). That's
+> not how it's computed. The real formula
+> (`src/finwiz/scoring/score_result_builder.py:258-280`) derives
+> confidence from **score dispersion** across the three component scores,
+> penalized by **data completeness**:
 
 ```python
-confidence_level = (
-    0.3 * fundamental_confidence +
-    0.3 * technical_confidence +
-    0.2 * risk_confidence +
-    0.2 * data_quality_score
+# src/finwiz/scoring/score_result_builder.py:258-280 (actual code)
+scores = [fundamental_score, technical_score, risk_score]
+score_std = (sum((s - sum(scores) / 3) ** 2 for s in scores) / 3) ** 0.5
+
+# Lower standard deviation across the three scores = higher confidence
+consistency_confidence = max(0.5, 1.0 - score_std * 2)
+
+# Data quality: -0.1 per missing field among current_price, volatility, rsi
+data_quality = 1.0
+missing_fields = sum(
+    1 for field in ["current_price", "volatility", "rsi"]
+    if field not in data or data[field] is None
 )
+data_quality -= missing_fields * 0.1
+
+confidence_level = min(1.0, max(0.3, consistency_confidence * data_quality))
 ```
+
+In other words: scores that agree with each other (low dispersion) drive
+confidence up; missing key fields drive it down; the result is clamped to
+[0.3, 1.0].
 
 **Confidence Thresholds:**
 
@@ -254,10 +293,9 @@ confidence_level = (
 
 1. **New Positions**: Only initiate on BUY recommendations (score ≥0.85)
 2. **Existing Positions**: KEEP on HOLD (≥0.65), exit on SELL (<0.65)
-3. **Position Sizing**: Scale based on score within BUY range:
+3. **Position Sizing**: Scale based on score within BUY range (≥0.85):
    - 0.95+: Full position
    - 0.85-0.95: 75-100% position
-   - 0.75-0.85: 50-75% position
 4. **Rebalancing Triggers**: Re-evaluate when score crosses threshold ±0.05
 
 ### For Individual Investors

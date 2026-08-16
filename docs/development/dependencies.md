@@ -18,10 +18,11 @@ that pull large transitive trees.
 ## Upgrades
 
 Routine minor/patch drift is **not** chased. Upgrades are driven by the CVE
-gate: `osv-scanner` runs in CI (`.github/workflows/osv-scanner.yml`) on every
-PR and fails on newly-introduced advisories. When it fails, raise the affected
-floor and re-lock. Locally, `make audit` (pip-audit) gives a quick equivalent
-check.
+gate: `osv-scanner` runs in CI via `.github/workflows/security.yml`, which
+delegates to the reusable `fjacquet/ci/.github/workflows/python-security.yml@v1.3.0`
+workflow (there is no standalone `osv-scanner.yml`), on every PR and fails on
+newly-introduced advisories. When it fails, raise the affected floor and
+re-lock. Locally, `make audit` (pip-audit) gives a quick equivalent check.
 
 Accepted/unfixable advisories are recorded in `osv-scanner.toml` (read
 automatically by osv-scanner) with a written justification, and mirrored to

@@ -21,24 +21,28 @@ FinWiz uses Jinja2 templates for generating professional HTML reports from Pytho
 
 ### Template Hierarchy
 
+The tree below was wrong on several points: most `crew_reports/` files are
+plain `.html`, not `.j2` (only `deep_analysis_report.html.j2` is a real
+Jinja2 template); there is no `stock_crew_report.html.j2` /
+`etf_crew_report.html.j2` / `crypto_crew_report.html.j2` / `final_report.html.j2`
+naming; and there is no `email/` or `static/` directory anywhere under
+`src/finwiz/templates/` — no CSS or JS files live there at all. The real
+tree (`find src/finwiz/templates -type f`):
+
 ```
 src/finwiz/templates/
 ├── crew_reports/
-│   ├── base.html                    # Base template with common layout
-│   ├── deep_analysis_report.html.j2 # Deep analysis specific template
-│   ├── stock_crew_report.html.j2    # Stock analysis template
-│   ├── etf_crew_report.html.j2      # ETF analysis template
-│   ├── crypto_crew_report.html.j2   # Crypto analysis template
-│   └── final_report.html.j2         # Consolidated final report
-├── email/
-│   └── notification.html.j2         # Email notification template
-└── static/
-    ├── css/
-    │   ├── base.css                 # Base styles
-    │   ├── light-theme.css          # Light mode theme
-    │   └── dark-theme.css           # Dark mode theme
-    └── js/
-        └── theme-switcher.js        # Theme switching logic
+│   ├── base.html
+│   ├── crypto_report.html
+│   ├── deep_analysis_report.html.j2   # the one real Jinja2 template
+│   ├── discovery_report.html
+│   ├── etf_report.html
+│   ├── final_report.html
+│   ├── rebalancing_report.html
+│   └── stock_report.html
+├── partials/
+│   └── _design_tokens.html
+└── (17 top-level .html files, e.g. portfolio_review.html, backtesting_results.html, ...)
 ```
 
 ### Template Inheritance
@@ -445,43 +449,36 @@ Create specialized templates by extending the base:
 
 The report generator handles template rendering:
 
+The real signature takes a single `result_data` dict and returns the HTML
+as a string — it does **not** take `detailed_analysis`/`output_path`
+arguments and does **not** write a file itself:
+
 ```python
 from finwiz.reporting.deep_analysis_report_generator import DeepAnalysisReportGenerator
 
 class DeepAnalysisReportGenerator:
     """Generate HTML reports from DeepAnalysisResult using Jinja2 templates."""
 
-    def __init__(self):
-        """Initialize report generator with Jinja2 environment."""
-        template_dir = Path(__file__).parent.parent / "templates"
-        self.jinja_env = Environment(
-            loader=FileSystemLoader(template_dir),
-            autoescape=select_autoescape(['html', 'xml'])
-        )
+    def __init__(self, template_dir: str | Path | None = None):
+        """Initialize report generator; builds its Jinja2 env via create_report_jinja_env()."""
+        if template_dir is None:
+            template_dir = Path(__file__).parent.parent / "templates" / "crew_reports"
+        self.template_dir = Path(template_dir)
+        self.env = create_report_jinja_env(self.template_dir.parent)
+        self.template = self.env.get_template("crew_reports/deep_analysis_report.html.j2")
 
-        # Register custom filters
-        self._register_custom_filters()
+    def generate_report(self, result_data: dict[str, Any]) -> str:
+        """Generate HTML report from DeepAnalysisResult data. Returns the HTML string — write it yourself."""
+        self._validate_input_data(result_data)
+        template_vars = self._prepare_template_variables(result_data)
+        return self.template.render(**template_vars)
+```
 
-    def generate_report(
-        self,
-        result: DeepAnalysisResult,
-        detailed_analysis: Dict[str, Any],
-        output_path: str
-    ) -> str:
-        """Generate HTML report from analysis result."""
+To write the result to disk, do it yourself with the returned string:
 
-        # Prepare template data
-        template_data = self._prepare_template_data(result, detailed_analysis)
-
-        # Load and render template
-        template = self.jinja_env.get_template("crew_reports/deep_analysis_report.html.j2")
-        html_content = template.render(**template_data)
-
-        # Save to file
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(html_content)
-
-        return output_path
+```python
+html_content = generator.generate_report(result_data)
+Path(output_path).write_text(html_content, encoding="utf-8")
 ```
 
 ### Performance Characteristics
@@ -529,22 +526,20 @@ def test_should_render_deep_analysis_template_with_stock_data():
         risk_details={"volatility": 0.18, "max_drawdown": -0.15}
     )
 
-    # Mock detailed analysis
-    detailed_analysis = {
+    # Extra fields merged into the single result_data dict generate_report() expects
+    result_data = {
+        **result.model_dump(),
         "data_sources": ["Yahoo Finance", "SEC EDGAR"],
-        "analysis_timestamp": "2025-01-25T10:30:00Z"
+        "analysis_timestamp": "2025-01-25T10:30:00Z",
     }
 
-    # Generate report
+    # Generate report — returns the HTML string, writes no file itself
+    html_content = generator.generate_report(result_data)
+
+    # Save it yourself if you need a file on disk
     output_path = "/tmp/test_report.html"
-    generated_path = generator.generate_report(result, detailed_analysis, output_path)
-
-    # Verify file created
-    assert Path(generated_path).exists()
-
-    # Verify HTML content
-    with open(generated_path, 'r') as f:
-        html_content = f.read()
+    Path(output_path).write_text(html_content, encoding="utf-8")
+    assert Path(output_path).exists()
 
     assert "AAPL" in html_content
     assert "Grade A" in html_content
@@ -569,12 +564,8 @@ def test_template_visual_scenarios():
     ]
 
     for scenario in scenarios:
-        result = create_mock_result(**scenario)
-        html = generator.generate_report(result, {}, f"/tmp/{scenario['ticker']}.html")
-
-        # Verify scenario-specific content
-        with open(html, 'r') as f:
-            content = f.read()
+        result_data = create_mock_result(**scenario)
+        content = generator.generate_report(result_data)  # returns the HTML string directly
 
         assert scenario["grade"] in content
         assert scenario["recommendation"] in content
@@ -637,25 +628,22 @@ Keep template documentation synchronized:
 
 Monitor template rendering performance:
 
+`PerformanceMonitor` has no `log_template_render` method — its real API is
+`start_ticker_analysis` / `record_api_call` / `record_llm_call` /
+`complete_ticker_analysis` / `complete_portfolio_analysis` (see
+[Performance Configuration](PERFORMANCE_CONFIGURATION.md)). Time the call
+directly instead:
+
 ```python
 import time
-from finwiz.infrastructure.monitoring.performance import PerformanceMonitor
 
 def monitor_template_performance():
     """Monitor template rendering performance."""
-    monitor = PerformanceMonitor()
-
     start_time = time.time()
-    html_content = generator.generate_report(result, detailed_analysis, output_path)
+    html_content = generator.generate_report(result_data)
     render_time = time.time() - start_time
 
-    # Log performance metrics
-    monitor.log_template_render(
-        template_name="deep_analysis_report",
-        render_time=render_time,
-        output_size=len(html_content),
-        data_complexity=len(detailed_analysis)
-    )
+    logger.info(f"deep_analysis_report rendered in {render_time * 1000:.1f}ms, {len(html_content)} bytes")
 
     # Alert if performance degrades
     if render_time > 0.5:  # 500ms threshold

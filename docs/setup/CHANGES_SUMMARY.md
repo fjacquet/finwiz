@@ -201,5 +201,5 @@ uv run pytest tests/unit/crews/helpers/test_llm_config.py -v
 ## Related Documentation
 
 - [LLM Configuration Guide](../LLM_CONFIGURATION.md)
-- CrewAI Standards (.kiro/steering/crewai-standards.md in project root)
-- Security Standards (.kiro/steering/security.md in project root)
+- CrewAI Standards (`.claude/skills/crewai/SKILL.md` — there is no `.kiro/` directory in this repo; standards now live as Claude Code skills)
+- Security Standards (`.claude/skills/security/SKILL.md`)

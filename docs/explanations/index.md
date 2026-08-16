@@ -260,7 +260,6 @@ Portfolio CSV → Data Accessor → Validation → Cache
 ### Reference
 
 - [API Reference](../reference/api/index.md) - API documentation
-- [CLI Commands](../reference/cli_commands.md) - Command reference
 
 ## Contributing Explanations
 

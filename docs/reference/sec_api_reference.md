@@ -6,8 +6,8 @@
 >
 > - Generate SEC filing URLs using `SECFilingURLGenerator`
 > - Download HTML directly from SEC.gov (free)
-> - Parse content using the `unstructured` library
-> - Extract insights using vector similarity search with OpenAI embeddings
+> - Parse content with BeautifulSoup and split it with a local `chunk_text()` helper (not the `unstructured` library — `unstructured`, `faiss`, and `OpenAIEmbeddings` appear nowhere in `src/` or `pyproject.toml`)
+> - Extract insights using simple keyword-based text matching (not vector similarity search or embeddings — see `EnhancedSECAnalysisTool._extract_section_insights()`, which has an inline comment stating this explicitly)
 >
 > **API Key**: No API key is required. `SEC_API_API_KEY` is not read by any code — the optional `sec_api` integration was removed as part of a dependency trim, and `EnhancedSECAnalysisTool._get_filing_date_from_api()` always returns `None`. The variable name only survives in the log sanitizer's redaction list as a defensive precaution.
 >
@@ -262,15 +262,15 @@ FinWiz implements SEC filing analysis without using the paid SEC API service:
 - Uses proper User-Agent headers as required by SEC.gov
 - Implements rate limiting and error handling
 
-**3. Content Processing**
+**3. Content Processing** (corrected — see note at top of this document)
 
-- Parses HTML using `unstructured` library's `partition_html`
-- Splits content into manageable chunks with `CharacterTextSplitter`
-- Creates vector embeddings using OpenAI embeddings
+- Parses HTML using BeautifulSoup (`from bs4 import BeautifulSoup`, `src/finwiz/tools/enhanced_sec_tool.py:508`), not the `unstructured` library
+- Splits content into manageable chunks with the local `chunk_text()` helper (`src/finwiz/tools/_text_chunking.py`), which explicitly replaces `langchain_text_splitters.CharacterTextSplitter` per its own docstring
+- No vector embeddings of any kind are created
 
-**4. Insight Extraction**
+**4. Insight Extraction** (corrected)
 
-- Uses FAISS vector similarity search for relevant content
+- Uses simple keyword-based text matching — scores each chunk by counting section-specific keyword hits (`src/finwiz/tools/enhanced_sec_tool.py:241`, inline comment: "Use simple keyword-based text matching instead of vector search"), not FAISS or any vector similarity search
 - Extracts section-specific insights (Item 1, 1A, 7, etc.)
 - Provides proper SEC citations and filing references
 

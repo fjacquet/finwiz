@@ -1,8 +1,10 @@
 [project]
 name = "finwiz"
-version = "5.10.0"
+version = "5.12.0"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "python-dotenv>=1.2.2",

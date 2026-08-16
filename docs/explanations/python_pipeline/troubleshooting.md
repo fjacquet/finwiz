@@ -200,11 +200,11 @@ backtesting_results["reason"] == "No A+ candidates available"
            print(f"Candidate: {holding['ticker']} (Grade {holding['grade']})")
    ```
 
-3. Verify discovery JSON exists:
-
-   ```bash
-   ls -la output/aplus_discovery_*.json
-   ```
+3. **This diagnostic can never succeed.** No file matching
+   `output/aplus_discovery_*.json` is ever written —
+   `integrate_aplus_discovery_with_deep_analysis()` returns its results
+   in-memory only (`aplus_discovery_integrator.py:110-126`). Check the
+   in-memory return value instead, as in step 2 above.
 
 **Solutions:**
 
@@ -228,18 +228,11 @@ backtesting_results["reason"] == "No A+ candidates available"
        print(f"Total analyzed: {discovery_results['total_analyzed']}")
    ```
 
-3. **Verify discovery JSON**:
-
-   ```python
-   from pathlib import Path
-   import json
-
-   discovery_file = Path(f"output/aplus_discovery_{session_id}.json")
-   if discovery_file.exists():
-       with open(discovery_file) as f:
-           data = json.load(f)
-           print(f"Candidates: {len(data.get('aplus_holdings', []))}")
-   ```
+3. **There is no discovery JSON file to verify.** Nothing writes
+   `output/aplus_discovery_{session_id}.json` — this always finds nothing.
+   Re-call `integrate_aplus_discovery_with_deep_analysis(session_id)` and
+   inspect its return value directly instead of looking for a file on
+   disk.
 
 ### Issue: JSON Export Files Not Found
 
@@ -314,48 +307,41 @@ FileNotFoundError: [Errno 2] No such file or directory: 'output/stock/AAPL_sessi
 Exception: Failed to generate report: ...
 ```
 
+**`PythonReportGenerator` uses no template file and no Jinja2** —
+`_generate_html_report` assembles the document from an f-string with
+inline CSS (`python_report_generator.py:267`). "Missing template" and
+"Jinja2 template error" cannot be the cause for this generator; the only
+`.j2` file in the templates tree is the unrelated
+`crew_reports/deep_analysis_report.html.j2`.
+
 **Possible Causes:**
 
-1. Missing template file
-2. Invalid data structure
-3. Jinja2 template error
-4. File write permissions
+1. Invalid data structure
+2. Unhandled exception inside the f-string assembly (e.g. a missing/None field)
+3. File write permissions
 
 **Diagnosis:**
 
-1. Check template exists:
-
-   ```bash
-   ls -la src/finwiz/templates/
-   ```
-
-2. Validate input data:
+1. Validate input data:
 
    ```python
    print(f"Portfolio review: {portfolio_review}")
    print(f"Analysis results: {analysis_results}")
    ```
 
-3. Check template rendering:
+2. Check HTML assembly directly:
 
    ```python
    from finwiz.reporting.python_report_generator import PythonReportGenerator
 
    generator = PythonReportGenerator()
-   # Check for template errors
+   # Call _generate_html_report directly and inspect the exception/traceback
    ```
 
 **Solutions:**
 
-1. **Verify template exists**:
-
-   ```python
-   from pathlib import Path
-
-   template_path = Path("src/finwiz/templates/report.html.j2")
-   if not template_path.exists():
-       print(f"❌ Template not found: {template_path}")
-   ```
+1. **There is no template file to verify** — see the note above. Focus on
+   the input data instead.
 
 2. **Validate data structure**:
 

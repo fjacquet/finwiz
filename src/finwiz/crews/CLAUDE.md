@@ -61,8 +61,10 @@ crews/
 | File | Function | Purpose |
 |------|----------|---------|
 | `helpers/context_preparation.py` | `prepare_crew_context()` | Build context for crew execution |
-| `helpers/llm_config.py` | `get_llm_config()` | Get LLM configuration for agents |
-| `helpers/tool_routing.py` | `route_tools_for_asset()` | Dynamic tool selection by asset class |
+| `helpers/llm_config.py` | `get_crew_llm()` | Build the `LLM` instance for crew agents |
+| `helpers/llm_config.py` | `get_crew_model_string()` | Model identifier as a string |
+| `helpers/tool_routing.py` | `get_tools_for_asset_class()` | Dynamic tool selection by asset class |
+| `helpers/tool_routing.py` | `get_minimal_risk_tools()` | Reduced tool set for risk-only work |
 
 ## Crew Structure Pattern
 
@@ -71,7 +73,7 @@ Every crew follows this exact pattern:
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.utils.agent_validators import final_reporter
+from finwiz.infrastructure.decorators.agent_validators import final_reporter
 
 @CrewBase
 class StockCrew:
@@ -156,8 +158,8 @@ analysis_task:
 ## Testing
 
 ```bash
-# Test specific crew
-uv run pytest tests/unit/crews/test_stock_crew.py -v
+# Test one crew's suite (per-crew directories: stock_crew/, etf_crew/, crypto_crew/)
+uv run pytest tests/unit/crews/stock_crew/ -v
 
 # Test all crews
 uv run pytest tests/unit/crews/ -v
@@ -167,5 +169,5 @@ uv run pytest tests/unit/crews/ -v
 
 - `finwiz.tools.tool_factories` - Tool initialization
 - `finwiz.schemas.crew_exports` - Pydantic export schemas
-- `finwiz.utils.agent_validators` - Decorators for agents
-- `finwiz.utils.task_decorators` - Decorators for tasks
+- `finwiz.infrastructure.decorators.agent_validators` - Decorators for agents
+- `finwiz.infrastructure.decorators.task_decorators` - Decorators for tasks

@@ -26,7 +26,10 @@ core/
 4. Create `FinwizState` instance
 5. Create `FinwizFlow` instance
 6. Execute the flow (`flow.kickoff()`)
-7. Returns `None`
+7. `logging.shutdown()` then `os._exit(0)` — **`kickoff()` never returns.**
+   The process is force-terminated so third-party thread pools (CrewAI,
+   LiteLLM, httpx) cannot block `threading._shutdown()`. Nothing written after
+   a `kickoff()` call site will ever execute.
 
 ## Usage
 
