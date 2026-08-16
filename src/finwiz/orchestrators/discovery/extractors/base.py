@@ -43,19 +43,47 @@ class OpportunityExtractor(ABC):
         self.logger.info(f"{field_name} unavailable for this candidate: {self._NO_DATA_REASON}.")
         return {"unavailable": True, "field": field_name, "reason": self._NO_DATA_REASON}
 
+    def _refuse(self, candidate: dict[str, Any], idx: int, reason: str) -> None:
+        """Log and refuse to build an opportunity for this candidate, naming it.
+
+        Returns None so a caller can ``return self._refuse(...)`` directly. Used
+        for a deliberate business-rule refusal -- e.g. a required derived value
+        such as composite_score cannot be computed from any real data, and
+        fabricating one (a "perfect" score synthesised from absent inputs) would
+        be worse than skipping the candidate. This is distinct from extract()'s
+        per-candidate exception handling: that catches an unexpected raise, this
+        is an intentional "we won't guess" decision, so it needs its own log --
+        a bare ``return None`` here is invisible to extract()'s ``if opportunity``
+        check, which skips silently.
+        """
+        identifier = candidate.get("symbol") or candidate.get("ticker") or f"index {idx}"
+        self.logger.warning(f"Refusing to build opportunity for {identifier}: {reason}")
+        return None
+
     @staticmethod
     def _passthrough_rationale(candidate: dict[str, Any], structured_rationale: list[str]) -> list[str]:
         """Append the writer's flat rationale/recommendation onto the structured rationale.
 
         NewcomerDiscoveryPipeline's writer (``_to_legacy_format``) emits a flat
-        ``rationale`` string and a ``recommendation`` string per candidate.
-        Neither is read by the moat/diversification/technology-derived rationale
-        this method receives, so both were silently discarded for every candidate
+        ``rationale`` string and a ``recommendation`` string per candidate; the
+        moat/diversification/technology-derived rationale this method receives
+        never reads either, so both were silently discarded for every candidate
         that only carries this shape (i.e. every candidate this pipeline produces).
 
-        Appended, not replacing: legacy AI-crew-shaped candidates carry their
-        reasoning only in the structured fields and never populate this top-level
-        "rationale"/"recommendation" pair, so this is purely additive for them.
+        Appended, not replacing. NewcomerDiscoveryPipeline-shaped candidates only
+        ever carry reasoning in this flat pair (moat_analysis/diversification/
+        technology are never populated for them), so for them this recovers
+        previously-discarded data outright. Legacy AI-crew-shaped candidates
+        *also* populate a flat top-level "rationale" -- as a list, not a string --
+        because DataParser's wrapper-unwrapping (parsers.py's
+        ``load_and_parse_json``) merges the outer wrapper's ``rationale`` list
+        into the inner candidate dict when the inner dict has no "rationale" key
+        of its own. Appending it here recovers that too (it was discarded before
+        this method existed) without duplicating anything: the structured-field
+        rationale (e.g. moat analysis) and this flat one (e.g. a numeric ROE/CAGR
+        summary) describe different things. "recommendation" has no legacy-wrapper
+        equivalent (the wrapper's field is "recommended_action", never merged
+        under the key "recommendation"), so it remains newcomer-pipeline-only.
         """
         items = list(structured_rationale)
 

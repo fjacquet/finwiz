@@ -4,6 +4,8 @@ Unit tests for StockOpportunityExtractor.
 Tests stock-specific extraction logic using the Template Method pattern.
 """
 
+import logging
+
 import pytest
 from pytest import approx
 
@@ -227,16 +229,73 @@ class TestStockOpportunityExtractor:
         # Assert
         assert len(opportunities) == 0
 
-    def test_should_handle_extraction_errors_gracefully(self, extractor):
-        """Test handling of extraction errors."""
+    def test_should_refuse_when_composite_score_cannot_be_derived(self, extractor):
+        """A candidate with no composite_score and no fundamentals must be
+        refused, not built with a fabricated composite_score computed from
+        zeros.
+
+        This used to return an opportunity with default values throughout,
+        including a composite_score silently computed from absent fundamentals
+        (0.2 -- a number that looks real but means nothing). Refusing is the
+        honest outcome: there's nothing here to score.
+        """
         # Arrange
-        invalid_candidate = {"symbol": "TEST"}  # Missing required fields
+        invalid_candidate = {"symbol": "TEST"}  # No composite_score, no fundamentals
 
         # Act
         opportunity = extractor._build_opportunity(invalid_candidate, 0)
 
         # Assert
-        # Should return opportunity with default values (Python doesn't raise on missing dict keys with .get())
+        assert opportunity is None
+
+    def test_should_handle_missing_optional_fields_gracefully(self, extractor):
+        """Test handling of extraction errors for fields other than composite_score's inputs.
+
+        As long as composite_score itself is derivable (supplied directly here),
+        every other missing field still defaults gracefully -- Python doesn't
+        raise on missing dict keys accessed via .get().
+        """
+        # Arrange
+        minimal_candidate = {"symbol": "TEST", "composite_score": 0.5}  # Missing everything else
+
+        # Act
+        opportunity = extractor._build_opportunity(minimal_candidate, 0)
+
+        # Assert
         assert opportunity is not None
         assert opportunity["symbol"] == "TEST"
-        assert opportunity["composite_score"] >= 0
+        assert opportunity["composite_score"] == approx(0.5)
+
+    def test_build_opportunity_failure_names_the_candidate_and_does_not_zero_siblings(self, extractor, valid_stock_candidate, caplog):
+        """A candidate that raises inside _build_opportunity (not _should_include)
+        must still be named in the log and skipped, not silently dropped -- and
+        a well-formed sibling in the same batch must still come through.
+
+        _build_opportunity used to have its own try/except that logged without
+        the candidate's symbol and returned None; base.py's `if opportunity:`
+        then skipped that None with no log at all -- the dominant failure path
+        (this method touches far more fields than _should_include) vanished
+        silently. Deleting that inner try/except lets extract()'s per-candidate
+        handler, which does log the identifier, catch this instead -- one
+        handler instead of four.
+        """
+        # Arrange: implementation is present but the wrong type, so
+        # candidate.get("implementation", {}).get("entry_strategy", "") raises
+        # AttributeError from inside _build_opportunity's return statement --
+        # not from _should_include, which never looks at "implementation".
+        malformed_candidate = {
+            "symbol": "BADIMPL",
+            "name": "Bad Impl",
+            "grade": "A+",
+            "composite_score": 0.5,
+            "implementation": "not-a-dict",
+        }
+
+        # Act
+        with caplog.at_level(logging.ERROR):
+            opportunities = extractor.extract([valid_stock_candidate, malformed_candidate])
+
+        # Assert
+        assert len(opportunities) == 1, "the malformed candidate must be skipped, not fatal to its well-formed sibling"
+        assert opportunities[0]["symbol"] == "NVDA"
+        assert any("BADIMPL" in record.message for record in caplog.records), "the malformed candidate must be named in the log"

@@ -156,3 +156,24 @@ class TestDiscoveryWriterReaderContract:
         crypto_metrics = collection.crypto_opportunities[0].key_metrics
         assert crypto_metrics["market_cap_usd"]["unavailable"] is True
         assert crypto_metrics["volume_24h_usd"]["unavailable"] is True
+
+    def test_confidence_and_risk_provenance_is_visible_for_real_writer_payload(self, discovery_output_dir):
+        """A grade-derived confidence/risk_score must not be indistinguishable
+        from a measured one, especially sitting beside a key_metrics block where
+        every entry is marked unavailable.
+
+        _to_legacy_format never emits confidence_level or risk_assessment for any
+        candidate, so every opportunity built from this payload shape falls back
+        to the grade-derived defaults in every extractor. Both fields keep their
+        float type (required -- they feed ranking and validation), so provenance
+        is surfaced as an appended rationale note instead of a schema change.
+        """
+        extractor = APlusDataExtractor(output_dir=discovery_output_dir)
+
+        collection = extractor.extract_aplus_opportunities()
+
+        assert collection is not None
+        for opportunities in (collection.stock_opportunities, collection.etf_opportunities, collection.crypto_opportunities):
+            rationale = " | ".join(opportunities[0].rationale)
+            assert "derived from grade" in rationale, f"confidence provenance missing from {rationale}"
+            assert "is a default, not measured" in rationale, f"risk_score provenance missing from {rationale}"

@@ -220,14 +220,41 @@ class TestCryptoOpportunityExtractor:
         assert opportunities[0]["symbol"] == "BTC"
         assert opportunities[1]["symbol"] == "ETH"
 
-    def test_should_handle_missing_market_metrics_gracefully(self, extractor, valid_crypto_candidate):
-        """Test handling of missing market metrics.
+    def test_should_mark_missing_market_metric_unavailable_when_partial_data_present(self, extractor, valid_crypto_candidate):
+        """An entirely absent market metric must not be defaulted to 0 -- a 0
+        reads as a real (and gate-failing) measurement, not as "unknown".
 
-        An entirely absent market_cap_usd/volume_24h_usd must not be defaulted to
-        0 -- a 0 reads as a real (and gate-failing) measurement, not as "unknown".
-        This used to assert key_metrics["market_cap_usd"] == 0, which was itself
-        the fabricated-zero bug: it pinned exactly the behavior that made a
-        genuinely unmeasured metric indistinguishable from a measured-and-zero one.
+        Only volume_24h_usd is deleted here (market_cap_usd stays) so
+        composite_score can still be derived from real data and the opportunity
+        is still built -- isolating the key_metrics marker behavior from the
+        "refuse entirely" case covered separately below.
+        """
+        # Arrange
+        del valid_crypto_candidate["volume_24h_usd"]
+
+        # Act
+        opportunity = extractor._build_opportunity(valid_crypto_candidate, 0)
+
+        # Assert
+        assert opportunity is not None
+        assert opportunity["key_metrics"]["market_cap_usd"] == valid_crypto_candidate["market_cap_usd"]
+        assert opportunity["key_metrics"]["volume_24h_usd"] == {
+            "unavailable": True,
+            "field": "volume_24h_usd",
+            "reason": extractor._NO_DATA_REASON,
+        }
+
+    def test_should_refuse_when_no_composite_score_and_no_market_data_at_all(self, extractor, valid_crypto_candidate):
+        """No composite_score and no market data at all: refuse rather than
+        fabricate a composite_score from nothing.
+
+        valid_crypto_candidate never carries composite_score directly, so
+        deleting both market_cap_usd and volume_24h_usd removes every input the
+        fallback derivation needs. This used to return an opportunity with
+        composite_score computed from zeros -- a plausible-looking, fully
+        fabricated 0.0 -- with every affected key_metrics value marked
+        unavailable around it. Now the extractor refuses to build the
+        opportunity at all: there is nothing here to score, so it says so.
         """
         # Arrange
         del valid_crypto_candidate["market_cap_usd"]
@@ -237,18 +264,7 @@ class TestCryptoOpportunityExtractor:
         opportunity = extractor._build_opportunity(valid_crypto_candidate, 0)
 
         # Assert
-        assert opportunity is not None
-        assert opportunity["composite_score"] >= 0
-        assert opportunity["key_metrics"]["market_cap_usd"] == {
-            "unavailable": True,
-            "field": "market_cap_usd",
-            "reason": extractor._NO_DATA_REASON,
-        }
-        assert opportunity["key_metrics"]["volume_24h_usd"] == {
-            "unavailable": True,
-            "field": "volume_24h_usd",
-            "reason": extractor._NO_DATA_REASON,
-        }
+        assert opportunity is None
 
     def test_should_handle_missing_risk_assessment_gracefully(self, extractor, valid_crypto_candidate):
         """Test handling of missing risk assessment."""
@@ -292,16 +308,39 @@ class TestCryptoOpportunityExtractor:
         # Assert
         assert len(opportunities) == 0
 
-    def test_should_handle_extraction_errors_gracefully(self, extractor):
-        """Test handling of extraction errors."""
+    def test_should_refuse_when_composite_score_cannot_be_derived(self, extractor):
+        """A candidate with no composite_score and no market data must be
+        refused, not built with a fabricated composite_score computed from
+        zeros.
+
+        This used to return an opportunity with default values throughout,
+        including a composite_score silently computed from absent market data
+        (0.0 -- indistinguishable from a genuine "this asset scored zero").
+        Refusing is the honest outcome: there's nothing here to score.
+        """
         # Arrange
-        invalid_candidate = {"symbol": "TEST"}  # Missing required fields
+        invalid_candidate = {"symbol": "TEST"}  # No composite_score, no market data
 
         # Act
         opportunity = extractor._build_opportunity(invalid_candidate, 0)
 
         # Assert
-        # Should return opportunity with default values (Python doesn't raise on missing dict keys with .get())
+        assert opportunity is None
+
+    def test_should_handle_missing_optional_fields_gracefully(self, extractor):
+        """Test handling of extraction errors for fields other than composite_score's inputs.
+
+        As long as composite_score itself is derivable (supplied directly here),
+        every other missing field still defaults gracefully -- Python doesn't
+        raise on missing dict keys accessed via .get().
+        """
+        # Arrange
+        minimal_candidate = {"symbol": "TEST", "composite_score": 0.5}  # Missing everything else
+
+        # Act
+        opportunity = extractor._build_opportunity(minimal_candidate, 0)
+
+        # Assert
         assert opportunity is not None
         assert opportunity["symbol"] == "TEST"
-        assert opportunity["composite_score"] >= 0
+        assert opportunity["composite_score"] == approx(0.5)
