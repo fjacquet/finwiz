@@ -13,7 +13,7 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.analysis.stages._resilience import StageContext
 from finwiz.analysis.stages.collect import collect
 from finwiz.analysis.stages.collect import collect_raw_data as collect_raw_data
-from finwiz.analysis.stages.emit import _emit_pending, emit
+from finwiz.analysis.stages.emit import _emit_pending, _pending_enriched, emit
 from finwiz.analysis.stages.emit import build_verdict as build_verdict
 from finwiz.analysis.stages.fact_pack import fact_pack
 from finwiz.analysis.stages.qualify import _run_qualitative_and_strategic_in_parallel as _run_qualitative_and_strategic_in_parallel
@@ -64,27 +64,27 @@ def run_pipeline(
     # Phase 1: Collect — any FAILED result short-circuits to AnalysePending.
     cr = collect(stage_ctx)
     if cr.payload is None:
-        return _emit_pending(stage_ctx, reason=cr.provenance.reason), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason=cr.provenance.reason), _pending_enriched(stage_ctx, reason=cr.provenance.reason)
     raw_data: dict[str, Any] = cr.payload.data
 
     # Phase 2: Quantify — any FAILED result short-circuits to AnalysePending.
     options_probs = _compute_options_probabilities(raw_data)  # None for crypto/niche ETFs
     qr = quantify(stage_ctx, raw_data)
     if qr.payload is None:
-        return _emit_pending(stage_ctx, reason=qr.provenance.reason), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason=qr.provenance.reason), _pending_enriched(stage_ctx, reason=qr.provenance.reason)
     quant = qr.payload
     # Pull the partial result stashed by quantify into stage_ctx.extras.
     # synthesize is the last writer of partial_result; nothing after it re-assigns.
     result = stage_ctx.extras.get("partial_result")
     if result is None:
-        return _emit_pending(stage_ctx, reason="quantify stage did not seed partial_result"), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason="quantify stage did not seed partial_result"), _pending_enriched(stage_ctx, reason="quantify stage did not seed partial_result")
 
     # Phase 2c: fact_pack (v5.2)
     fpr = fact_pack(stage_ctx, raw_data)
     if fpr.payload is None:
         # FAILED — no cache and Perplexity unavailable. Trust-spine policy:
         # halt holding to AnalysePending rather than running ungrounded.
-        return _emit_pending(stage_ctx, reason=fpr.provenance.reason), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason=fpr.provenance.reason), _pending_enriched(stage_ctx, reason=fpr.provenance.reason)
     stage_ctx.extras["fact_pack"] = fpr.payload  # FactPack with freshness in {"fresh","recent","stale"}
 
     # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
@@ -92,7 +92,7 @@ def run_pipeline(
     # parallel helper, which silently swallows qualify failures).
     qr3 = qualify(stage_ctx, quant, raw_data)
     if qr3.payload is None:
-        return _emit_pending(stage_ctx, reason=qr3.provenance.reason), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason=qr3.provenance.reason), _pending_enriched(stage_ctx, reason=qr3.provenance.reason)
     qual = qr3.payload
     # Run strategic research independently for stocks.
     from finwiz.analysis.stages.qualify import _safe_strategic
@@ -115,7 +115,7 @@ def run_pipeline(
     stage_ctx.extras["qualify_outcome"] = qr3.provenance.outcome
     sr4 = synthesize(stage_ctx, quant, qual, raw_data)
     if sr4.payload is None:
-        return _emit_pending(stage_ctx, reason=sr4.provenance.reason), EnrichedAnalysis.model_construct()
+        return _emit_pending(stage_ctx, reason=sr4.provenance.reason), _pending_enriched(stage_ctx, reason=sr4.provenance.reason)
     enriched = sr4.payload
 
     # Phase 5: Emit — synthesize is the last writer of partial_result; do not
