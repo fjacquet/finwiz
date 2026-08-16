@@ -6,9 +6,13 @@ with Perplexity-grounded web research. Each framework self-rates its
 pure averaging — no Python derivation from item counts.
 """
 
+import logging
+import re
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 def _coerce_prose(v: object) -> str:
@@ -18,19 +22,78 @@ def _coerce_prose(v: object) -> str:
     return str(v) if v is not None else ""
 
 
-def _coerce_str_list(v: object) -> list[str]:
-    """Coerce a list whose entries may be dicts into a list of strings."""
-    if not isinstance(v, list):
+def _coerce_list_item(item: object) -> str:
+    """Coerce a single list entry (possibly a dict) into a string."""
+    if isinstance(item, dict):
+        label = item.get("name") or item.get("label") or item.get("description") or item.get("text") or str(item)
+        severity = item.get("severity") or item.get("impact") or item.get("level")
+        return f"{label} (Sévérité: {severity})" if severity else str(label)
+    return str(item)
+
+
+_LEADING_BULLET_MARKER_RE = re.compile(r"^[-•*]\s+")
+
+
+def _split_prose_into_bullets(text: str) -> list[str]:
+    """Split a prose string into bullets when it looks like a list.
+
+    Splits on newlines — the shape a model falls back to when asked for
+    bullets but writes a paragraph, or a manually-authored bullet list
+    joined into one string — and strips a leading ``-``/``•``/``*`` marker
+    from each resulting line. A single line with no newline is kept as one
+    bullet rather than being torn apart.
+    """
+    lines = [line.strip() for line in text.strip().splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
         return []
-    out: list[str] = []
-    for item in v:
-        if isinstance(item, dict):
-            label = item.get("name") or item.get("label") or item.get("description") or item.get("text") or str(item)
-            severity = item.get("severity") or item.get("impact") or item.get("level")
-            out.append(f"{label} (Sévérité: {severity})" if severity else str(label))
-        else:
-            out.append(str(item))
-    return out
+    return [_LEADING_BULLET_MARKER_RE.sub("", line).strip() or line for line in lines]
+
+
+def _warn_coerced_non_list_shape(v: object) -> None:
+    """Log the shape a non-list value had before it was coerced into bullets.
+
+    Silent coercion of an unexpected shape is how this class of defect
+    (an AI paragraph, or a pre-schema-change dict/string read back from a
+    ``*_enriched.json`` file, silently collapsing to ``[]``) stayed
+    invisible. Every coercion of a non-list shape is logged so it can be
+    seen, even though it is never rejected.
+    """
+    preview = repr(v)
+    if len(preview) > 120:
+        preview = preview[:120] + "…"
+    logger.warning("Coercing non-list value into bullets: type=%s preview=%s", type(v).__name__, preview)
+
+
+def _coerce_str_list(v: object) -> list[str]:
+    """Coerce a list, string, dict, or scalar into a list of strings.
+
+    A non-list shape must never collapse to an empty list — that reads
+    downstream as "no data" when data actually arrived, just not as a
+    ``list``. Two live paths depend on this: a model asked for bullets
+    that returns a paragraph instead, and re-validating a
+    ``strategic_analysis`` blob read back from a ``*_enriched.json`` file
+    written before PESTEL dimensions became ``list[str]`` (those files
+    have plain strings for ``political``/``economic``/etc.). Only ``None``
+    and an empty/blank string are genuinely absent data and correctly
+    yield ``[]``.
+    """
+    if isinstance(v, list):
+        return [_coerce_list_item(item) for item in v]
+    if v is None:
+        return []
+    if isinstance(v, str):
+        if not v.strip():
+            return []
+        _warn_coerced_non_list_shape(v)
+        return _split_prose_into_bullets(v)
+    if isinstance(v, dict):
+        _warn_coerced_non_list_shape(v)
+        prose = _coerce_prose(v)
+        return [prose] if prose else []
+    _warn_coerced_non_list_shape(v)
+    text = str(v)
+    return [text] if text else []
 
 
 MAX_BULLETS_PESTEL = 3
