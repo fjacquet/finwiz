@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from finwiz.reporting.markdown_fragment import render_markdown_inline
 from finwiz.schemas.portfolio_review import PortfolioReview
 
 
@@ -93,6 +94,12 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     as a wall of raw markdown in a document meant for a family. ``posture`` is a
     :class:`PortfolioStrategicPosture` model_dump. Returns "" when no posture is
     available so the surrounding report stays clean.
+
+    The three verdicts are model-authored and go through the inline render
+    boundary, not bare ``escape()``: escaping alone left "Le **durcissement**
+    réglementaire pèse [1]" in the family artifact, which is the same
+    readability defect this branch exists to remove. No citations are threaded
+    here, so ``[n]`` markers are stripped rather than shown pointing at nothing.
     """
     if not posture or not isinstance(posture, dict):
         return ""
@@ -111,9 +118,9 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     <h2>🎯 Posture Stratégique du Portefeuille</h2>
     <p><strong>{score_pct} %</strong>{coverage} · Confiance : {conf_pct} %</p>
     <ul>
-      <li>{escape(posture.get("macro_verdict") or "")}</li>
-      <li>{escape(posture.get("competitive_verdict") or "")}</li>
-      <li>{escape(posture.get("swot_verdict") or "")}</li>
+      <li>{render_markdown_inline(posture.get("macro_verdict"))}</li>
+      <li>{render_markdown_inline(posture.get("competitive_verdict"))}</li>
+      <li>{render_markdown_inline(posture.get("swot_verdict"))}</li>
     </ul>
     <p><a href="finwiz_posture_strategique.html">Analyse stratégique complète →</a></p>
   </div>

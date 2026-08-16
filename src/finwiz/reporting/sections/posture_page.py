@@ -20,7 +20,7 @@ from html import escape
 from typing import Any
 
 from finwiz.reporting.css_styles import get_report_css
-from finwiz.reporting.markdown_fragment import render_markdown_fragment
+from finwiz.reporting.markdown_fragment import render_markdown_fragment, render_markdown_inline
 
 # (heading, verdict field, analyst-length detail field)
 _THEMES = (
@@ -70,35 +70,50 @@ def _coverage_banner(posture: dict[str, Any]) -> str:
     )
 
 
-def _dominant_themes(posture: dict[str, Any]) -> str:
+def _dominant_themes(posture: dict[str, Any], citations: list[str] | None) -> str:
     """Top 3-5 recurring themes — the single most useful line for a family reader.
 
     Rendered prominently (right after coverage, before the analyst blocks)
     because a handful of short themes beats three paragraphs of synthesis.
+
+    Themes are model-authored, so they go through the inline render boundary
+    rather than bare ``escape()``: a badge reading "**Résilience** énergétique
+    [1]" is the same readability defect this branch set out to remove, one
+    surface further along.
     """
     themes = posture.get("dominant_themes") or []
     if not themes:
         return ""
-    badges = "".join(f'<span class="badge">{escape(str(t))}</span>' for t in themes)
+    badges = "".join(f'<span class="badge">{render_markdown_inline(t, citations=citations)}</span>' for t in themes)
     return f'<section class="section"><h2>🧭 Thèmes Dominants</h2><div>{badges}</div></section>'
 
 
 def _theme_block(title: str, verdict: str, detail_md: str, citations: list[str] | None) -> str:
-    """Verdict in the open; analyst-length prose behind a disclosure."""
+    """Verdict in the open; analyst-length prose behind a disclosure.
+
+    ``title`` is a module constant, so plain ``escape()`` is right for it.
+    ``verdict`` is model-authored and goes through the inline render boundary
+    (see :func:`_dominant_themes`).
+    """
     detail = render_markdown_fragment(detail_md, citations=citations)
     body = f"<details><summary>Détail</summary>{detail}</details>" if detail else ""
-    verdict_html = f'<p class="verdict">{escape(verdict)}</p>' if verdict else ""
+    verdict_inline = render_markdown_inline(verdict, citations=citations)
+    verdict_html = f'<p class="verdict">{verdict_inline}</p>' if verdict_inline else ""
     return f'<section class="section"><h2>{escape(title)}</h2>{verdict_html}{body}</section>'
 
 
-def _swot_lists(posture: dict[str, Any]) -> str:
-    """Four short lists, not merged into prose. Skipped entirely if all empty."""
+def _swot_lists(posture: dict[str, Any], citations: list[str] | None) -> str:
+    """Four short lists, not merged into prose. Skipped entirely if all empty.
+
+    Each item is model-authored — inline render boundary, not bare
+    ``escape()`` (see :func:`_dominant_themes`). Headings are constants.
+    """
     cards = []
     for heading, emoji, field in _SWOT_LISTS:
         items = posture.get(field) or []
         if not items:
             continue
-        rows = "".join(f"<li>{emoji} {escape(str(item))}</li>" for item in items)
+        rows = "".join(f"<li>{emoji} {render_markdown_inline(item, citations=citations)}</li>" for item in items)
         cards.append(f'<div class="metric-card"><h4>{emoji} {escape(heading)}</h4><ul>{rows}</ul></div>')
     if not cards:
         return ""
@@ -168,9 +183,9 @@ def generate_posture_page(
         "<h1>Posture Stratégique du Portefeuille</h1>"
         f"{_coverage_banner(posture)}"
         f'<p class="verdict">Score stratégique global : <strong>{score_pct:.0f} %</strong> · Confiance : <strong>{conf_pct:.0f} %</strong></p>'
-        f"{_dominant_themes(posture)}"
+        f"{_dominant_themes(posture, citations)}"
         f"{themes}"
-        f"{_swot_lists(posture)}"
+        f"{_swot_lists(posture, citations)}"
         f"{_per_holding_table(holdings_strategic)}"
         f"{_sources(citations)}"
         "</body></html>"

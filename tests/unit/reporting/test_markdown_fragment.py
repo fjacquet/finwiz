@@ -8,7 +8,7 @@ injection vector is neutralized.
 
 from __future__ import annotations
 
-from finwiz.reporting.markdown_fragment import render_markdown_fragment
+from finwiz.reporting.markdown_fragment import render_markdown_fragment, render_markdown_inline
 
 
 class TestEscapeBoundary:
@@ -172,3 +172,69 @@ class TestEmptyInput:
 
     def test_whitespace_only_text_produces_no_paragraph(self) -> None:
         assert "<p>" not in render_markdown_fragment("   \n  \n")
+
+
+class TestInlineSibling:
+    """``render_markdown_inline`` is the same boundary without block wrapping.
+
+    Verdicts, dominant-theme badges and SWOT list items are model-authored, but
+    they land inside a ``<p class="verdict">``, a ``<span class="badge">`` or an
+    ``<li>`` that the caller already owns. ``render_markdown_fragment`` would
+    nest a ``<p>`` (or a whole ``<ul>``) inside them. The inline sibling exists
+    so those surfaces can stop calling bare ``escape()`` -- which is what
+    reintroduced literal ``**`` and dangling ``[n]`` markers on the posture and
+    family pages -- without inheriting block markup they cannot host.
+    """
+
+    def test_no_block_wrapping(self) -> None:
+        out = render_markdown_inline("Un verdict simple.")
+
+        assert out == "Un verdict simple."
+        assert "<p>" not in out
+
+    def test_a_leading_dash_is_text_not_a_list(self) -> None:
+        """A one-line fragment starting with '- ' must not become a <ul>."""
+        out = render_markdown_inline("- Moats larges")
+
+        assert "<ul>" not in out
+        assert "<li>" not in out
+        assert "Moats larges" in out
+
+    def test_bold_and_italic_render(self) -> None:
+        out = render_markdown_inline("Le **durcissement** reste *net*.")
+
+        assert "<strong>durcissement</strong>" in out
+        assert "<em>net</em>" in out
+        assert "**" not in out
+
+    def test_dangling_citation_marker_is_stripped(self) -> None:
+        out = render_markdown_inline("Un fait[7].")
+
+        assert "[7]" not in out
+        assert "<sup>" not in out
+
+    def test_citation_marker_links_when_a_source_exists(self) -> None:
+        out = render_markdown_inline("Un fait[1].", citations=["https://example.com/a"])
+
+        assert '<sup><a href="https://example.com/a"' in out
+
+    def test_html_is_escaped_not_executed(self) -> None:
+        out = render_markdown_inline("<script>alert(1)</script>")
+
+        assert "<script>" not in out
+        assert "&lt;script&gt;" in out
+
+    def test_empty_and_none_render_empty(self) -> None:
+        assert render_markdown_inline("") == ""
+        assert render_markdown_inline(None) == ""
+
+    def test_non_string_input_is_coerced(self) -> None:
+        """Posture fields come from a model_dump; a list item may not be a str."""
+        assert render_markdown_inline(42) == "42"
+
+    def test_multiline_text_collapses_to_one_line(self) -> None:
+        """Inline surfaces have no block structure to express a line break."""
+        out = render_markdown_inline("Première ligne\nseconde ligne")
+
+        assert "\n" not in out
+        assert "Première ligne seconde ligne" in out

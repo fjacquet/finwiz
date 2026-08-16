@@ -237,12 +237,85 @@ class TestOptionalFieldsAbsent:
         )
 
         assert "Posture Stratégique" in html
-        assert "**" not in html
+        # NOTE: deliberately no `"**" not in html` here. This posture's verdicts
+        # and lists are empty, so such an assertion could never fail for the
+        # property it names. The real markdown property is pinned by
+        # TestModelAuthoredSurfacesAreRendered below, against model-shaped text.
 
     def test_no_citations_does_not_crash_and_omits_sources(self) -> None:
         html = generate_posture_page(_full_posture(), citations=None)
 
         assert "Sources" not in html
+
+
+_MODEL_SHAPED = {
+    "macro_verdict": "Le **durcissement** réglementaire pèse sur la tech [1].",
+    "competitive_verdict": "Moats *larges* mais sous pression [2].",
+    "swot_verdict": "Équilibre **fragile** entre croissance et dette [3].",
+    "dominant_themes": ["**Résilience** énergétique", "IA *générative* [1]"],
+    "portfolio_strengths": ["Moats **larges** en tech [2]"],
+    "portfolio_weaknesses": ["Concentration *excessive* [3]"],
+    "portfolio_opportunities": ["Transition **énergétique**"],
+    "portfolio_threats": ["Durcissement *réglementaire* [1]"],
+}
+
+
+class TestModelAuthoredSurfacesAreRendered:
+    """Every model-authored surface goes through the render boundary, not bare escape().
+
+    The original report's defect was 42 literal ``**`` markers and 470 dangling
+    ``[n]`` markers. The three prose fields were fixed via
+    ``render_markdown_fragment``; verdicts, dominant-theme badges and SWOT list
+    items are four *new* model-authored surfaces created on the same branch, and
+    each reproduced the defect by calling ``escape()`` directly.
+
+    Not a security property -- ``escape()`` holds either way (pinned separately
+    below). This is readability: a family reader must never see raw markdown or
+    a citation marker pointing at nothing.
+    """
+
+    def _body(self) -> str:
+        html = generate_posture_page(_full_posture(**_MODEL_SHAPED))
+        return html.split("</style>", 1)[1]
+
+    def test_no_literal_bold_markers_survive_on_any_surface(self) -> None:
+        assert "**" not in self._body()
+
+    def test_bold_becomes_strong_on_verdicts_themes_and_swot_items(self) -> None:
+        body = self._body()
+
+        assert "<strong>durcissement</strong>" in body  # theme verdict
+        assert "<strong>Résilience</strong>" in body  # dominant-theme badge
+        assert "<strong>larges</strong>" in body  # SWOT list item
+
+    def test_italic_becomes_em(self) -> None:
+        body = self._body()
+
+        assert "<em>larges</em>" in body  # competitive verdict
+        assert "<em>générative</em>" in body  # dominant-theme badge
+        assert "<em>excessive</em>" in body  # SWOT list item
+
+    def test_dangling_citation_markers_are_stripped_not_shown(self) -> None:
+        """No citations are supplied, so every [n] points at nothing."""
+        body = self._body()
+
+        for marker in ("[1]", "[2]", "[3]"):
+            assert marker not in body
+
+    def test_markup_in_model_text_is_still_escaped_not_executed(self) -> None:
+        """Routing through the render boundary must stay escape-first."""
+        html = generate_posture_page(
+            _full_posture(
+                macro_verdict="<script>alert(1)</script>",
+                dominant_themes=["<img src=x onerror=alert(1)>"],
+                portfolio_strengths=["<script>alert(2)</script>"],
+            )
+        )
+        body = html.split("</style>", 1)[1]
+
+        assert "<script>" not in body
+        assert "<img" not in body
+        assert "&lt;script&gt;" in body
 
 
 class TestStandaloneDocument:
@@ -297,6 +370,18 @@ class TestFamilySectionSummarisesAndLinksOut:
 
         assert "<script>" not in html
         assert "&lt;script&gt;" in html
+
+    def test_model_shaped_verdicts_render_as_html_not_raw_markdown(self) -> None:
+        """The family artifact's three verdict <li>s are model-authored too."""
+        from finwiz.reporting.section_generators import generate_strategic_posture_section
+
+        html = generate_strategic_posture_section(_full_posture(**_MODEL_SHAPED))
+
+        assert "**" not in html
+        assert "[1]" not in html
+        assert "[3]" not in html
+        assert "<strong>durcissement</strong>" in html
+        assert "<em>larges</em>" in html
 
     def test_no_posture_renders_nothing(self) -> None:
         from finwiz.reporting.section_generators import generate_strategic_posture_section

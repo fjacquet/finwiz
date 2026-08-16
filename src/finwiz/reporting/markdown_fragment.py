@@ -82,6 +82,35 @@ def _render_inline(segment: str, citations: list[str] | None) -> str:
     return _CITATION.sub(_cite, out)
 
 
+def render_markdown_inline(text: object, *, citations: list[str] | None = None) -> str:
+    """Render a short model-authored fragment with no block wrapping.
+
+    Same escape-first pipeline as :func:`render_markdown_fragment` — the model
+    is still never a source of markup — but it emits only inline HTML
+    (``<strong>``, ``<em>``, citation ``<sup><a>``). Use it for text the caller
+    already places inside an element it owns: a verdict ``<p>``, a badge
+    ``<span>``, an ``<li>``. ``render_markdown_fragment`` would nest a ``<p>``
+    or a whole ``<ul>`` inside those, which is why they were calling bare
+    ``escape()`` instead — and bare ``escape()`` is exactly what left literal
+    ``**`` markers and dangling ``[n]`` citations in the family report.
+
+    Routing a surface through here is strictly safer than ``escape()``, never
+    less safe: escaping happens first and identically, and only a fixed
+    allowlist of inline tags is reinstated afterwards.
+
+    Non-``str`` input is coerced (posture fields arrive from a ``model_dump``,
+    where a list item is not guaranteed to be a string) and newlines collapse
+    to single spaces: an inline surface has no block structure in which to
+    express a line break.
+    """
+    if text is None:
+        return ""
+    collapsed = " ".join(line.strip() for line in str(text).splitlines() if line.strip())
+    if not collapsed:
+        return ""
+    return _render_inline(escape(collapsed, quote=False), citations)
+
+
 def render_markdown_fragment(text: str, *, citations: list[str] | None = None) -> str:
     """Render a markdown fragment to HTML using a strict allowlist.
 
