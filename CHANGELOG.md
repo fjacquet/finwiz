@@ -78,6 +78,32 @@ data.
 
 ### Known limitations
 
+Three of these were found by inspecting a live `crewai flow kickoff` on
+2026-08-16. That run executed a pre-merge build, so it did not exercise the
+fixes above — but the defects below were confirmed against the merged source
+and are live in this release.
+
+- **A Perplexity failure discards completed Python work.** When `fact_pack`
+  fails, `stages/__init__.py` short-circuits the whole holding to pending, even
+  though `collect` and `quantify` had already succeeded. In the observed run 24
+  of 61 holdings were lost this way while their deterministic scoring was
+  already done. This inverts AI Minimalism: the $0 deterministic half is held
+  hostage by the flaky AI half. The fix is to emit a partial verdict carrying
+  the quantitative scores with the qualitative section marked unavailable.
+- **A refused holding is persisted as `C` / `0.5` / `HOLD`.** `_emit_pending`
+  returns `EnrichedAnalysis.model_construct()` with no arguments, and that
+  object is serialized to `{TICKER}_enriched.json`. Because the schema defaults
+  are `final_grade="C"`, `final_score=0.5`, `final_recommendation="HOLD"`
+  (`schemas/hybrid_analysis/enriched.py:76-78`), the artifact downstream
+  consumers read asserts a middling hold for a holding the pipeline explicitly
+  refused — with `ticker: ""` and both analysis sections `null`. The
+  `DeepAnalysisResult` beside it correctly says `N/A` / `0.0` / `WAIT`.
+- **The orchestrator counts placeholders as analyses**, logging
+  `Deep analysis complete: 64/64 holdings analyzed` when 27 were pending
+  placeholders.
+- **Perplexity transport errors log an empty message**
+  (`Perplexity transport error for _FactPackRaw:`), so a failing run gives no
+  indication of why.
 - Discovery still surfaces few or no opportunities. `composite_score =
   standalone_factor × portfolio_fit` uses fit as a full-range multiplier, but
   fit's practical ceiling is ~0.75 (its diversification term is `1 − max_corr`,
