@@ -390,7 +390,15 @@ class ReportEnrichmentMixin:
         holdings_covered = len(covered_tickers)
         uncovered_tickers = sorted(set(all_tickers) - covered_tickers)
 
-        priced_values = {h.ticker: h.eur_value for h in holdings if h.ticker and h.eur_value is not None}
+        # Summed, not last-wins: the same ticker can appear on several rows (the
+        # same position held in two accounts). A dict comprehension keyed by
+        # ticker would keep only the last row's eur_value, understating the
+        # portfolio total and reporting a value weight that does not match the
+        # real position sizes.
+        priced_values: dict[str, float] = {}
+        for h in holdings:
+            if h.ticker and h.eur_value is not None:
+                priced_values[h.ticker] = priced_values.get(h.ticker, 0.0) + h.eur_value
         total_priced_value = sum(priced_values.values())
         if total_priced_value > 0:
             covered_value = sum(v for t, v in priced_values.items() if t in covered_tickers)

@@ -112,8 +112,15 @@ async def test_circuit_breaker_opens_after_threshold(mocker):
 @pytest.mark.asyncio
 async def test_circuit_breaker_half_open_after_recovery(mocker):
     """Circuit breaker allows retry after RECOVERY_TIMEOUT passes."""
+    from finwiz.infrastructure.resilience import crew_execution
+
     # Open the circuit breaker manually
     _crew_failures["recovered_crew"] = FAILURE_THRESHOLD
+    # Pin the cooldown: production reads it from _get_recovery_timeout(), which
+    # resolves FINWIZ_CIRCUIT_BREAKER_RECOVERY. Stamping against the local
+    # RECOVERY_TIMEOUT constant alone means an environment setting it above 121
+    # leaves the breaker still open, and this test sleeps or fails.
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: RECOVERY_TIMEOUT)
     _crew_circuit_open["recovered_crew"] = time.time() - RECOVERY_TIMEOUT - 1  # Past recovery
 
     crew = _make_crew(mocker, return_value="recovered_result")
@@ -321,6 +328,7 @@ async def test_failure_counter_reset_on_half_open_prevents_instant_reopen(mocker
     from finwiz.infrastructure.resilience import crew_execution
 
     _crew_failures["flaky_reset"] = FAILURE_THRESHOLD
+    mocker.patch.object(crew_execution, "_get_recovery_timeout", lambda: RECOVERY_TIMEOUT)
     _crew_circuit_open["flaky_reset"] = time.time() - RECOVERY_TIMEOUT - 1  # already past cooldown
 
     crew = _make_crew(mocker, side_effect=RuntimeError("still flaky"))

@@ -20,7 +20,7 @@ from html import escape
 from typing import Any
 
 from finwiz.reporting.css_styles import get_report_css
-from finwiz.reporting.markdown_fragment import render_markdown_fragment, render_markdown_inline
+from finwiz.reporting.markdown_fragment import _is_safe_url, render_markdown_fragment, render_markdown_inline
 
 # (heading, verdict field, analyst-length detail field)
 _THEMES = (
@@ -155,9 +155,21 @@ def _per_holding_table(holdings_strategic: dict[str, dict] | None) -> str:
 
 
 def _sources(citations: list[str] | None) -> str:
+    """Render the sources list, dropping any URL the render boundary would reject.
+
+    Citation URLs are model-supplied. ``escape(u, quote=True)`` stops attribute
+    breakout but not an executable scheme, so a ``javascript:`` citation would
+    become a clickable payload here while ``render_markdown_fragment`` refuses
+    the identical string. Both surfaces apply ``_is_safe_url`` so the boundary
+    is one rule rather than two.
+    """
     if not citations:
         return ""
-    items = "".join(f'<li id="src{i}"><a href="{escape(u, quote=True)}" rel="noopener noreferrer" target="_blank">{escape(u)}</a></li>' for i, u in enumerate(citations, 1))
+    items = "".join(
+        f'<li id="src{i}"><a href="{escape(u, quote=True)}" rel="noopener noreferrer" target="_blank">{escape(u)}</a></li>' for i, u in enumerate(citations, 1) if _is_safe_url(u)
+    )
+    if not items:
+        return ""
     return f'<section class="section"><h2>Sources</h2><ol>{items}</ol></section>'
 
 

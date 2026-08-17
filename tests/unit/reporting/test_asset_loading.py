@@ -45,15 +45,29 @@ class TestTrustBannerCss:
             assert f".{cls}" in css, f"missing CSS rule for .{cls}"
 
     def test_trust_banner_states_are_visually_distinct(self):
+        """Each state must declare its own colours in its own dedicated rule.
+
+        The naive version of this test searched for ``.trust-banner-green``
+        anywhere in the stylesheet. That matched the *grouped* selector
+        (``.trust-banner-green, .trust-banner-amber, ... {``) which lists all
+        four names on one line, so all four extracted blocks were suffixes of
+        the same shared body and differed only by leading offset. The assertion
+        passed even when every state declared identical colours -- it never
+        tested distinctness at all. Anchor on the single-class rule instead.
+        """
         css = get_report_css()
         blocks = {}
         for cls in ("trust-banner-green", "trust-banner-amber", "trust-banner-red", "trust-banner-blocked"):
-            start = css.index(f".{cls}")
-            end = css.index("}", start)
-            blocks[cls] = css[start:end]
+            match = re.search(rf"^\s*\.{re.escape(cls)}\s*\{{(.*?)\}}", css, re.DOTALL | re.MULTILINE)
+            assert match is not None, f"no dedicated rule for .{cls} (only a grouped selector?)"
+            blocks[cls] = match.group(1).strip()
+
         # Every state must resolve to its own rule body -- no two states may
         # share a verbatim block, or they'd be indistinguishable at a glance.
-        assert len(set(blocks.values())) == 4
+        assert len(set(blocks.values())) == 4, f"states share a rule body: {blocks}"
+        # And each dedicated rule must actually set a colour, not merely exist.
+        for cls, body in blocks.items():
+            assert "background" in body or "color" in body, f".{cls} declares no colour: {body!r}"
 
 
 def _classes_in(html: str) -> set[str]:

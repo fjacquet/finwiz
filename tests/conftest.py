@@ -73,8 +73,23 @@ def _block_remote_network(request):
     pytest_socket.enable_socket()
 
 
-# Non-FINWIZ_-prefixed env vars resilience_config still honours (back-compat).
-_EXTRA_CONFIG_ENV_VARS = ("PORTFOLIO_PARALLEL_LIMIT", "DEEP_ANALYSIS_PARALLEL_LIMIT")
+# Non-FINWIZ_-prefixed env vars resilience_config still honours (back-compat),
+# plus optional API keys that are NOT in ConfigurationManager.REQUIRED_API_KEYS
+# and therefore escape the clear loop below.
+#
+# PERPLEXITY_API_KEY / PPLX_API_KEY earn their place here: perplexity_with_retry
+# short-circuits to None when neither is set, so a test that does not supply one
+# exercises the retry loop on a developer machine (where load_dotenv leaks the
+# real key in) and silently exercises nothing in CI. That difference produced a
+# green local suite and a red CI on this branch. Clearing them here makes the
+# dependency explicit — a test that needs a key sets its own, as the docstring
+# below describes.
+_EXTRA_CONFIG_ENV_VARS = (
+    "PORTFOLIO_PARALLEL_LIMIT",
+    "DEEP_ANALYSIS_PARALLEL_LIMIT",
+    "PERPLEXITY_API_KEY",
+    "PPLX_API_KEY",
+)
 
 
 @pytest.fixture(autouse=True)
