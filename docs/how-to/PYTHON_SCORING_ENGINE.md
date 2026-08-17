@@ -16,43 +16,15 @@ The FinWiz Python Scoring Engine is a deterministic, high-performance alternativ
 
 ### Component Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 DeepAnalysisScorer                          │
-├─────────────────────────────────────────────────────────────┤
-│  calculate_composite_score()                                │
-│  ├── calculate_fundamental_score() (40% weight)             │
-│  ├── calculate_technical_score() (30% weight)               │
-│  └── calculate_risk_score() (30% weight)                    │
-│                                                             │
-│  assign_grade()                                             │
-│  generate_recommendation()                                  │
-│  generate_rationale()                                       │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                DeepAnalysisResult                           │
-├─────────────────────────────────────────────────────────────┤
-│  • Composite Score (0.0-1.0)                               │
-│  • Component Scores (fundamental, technical, risk)         │
-│  • Grade (A+, A, B, C, D, F)                              │
-│  • Recommendation (BUY, HOLD, SELL)                        │
-│  • Confidence Level (0.0-1.0)                              │
-│  • Detailed Rationale                                      │
-│  • Component Details (all calculations preserved)          │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│            Jinja2 Template Rendering                       │
-├─────────────────────────────────────────────────────────────┤
-│  • Professional HTML Report Generation                     │
-│  • French Language Localization                            │
-│  • Light/Dark Mode Support                                 │
-│  • Responsive Design                                        │
-│  • Asset-Specific Sections                                 │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Scorer["DeepAnalysisScorer<br/>calculate_composite_score()<br/>• calculate_fundamental_score() (40% weight)<br/>• calculate_technical_score() (30% weight)<br/>• calculate_risk_score() (30% weight)<br/>assign_grade()<br/>generate_recommendation()<br/>generate_rationale()"]
+
+    Result["DeepAnalysisResult<br/>• Composite Score (0.0-1.0)<br/>• Component Scores (fundamental, technical, risk)<br/>• Grade (A+, A, B, C, D, F)<br/>• Recommendation (BUY, HOLD, SELL)<br/>• Confidence Level (0.0-1.0)<br/>• Detailed Rationale<br/>• Component Details (all calculations preserved)"]
+
+    Template["Jinja2 Template Rendering<br/>• Professional HTML Report Generation<br/>• French Language Localization<br/>• Light/Dark Mode Support<br/>• Responsive Design<br/>• Asset-Specific Sections"]
+
+    Scorer --> Result --> Template
 ```
 
 ## Scoring Methodology

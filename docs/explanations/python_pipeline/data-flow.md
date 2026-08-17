@@ -8,68 +8,51 @@ The pipeline processes data through four sequential stages, with each stage prod
 
 ## Complete Data Flow
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ Step 1: Deep Analysis (Python Scoring)                      │
-│                                                              │
-│ Portfolio Holdings                                           │
-│        ↓                                                     │
-│ analyze_portfolio_with_python()                             │
-│        ↓                                                     │
-│ For each holding:                                           │
-│   - Fetch real market data (QuantitativeAnalysisTool)      │
-│   - Calculate composite score (DeepAnalysisScorer)         │
-│   - Generate JSON export                                    │
-│   - Generate HTML report                                    │
-│        ↓                                                     │
-│ Output: JSON files in output/{asset_class}/                │
-│         HTML reports per holding                            │
-└─────────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 2: A+ Discovery Integration                            │
-│                                                              │
-│ integrate_aplus_discovery_with_deep_analysis()              │
-│        ↓                                                     │
-│ Scan output directories:                                    │
-│   - output/stock/*.json                                     │
-│   - output/etf/*.json                                       │
-│   - output/crypto/*.json                                    │
-│        ↓                                                     │
-│ Filter A+ and A grade holdings                              │
-│        ↓                                                     │
-│ Output: Discovery results with opportunities list           │
-└─────────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 3: Backtesting Pipeline                                │
-│                                                              │
-│ connect_backtesting_to_discovery_results()                  │
-│        ↓                                                     │
-│ Read A+ candidates from discovery                           │
-│        ↓                                                     │
-│ For each candidate:                                         │
-│   - Execute backtesting strategy                            │
-│   - Calculate performance metrics                           │
-│        ↓                                                     │
-│ Output: Backtesting results JSON                            │
-└─────────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│ Step 4: Final Report Generation                             │
-│                                                              │
-│ generate_python_report()                                    │
-│        ↓                                                     │
-│ Consolidate all data:                                       │
-│   - Portfolio review                                        │
-│   - Deep analysis results                                   │
-│   - Discovery opportunities                                 │
-│   - Backtesting metrics                                     │
-│        ↓                                                     │
-│ Assemble HTML from f-string templates (no Jinja2 — see below)│
-│        ↓                                                     │
-│ Output: Final HTML report                                   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph S1["Step 1: Deep Analysis (Python Scoring)"]
+        A1[Portfolio Holdings]
+        A2["analyze_portfolio_with_python()"]
+        A3["For each holding:<br/>Fetch real market data (QuantitativeAnalysisTool)<br/>Calculate composite score (DeepAnalysisScorer)<br/>Generate JSON export<br/>Generate HTML report"]
+        A4["Output: JSON files in output/{asset_class}/<br/>HTML reports per holding"]
+        A1 --> A2
+        A2 --> A3
+        A3 --> A4
+    end
+
+    subgraph S2["Step 2: A+ Discovery Integration"]
+        B1["integrate_aplus_discovery_with_deep_analysis()"]
+        B2["Scan output directories:<br/>output/stock/*.json<br/>output/etf/*.json<br/>output/crypto/*.json"]
+        B3["Filter A+ and A grade holdings"]
+        B4["Output: Discovery results with opportunities list"]
+        B1 --> B2
+        B2 --> B3
+        B3 --> B4
+    end
+
+    subgraph S3["Step 3: Backtesting Pipeline"]
+        C1["connect_backtesting_to_discovery_results()"]
+        C2["Read A+ candidates from discovery"]
+        C3["For each candidate:<br/>Execute backtesting strategy<br/>Calculate performance metrics"]
+        C4["Output: Backtesting results JSON"]
+        C1 --> C2
+        C2 --> C3
+        C3 --> C4
+    end
+
+    subgraph S4["Step 4: Final Report Generation"]
+        D1["generate_python_report()"]
+        D2["Consolidate all data:<br/>Portfolio review<br/>Deep analysis results<br/>Discovery opportunities<br/>Backtesting metrics"]
+        D3["Assemble HTML from f-string templates (no Jinja2 — see below)"]
+        D4["Output: Final HTML report"]
+        D1 --> D2
+        D2 --> D3
+        D3 --> D4
+    end
+
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
 ```
 
 ## Stage 1: Deep Analysis
