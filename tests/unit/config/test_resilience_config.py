@@ -359,7 +359,9 @@ class TestGetResilienceConfig:
         assert config.flow_timeout == 7200
         assert config.auto_resume is False
         assert config.state_max_age_hours == 24
-        assert config.parallel_limit == 10
+        # 4, not 10: in-flight holdings contend for one 4-slot Perplexity gate,
+        # and each holding is capped by a 900 s wait_for.
+        assert config.parallel_limit == 4
         assert config.deep_analysis_parallel_limit == 3
         assert config.circuit_breaker_threshold == 5
         assert config.circuit_breaker_recovery == 120.0

@@ -53,3 +53,8 @@ async def test_strategic_calls_go_through_the_retry_wrapper(mocker):
     for call in wrapper.await_args_list:
         assert call.kwargs["schema"] is not None
         assert "prompt" in call.kwargs and "system" in call.kwargs
+        # Both were deliberate: the recency window keeps the frameworks from
+        # citing stale news, and the attempt cap keeps a retry storm inside the
+        # holding's remaining 900 s budget. Neither is the wrapper's default.
+        assert call.kwargs["search_recency_filter"] == "month"
+        assert call.kwargs["max_attempts"] == 3

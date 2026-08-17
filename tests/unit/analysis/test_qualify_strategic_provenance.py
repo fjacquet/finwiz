@@ -41,3 +41,24 @@ def test_a_strategic_analysis_the_model_emits_is_dropped() -> None:
 
     assert not hasattr(raw, "strategic_analysis")
     assert "strategic_analysis" not in raw.model_dump()
+
+
+def test_the_full_schema_validator_also_refuses_a_model_authored_analysis() -> None:
+    """The second door.
+
+    ``_QualitativeInsightsRaw`` is the LLM-facing schema and no longer declares
+    the field, but ``validate_qualitative_insights`` validates LLM-derived dicts
+    against the *full* ``QualitativeInsights``, which still declares it. Nothing
+    reaches that path with a raw model dict today; this pins that it stays shut
+    if something ever does.
+    """
+    from finwiz.validation.ai_output import validate_qualitative_insights
+
+    payload = {
+        "ai_confidence": 0.8,
+        "strategic_analysis": {"pestel": {"strategic_score": 0.9, "confidence": 0.9}},
+    }
+
+    insights = validate_qualitative_insights(payload)
+
+    assert insights.strategic_analysis is None

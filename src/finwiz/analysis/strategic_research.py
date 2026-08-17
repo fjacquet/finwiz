@@ -51,6 +51,19 @@ def _today_french() -> str:
     return f"{today.day} {_FR_MONTHS[today.month]} {today.year}"
 
 
+# The wrapper's ``timeout`` is per *attempt*, not a total budget -- so attempts
+# multiply the worst case. Strategic research is the last thing to run inside a
+# holding's 900 s ``asyncio.wait_for`` (stages/__init__.py), and the tightest
+# holdings observed on 2026-08-16 reached it with ~240 s left. At the wrapper's
+# default of 4 attempts the worst case per framework is 4x60+backoff ~= 247 s,
+# which exceeds that headroom and would lose the whole holding -- strictly worse
+# than losing one framework. Three attempts bound it to ~184 s, inside every
+# headroom actually observed.
+#
+# The portfolio synthesis call deliberately keeps the wrapper default: it runs
+# once, after every holding, outside any per-holding budget.
+_FRAMEWORK_MAX_ATTEMPTS = 3
+
 SYSTEM_FR = (
     "Tu es un analyste stratégique financier expert. Réponds en français, "
     "avec des faits récents vérifiables et des citations. "
@@ -245,6 +258,7 @@ async def gather_strategic_analysis(
         system=SYSTEM_FR,
         search_recency_filter="month",
         timeout=timeout,
+        max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
     )
     swot_coro = perplexity_with_retry(
         prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
@@ -252,6 +266,7 @@ async def gather_strategic_analysis(
         system=SYSTEM_FR,
         search_recency_filter="month",
         timeout=timeout,
+        max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
     )
     porter_coro = perplexity_with_retry(
         prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
@@ -259,6 +274,7 @@ async def gather_strategic_analysis(
         system=SYSTEM_FR,
         search_recency_filter="month",
         timeout=timeout,
+        max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
     )
     pestel, swot, porter = await asyncio.gather(pestel_coro, swot_coro, porter_coro)
 

@@ -109,7 +109,7 @@ def get_resilience_config() -> ResilienceConfig:
         FINWIZ_CIRCUIT_BREAKER_RECOVERY: Seconds before half-open retry (default: 120)
         FINWIZ_AUTO_RESUME: Auto-resume from checkpoint (default: false)
         FINWIZ_STATE_MAX_AGE_HOURS: Max checkpoint age in hours (default: 24)
-        FINWIZ_PARALLEL_LIMIT: Concurrent portfolio holdings (default: 10)
+        FINWIZ_PARALLEL_LIMIT: Concurrent portfolio holdings (default: 4)
         FINWIZ_DEEP_ANALYSIS_PARALLEL_LIMIT: Concurrent deep analysis (default: 3)
         FINWIZ_CLEANUP_STATE_ON_SUCCESS: Cleanup state on success (default: false)
         FINWIZ_STATE_CLEANUP_MAX_AGE_DAYS: Max state age for cleanup in days (default: 7)
@@ -142,7 +142,11 @@ def get_resilience_config() -> ResilienceConfig:
         state_max_age_hours = int(os.getenv("FINWIZ_STATE_MAX_AGE_HOURS", "24"))
 
         # Load parallelization configuration with fallback to old variable names
-        parallel_limit = int(os.getenv("FINWIZ_PARALLEL_LIMIT", os.getenv("PORTFOLIO_PARALLEL_LIMIT", "10")))
+        # 4, not 10: every in-flight holding contends for the same 4-slot
+        # Perplexity gate (PERPLEXITY_CONCURRENCY), and each holding is capped by
+        # a 900 s asyncio.wait_for. At 10 the queue behind that gate ate most of
+        # the slowest holding's headroom; the run gets longer, no holding is lost.
+        parallel_limit = int(os.getenv("FINWIZ_PARALLEL_LIMIT", os.getenv("PORTFOLIO_PARALLEL_LIMIT", "4")))
         deep_analysis_parallel_limit = int(
             os.getenv(
                 "FINWIZ_DEEP_ANALYSIS_PARALLEL_LIMIT",
