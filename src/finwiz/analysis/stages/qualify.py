@@ -54,7 +54,7 @@ class _QualitativeInsightsRaw(BaseModel):
     * ``strategic_analysis`` is dropped — it is filled only by
       :func:`finwiz.analysis.strategic_research.gather_strategic_analysis`
       via ``stages/__init__.py``. No agent or task config prompts the crew
-      for PESTEL/SWOT/Porter, but a field present in the schema handed to the
+      for SWOT/Porter, but a field present in the schema handed to the
       model gets filled anyway when the model recognizes the company. A
       model-authored strategic analysis is indistinguishable downstream from
       a researched one and would silently count as full coverage.

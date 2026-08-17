@@ -1,7 +1,7 @@
 """strategic_research must route every Perplexity call through the retry wrapper.
 
 The 2026-08-16 end-to-end run hit Perplexity 429s eight times against the
-strategic frameworks and lost all three for two holdings (DIS, ORCL), because
+strategic frameworks and lost both for two holdings (DIS, ORCL), because
 ``strategic_research.py`` called ``perplexity_structured`` directly instead of
 going through ``perplexity_with_retry`` — the same wrapper
 ``fact_pack_research.py`` already uses, which hit 24 transport errors in the
@@ -32,7 +32,7 @@ async def test_a_transient_failure_does_not_lose_a_framework(mocker, monkeypatch
 
     async def flaky(*, prompt, schema, system, **kw):
         calls["n"] += 1
-        if calls["n"] <= 3:  # first attempt of each of the three frameworks
+        if calls["n"] <= 2:  # first attempt of each of the two frameworks
             return None
         return schema.model_construct(strategic_score=0.6, confidence=0.7)
 
@@ -42,7 +42,7 @@ async def test_a_transient_failure_does_not_lose_a_framework(mocker, monkeypatch
     result = await strategic_research.gather_strategic_analysis(ticker="ORCL", sector="Tech", industry="Software", description="desc")
 
     assert result is not None
-    assert calls["n"] > 3  # it retried rather than giving up on the first None
+    assert calls["n"] > 2  # it retried rather than giving up on the first None
 
 
 @pytest.mark.asyncio
@@ -57,7 +57,7 @@ async def test_strategic_calls_go_through_the_retry_wrapper(mocker):
 
     await strategic_research.gather_strategic_analysis(ticker="ORCL", sector="Tech", industry="Software", description="desc")
 
-    assert wrapper.await_count == 3
+    assert wrapper.await_count == 2
     for call in wrapper.await_args_list:
         assert call.kwargs["schema"] is not None
         assert "prompt" in call.kwargs and "system" in call.kwargs
@@ -66,3 +66,32 @@ async def test_strategic_calls_go_through_the_retry_wrapper(mocker):
         # holding's remaining 900 s budget. Neither is the wrapper's default.
         assert call.kwargs["search_recency_filter"] == "month"
         assert call.kwargs["max_attempts"] == 3
+
+
+@pytest.mark.asyncio
+async def test_only_two_frameworks_are_researched(mocker):
+    """Only SWOT and Five Forces are researched; macro analysis runs outside FinWiz."""
+    from finwiz.analysis import strategic_research
+
+    wrapper = mocker.patch(
+        "finwiz.analysis.strategic_research.perplexity_with_retry",
+        new=mocker.AsyncMock(return_value=None),
+    )
+
+    await strategic_research.gather_strategic_analysis(ticker="ORCL", sector="Tech", industry="Software", description="d")
+
+    assert wrapper.await_count == 2
+    schemas = {call.kwargs["schema"].__name__ for call in wrapper.await_args_list}
+    assert schemas == {"SwotAnalysis", "FiveForcesAnalysis"}
+
+
+@pytest.mark.asyncio
+async def test_gather_returns_none_when_both_frameworks_fail(mocker):
+    from finwiz.analysis import strategic_research
+
+    mocker.patch(
+        "finwiz.analysis.strategic_research.perplexity_with_retry",
+        new=mocker.AsyncMock(return_value=None),
+    )
+
+    assert await strategic_research.gather_strategic_analysis(ticker="ORCL", sector="", industry="", description="") is None

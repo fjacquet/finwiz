@@ -427,3 +427,50 @@ class TestDeepAnalysisReportGenerator:
         # Performance regression check
         assert avg_time < 0.05, f"Average generation time {avg_time * 1000:.1f}ms exceeds 50ms"
         assert max_time < 0.1, f"Maximum generation time {max_time * 1000:.1f}ms exceeds 100ms"
+
+
+class TestStrategicScoreLabel:
+    """The score card must name the frameworks that actually contributed.
+
+    Since PESTEL was dropped, a holding carries at most two frameworks, and
+    either one can fail on its own. The card averaged whatever survived while
+    always captioning it "Moyenne SWOT + Porter" -- so a single-framework score
+    was presented to the reader as a two-framework average.
+    """
+
+    @pytest.fixture
+    def generator(self) -> DeepAnalysisReportGenerator:
+        return DeepAnalysisReportGenerator()
+
+    @staticmethod
+    def _data(strategic: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "ticker": "AAPL",
+            "asset_class": "stock",
+            "composite_score": 0.85,
+            "grade": "A+",
+            "recommendation": "BUY",
+            "confidence": 0.90,
+            "rationale": "Fondamentaux solides.",
+            "analysis_date": datetime.now(),
+            "session_id": "test_session",
+            "strategic_analysis": strategic,
+        }
+
+    def test_both_frameworks_present_reads_as_an_average(self, generator: DeepAnalysisReportGenerator):
+        html = generator.generate_report(self._data({"swot": {"strategic_score": 0.6}, "five_forces": {"strategic_score": 0.8}}))
+
+        assert "Moyenne SWOT + Porter" in html
+        assert "70%" in html
+
+    def test_swot_alone_is_not_called_an_average(self, generator: DeepAnalysisReportGenerator):
+        html = generator.generate_report(self._data({"swot": {"strategic_score": 0.6}}))
+
+        assert "SWOT uniquement" in html
+        assert "Moyenne SWOT + Porter" not in html
+
+    def test_porter_alone_is_not_called_an_average(self, generator: DeepAnalysisReportGenerator):
+        html = generator.generate_report(self._data({"five_forces": {"strategic_score": 0.8}}))
+
+        assert "Porter uniquement" in html
+        assert "Moyenne SWOT + Porter" not in html

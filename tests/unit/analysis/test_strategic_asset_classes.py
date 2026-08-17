@@ -1,6 +1,6 @@
 """Tests for asset-class-aware strategic analysis (ETF/crypto framing, not just stock).
 
-Strategic research (PESTEL/SWOT/Porter) used to be gated to
+Strategic research (SWOT/Porter) used to be gated to
 ``asset_class == "stock"`` at two separate call sites (`stages/__init__.py` and
 the legacy `_run_qualitative_and_strategic_in_parallel` helper), which
 structurally excluded 38 of 64 holdings — every ETF and crypto — from any
@@ -14,33 +14,6 @@ circuit breaker and killed 31 holdings.
 from __future__ import annotations
 
 import pytest
-
-
-def test_etf_prompt_asks_about_cost_and_concentration_not_moats():
-    from finwiz.analysis.strategic_research import _pestel_prompt
-
-    etf = _pestel_prompt("VUSA.L", "", "", "", "16 août 2026", asset_class="etf")
-
-    assert "concentration" in etf.lower()
-    assert "frais" in etf.lower()
-
-
-def test_crypto_prompt_asks_about_protocol_and_regulation():
-    from finwiz.analysis.strategic_research import _pestel_prompt
-
-    crypto = _pestel_prompt("BTC-USD", "", "", "", "16 août 2026", asset_class="crypto")
-
-    assert "protocole" in crypto.lower()
-    assert "réglementaire" in crypto.lower()
-
-
-def test_pestel_prompt_defaults_asset_class_to_stock():
-    """Existing callers that omit asset_class keep getting the stock framing."""
-    from finwiz.analysis.strategic_research import _pestel_prompt
-
-    default = _pestel_prompt("AAPL", "Tech", "Consumer Electronics", "", "16 août 2026")
-    stock = _pestel_prompt("AAPL", "Tech", "Consumer Electronics", "", "16 août 2026", asset_class="stock")
-    assert default == stock
 
 
 class TestSwotAssetClassFraming:
@@ -83,14 +56,6 @@ class TestCapsSurviveEveryAssetClassBranch:
     """
 
     @pytest.mark.parametrize("asset_class", ["stock", "etf", "crypto"])
-    def test_pestel_caps_present_for_every_asset_class(self, asset_class):
-        from finwiz.analysis.strategic_research import _pestel_prompt
-
-        prompt = _pestel_prompt("TICK", "Sector", "Industry", "", "16 août 2026", asset_class=asset_class)
-        assert "3 puces" in prompt
-        assert "200 caractères" in prompt
-
-    @pytest.mark.parametrize("asset_class", ["stock", "etf", "crypto"])
     def test_swot_caps_present_for_every_asset_class(self, asset_class):
         from finwiz.analysis.strategic_research import _swot_prompt
 
@@ -112,16 +77,10 @@ class TestCapsSurviveEveryAssetClassBranch:
         which only ever exercised the (default) stock branch.
         """
         import finwiz.analysis.strategic_research as strategic_research
-        from finwiz.analysis.strategic_research import _pestel_prompt, _porter_prompt, _swot_prompt
+        from finwiz.analysis.strategic_research import _porter_prompt, _swot_prompt
 
-        mocker.patch.object(strategic_research, "MAX_BULLETS_PESTEL", 7)
-        mocker.patch.object(strategic_research, "MAX_BULLET_CHARS", 333)
         mocker.patch.object(strategic_research, "MAX_BULLETS_SWOT", 9)
         mocker.patch.object(strategic_research, "MAX_RATIONALE_CHARS", 444)
-
-        pestel = _pestel_prompt("TICK", "Sector", "Industry", "", "16 août 2026", asset_class=asset_class)
-        assert "7 puces" in pestel, "PESTEL should interpolate MAX_BULLETS_PESTEL"
-        assert "333 caractères" in pestel, "PESTEL should interpolate MAX_BULLET_CHARS"
 
         swot = _swot_prompt("TICK", "Sector", "Industry", "", "16 août 2026", asset_class=asset_class)
         assert "9 puces" in swot, "SWOT should interpolate MAX_BULLETS_SWOT"
@@ -139,13 +98,11 @@ class TestAssetClassThreadsThroughGatherFunctions:
         import finwiz.analysis.strategic_research as strategic_research
 
         mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
-        pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
         swot_spy = mocker.spy(strategic_research, "_swot_prompt")
         porter_spy = mocker.spy(strategic_research, "_porter_prompt")
 
         await strategic_research.gather_strategic_analysis(ticker="VUSA.L", asset_class="etf")
 
-        assert pestel_spy.call_args.kwargs["asset_class"] == "etf"
         assert swot_spy.call_args.kwargs["asset_class"] == "etf"
         assert porter_spy.call_args.kwargs["asset_class"] == "etf"
 
@@ -153,21 +110,21 @@ class TestAssetClassThreadsThroughGatherFunctions:
         import finwiz.analysis.strategic_research as strategic_research
 
         mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
-        pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
+        swot_spy = mocker.spy(strategic_research, "_swot_prompt")
 
         strategic_research.gather_strategic_analysis_sync(ticker="BTC-USD", asset_class="crypto")
 
-        assert pestel_spy.call_args.kwargs["asset_class"] == "crypto"
+        assert swot_spy.call_args.kwargs["asset_class"] == "crypto"
 
     def test_gather_strategic_analysis_sync_defaults_to_stock(self, mocker):
         import finwiz.analysis.strategic_research as strategic_research
 
         mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
-        pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
+        swot_spy = mocker.spy(strategic_research, "_swot_prompt")
 
         strategic_research.gather_strategic_analysis_sync(ticker="AAPL")
 
-        assert pestel_spy.call_args.kwargs["asset_class"] == "stock"
+        assert swot_spy.call_args.kwargs["asset_class"] == "stock"
 
     def test_safe_strategic_forwards_asset_class(self, mocker):
         from finwiz.analysis.stages.qualify import _safe_strategic

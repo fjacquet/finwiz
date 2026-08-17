@@ -13,7 +13,6 @@ import pytest
 
 from finwiz.schemas.hybrid_analysis.strategic import (
     FiveForcesAnalysis,
-    PestelAnalysis,
     PortfolioPostureNarrative,
     PortfolioStrategicPosture,
     StrategicAnalysis,
@@ -24,7 +23,6 @@ from finwiz.schemas.hybrid_analysis.strategic import (
 def _one_holding() -> dict[str, StrategicAnalysis]:
     return {
         "AAPL": StrategicAnalysis(
-            pestel=PestelAnalysis(strategic_score=0.6, confidence=0.7),
             swot=SwotAnalysis(strategic_score=0.5, confidence=0.6),
             five_forces=FiveForcesAnalysis(strategic_score=0.4, confidence=0.5),
         )
@@ -33,7 +31,6 @@ def _one_holding() -> dict[str, StrategicAnalysis]:
 
 def _narrative(**overrides: object) -> PortfolioPostureNarrative:
     base = {
-        "macro_verdict": "Macro favorable.",
         "competitive_verdict": "Moats solides.",
         "swot_verdict": "Forces dominantes.",
         "strategic_score": 0.71,
@@ -66,7 +63,7 @@ async def test_coverage_is_merged_before_constructing_the_full_posture(mocker):
     # Narrative fields from the LLM response survive the merge.
     assert posture.strategic_score == 0.71
     assert posture.confidence == 0.83
-    assert posture.macro_verdict == "Macro favorable."
+    assert posture.competitive_verdict == "Moats solides."
 
 
 @pytest.mark.asyncio
@@ -118,3 +115,194 @@ async def test_returns_none_when_perplexity_returns_none(mocker):
     )
 
     assert posture is None
+
+
+def _analysis(score: float, strength: str, threat: str):
+    from finwiz.schemas.hybrid_analysis.strategic import FiveForcesAnalysis, StrategicAnalysis, SwotAnalysis
+
+    return StrategicAnalysis(
+        swot=SwotAnalysis(strengths=[strength], threats=[threat], strategic_score=score),
+        five_forces=FiveForcesAnalysis(strategic_score=score),
+    )
+
+
+def test_the_payload_is_aggregates_and_extremes_not_every_holding():
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(60)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 60
+    assert len(payload["weakest"]) == 5
+    assert len(payload["strongest"]) == 5
+    assert payload["weakest"][0]["t"] == "T0"
+    assert payload["strongest"][-1]["t"] == "T59"
+    # The 50 mid-pack holdings are represented by the distribution, not by name.
+    assert "T30" not in _serialize_holdings(holdings)
+
+
+def test_the_payload_does_not_grow_with_portfolio_size():
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    small = {f"T{i}": _analysis(i / 100, "force", "menace") for i in range(20)}
+    large = {f"T{i}": _analysis(i / 200, "force", "menace") for i in range(200)}
+
+    assert len(_serialize_holdings(large)) < 2 * len(_serialize_holdings(small))
+
+
+def test_an_empty_portfolio_serializes_without_raising():
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    payload = json.loads(_serialize_holdings({}))
+
+    assert payload["n"] == 0
+    assert payload["weakest"] == []
+    assert payload["strongest"] == []
+
+
+@pytest.mark.parametrize("n", [0, 1, 3, 9, 10, 11, 60])
+def test_weakest_and_strongest_are_always_disjoint(n):
+    """No ticker may be named as both the portfolio's weakest and strongest position.
+
+    Below 2 * _EXTREMES holdings, naming the same ticker in both lists would hand
+    the model a self-contradictory payload -- exactly the small-portfolio case
+    where each holding carries the most weight in the verdict. `n` must still
+    report the true count regardless of how many holdings get named.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(n)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == n
+    weak_tickers = {row["t"] for row in payload["weakest"]}
+    strong_tickers = {row["t"] for row in payload["strongest"]}
+    assert weak_tickers.isdisjoint(strong_tickers)
+
+
+def test_a_single_holding_is_named_in_exactly_one_list():
+    """At n=1 the lone holding cannot be both weakest and strongest -- it is
+    assigned to `weakest` deliberately (see _serialize_holdings), never both."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {"SOLO": _analysis(0.5, "force", "menace")}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 1
+    assert [row["t"] for row in payload["weakest"]] == ["SOLO"]
+    assert payload["strongest"] == []
+
+
+def test_ten_or_more_holdings_keeps_five_and_five_unchanged():
+    """At n >= 2 * _EXTREMES the disjoint split must reduce to the original
+    5-weakest / 5-strongest slicing -- this fix must not change behaviour at
+    the portfolio sizes it already worked for."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(10)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 10
+    assert [row["t"] for row in payload["weakest"]] == ["T0", "T1", "T2", "T3", "T4"]
+    assert [row["t"] for row in payload["strongest"]] == ["T5", "T6", "T7", "T8", "T9"]
+
+
+@pytest.mark.parametrize("n", [0, 1, 3, 9, 10, 11, 60])
+def test_distribution_accounts_for_every_holding(n):
+    """`distribution` is the only channel by which mid-pack holdings reach the
+    synthesis model at all -- the payload's entire claim to not dropping data.
+    Every holding must land in exactly one bucket, so the bucket counts must
+    sum to `n` regardless of portfolio size."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(n)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert sum(payload["distribution"].values()) == payload["n"] == n
+
+
+def test_distribution_bucket_boundaries_are_pinned():
+    """Pins the `<` vs `<=` comparison and the bucket ordering in `_bucket`.
+
+    Scores sit exactly on each boundary (0.5, 0.65, 0.8) plus one holding just
+    below each (0.49, 0.64, 0.79), so a future edit that flips a comparison or
+    reorders `_SCORE_BUCKETS` moves a count between buckets and this test
+    catches it.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {
+        "BELOW_HALF": _analysis(0.49, "force", "menace"),
+        "AT_HALF": _analysis(0.50, "force", "menace"),
+        "BELOW_MID": _analysis(0.64, "force", "menace"),
+        "AT_MID": _analysis(0.65, "force", "menace"),
+        "BELOW_HIGH": _analysis(0.79, "force", "menace"),
+        "AT_HIGH": _analysis(0.80, "force", "menace"),
+    }
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["distribution"] == {
+        "<0.5": 1,
+        "0.5-0.65": 2,
+        "0.65-0.8": 2,
+        ">=0.8": 1,
+    }
+    assert sum(payload["distribution"].values()) == payload["n"] == 6
+
+
+def test_swot_mean_and_moat_mean_are_hand_computed_with_asymmetric_coverage():
+    """`swot_mean` and `moat_mean` must reflect the actual per-framework scores,
+    not a constant -- and when a holding is missing one framework, that mean
+    must average over fewer rows than `n` rather than treating the missing
+    framework as 0 or skipping the holding entirely.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {
+        # swot=0.6, five_forces=0.6 -> composite 0.6
+        "AAA": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["a"], threats=["x"], strategic_score=0.6),
+            five_forces=FiveForcesAnalysis(strategic_score=0.6),
+        ),
+        # swot=0.8, five_forces MISSING -> composite 0.8 (averaged over swot alone)
+        "BBB": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["b"], threats=["y"], strategic_score=0.8),
+            five_forces=None,
+        ),
+        # swot=0.4, five_forces=0.2 -> composite 0.3
+        "CCC": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["c"], threats=["z"], strategic_score=0.4),
+            five_forces=FiveForcesAnalysis(strategic_score=0.2),
+        ),
+    }
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 3
+    # swot_mean: all three holdings carry a swot score -> mean(0.6, 0.8, 0.4)
+    assert payload["swot_mean"] == pytest.approx(0.6)
+    # moat_mean: only AAA and CCC carry five_forces -- BBB is excluded from
+    # this average, not counted as 0 -- so the denominator is 2, not n=3.
+    assert payload["moat_mean"] == pytest.approx(0.4)

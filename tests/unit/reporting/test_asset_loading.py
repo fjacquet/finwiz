@@ -96,16 +96,14 @@ class TestPostureAndBannerClassesAreStyled:
                 "holdings_total": 64,
                 "value_covered_pct": 38.2,
                 "uncovered_tickers": ["TSLA"],
-                "macro_verdict": "Environnement porteur.",
                 "competitive_verdict": "Moats solides.",
                 "swot_verdict": "Équilibré.",
                 "strategic_score": 0.71,
                 "confidence": 0.83,
-                "macro_environment_summary": "- Politique : durcissement",
                 "dominant_themes": ["Résilience énergétique"],
                 "portfolio_strengths": ["Moats larges"],
             },
-            holdings_strategic={"AAPL": {"pestel": {"strategic_score": 0.6}}},
+            holdings_strategic={"AAPL": {"swot": {"strategic_score": 0.6}}},
         )
         banner_html = "".join(
             render_trust_banner(TrustBanner.from_coverage(CoverageSummary(analyzed=a, degraded=d, failed=f, total=5))) for a, d, f in [(5, 0, 0), (4, 1, 0), (1, 0, 4), (0, 0, 0)]

@@ -236,13 +236,12 @@
     </ul>
 </div>
 
-<!-- Strategic Analysis Section (PESTEL / SWOT / Porter's Five Forces) -->
+<!-- Strategic Analysis Section (SWOT / Porter's Five Forces) -->
 {% if strategic_analysis %}
 <div class="section">
     <h2>🎯 Analyse Stratégique</h2>
     {% set _comp = strategic_analysis %}
     {% set _scores = [] %}
-    {% if _comp.pestel and _comp.pestel.strategic_score is not none %}{% set _ = _scores.append(_comp.pestel.strategic_score) %}{% endif %}
     {% if _comp.swot and _comp.swot.strategic_score is not none %}{% set _ = _scores.append(_comp.swot.strategic_score) %}{% endif %}
     {% if _comp.five_forces and _comp.five_forces.strategic_score is not none %}{% set _ = _scores.append(_comp.five_forces.strategic_score) %}{% endif %}
     {% if _scores %}
@@ -250,26 +249,9 @@
         <div class="metric-card">
             <h4>Score Stratégique Global</h4>
             <p class="metric-value">{{ "%.0f"|format((_scores|sum / _scores|length) * 100) }}%</p>
-            <small>Moyenne PESTEL + SWOT + Porter</small>
+            <small>{% if _scores|length == 2 %}Moyenne SWOT + Porter{% elif _comp.swot and _comp.swot.strategic_score is not none %}SWOT uniquement{% else %}Porter uniquement{% endif %}</small>
         </div>
     </div>
-    {% endif %}
-
-    {# === PESTEL === #}
-    {% if _comp.pestel %}
-    {% set p = _comp.pestel %}
-    <h3>🌍 PESTEL — Environnement Macro</h3>
-    <div class="metrics-grid">
-        {% if p.political %}<div class="metric-card"><h4>Politique</h4><ul>{% for b in p.political %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-        {% if p.economic %}<div class="metric-card"><h4>Économique</h4><ul>{% for b in p.economic %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-        {% if p.social %}<div class="metric-card"><h4>Social</h4><ul>{% for b in p.social %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-        {% if p.technological %}<div class="metric-card"><h4>Technologique</h4><ul>{% for b in p.technological %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-        {% if p.environmental %}<div class="metric-card"><h4>Environnemental</h4><ul>{% for b in p.environmental %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-        {% if p.legal %}<div class="metric-card"><h4>Légal</h4><ul>{% for b in p.legal %}<li>{{ b }}</li>{% endfor %}</ul></div>{% endif %}
-    </div>
-    {% if p.key_opportunities %}<h4>Opportunités Clés</h4><ul>{% for o in p.key_opportunities %}<li>✅ {{ o }}</li>{% endfor %}</ul>{% endif %}
-    {% if p.key_threats %}<h4>Menaces Clés</h4><ul>{% for t in p.key_threats %}<li>⚠️ {{ t }}</li>{% endfor %}</ul>{% endif %}
-    <p><small>Score PESTEL: <strong>{{ "%.0f"|format((p.strategic_score if p.strategic_score is number else 0.5) * 100) }}%</strong> · Confiance: {{ "%.0f"|format((p.confidence if p.confidence is number else 0.5) * 100) }}%</small></p>
     {% endif %}
 
     {# === SWOT === #}

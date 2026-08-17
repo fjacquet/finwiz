@@ -90,21 +90,21 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
 def generate_strategic_posture_section(posture: dict | None) -> str:
     """Verdict and link only; the analyst-length synthesis lives on its own page.
 
-    This section used to embed the full PESTEL/SWOT/Porter prose, which rendered
+    This section used to embed the full SWOT/Porter prose, which rendered
     as a wall of raw markdown in a document meant for a family. ``posture`` is a
     :class:`PortfolioStrategicPosture` model_dump.
 
     When no posture is available this renders a short "indisponible" block
     rather than "". Silence is indistinguishable from "this report never had a
-    posture", and the branch that made ``macro_verdict`` /
-    ``competitive_verdict`` / ``swot_verdict`` / ``strategic_score`` /
-    ``confidence`` required also made losing the whole posture the normal
-    consequence of a truncated model response. Failing loudly was the right
-    call; failing silently *to the reader* turns "wrong data" into "lost data".
+    posture", and the branch that made ``competitive_verdict`` /
+    ``swot_verdict`` / ``strategic_score`` / ``confidence`` required also made
+    losing the whole posture the normal consequence of a truncated model
+    response. Failing loudly was the right call; failing silently *to the
+    reader* turns "wrong data" into "lost data".
     The block carries no score (0 % would read as a measurement) and no link to
     the companion page, which is not written when there is no posture.
 
-    The three verdicts are model-authored and go through the inline render
+    The two verdicts are model-authored and go through the inline render
     boundary, not bare ``escape()``: escaping alone left "Le **durcissement**
     réglementaire pèse [1]" in the family artifact, which is the same
     readability defect this branch exists to remove. No citations are threaded
@@ -135,7 +135,6 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     <h2>🎯 Posture Stratégique du Portefeuille</h2>
     <p><strong>{score_pct} %</strong>{coverage} · Confiance : {conf_pct} %</p>
     <ul>
-      <li>{render_markdown_inline(posture.get("macro_verdict"))}</li>
       <li>{render_markdown_inline(posture.get("competitive_verdict"))}</li>
       <li>{render_markdown_inline(posture.get("swot_verdict"))}</li>
     </ul>

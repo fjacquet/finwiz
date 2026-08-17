@@ -29,7 +29,6 @@ from finwiz.orchestrators.reporting.enrichment import ReportEnrichmentMixin
 from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.hybrid_analysis.strategic import (
     FiveForcesAnalysis,
-    PestelAnalysis,
     PortfolioStrategicPosture,
     StrategicAnalysis,
     SwotAnalysis,
@@ -59,7 +58,6 @@ def _holding(ticker: str, *, eur_value: float | None = None) -> HoldingDecision:
 
 def _valid_strategic() -> dict[str, Any]:
     return StrategicAnalysis(
-        pestel=PestelAnalysis(strategic_score=0.6, confidence=0.7),
         swot=SwotAnalysis(strategic_score=0.5, confidence=0.6),
         five_forces=FiveForcesAnalysis(strategic_score=0.4, confidence=0.5),
     ).model_dump()
@@ -70,7 +68,6 @@ def _valid_posture(**overrides: Any) -> PortfolioStrategicPosture:
         "holdings_covered": 1,
         "holdings_total": 1,
         "value_covered_pct": 100.0,
-        "macro_verdict": "Macro favorable.",
         "competitive_verdict": "Moats solides.",
         "swot_verdict": "Forces dominantes.",
         "strategic_score": 0.71,

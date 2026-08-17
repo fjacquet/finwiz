@@ -1,11 +1,11 @@
 """The deep-analysis crew must not be able to author `strategic_analysis`.
 
-`strategic_analysis` (PESTEL/SWOT/Porter) is a Python-gathered field, filled
+`strategic_analysis` (SWOT/Porter) is a Python-gathered field, filled
 only by `gather_strategic_analysis` via `stages/__init__.py:107-108`. No agent
 or task config under `src/finwiz/crews/` prompts for it. If the LLM-facing
 bridging schema (`_QualitativeInsightsRaw`) still declares the field, the
 model fills it unprompted whenever it recognizes the company — and a
-hallucinated PESTEL/SWOT is indistinguishable downstream from a researched
+hallucinated SWOT is indistinguishable downstream from a researched
 one, so it silently counts as full coverage.
 
 See the 2026-08-16 end-to-end run: DIS and ORCL lost all three Perplexity
@@ -24,8 +24,9 @@ def test_the_crew_cannot_author_strategic_analysis() -> None:
     """Only gather_strategic_analysis may fill this field.
 
     The model fills any field present in the schema it is handed, whether or
-    not a task asks for it. A PESTEL the model invented is indistinguishable
-    from a researched one downstream, and counts as full coverage.
+    not a task asks for it. A strategic analysis the model invented is
+    indistinguishable from a researched one downstream, and counts as full
+    coverage.
     """
     assert "strategic_analysis" not in _QualitativeInsightsRaw.model_fields
 
@@ -35,7 +36,7 @@ def test_a_strategic_analysis_the_model_emits_is_dropped() -> None:
     raw = _QualitativeInsightsRaw.model_validate(
         {
             "ai_confidence": 0.8,
-            "strategic_analysis": {"pestel": {"strategic_score": 0.9, "confidence": 0.9}},
+            "strategic_analysis": {"swot": {"strategic_score": 0.9, "confidence": 0.9}},
         },
     )
 
@@ -56,7 +57,7 @@ def test_the_full_schema_validator_also_refuses_a_model_authored_analysis() -> N
 
     payload = {
         "ai_confidence": 0.8,
-        "strategic_analysis": {"pestel": {"strategic_score": 0.9, "confidence": 0.9}},
+        "strategic_analysis": {"swot": {"strategic_score": 0.9, "confidence": 0.9}},
     }
 
     insights = validate_qualitative_insights(payload)

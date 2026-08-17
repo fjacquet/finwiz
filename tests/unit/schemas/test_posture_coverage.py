@@ -22,7 +22,6 @@ def _valid_kwargs(**overrides: object) -> dict:
         "holdings_covered": 64,
         "holdings_total": 64,
         "value_covered_pct": 100.0,
-        "macro_verdict": "Macro favorable dans l'ensemble.",
         "competitive_verdict": "Moats solides sur la majorité des positions.",
         "swot_verdict": "Forces largement supérieures aux faiblesses.",
         "strategic_score": 0.71,
@@ -45,7 +44,6 @@ def test_posture_score_has_no_plausible_default():
             holdings_covered=64,
             holdings_total=64,
             value_covered_pct=100.0,
-            macro_verdict="m",
             competitive_verdict="c",
             swot_verdict="s",
         )
@@ -57,7 +55,6 @@ def test_confidence_has_no_plausible_default():
             holdings_covered=64,
             holdings_total=64,
             value_covered_pct=100.0,
-            macro_verdict="m",
             competitive_verdict="c",
             swot_verdict="s",
             strategic_score=0.71,
@@ -65,9 +62,9 @@ def test_confidence_has_no_plausible_default():
 
 
 def test_verdicts_are_required():
-    """The three one-sentence verdicts must not be silently omitted."""
+    """The verdicts must not be silently omitted."""
     kwargs = _valid_kwargs()
-    del kwargs["macro_verdict"]
+    del kwargs["competitive_verdict"]
     with pytest.raises(ValidationError):
         PortfolioStrategicPosture(**kwargs)
 
@@ -80,12 +77,10 @@ def test_overlong_verdict_is_truncated_not_rejected():
     """
     posture = PortfolioStrategicPosture(
         **_valid_kwargs(
-            macro_verdict="m" * 250,
             competitive_verdict="c" * 250,
             swot_verdict="s" * 250,
         )
     )
-    assert len(posture.macro_verdict) == MAX_VERDICT_CHARS
     assert len(posture.competitive_verdict) == MAX_VERDICT_CHARS
     assert len(posture.swot_verdict) == MAX_VERDICT_CHARS
 
@@ -94,12 +89,10 @@ def test_portfolio_prose_fields_are_clamped():
     """The wall-of-prose symptom the user opened this work with, capped."""
     posture = PortfolioStrategicPosture(
         **_valid_kwargs(
-            macro_environment_summary="a" * 5000,
             competitive_landscape_summary="b" * 5000,
             overall_assessment="c" * 5000,
         )
     )
-    assert len(posture.macro_environment_summary) <= MAX_PORTFOLIO_PROSE_CHARS
     assert len(posture.competitive_landscape_summary) <= MAX_PORTFOLIO_PROSE_CHARS
     assert len(posture.overall_assessment) <= MAX_PORTFOLIO_PROSE_CHARS
 

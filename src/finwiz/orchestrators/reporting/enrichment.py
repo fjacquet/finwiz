@@ -451,7 +451,7 @@ class ReportEnrichmentMixin:
                 except Exception as e:
                     self.logger.debug(f"Skipping {ticker} for portfolio synthesis (invalid schema): {e}")
                     continue
-                # Validating is not the same as carrying evidence. All three
+                # Validating is not the same as carrying evidence. Both
                 # framework fields are Optional, so an all-None blob -- what a
                 # fully-failed strategic gather used to write to disk, and what
                 # legacy *_enriched.json files still contain -- validates

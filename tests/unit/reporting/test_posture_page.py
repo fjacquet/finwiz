@@ -1,6 +1,6 @@
 """Tests for the dedicated strategic posture page.
 
-The posture is analyst-length: PESTEL/SWOT/Porter synthesis across a whole
+The posture is analyst-length: SWOT/Porter synthesis across a whole
 portfolio. Moving it off the family artifact only fixes readability if this
 page (1) puts coverage before the score so a reader can't mistake "one
 holding's opinion" for "the portfolio's opinion", (2) actually renders the
@@ -20,12 +20,10 @@ def _full_posture(**overrides: object) -> dict[str, object]:
         "holdings_total": 64,
         "value_covered_pct": 100.0,
         "uncovered_tickers": [],
-        "macro_verdict": "Environnement porteur.",
         "competitive_verdict": "Moats solides.",
         "swot_verdict": "Équilibré.",
         "strategic_score": 0.71,
         "confidence": 0.83,
-        "macro_environment_summary": "- **Politique** : durcissement",
         "competitive_landscape_summary": "- Moats **larges** en tech",
         "overall_assessment": "- Portefeuille **globalement** solide",
         "dominant_themes": ["Résilience énergétique", "IA générative", "Consolidation bancaire"],
@@ -38,6 +36,16 @@ def _full_posture(**overrides: object) -> dict[str, object]:
     return posture
 
 
+class TestMacroRemoved:
+    """PESTEL moved out of FinWiz; the macro section has no producer here."""
+
+    def test_the_macro_block_is_gone_from_the_posture_page(self) -> None:
+        html = generate_posture_page(_full_posture())
+
+        assert "Environnement Macro" not in html
+        assert "PESTEL" not in html
+
+
 class TestCoverageLeads:
     def test_coverage_leads_the_page(self) -> None:
         """Coverage is the first thing a reader sees, not a footnote."""
@@ -47,17 +55,16 @@ class TestCoverageLeads:
                 "holdings_total": 64,
                 "value_covered_pct": 38.2,
                 "uncovered_tickers": ["TSLA"],
-                "macro_verdict": "Environnement porteur.",
                 "competitive_verdict": "Moats solides.",
                 "swot_verdict": "Équilibré.",
                 "strategic_score": 0.71,
                 "confidence": 0.83,
-                "macro_environment_summary": "- **Politique** : durcissement",
+                "competitive_landscape_summary": "- Moats **larges** en tech",
             }
         )
 
         assert "26 / 64" in html
-        assert html.index("26 / 64") < html.index("Environnement porteur.")
+        assert html.index("26 / 64") < html.index("Moats solides.")
 
     def test_score_never_appears_before_coverage(self) -> None:
         html = generate_posture_page(_full_posture())
@@ -106,16 +113,16 @@ class TestDetailDisclosure:
         body = html.split("</style>", 1)[1]
 
         assert "<details>" in body
-        assert "<strong>Politique</strong>" in body  # markdown rendered, not literal
+        assert "<strong>larges</strong>" in body  # markdown rendered, not literal
         assert "**" not in body
 
     def test_verdicts_are_visible_without_expanding(self) -> None:
         """Each theme's verdict precedes *its own* disclosure, not merely the
-        page's first one — three theme blocks each pair a verdict with detail."""
+        page's first one — two theme blocks each pair a verdict with detail."""
         html = generate_posture_page(_full_posture())
         body = html.split("</style>", 1)[1]
 
-        for verdict in ("Environnement porteur.", "Moats solides.", "Équilibré."):
+        for verdict in ("Moats solides.", "Équilibré."):
             verdict_pos = body.index(verdict)
             assert verdict_pos < body.index("<details>", verdict_pos)
 
@@ -171,12 +178,10 @@ class TestPerHolding:
     def test_holdings_strategic_renders_a_scannable_score_table(self) -> None:
         holdings_strategic = {
             "AAPL": {
-                "pestel": {"strategic_score": 0.62},
                 "swot": {"strategic_score": 0.75},
                 "five_forces": {"strategic_score": 0.80},
             },
             "MSFT": {
-                "pestel": {"strategic_score": 0.70},
                 "swot": {"strategic_score": 0.68},
                 "five_forces": {"strategic_score": 0.72},
             },
@@ -189,26 +194,35 @@ class TestPerHolding:
         assert "<table" in html
 
     def test_missing_framework_on_a_holding_does_not_crash(self) -> None:
-        holdings_strategic = {"AAPL": {"pestel": {"strategic_score": 0.62}}}
+        holdings_strategic = {"AAPL": {"swot": {"strategic_score": 0.62}}}
 
         html = generate_posture_page(_full_posture(), holdings_strategic=holdings_strategic)
 
         assert "AAPL" in html
 
     def test_table_has_a_plain_language_legend(self) -> None:
-        """PESTEL/SWOT/Porter as bare column headers teach a family reader
+        """SWOT/Porter as bare column headers teach a family reader
         nothing -- a one-sentence gloss must explain what each score means."""
-        holdings_strategic = {"AAPL": {"pestel": {"strategic_score": 0.62}}}
+        holdings_strategic = {"AAPL": {"swot": {"strategic_score": 0.62}}}
 
         html = generate_posture_page(_full_posture(), holdings_strategic=holdings_strategic)
         table_section = html[html.index("Par ligne") :]
 
-        assert "PESTEL" in table_section
         assert "SWOT" in table_section
         assert "Porter" in table_section
+        assert "PESTEL" not in table_section
         # A glance-level gloss, not a tutorial: exactly one sentence.
         legend = table_section[table_section.index("<p", table_section.index("</h2>")) : table_section.index("</p>") + len("</p>")]
         assert legend.count(".") == 1
+
+    def test_the_per_holding_table_has_two_score_columns(self) -> None:
+        holdings_strategic = {"AAPL": {"swot": {"strategic_score": 0.7}, "five_forces": {"strategic_score": 0.6}}}
+
+        html = generate_posture_page(_full_posture(), holdings_strategic=holdings_strategic)
+
+        assert "<th>SWOT</th>" in html
+        assert "<th>Porter</th>" in html
+        assert "<th>PESTEL</th>" not in html
 
     def test_no_holdings_strategic_does_not_render_a_bare_ticker_list(self) -> None:
         html = generate_posture_page(_full_posture(), holdings_strategic=None)
@@ -228,7 +242,6 @@ class TestOptionalFieldsAbsent:
                 "holdings_covered": 0,
                 "holdings_total": 0,
                 "value_covered_pct": 0.0,
-                "macro_verdict": "",
                 "competitive_verdict": "",
                 "swot_verdict": "",
                 "strategic_score": 0.0,
@@ -249,7 +262,6 @@ class TestOptionalFieldsAbsent:
 
 
 _MODEL_SHAPED = {
-    "macro_verdict": "Le **durcissement** réglementaire pèse sur la tech [1].",
     "competitive_verdict": "Moats *larges* mais sous pression [2].",
     "swot_verdict": "Équilibre **fragile** entre croissance et dette [3].",
     "dominant_themes": ["**Résilience** énergétique", "IA *générative* [1]"],
@@ -284,7 +296,7 @@ class TestModelAuthoredSurfacesAreRendered:
     def test_bold_becomes_strong_on_verdicts_themes_and_swot_items(self) -> None:
         body = self._body()
 
-        assert "<strong>durcissement</strong>" in body  # theme verdict
+        assert "<strong>fragile</strong>" in body  # theme verdict
         assert "<strong>Résilience</strong>" in body  # dominant-theme badge
         assert "<strong>larges</strong>" in body  # SWOT list item
 
@@ -306,7 +318,7 @@ class TestModelAuthoredSurfacesAreRendered:
         """Routing through the render boundary must stay escape-first."""
         html = generate_posture_page(
             _full_posture(
-                macro_verdict="<script>alert(1)</script>",
+                swot_verdict="<script>alert(1)</script>",
                 dominant_themes=["<img src=x onerror=alert(1)>"],
                 portfolio_strengths=["<script>alert(2)</script>"],
             )
@@ -342,10 +354,10 @@ class TestFamilySectionSummarisesAndLinksOut:
 
         html = generate_strategic_posture_section(_full_posture())
 
-        assert "Environnement porteur." in html
         assert "Moats solides." in html
         assert "Équilibré." in html
         assert "finwiz_posture_strategique.html" in html
+        assert "macro" not in html.lower()
         assert "PESTEL" not in html
         assert "SWOT" not in html
         assert "Porter" not in html
@@ -366,29 +378,29 @@ class TestFamilySectionSummarisesAndLinksOut:
     def test_model_supplied_verdicts_are_escaped(self) -> None:
         from finwiz.reporting.section_generators import generate_strategic_posture_section
 
-        html = generate_strategic_posture_section(_full_posture(macro_verdict="<script>alert(1)</script>"))
+        html = generate_strategic_posture_section(_full_posture(swot_verdict="<script>alert(1)</script>"))
 
         assert "<script>" not in html
         assert "&lt;script&gt;" in html
 
     def test_model_shaped_verdicts_render_as_html_not_raw_markdown(self) -> None:
-        """The family artifact's three verdict <li>s are model-authored too."""
+        """The family artifact's two verdict <li>s are model-authored too."""
         from finwiz.reporting.section_generators import generate_strategic_posture_section
 
         html = generate_strategic_posture_section(_full_posture(**_MODEL_SHAPED))
 
         assert "**" not in html
-        assert "[1]" not in html
+        assert "[2]" not in html
         assert "[3]" not in html
-        assert "<strong>durcissement</strong>" in html
+        assert "<strong>fragile</strong>" in html
         assert "<em>larges</em>" in html
 
 
 class TestMissingPostureIsVisibleToTheReader:
     """A posture that failed this run must say so, not vanish.
 
-    Making macro_verdict/competitive_verdict/swot_verdict/strategic_score/
-    confidence required was the right call -- a posture built from nothing can
+    Making competitive_verdict/swot_verdict/strategic_score/confidence
+    required was the right call -- a posture built from nothing can
     no longer report a confident midpoint by omission. But it also means a
     truncated or partial model response now fails validation and loses the
     *entire* posture, where before it produced a degraded one. Failing loudly is
