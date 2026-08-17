@@ -17,6 +17,7 @@ Python only averages them into a composite — no item-counting heuristics.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from typing import Any
 
@@ -419,197 +420,82 @@ def synthesize_portfolio_posture_sync(
 
 
 SYNTHESIS_PAYLOAD_BUDGET_CHARS = 240_000
-"""Char budget for the portfolio-synthesis payload (~60K tokens).
+"""Guard for the portfolio-synthesis payload (~60K tokens).
 
-These figures are measured against a specific 64-holding fixture at the
-Task 3 field caps (see ``tests/unit/analysis/test_strategic_digest.py``) —
-approximate and fixture-dependent, not a promise about every real portfolio.
-A different mix of populated fields shifts every number below.
-
-Task 7 added the six raw PESTEL dimension bullets (political/economic/
-social/technological/environmental/legal) to the digest — the material the
-portfolio prompt asks the model to synthesize into cross-holding themes,
-previously collected per-holding via a paid Perplexity call and never sent
-to the one prompt that needed them. A first attempt gated the dimensions
-behind a single all-or-nothing rung tried only at full bullet count (3):
-that rung measured ~461K chars, ~92% over budget, so for the real portfolio
-it was *always* skipped and the dimensions never actually reached the
-prompt — the ladder fell straight through to the no-dimensions rung every
-time, silently inert.
-
-The ladder was restructured so dimensions shrink alongside bullet count
-instead of toggling off entirely, and — since ``key_threats``/
-``key_opportunities`` are the model's own summary of the six dimensions
-(derived evidence), while the dimensions themselves are the primary
-evidence a Perplexity call was paid to produce — the derived summary is
-shed *before* the dimensions, not the other way round. Measured for 64
-holdings at this fixture:
-
-| Rung | bullets | prose | pestel summary | pestel dims | chars | fits 240K? |
-|---|---|---|---|---|---|---|
-| 1 | 3 | yes | yes | yes | 461,110 | no |
-| 2 | 2 | yes | yes | yes | 330,550 | no |
-| 3 | 1 | yes | yes | yes | 199,990 | **yes** |
-| 4 | 1 | yes | no  | yes | 171,830 | yes |
-| 5 | 1 | no  | no  | yes | 118,518 | yes |
-
-Rung 3 is the one actually selected for the real 64-holding portfolio: the
-dimensions now reach the prompt, at 1 bullet per dimension plus 1 threat and
-1 opportunity — strictly more informative than the pre-restructure result
-(no dimensions at all), and with ~17% margin under budget. Rungs 4 and 5
-exist for portfolios dense or large enough that rung 3 doesn't fit; they are
-not expected to fire for the current portfolio size, but keep the ladder
-graceful rather than a hard cliff into the scores-only floor.
-
-Landing on rung 3 used to mean *building and serializing all 64 holdings
-three times* — once each for rungs 1 and 2, discarded, before the kept
-attempt at rung 3 — on every single synthesis call. ``_serialize_holdings``
-now estimates the likely starting rung from one sample holding (cheap, O(1))
-before doing any real O(n) digest-and-serialize, so the common case costs
-exactly one full serialization instead of three. See its docstring for the
-correctness guarantee: a wrong estimate can only cost an extra real
-serialization, never a dropped holding.
+Task 3 replaced the per-holding digest (39,001 chars for 64 holdings, and
+growing linearly with portfolio size) with fixed-size aggregates plus the 5
+weakest and 5 strongest holdings — a shape that costs ~3,000 chars at any
+portfolio size. This budget is no longer a trimming target the payload is
+degraded down to; it should never trigger. If it does, that signals unusually
+long bullets in the extreme entries, not a large portfolio.
 """
 
 
-def _digest_one(sa: StrategicAnalysis, *, bullets: int, include_prose: bool, include_pestel_dimensions: bool = False, include_pestel_summary: bool = True) -> dict[str, Any]:
-    """One holding's contribution at a given detail level.
+_EXTREMES = 5
+"""Holdings named at each end. Fixed, so the payload does not scale with the portfolio."""
 
-    ``include_pestel_dimensions`` adds the six raw PESTEL dimensions
-    (political/economic/social/technological/environmental/legal) — the
-    material the portfolio prompt actually asks the model to synthesize into
-    "thèmes PESTEL transversaux". Before Task 7 these were never forwarded at
-    all: the synthesis call paid for a Perplexity PESTEL run per holding and
-    withheld the six dimensions from the one prompt that needed them,
-    sending only ``key_threats``/``key_opportunities``.
-
-    ``include_pestel_summary`` gates those ``key_threats``/``key_opportunities``
-    fields. They are the model's own *summary* of the six dimensions — derived
-    evidence, not primary evidence — so the degradation ladder in
-    :func:`_serialize_holdings` drops them (``include_pestel_summary=False``)
-    *before* it drops the dimensions themselves. An all-or-nothing dimensions
-    flag would mean dimensions are either included at full bullet count (too
-    large for the real portfolio) or never included at all; shrinking bullet
-    count while keeping both, then dropping the derived summary while keeping
-    the primary evidence, is what actually gets dimensions to the prompt.
-    """
-    out: dict[str, Any] = {}
-    if sa.pestel:
-        pestel: dict[str, Any] = {"score": sa.pestel.strategic_score}
-        if include_pestel_summary:
-            pestel["threats"] = sa.pestel.key_threats[:bullets]
-            pestel["opportunities"] = sa.pestel.key_opportunities[:bullets]
-        if include_pestel_dimensions:
-            pestel["dimensions"] = {
-                "political": sa.pestel.political[:bullets],
-                "economic": sa.pestel.economic[:bullets],
-                "social": sa.pestel.social[:bullets],
-                "technological": sa.pestel.technological[:bullets],
-                "environmental": sa.pestel.environmental[:bullets],
-                "legal": sa.pestel.legal[:bullets],
-            }
-        out["pestel"] = pestel
-    if sa.swot:
-        out["swot"] = {"score": sa.swot.strategic_score, "strengths": sa.swot.strengths[:bullets], "threats": sa.swot.threats[:bullets]}
-        if include_prose:
-            out["swot"]["assessment"] = sa.swot.strategic_assessment
-    if sa.five_forces:
-        out["moat"] = {"score": sa.five_forces.strategic_score}
-        if include_prose:
-            out["moat"]["summary"] = sa.five_forces.competitive_position_summary
-    return out
+_SCORE_BUCKETS = ((0.5, "<0.5"), (0.65, "0.5-0.65"), (0.8, "0.65-0.8"))
 
 
-_SERIALIZE_RUNGS: tuple[tuple[int, bool, bool, bool], ...] = (
-    (3, True, True, True),  # full detail
-    (2, True, True, True),  # fewer bullets, still both pestel fields
-    (1, True, True, True),  # fewest bullets, still both pestel fields
-    (1, True, False, True),  # drop the derived pestel summary, keep dimensions (primary evidence)
-    (1, False, False, True),  # drop prose too, dimensions still present
-)
-"""(bullets, include_prose, include_pestel_summary, include_pestel_dimensions) per rung, finest first."""
-
-
-def _digest_all(holdings_strategic: dict[str, StrategicAnalysis], rung: tuple[int, bool, bool, bool]) -> dict[str, Any]:
-    """Digest every holding at one rung. The one place that does the O(n) work."""
-    bullets, include_prose, include_pestel_summary, include_pestel_dimensions = rung
-    return {
-        ticker: _digest_one(sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions)
-        for ticker, sa in holdings_strategic.items()
-    }
+def _bucket(score: float) -> str:
+    for upper, label in _SCORE_BUCKETS:
+        if score < upper:
+            return label
+    return ">=0.8"
 
 
 def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str:
-    """Compact JSON digest of every holding, fitted to the budget.
+    """Portfolio aggregates plus the extreme holdings, as a JSON string.
 
-    Detail degrades before the holding list does. Dropping a holding is not an
-    operation this function can perform: the 2026-08-16 posture was synthesized
-    from 1 of 64 holdings because the old implementation ended in ``[:30000]``.
+    A portfolio posture is a judgement about distribution and outliers, not a
+    reading of every line. Sending all 64 digests cost ~39,000 chars to produce
+    ~2,000 chars of verdict and grew linearly with the portfolio; this shape is
+    ~3,000 chars at any size.
 
-    Degradation order: full detail -> fewer bullets (dimensions and derived
-    summary shrink together) -> drop the PESTEL derived summary
-    (key_threats/key_opportunities) while keeping the PESTEL dimensions,
-    since the dimensions are the primary evidence a Perplexity call was paid
-    for and the derived summary is the model's own restatement of it -> drop
-    prose -> scores-only floor (see below), which drops the dimensions too.
-
-    An earlier version toggled dimensions on only at full bullet count (3)
-    and off everywhere else — all-or-nothing. For the real 64-holding
-    portfolio, "on" (~461K chars) always overflowed the 240K budget and "off"
-    was the only rung ever selected, so the dimensions never actually reached
-    the prompt. Shrinking bullets while keeping both fields, then shedding
-    the derived summary before the dimensions, is what gets them there.
-
-    Rung selection is estimate-then-verify, not brute-force-from-the-top. A
-    naive version rebuilds the full per-holding digest for *every* holding and
-    serializes it at every rung, discarding all but the last, purely to
-    measure ``len(payload)``. For the real 64-holding portfolio that means two
-    full ~330-460K-char dict-builds-and-serializes thrown away on every single
-    synthesis call, before ever landing on the rung it was always going to
-    land on. Instead: digest and serialize *one* holding at each rung (O(1)
-    per rung, not O(n)) to estimate the finest rung likely to fit, then do a
-    real, full verification starting there — stepping to a coarser rung only
-    if the estimate undershot. The estimate can only cost one extra real
-    serialization when it's wrong; it can never cause a holding to be
-    dropped, because every real candidate payload is still checked against
-    the budget before being returned, and the floor below is unchanged.
+    The mid-pack holdings are represented by ``distribution``, never dropped
+    silently: ``n`` always reports the true count, so the model cannot mistake
+    the extremes for the whole portfolio.
     """
-    import json
+    rows: list[tuple[float, str, StrategicAnalysis]] = []
+    for ticker, sa in sorted(holdings_strategic.items()):
+        composite = sa.composite_strategic_score
+        if composite is None:
+            continue
+        rows.append((composite, ticker, sa))
+    rows.sort(key=lambda r: (r[0], r[1]))
 
-    if not holdings_strategic:
-        return "{}"
+    swot_scores = [sa.swot.strategic_score for _, _, sa in rows if sa.swot is not None]
+    moat_scores = [sa.five_forces.strategic_score for _, _, sa in rows if sa.five_forces is not None]
 
-    holding_count = len(holdings_strategic)
-    sample_ticker, sample_sa = next(iter(holdings_strategic.items()))
+    distribution: dict[str, int] = {}
+    for composite, _, _ in rows:
+        label = _bucket(composite)
+        distribution[label] = distribution.get(label, 0) + 1
 
-    start_index = len(_SERIALIZE_RUNGS) - 1
-    for index, rung in enumerate(_SERIALIZE_RUNGS):
-        bullets, include_prose, include_pestel_summary, include_pestel_dimensions = rung
-        sample_entry = json.dumps(
-            {
-                sample_ticker: _digest_one(
-                    sample_sa, bullets=bullets, include_prose=include_prose, include_pestel_summary=include_pestel_summary, include_pestel_dimensions=include_pestel_dimensions
-                )
-            },
-            ensure_ascii=False,
-            default=str,
-        )
-        if len(sample_entry) * holding_count <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
-            start_index = index
-            break
+    def _weak(entry: tuple[float, str, StrategicAnalysis]) -> dict[str, Any]:
+        composite, ticker, sa = entry
+        threats = sa.swot.threats if sa.swot else []
+        return {"t": ticker, "c": round(composite, 2), "T": threats[0] if threats else None}
 
-    for rung in _SERIALIZE_RUNGS[start_index:]:
-        payload = json.dumps(_digest_all(holdings_strategic, rung), ensure_ascii=False, default=str)
-        if len(payload) <= SYNTHESIS_PAYLOAD_BUDGET_CHARS:
-            return payload
+    def _strong(entry: tuple[float, str, StrategicAnalysis]) -> dict[str, Any]:
+        composite, ticker, sa = entry
+        strengths = sa.swot.strengths if sa.swot else []
+        return {"t": ticker, "c": round(composite, 2), "S": strengths[0] if strengths else None}
 
-    # Floor: scores only. Still every holding.
-    scores = {
-        ticker: {
-            "pestel": sa.pestel.strategic_score if sa.pestel else None,
-            "swot": sa.swot.strategic_score if sa.swot else None,
-            "moat": sa.five_forces.strategic_score if sa.five_forces else None,
-        }
-        for ticker, sa in holdings_strategic.items()
+    payload = {
+        "n": len(rows),
+        "swot_mean": round(sum(swot_scores) / len(swot_scores), 2) if swot_scores else None,
+        "moat_mean": round(sum(moat_scores) / len(moat_scores), 2) if moat_scores else None,
+        "distribution": distribution,
+        "weakest": [_weak(r) for r in rows[:_EXTREMES]],
+        "strongest": [_strong(r) for r in rows[-_EXTREMES:]],
     }
-    return json.dumps(scores, ensure_ascii=False, default=str)
+
+    serialized = json.dumps(payload, ensure_ascii=False, default=str)
+    if len(serialized) > SYNTHESIS_PAYLOAD_BUDGET_CHARS:
+        logger.warning(
+            f"Synthesis payload {len(serialized)} chars exceeds the {SYNTHESIS_PAYLOAD_BUDGET_CHARS} budget "
+            f"for {len(rows)} holdings — the payload is meant to be size-independent, so this indicates "
+            f"unusually long bullets rather than a large portfolio."
+        )
+    return serialized

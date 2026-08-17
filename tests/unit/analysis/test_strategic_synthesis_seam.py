@@ -117,3 +117,51 @@ async def test_returns_none_when_perplexity_returns_none(mocker):
     )
 
     assert posture is None
+
+
+def _analysis(score: float, strength: str, threat: str):
+    from finwiz.schemas.hybrid_analysis.strategic import FiveForcesAnalysis, StrategicAnalysis, SwotAnalysis
+
+    return StrategicAnalysis(
+        swot=SwotAnalysis(strengths=[strength], threats=[threat], strategic_score=score),
+        five_forces=FiveForcesAnalysis(strategic_score=score),
+    )
+
+
+def test_the_payload_is_aggregates_and_extremes_not_every_holding():
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(60)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 60
+    assert len(payload["weakest"]) == 5
+    assert len(payload["strongest"]) == 5
+    assert payload["weakest"][0]["t"] == "T0"
+    assert payload["strongest"][-1]["t"] == "T59"
+    # The 50 mid-pack holdings are represented by the distribution, not by name.
+    assert "T30" not in _serialize_holdings(holdings)
+
+
+def test_the_payload_does_not_grow_with_portfolio_size():
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    small = {f"T{i}": _analysis(i / 100, "force", "menace") for i in range(20)}
+    large = {f"T{i}": _analysis(i / 200, "force", "menace") for i in range(200)}
+
+    assert len(_serialize_holdings(large)) < 2 * len(_serialize_holdings(small))
+
+
+def test_an_empty_portfolio_serializes_without_raising():
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    payload = json.loads(_serialize_holdings({}))
+
+    assert payload["n"] == 0
+    assert payload["weakest"] == []
+    assert payload["strongest"] == []
