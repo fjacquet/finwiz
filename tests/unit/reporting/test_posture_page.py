@@ -242,7 +242,6 @@ class TestOptionalFieldsAbsent:
                 "holdings_covered": 0,
                 "holdings_total": 0,
                 "value_covered_pct": 0.0,
-                "macro_verdict": "",
                 "competitive_verdict": "",
                 "swot_verdict": "",
                 "strategic_score": 0.0,
