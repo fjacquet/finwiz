@@ -31,7 +31,6 @@ from finwiz.schemas.hybrid_analysis import (
     TechnicalStrategyInsights,
 )
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
-from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
 from finwiz.schemas.stage_contract import StageOutcome, StageProvenance, StageResult
 
 if TYPE_CHECKING:
@@ -53,6 +52,13 @@ class _QualitativeInsightsRaw(BaseModel):
       promotion. The LLM never has to satisfy ``FactPack``'s freshness
       ``model_validator`` or its 200/1000-char string caps.
     * ``analysis_timestamp`` is dropped — Python sets it on promotion.
+    * ``strategic_analysis`` is dropped — it is filled only by
+      :func:`finwiz.analysis.strategic_research.gather_strategic_analysis`
+      via ``stages/__init__.py``. No agent or task config prompts the crew
+      for PESTEL/SWOT/Porter, but a field present in the schema handed to the
+      model gets filled anyway when the model recognizes the company. A
+      model-authored strategic analysis is indistinguishable downstream from
+      a researched one and would silently count as full coverage.
 
     ``extra="ignore"`` so any of those keys the LLM still emits are dropped
     silently rather than triggering a retry loop.
@@ -63,7 +69,6 @@ class _QualitativeInsightsRaw(BaseModel):
     fundamental_context: FundamentalContextInsights | None = Field(default=None)
     technical_strategy: TechnicalStrategyInsights | None = Field(default=None)
     contextual_risks: ContextualRiskInsights | None = Field(default=None)
-    strategic_analysis: StrategicAnalysis | None = Field(default=None)
     ai_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
