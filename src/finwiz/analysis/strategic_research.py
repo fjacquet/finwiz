@@ -1,8 +1,8 @@
 """Strategic analysis research orchestrator.
 
-Three independent Perplexity calls (PESTEL/SWOT/Porter's Five Forces) per
+Two independent Perplexity calls (SWOT/Porter's Five Forces) per
 holding, plus a portfolio-level synthesis call. Every asset class — stock,
-ETF, crypto — gets all three frameworks; each prompt builder takes an
+ETF, crypto — gets both frameworks; each prompt builder takes an
 ``asset_class`` and asks a question that actually fits the asset (moats and
 competitors for stocks, fees and concentration for ETFs, protocol economics
 and regulatory posture for crypto) while requesting the exact same output
@@ -23,15 +23,12 @@ from typing import Any
 
 from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
 from finwiz.schemas.hybrid_analysis.strategic import (
-    MAX_BULLET_CHARS,
-    MAX_BULLETS_PESTEL,
     MAX_BULLETS_SWOT,
     MAX_PORTFOLIO_PROSE_CHARS,
     MAX_PROSE_CHARS,
     MAX_RATIONALE_CHARS,
     MAX_VERDICT_CHARS,
     FiveForcesAnalysis,
-    PestelAnalysis,
     PortfolioPostureNarrative,
     PortfolioStrategicPosture,
     StrategicAnalysis,
@@ -82,52 +79,6 @@ SYSTEM_FR = (
 
 def _date_preamble(current_date: str) -> str:
     return f"📅 Aujourd'hui : {current_date}. Toutes tes affirmations factuelles doivent être valides à cette date.\n\n"
-
-
-def _pestel_focus(asset_class: str) -> str:
-    """The dimensions to cover, tailored to what the asset class actually is."""
-    if asset_class == "etf":
-        return (
-            "Pour un ETF, traite les six dimensions à travers : régime réglementaire et "
-            "fiscal, concentration sectorielle et géographique, frais et qualité de "
-            "réplication, liquidité."
-        )
-    if asset_class == "crypto":
-        return (
-            "Pour un actif crypto, traite les six dimensions à travers : posture "
-            "réglementaire par juridiction, économie du protocole et émission, effets de "
-            "réseau et activité des développeurs, risque de conservation et de contrepartie."
-        )
-    return "Couvre les six dimensions PESTEL classiques (politique, économique, social, technologique, environnemental, légal) pour l'entreprise."
-
-
-def _pestel_caps_fragment(current_date: str) -> str:
-    """Output-budget language shared by every asset-class branch.
-
-    Interpolated from ``MAX_BULLETS_PESTEL``/``MAX_BULLET_CHARS`` — never
-    hardcoded — so the model's actual output budget always matches what
-    ``PestelAnalysis``'s validators will accept. Dropping this in any
-    per-asset-class branch is what let the model overrun its output limit
-    and return unparseable JSON, which opened the circuit breaker and killed
-    31 holdings.
-    """
-    return (
-        f"Pour chacune des six dimensions : au maximum {MAX_BULLETS_PESTEL} puces, chacune "
-        f"de {MAX_BULLET_CHARS} caractères maximum. Pas de paragraphes, pas de prose. "
-        f"Chaque puce cite une évolution des 12 mois précédant {current_date}. "
-        f"Liste ensuite au maximum {MAX_BULLETS_PESTEL} menaces et {MAX_BULLETS_PESTEL} "
-        f"opportunités, même format. "
-        f"Termine en attribuant strategic_score et confidence."
-    )
-
-
-def _pestel_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
-    return (
-        _date_preamble(current_date) + f"Analyse PESTEL pour {ticker} ({sector} / {industry}).\n"
-        f"Description: {description or 'Non fournie'}\n\n"
-        f"{_pestel_focus(asset_class)}\n\n"
-        f"{_pestel_caps_fragment(current_date)}"
-    )
 
 
 def _swot_focus(asset_class: str) -> str:
@@ -233,32 +184,24 @@ async def gather_strategic_analysis(
     timeout: float = 60.0,
     current_date: str | None = None,
 ) -> StrategicAnalysis | None:
-    """Run PESTEL + SWOT + Porter in parallel for one holding.
+    """Run SWOT + Porter in parallel for one holding.
 
     Returns a :class:`StrategicAnalysis` on *partial* failure — fields are
     independently None so a failure of one framework does not break the
-    others, and one surviving framework is real evidence worth keeping.
+    other, and one surviving framework is real evidence worth keeping.
 
-    Returns ``None`` when **all three** fail: no evidence at all must not be
+    Returns ``None`` when **both** fail: no evidence at all must not be
     dressed up as an analysis object. Callers already handle ``None``
     (``analysis/stages/__init__.py`` guards ``if strategic is not None``).
 
     ``asset_class`` ("stock"/"etf"/"crypto") is forwarded to each prompt
     builder so the questions asked actually fit the asset — every asset
-    class gets all three frameworks, just framed differently.
+    class gets both frameworks, just framed differently.
 
     ``current_date`` anchors the prompts so the model anchors its claims to today
     rather than its training cutoff (defaults to today in long French form).
     """
     date_anchor = current_date or _today_french()
-    pestel_coro = perplexity_with_retry(
-        prompt=_pestel_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
-        schema=PestelAnalysis,
-        system=SYSTEM_FR,
-        search_recency_filter="month",
-        timeout=timeout,
-        max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
-    )
     swot_coro = perplexity_with_retry(
         prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=SwotAnalysis,
@@ -275,21 +218,21 @@ async def gather_strategic_analysis(
         timeout=timeout,
         max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
     )
-    pestel, swot, porter = await asyncio.gather(pestel_coro, swot_coro, porter_coro)
+    swot, porter = await asyncio.gather(swot_coro, porter_coro)
 
-    if pestel is None and swot is None and porter is None:
+    if swot is None and porter is None:
         # The absence of data must be representable. Returning
-        # StrategicAnalysis(pestel=None, swot=None, five_forces=None) here
-        # produced a truthy, schema-valid blob that survived every downstream
-        # check: `if ticker and sa`, `model_validate`, and the portfolio
-        # coverage set. A total provider outage therefore rendered
+        # StrategicAnalysis(swot=None, five_forces=None) here produced a
+        # truthy, schema-valid blob that survived every downstream check:
+        # `if ticker and sa`, `model_validate`, and the portfolio coverage
+        # set. A total provider outage therefore rendered
         # "64 / 64 holdings · 100.0 %" in green above a score the model was
         # forced to invent from `{"T0": {}, "T1": {}, ...}` -- the 2026-08-16
         # defect with the numbers inverted, and harder to spot.
-        logger.warning(f"All three strategic analyses failed for {ticker}; returning None (no evidence, not an empty analysis)")
+        logger.warning(f"Both strategic analyses failed for {ticker}; returning None (no evidence, not an empty analysis)")
         return None
 
-    return StrategicAnalysis(pestel=pestel, swot=swot, five_forces=porter)
+    return StrategicAnalysis(swot=swot, five_forces=porter)
 
 
 def gather_strategic_analysis_sync(
@@ -305,7 +248,7 @@ def gather_strategic_analysis_sync(
     """Synchronous wrapper for the async gather. Safe to call from non-async code paths.
 
     Propagates the async gather's ``None`` unchanged — see
-    :func:`gather_strategic_analysis` for why all-three-failed is ``None``.
+    :func:`gather_strategic_analysis` for why both-failed is ``None``.
     """
     try:
         loop = asyncio.get_running_loop()
