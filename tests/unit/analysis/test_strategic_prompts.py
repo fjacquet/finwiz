@@ -76,7 +76,11 @@ class TestPortfolioPayloadLegend:
 
         prompt = _portfolio_prompt('{"n": 64}', "2026-08-17")
 
-        for key in ("n", "swot_mean", "moat_mean", "distribution", "weakest", "strongest"):
+        # "n" alone is a single character that occurs throughout French prose, so
+        # a bare membership check would pass whether or not the legend glosses it.
+        # Anchor on the legend entry itself.
+        assert "- n :" in prompt, "payload key 'n' is sent but never explained"
+        for key in ("swot_mean", "moat_mean", "distribution", "weakest", "strongest"):
             assert key in prompt, f"payload key {key!r} is sent but never explained"
         # The single-letter keys inside weakest/strongest entries.
         assert "t = ticker" in prompt

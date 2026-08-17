@@ -249,7 +249,7 @@
         <div class="metric-card">
             <h4>Score Stratégique Global</h4>
             <p class="metric-value">{{ "%.0f"|format((_scores|sum / _scores|length) * 100) }}%</p>
-            <small>Moyenne SWOT + Porter</small>
+            <small>{% if _scores|length == 2 %}Moyenne SWOT + Porter{% elif _comp.swot and _comp.swot.strategic_score is not none %}SWOT uniquement{% else %}Porter uniquement{% endif %}</small>
         </div>
     </div>
     {% endif %}
