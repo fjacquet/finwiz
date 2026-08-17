@@ -24,7 +24,6 @@ from finwiz.reporting.markdown_fragment import _is_safe_url, render_markdown_fra
 
 # (heading, verdict field, analyst-length detail field)
 _THEMES = (
-    ("🌍 Environnement Macro", "macro_verdict", "macro_environment_summary"),
     ("⚔️ Paysage Concurrentiel", "competitive_verdict", "competitive_landscape_summary"),
     ("📐 SWOT Agrégé", "swot_verdict", "overall_assessment"),
 )
@@ -39,7 +38,6 @@ _SWOT_LISTS = (
 
 # (label, framework key inside each holding's strategic dict)
 _FRAMEWORK_COLUMNS = (
-    ("PESTEL", "pestel"),
     ("SWOT", "swot"),
     ("Porter", "five_forces"),
 )
@@ -134,8 +132,8 @@ def _per_holding_table(holdings_strategic: dict[str, dict] | None) -> str:
 
     A section promising per-line detail with only a ticker in it is worse
     than no section — see the family artifact's own former "Par ligne". Each
-    holding's PESTEL/SWOT/Porter ``strategic_score`` earns the section its
-    place instead. The three column headers are untranslated analyst jargon,
+    holding's SWOT/Porter ``strategic_score`` earns the section its
+    place instead. The two column headers are untranslated analyst jargon,
     so a one-sentence legend glosses what each score actually measures --
     a glance-level explanation, not a tutorial.
     """
@@ -147,10 +145,7 @@ def _per_holding_table(holdings_strategic: dict[str, dict] | None) -> str:
         analysis = holdings_strategic[ticker] or {}
         cells = "".join(_score_cell(analysis.get(key)) for _, key in _FRAMEWORK_COLUMNS)
         rows.append(f"<tr><td><strong>{escape(ticker)}</strong></td>{cells}</tr>")
-    legend = (
-        '<p class="muted small">PESTEL évalue l\'environnement macro-économique et réglementaire, '
-        "SWOT les forces et faiblesses internes, et Porter la solidité de l'avantage concurrentiel.</p>"
-    )
+    legend = '<p class="muted small">SWOT évalue les forces et faiblesses internes, et Porter la solidité de l\'avantage concurrentiel.</p>'
     return f'<section class="section"><h2>Par ligne</h2>{legend}<table><thead><tr><th>Ticker</th>{header_cells}</tr></thead><tbody>{"".join(rows)}</tbody></table></section>'
 
 

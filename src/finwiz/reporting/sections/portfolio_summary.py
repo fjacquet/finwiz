@@ -96,11 +96,11 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
 
     When no posture is available this renders a short "indisponible" block
     rather than "". Silence is indistinguishable from "this report never had a
-    posture", and the branch that made ``macro_verdict`` /
-    ``competitive_verdict`` / ``swot_verdict`` / ``strategic_score`` /
-    ``confidence`` required also made losing the whole posture the normal
-    consequence of a truncated model response. Failing loudly was the right
-    call; failing silently *to the reader* turns "wrong data" into "lost data".
+    posture", and the branch that made ``competitive_verdict`` /
+    ``swot_verdict`` / ``strategic_score`` / ``confidence`` required also made
+    losing the whole posture the normal consequence of a truncated model
+    response. Failing loudly was the right call; failing silently *to the
+    reader* turns "wrong data" into "lost data".
     The block carries no score (0 % would read as a measurement) and no link to
     the companion page, which is not written when there is no posture.
 
@@ -135,7 +135,6 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     <h2>🎯 Posture Stratégique du Portefeuille</h2>
     <p><strong>{score_pct} %</strong>{coverage} · Confiance : {conf_pct} %</p>
     <ul>
-      <li>{render_markdown_inline(posture.get("macro_verdict"))}</li>
       <li>{render_markdown_inline(posture.get("competitive_verdict"))}</li>
       <li>{render_markdown_inline(posture.get("swot_verdict"))}</li>
     </ul>
