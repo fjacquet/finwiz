@@ -196,3 +196,56 @@ class TestFREDAdapter:
 
         reloaded = MacroSnapshot.model_validate_json(cache_path.read_text())
         assert reloaded.fed_rate == 5.25
+
+
+class TestCPIIsARateNotAnIndexLevel:
+    """CPIAUCSL is an index level, not a rate.
+
+    Taking its latest observation as ``cpi_yoy`` put "IPC (Inflation) 332.8 %"
+    in the family report and pinned the indicator permanently red, since the
+    scorer's band tops out at 5 %. The field must carry the year-over-year
+    rate its name promises, which FRED computes server-side via ``units=pc1``.
+    """
+
+    def test_cpi_is_requested_as_percent_change_from_a_year_ago(self, mocker):
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+        adapter = FREDAdapter()
+
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+        mock_fred.get_series.return_value = pd.Series([2.4])
+
+        adapter.get_macro_snapshot()
+
+        cpi_calls = [c for c in mock_fred.get_series.call_args_list if c.args and c.args[0] == "CPIAUCSL"]
+        assert cpi_calls, "CPIAUCSL was never requested"
+        assert cpi_calls[0].kwargs.get("units") == "pc1", "CPI fetched as a raw index level, not a YoY rate"
+
+    def test_other_series_are_not_transformed(self, mocker):
+        """Only CPI needs a transform; asking for pc1 on a rate would double-derive it."""
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+        adapter = FREDAdapter()
+
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+        mock_fred.get_series.return_value = pd.Series([4.1])
+
+        adapter.get_macro_snapshot()
+
+        for call in mock_fred.get_series.call_args_list:
+            if call.args and call.args[0] != "CPIAUCSL":
+                assert "units" not in call.kwargs, f"{call.args[0]} was transformed unexpectedly"
+
+    def test_the_transform_is_recorded_in_data_sources(self, mocker):
+        """A silently transformed series is unauditable; the source must say so."""
+        mocker.patch.dict("os.environ", {"FRED_API_KEY": "test_key"})
+        adapter = FREDAdapter()
+
+        mock_fred_cls = mocker.patch("fredapi.Fred")
+        mock_fred = mock_fred_cls.return_value
+        mock_fred.get_series.return_value = pd.Series([2.4])
+
+        snapshot = adapter.get_macro_snapshot()
+
+        assert snapshot.data_sources["cpi_yoy"] == "FRED:CPIAUCSL(pc1)"
+        assert snapshot.data_sources["fed_rate"] == "FRED:FEDFUNDS"

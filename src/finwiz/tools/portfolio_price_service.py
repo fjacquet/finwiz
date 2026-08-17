@@ -16,6 +16,7 @@ from crewai_custom_tools.core.results import ToolResultError, parse_tool_result
 from pydantic import BaseModel, Field
 
 from finwiz.infrastructure.caching.manager import CacheManager, get_cache_manager
+from finwiz.schemas.portfolio_processing import AssetClass
 from finwiz.schemas.portfolio_rebalancing import PriceData
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.logger import get_logger
@@ -81,12 +82,15 @@ class PortfolioPriceService:
 
         logger.info("Portfolio price service initialized with shared caching")
 
-    async def get_current_prices(self, symbols: list[str]) -> dict[str, PriceData]:
+    async def get_current_prices(self, symbols: list[str], asset_classes: dict[str, AssetClass] | None = None) -> dict[str, PriceData]:
         """
         Get current prices for multiple symbols concurrently.
 
         Args:
             symbols: List of symbols to get prices for
+            asset_classes: Optional mapping of symbol to known asset class
+                ("stock"/"etf"/"crypto"). When a symbol is present, its asset
+                class is used directly instead of guessing from the ticker text.
 
         Returns:
             Dictionary mapping symbols to PriceData objects
@@ -98,7 +102,7 @@ class PortfolioPriceService:
         logger.info(f"Retrieving prices for {len(symbols)} symbols: {symbols}")
 
         # Create tasks for concurrent price retrieval
-        tasks = [self.get_current_price(symbol) for symbol in symbols]
+        tasks = [self.get_current_price(symbol, (asset_classes or {}).get(symbol)) for symbol in symbols]
 
         try:
             # Execute all price requests concurrently
@@ -127,21 +131,24 @@ class PortfolioPriceService:
             logger.error(f"Critical error in batch price retrieval: {e}")
             raise PriceServiceError(f"Batch price retrieval failed: {e}") from e
 
-    async def get_current_price(self, symbol: str) -> PriceData | None:
+    async def get_current_price(self, symbol: str, asset_class: AssetClass | None = None) -> PriceData | None:
         """
         Get current price for a single symbol with caching and fallback.
 
         Args:
             symbol: Symbol to get price for
+            asset_class: Optional known asset class ("stock"/"etf"/"crypto").
+                When supplied, it is used directly instead of guessing from
+                the ticker text.
 
         Returns:
             PriceData object or None if price cannot be retrieved
 
         """
         async with self._semaphore:
-            return await self._get_price_with_cache(symbol)
+            return await self._get_price_with_cache(symbol, asset_class)
 
-    async def _get_price_with_cache(self, symbol: str) -> PriceData | None:
+    async def _get_price_with_cache(self, symbol: str, asset_class: AssetClass | None = None) -> PriceData | None:
         """Get price with shared portfolio caching logic."""
         symbol = symbol.upper()
 
@@ -161,7 +168,7 @@ class PortfolioPriceService:
                         logger.warning(f"Cached price for {symbol} is stale (age: {age_seconds:.0f}s)")
 
             # Get fresh price data
-            price_data = await self._fetch_price_with_fallback(symbol)
+            price_data = await self._fetch_price_with_fallback(symbol, asset_class)
 
             if price_data is not None:
                 # Cache the result using portfolio cache service
@@ -173,37 +180,46 @@ class PortfolioPriceService:
         except Exception as e:
             logger.error(f"Error in price caching logic for {symbol}: {e}")
             # Try to get price without caching
-            return await self._fetch_price_with_fallback(symbol)
+            return await self._fetch_price_with_fallback(symbol, asset_class)
 
-    async def _fetch_price_with_fallback(self, symbol: str) -> PriceData | None:
-        """Fetch price with fallback mechanisms."""
+    async def _fetch_price_with_fallback(self, symbol: str, asset_class: AssetClass | None = None) -> PriceData | None:
+        """Fetch price with fallback mechanisms.
+
+        When `asset_class` is known (supplied by the caller), it is used
+        directly. Otherwise falls back to guessing from the ticker text via
+        `_is_crypto_symbol`, which is unreliable for tickers the guesser has
+        never seen (e.g. European exchange suffixes).
+        """
         symbol = symbol.upper().strip()
 
-        # Determine asset class and try appropriate sources
-        if self._is_crypto_symbol(symbol):
+        is_crypto = asset_class == "crypto" if asset_class is not None else self._is_crypto_symbol(symbol)
+
+        if is_crypto:
             return await self._get_crypto_price(symbol)
         else:
             return await self._get_stock_etf_price(symbol)
 
-    def _is_crypto_symbol(self, symbol: str) -> bool:
-        """Determine if symbol is likely a cryptocurrency."""
-        # Common crypto patterns
-        crypto_patterns = [
-            "-USD",
-            "-USDT",
-            "-BTC",
-            "-ETH",  # Crypto pairs
-            "BTC",
-            "ETH",
-            "ADA",
-            "DOT",
-            "SOL",
-            "AVAX",
-            "MATIC",
-            "LINK",  # Major cryptos
-        ]
+    # Crypto pair suffixes, e.g. "BTC-USD", "ETH-USDT".
+    _CRYPTO_SUFFIXES = ("-USD", "-USDT", "-BTC", "-ETH")
 
-        return any(pattern in symbol for pattern in crypto_patterns) or len(symbol) > 5
+    # Bare (suffix-less) tickers for major cryptocurrencies. Matched by exact
+    # equality only — NOT substring — so a stock ticker that merely contains
+    # one of these as a substring (e.g. "BTCH.L", "LINKED.L") is not
+    # misclassified as crypto.
+    _BARE_CRYPTO_TICKERS = frozenset({"BTC", "ETH", "ADA", "DOT", "SOL", "AVAX", "MATIC", "LINK", "XRP"})
+
+    def _is_crypto_symbol(self, symbol: str) -> bool:
+        """Best-effort fallback guess of asset class from ticker text alone.
+
+        Only used when the caller does not supply a known `asset_class`.
+        Ticker length has no bearing on asset class (many stock tickers,
+        especially on European exchanges, are longer than 5 characters —
+        e.g. "NESN.SW", "VOW.DE") so it must never be used as a signal here.
+        """
+        if symbol.endswith(self._CRYPTO_SUFFIXES):
+            return True
+
+        return symbol in self._BARE_CRYPTO_TICKERS
 
     async def _get_stock_etf_price(self, symbol: str) -> PriceData | None:
         """Get price for stocks/ETFs using Yahoo Finance with fallback."""
@@ -318,12 +334,13 @@ class PortfolioPriceService:
         logger.error(f"All attempts failed to get price for crypto {symbol}")
         return None
 
-    async def get_price_with_fallback(self, symbol: str) -> PriceData:
+    async def get_price_with_fallback(self, symbol: str, asset_class: AssetClass | None = None) -> PriceData:
         """
         Get price with fallback, raising exception if all sources fail.
 
         Args:
             symbol: Symbol to get price for
+            asset_class: Optional known asset class ("stock"/"etf"/"crypto")
 
         Returns:
             PriceData object
@@ -332,7 +349,7 @@ class PortfolioPriceService:
             PriceDataUnavailableError: If price cannot be retrieved from any source
 
         """
-        price_data = await self.get_current_price(symbol)
+        price_data = await self.get_current_price(symbol, asset_class)
 
         if price_data is None:
             raise PriceDataUnavailableError(symbol, "All price sources failed")

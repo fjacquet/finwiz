@@ -91,11 +91,95 @@ class TestPortfolioPriceService:
         # Arrange & Act & Assert
         assert price_service._is_crypto_symbol("BTC-USD") is True
         assert price_service._is_crypto_symbol("ETH-USDT") is True
+        assert price_service._is_crypto_symbol("SOL-USD") is True
+        assert price_service._is_crypto_symbol("XRP-USD") is True
         assert price_service._is_crypto_symbol("BTC") is True
-        assert price_service._is_crypto_symbol("DOGECOIN") is True  # Long symbol
         assert price_service._is_crypto_symbol("AAPL") is False
         assert price_service._is_crypto_symbol("MSFT") is False
         assert price_service._is_crypto_symbol("VTI") is False
+
+    def test_should_not_treat_long_tickers_as_crypto(self, price_service):
+        """Regression test: ticker length must never be used to infer asset class.
+
+        Previously `_is_crypto_symbol` classified any symbol longer than 5
+        characters as crypto, which misclassified most European-listed
+        stocks/ETFs (33 of 35 holdings in one production run).
+        """
+        for symbol in ("NESN.SW", "UBSG.SW", "VOW.DE", "SUSM.L", "SPICHA.SW", "SAN.PA"):
+            assert price_service._is_crypto_symbol(symbol) is False, symbol
+
+    def test_should_not_treat_stock_tickers_with_crypto_substrings_as_crypto(self, price_service):
+        """Regression test: substring matches on crypto names must not misfire.
+
+        e.g. "BTCH.L" contains "BTC" and "LINKED.L" contains "LINK", but
+        neither is a cryptocurrency.
+        """
+        assert price_service._is_crypto_symbol("BTCH.L") is False
+        assert price_service._is_crypto_symbol("LINKED.L") is False
+
+    @pytest.mark.asyncio
+    async def test_should_use_supplied_asset_class_for_crypto_routing(self, price_service, mock_portfolio_cache, mocker):
+        """An explicitly supplied asset_class wins over any ticker-text guess."""
+        mock_portfolio_cache.get_price_data.return_value = None
+        crypto_price = PriceData(symbol="WEIRD", price=1.23, timestamp=datetime.now(), source="crypto_tool", currency="USD")
+        get_crypto = mocker.patch.object(price_service, "_get_crypto_price", mocker.AsyncMock(return_value=crypto_price))
+        get_stock = mocker.patch.object(price_service, "_get_stock_etf_price", mocker.AsyncMock())
+
+        # "WEIRD" matches none of the crypto patterns, but the caller knows better.
+        result = await price_service.get_current_price("WEIRD", asset_class="crypto")
+
+        assert result is not None
+        assert result.price == approx(1.23)
+        get_crypto.assert_called_once_with("WEIRD")
+        get_stock.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_should_use_supplied_asset_class_over_crypto_substring_guess(self, price_service, mock_portfolio_cache, mocker):
+        """Adversarial case: a stock ticker containing a crypto substring (e.g. "BTC"
+        in "BTCH.L") must route to stocks/ETFs when the caller declares it a stock."""
+        mock_portfolio_cache.get_price_data.return_value = None
+        stock_price = PriceData(symbol="BTCH.L", price=42.0, timestamp=datetime.now(), source="yahoo_finance", currency="GBP")
+        get_crypto = mocker.patch.object(price_service, "_get_crypto_price", mocker.AsyncMock())
+        get_stock = mocker.patch.object(price_service, "_get_stock_etf_price", mocker.AsyncMock(return_value=stock_price))
+
+        result = await price_service.get_current_price("BTCH.L", asset_class="stock")
+
+        assert result is not None
+        assert result.price == approx(42.0)
+        get_stock.assert_called_once_with("BTCH.L")
+        get_crypto.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_should_route_batch_prices_using_per_symbol_asset_classes(self, price_service, mock_portfolio_cache, mocker):
+        """get_current_prices routes each symbol per its own asset_classes entry."""
+        mock_portfolio_cache.get_price_data.return_value = None
+        crypto_price = PriceData(symbol="BTC-USD", price=50000.0, timestamp=datetime.now(), source="crypto_tool", currency="USD")
+        stock_price = PriceData(symbol="NESN.SW", price=95.0, timestamp=datetime.now(), source="yahoo_finance", currency="CHF")
+        get_crypto = mocker.patch.object(price_service, "_get_crypto_price", mocker.AsyncMock(return_value=crypto_price))
+        get_stock = mocker.patch.object(price_service, "_get_stock_etf_price", mocker.AsyncMock(return_value=stock_price))
+
+        result = await price_service.get_current_prices(
+            ["NESN.SW", "BTC-USD"],
+            asset_classes={"NESN.SW": "stock", "BTC-USD": "crypto"},
+        )
+
+        assert result["NESN.SW"].price == approx(95.0)
+        assert result["BTC-USD"].price == approx(50000.0)
+        get_stock.assert_called_once_with("NESN.SW")
+        get_crypto.assert_called_once_with("BTC-USD")
+
+    @pytest.mark.asyncio
+    async def test_should_behave_sanely_when_caller_supplies_only_tickers(self, price_service, mock_portfolio_cache):
+        """A caller that passes no asset_classes still gets correct routing, via the
+        (now length-safe) ticker-text guesser rather than raising or misrouting."""
+        mock_portfolio_cache.get_price_data.return_value = None
+        price_service.yahoo_tool._run.return_value = ok({"current_price": 95.0, "currency": "CHF"})
+
+        result = await price_service.get_current_price("NESN.SW")
+
+        assert result is not None
+        assert result.price == approx(95.0)
+        assert result.source == "yahoo_finance"
 
     @pytest.mark.asyncio
     async def test_should_return_cached_price_when_cache_hit_and_fresh(self, price_service, mock_portfolio_cache):
@@ -506,7 +590,7 @@ class TestPortfolioPriceService:
         price_service.crypto_tool._run.return_value = {"crypto_data": {"current_price": 45000.0}}
 
         # Test different crypto symbol formats
-        crypto_symbols = ["BTC-USD", "ETH-USDT", "BTC", "ETHEREUM"]
+        crypto_symbols = ["BTC-USD", "ETH-USDT", "SOL-USD", "XRP-USD", "BTC"]
 
         for symbol in crypto_symbols:
             # Act

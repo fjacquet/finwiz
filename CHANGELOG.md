@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.14.0] - 2026-08-17
+
+PESTEL removal, plus two data-correctness fixes found by the live 64-holding
+run that validated it.
+
+**Validated against a live `crewai flow kickoff`**: posture 72 % on **64/64
+holdings, 100 % of portfolio value**, zero PESTEL references in the report,
+no synthesis-payload budget warning. The 2-point move from the 2026-08-16
+baseline of 74 % is the two-framework scoring change below, not a coverage
+regression.
+
+### Fixed
+
+- **Asset class is no longer guessed from ticker length.**
+  `PortfolioPriceService._is_crypto_symbol` classified any ticker longer than
+  five characters as a cryptocurrency, so 33 of 35 European-listed holdings —
+  `NESN.SW`, `SAN.PA`, `UBSG.SW`, `VOW.DE` among them — were routed through
+  CoinGecko and the crypto research tool. Only `SCL.F` and `EL.PA` escaped, by
+  being exactly five characters.
+
+  The visible damage was in the family report's portfolio allocation: every
+  misrouted holding ended with no price, was dropped from the valuation, and
+  the remaining weights were normalised over the survivors. One run showed
+  **30 positions summing to 100 % and 34 046 €, under a header reading "64
+  positions"** — an understated portfolio total and overstated concentration
+  (ASML at 23.3 %), presented as complete. Callers now pass the `asset_class`
+  they already know from the source CSV instead of letting the price service
+  re-derive it.
+
+  Per run this also wasted ~95 paid Perplexity "crypto insight" calls on
+  European blue chips and provoked 136 CoinGecko rate-limit errors.
+- **CPI is now a year-over-year rate, not an index level.** `cpi_yoy` was
+  mapped to FRED's `CPIAUCSL`, an index (~332 in 2025), so the macro dashboard
+  read `IPC (Inflation) 332.8 %` and the scorer — whose band tops out at 5 % —
+  held the indicator permanently red. It now requests `units=pc1`, recorded in
+  `data_sources` as `FRED:CPIAUCSL(pc1)` so a derived series stays auditable.
+
 ### Changed
 
 - PESTEL analysis removed from per-holding strategic research. Macro analysis
