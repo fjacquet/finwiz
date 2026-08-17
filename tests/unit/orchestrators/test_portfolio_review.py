@@ -13,6 +13,7 @@ from finwiz.orchestrators.portfolio_review_orchestrator import (
     get_csv_paths,
     save_review_json,
 )
+from finwiz.schemas.portfolio_processing import RawHolding
 
 
 class TestPortfolioReview:
@@ -235,7 +236,7 @@ class TestAllocationWiring:
 
         from finwiz.schemas.rebalancing.core import PriceData
 
-        async def fake_get_current_prices(symbols):
+        async def fake_get_current_prices(symbols, asset_classes=None):
             return {s: PriceData(symbol=s, price=100.0, currency="EUR") for s in symbols}
 
         price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
@@ -293,7 +294,7 @@ class TestAllocationWiring:
 
         from finwiz.schemas.rebalancing.core import PriceData
 
-        async def fake_get_current_prices(symbols):
+        async def fake_get_current_prices(symbols, asset_classes=None):
             return {"AAPL": PriceData(symbol="AAPL", price=100.0, currency="EUR")}
 
         price_service = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
@@ -310,3 +311,59 @@ class TestAllocationWiring:
         assert msft.eur_value is None
         assert aapl.weight == pytest.approx(1.0)
         assert review.total_value_eur == pytest.approx(aapl.eur_value)
+
+
+class TestValuePortfolioAssetClassRouting:
+    """Regression coverage for the asset-class routing defect: `_value_portfolio`
+    must pass each holding's known asset_class through to the price service
+    instead of letting it re-guess (and misclassify) from the ticker text."""
+
+    @staticmethod
+    def _make_holding(ticker: str, asset_class: str, currency: str = "EUR") -> RawHolding:
+        return RawHolding(
+            asset_class=asset_class,  # type: ignore[arg-type]
+            name=ticker,
+            ticker=ticker,
+            currency=currency,
+            source_file=f"{asset_class}.csv",
+            line_number=1,
+            quantity=1.0,
+        )
+
+    async def test_should_pass_known_asset_class_per_ticker_to_price_service(self, mocker):
+        """Long European tickers must be routed as stock/etf, not guessed as crypto."""
+        from finwiz.orchestrators.portfolio_review_orchestrator import _value_portfolio
+        from finwiz.schemas.rebalancing.core import PriceData
+
+        holdings = [
+            self._make_holding("NESN.SW", "stock"),
+            self._make_holding("VUSA.L", "etf"),
+            self._make_holding("BTC-USD", "crypto"),
+        ]
+
+        mock_service_cls = mocker.patch("finwiz.orchestrators.portfolio_review_orchestrator.PortfolioPriceService")
+        mock_service = mock_service_cls.return_value
+        mock_service.get_current_prices = mocker.AsyncMock(
+            return_value={
+                "NESN.SW": PriceData(symbol="NESN.SW", price=95.0, currency="EUR"),
+                "VUSA.L": PriceData(symbol="VUSA.L", price=88.0, currency="EUR"),
+                "BTC-USD": PriceData(symbol="BTC-USD", price=50000.0, currency="EUR"),
+            }
+        )
+
+        result = await _value_portfolio(holdings)
+
+        assert result is not None
+        mock_service.get_current_prices.assert_awaited_once()
+        _args, kwargs = mock_service.get_current_prices.call_args
+        assert kwargs["asset_classes"] == {
+            "NESN.SW": "stock",
+            "VUSA.L": "etf",
+            "BTC-USD": "crypto",
+        }
+
+        # And every holding actually got priced/weighted (none silently dropped).
+        weights = {ticker: hv.weight for ticker, hv in result.per_ticker.items()}
+        assert weights["NESN.SW"] is not None
+        assert weights["VUSA.L"] is not None
+        assert weights["BTC-USD"] is not None

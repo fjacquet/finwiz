@@ -86,13 +86,19 @@ async def _value_portfolio(raw_holdings: list[RawHolding]) -> ValuationResult | 
 
     Short-circuits (no price service, no network) when no holding has a quantity.
     """
-    tickers = list({h.ticker for h in raw_holdings if h.quantity is not None})
+    quantified_holdings = [h for h in raw_holdings if h.quantity is not None]
+    tickers = list({h.ticker for h in quantified_holdings})
     if not tickers:
         return None
 
+    # Asset class is already known from which CSV each holding came from
+    # (see PortfolioHoldingsProcessor) — pass it through so the price
+    # service doesn't have to guess it back from the ticker text.
+    asset_classes = {h.ticker: h.asset_class for h in quantified_holdings}
+
     try:
         service = PortfolioPriceService()
-        prices = await service.get_current_prices(tickers)
+        prices = await service.get_current_prices(tickers, asset_classes=asset_classes)
 
         def price_fn(ticker: str) -> tuple[float, str] | None:
             pd = prices.get(ticker)
