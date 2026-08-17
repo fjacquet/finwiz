@@ -32,9 +32,9 @@ dependencies = [
     "psutil>=7.2.2",
     "python-dateutil>=2.9.0.post0",
     "tenacity>=9.1.4",
-    "crewai>=1.15.12",
-    "langchain-core>=1.5.3",
-    "litellm>=1.94.1",
+    "crewai>=1.15.16",
+    "langchain-core>=1.5.4",
+    "litellm>=1.96.2",
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.6.0",
 ]
 
@@ -449,12 +449,12 @@ dev = [
     "pytest-cov>=7.1.0",
     "types-requests>=2.33.0.20260712",
     "types-psutil>=7.2.2.20260518",
-    "pandas-stubs>=3.0.3.260530",
+    "pandas-stubs>=3.0.5.260730",
     "scipy-stubs>=1.18.0.1",
     "hypothesis>=6.155.7",
     "pre-commit>=4.6.0",
     "ruff>=0.16.2,<1.0.0",
-    "pytest>=9.1.0",
+    "pytest>=9.1.1",
     "pytest-socket>=0.8.0",
 ]
 
