@@ -268,42 +268,15 @@ Professional-grade quantitative analysis framework:
 
 ## Architecture Overview
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Flow Orchestrator                        │
-│                  (CrewAI Flow - Pydantic State)             │
-└────────┬────────────────────────────────────────────┬────────┘
-         │                                            │
-         ▼                                            ▼
-┌──────────────────┐                        ┌──────────────────┐
-│   Orchestrators  │                        │   Crews (AI)     │
-│  (Business Logic)│                        │  (Analysis)      │
-├──────────────────┤                        ├──────────────────┤
-│ • Portfolio Review│                       │ • Stock Crew     │
-│ • Rebalancing    │                        │ • ETF Crew       │
-│ • Decisions      │                        │ • Crypto Crew    │
-└────────┬─────────┘                        │ • Deep Analysis  │
-         │                                  │ • Discovery      │
-         ▼                                  └─────────┬────────┘
-┌──────────────────┐                                 │
-│  Scoring Engine  │                                 ▼
-│   (Python)       │                        ┌──────────────────┐
-├──────────────────┤                        │      Tools       │
-│ • Deep Analysis  │                        ├──────────────────┤
-│ • Portfolio      │                        │ • Quantitative   │
-│ • Risk           │                        │ • Sentiment      │
-└────────┬─────────┘                        │ • Technical      │
-         │                                  │ • Data Access    │
-         ▼                                  └─────────┬────────┘
-┌──────────────────┐                                 │
-│  Reporting       │                                 ▼
-│  (Jinja2)        │                        ┌──────────────────┐
-├──────────────────┤                        │   Integration    │
-│ • HTML Reports   │                        ├──────────────────┤
-│ • Templates      │                        │ • Data Accessor  │
-│ • Formatters     │                        │ • Validation     │
-└──────────────────┘                        │ • Caching        │
-                                            └──────────────────┘
+```mermaid
+flowchart TD
+    A["Flow Orchestrator<br/>(CrewAI Flow - Pydantic State)"]
+    A --> B["Orchestrators (Business Logic)<br/>• Portfolio Review<br/>• Rebalancing<br/>• Decisions"]
+    A --> C["Crews (AI) (Analysis)<br/>• Stock Crew<br/>• ETF Crew<br/>• Crypto Crew<br/>• Deep Analysis<br/>• Discovery"]
+    B --> D["Scoring Engine (Python)<br/>• Deep Analysis<br/>• Portfolio<br/>• Risk"]
+    C --> E["Tools<br/>• Quantitative<br/>• Sentiment<br/>• Technical<br/>• Data Access"]
+    D --> F["Reporting (Jinja2)<br/>• HTML Reports<br/>• Templates<br/>• Formatters"]
+    E --> G["Integration<br/>• Data Accessor<br/>• Validation<br/>• Caching"]
 ```
 
 ## Core Design Principles

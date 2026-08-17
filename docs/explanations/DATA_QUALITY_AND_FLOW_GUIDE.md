@@ -89,46 +89,13 @@ class HoldingDecision(BaseModel):
 
 The system follows a strict data flow from generation to report:
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    1. DATA GENERATION                            │
-│  Crews generate rich analysis with proper grades and scores     │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    2. DATA STORAGE                               │
-│  Crew outputs stored in output/{crew_name}/ directories         │
-│  - stock_output_*.json                                           │
-│  - etf_output_*.json                                             │
-│  - crypto_output_*.json                                          │
-│  - portfolio_review.json                                         │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    3. DATA RETRIEVAL                             │
-│  DataConsolidationValidator ensures data can be retrieved       │
-│  - Validates crew data exists                                    │
-│  - Checks data structure integrity                               │
-│  - Fails fast if data missing or corrupted                       │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    4. DATA CONSOLIDATION                         │
-│  ReportConsolidator merges crew exports into one report          │
-│  - Loads deep analysis exports                                   │
-│  - Validates export structure                                    │
-│  - Tracks per-crew execution status                              │
-│  - Records validation errors in the report                       │
-└─────────────────────────────────────────────────────────────────┘
-                              ↓
-┌─────────────────────────────────────────────────────────────────┐
-│                    5. REPORT GENERATION                          │
-│  ReportDataValidator ensures complete inputs                    │
-│  - Validates all required fields present                         │
-│  - Detects "NOT PROVIDED" placeholders                           │
-│  - Checks for fallback Grade D patterns                          │
-│  - Refuses to generate report if data incomplete                 │
-└─────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    A["1. DATA GENERATION<br/>Crews generate rich analysis with proper grades and scores"]
+    A --> B["2. DATA STORAGE<br/>Crew outputs stored in output/{crew_name}/ directories<br/>- stock_output_*.json<br/>- etf_output_*.json<br/>- crypto_output_*.json<br/>- portfolio_review.json"]
+    B --> C["3. DATA RETRIEVAL<br/>DataConsolidationValidator ensures data can be retrieved<br/>- Validates crew data exists<br/>- Checks data structure integrity<br/>- Fails fast if data missing or corrupted"]
+    C --> D["4. DATA CONSOLIDATION<br/>ReportConsolidator merges crew exports into one report<br/>- Loads deep analysis exports<br/>- Validates export structure<br/>- Tracks per-crew execution status<br/>- Records validation errors in the report"]
+    D --> E["5. REPORT GENERATION<br/>ReportDataValidator ensures complete inputs<br/>- Validates all required fields present<br/>- Detects 'NOT PROVIDED' placeholders<br/>- Checks for fallback Grade D patterns<br/>- Refuses to generate report if data incomplete"]
 ```
 
 ### Data Generation Phase

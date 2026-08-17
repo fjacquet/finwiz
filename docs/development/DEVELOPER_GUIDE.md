@@ -20,42 +20,25 @@ Comprehensive guide for developers contributing to or extending FinWiz.
 
 FinWiz follows a modular, microservices-inspired architecture built on CrewAI's agent framework.
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Flow Orchestrator                        │
-│                  (CrewAI Flow - Pydantic State)             │
-└────────┬────────────────────────────────────────────┬────────┘
-         │                                            │
-         ▼                                            ▼
-┌──────────────────┐                        ┌──────────────────┐
-│   Orchestrators  │                        │   Crews (AI)     │
-│  (Business Logic)│                        │  (Analysis)      │
-├──────────────────┤                        ├──────────────────┤
-│ • Portfolio Review│                       │ • Stock Crew     │
-│ • Rebalancing    │                        │ • ETF Crew       │
-│ • Decisions      │                        │ • Crypto Crew    │
-└────────┬─────────┘                        │ • Deep Analysis  │
-         │                                  │ • Discovery      │
-         ▼                                  └─────────┬────────┘
-┌──────────────────┐                                 │
-│  Scoring Engine  │                                 ▼
-│   (Python)       │                        ┌──────────────────┐
-├──────────────────┤                        │      Tools       │
-│ • Deep Analysis  │                        ├──────────────────┤
-│ • Portfolio      │                        │ • Quantitative   │
-│ • Risk           │                        │ • Sentiment      │
-└────────┬─────────┘                        │ • Technical      │
-         │                                  │ • Data Access    │
-         ▼                                  └─────────┬────────┘
-┌──────────────────┐                                 │
-│  Reporting       │                                 ▼
-│  (Jinja2)        │                        ┌──────────────────┐
-├──────────────────┤                        │   Integration    │
-│ • HTML Reports   │                        ├──────────────────┤
-│ • Templates      │                        │ • Data Accessor  │
-│ • Formatters     │                        │ • Validation     │
-└──────────────────┘                        │ • Caching        │
-                                            └──────────────────┘
+```mermaid
+flowchart TD
+    Flow["Flow Orchestrator<br/>(CrewAI Flow - Pydantic State)"]
+
+    Orch["Orchestrators (Business Logic)<br/>• Portfolio Review<br/>• Rebalancing<br/>• Decisions"]
+    Crews["Crews (AI) (Analysis)<br/>• Stock Crew<br/>• ETF Crew<br/>• Crypto Crew<br/>• Deep Analysis<br/>• Discovery"]
+
+    Scoring["Scoring Engine (Python)<br/>• Deep Analysis<br/>• Portfolio<br/>• Risk"]
+    Tools["Tools<br/>• Quantitative<br/>• Sentiment<br/>• Technical<br/>• Data Access"]
+
+    Reporting["Reporting (Jinja2)<br/>• HTML Reports<br/>• Templates<br/>• Formatters"]
+    Integration["Integration<br/>• Data Accessor<br/>• Validation<br/>• Caching"]
+
+    Flow --> Orch
+    Flow --> Crews
+    Orch --> Scoring
+    Crews --> Tools
+    Scoring --> Reporting
+    Tools --> Integration
 ```
 
 ### Core Design Principles

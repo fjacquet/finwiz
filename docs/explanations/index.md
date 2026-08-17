@@ -163,53 +163,34 @@ Understand design decisions and trade-offs:
 
 ### System Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Flow Orchestrator                        │
-│                  (CrewAI Flow - Pydantic State)             │
-└────────┬────────────────────────────────────────────┬────────┘
-         │                                            │
-         ▼                                            ▼
-┌──────────────────┐                        ┌──────────────────┐
-│   Orchestrators  │                        │   Crews (AI)     │
-│  (Business Logic)│                        │  (Analysis)      │
-└────────┬─────────┘                        └─────────┬────────┘
-         │                                            │
-         ▼                                            ▼
-┌──────────────────┐                        ┌──────────────────┐
-│  Scoring Engine  │                        │      Tools       │
-│   (Python)       │                        │  (Data Access)   │
-└────────┬─────────┘                        └─────────┬────────┘
-         │                                            │
-         ▼                                            ▼
-┌──────────────────┐                        ┌──────────────────┐
-│  Reporting       │                        │   Integration    │
-│  (Jinja2)        │                        │  (Data Sources)  │
-└──────────────────┘                        └──────────────────┘
+```mermaid
+flowchart TD
+    A["Flow Orchestrator<br/>(CrewAI Flow - Pydantic State)"]
+    A --> B["Orchestrators<br/>(Business Logic)"]
+    A --> C["Crews (AI)<br/>(Analysis)"]
+    B --> D["Scoring Engine<br/>(Python)"]
+    C --> E["Tools<br/>(Data Access)"]
+    D --> F["Reporting<br/>(Jinja2)"]
+    E --> G["Integration<br/>(Data Sources)"]
 ```
 
 **Learn More**: [Architecture Overview](ARCHITECTURE.md)
 
 ### Data Flow
 
-```
-Portfolio CSV → Data Accessor → Validation → Cache
-                                                ↓
-                                           Batch Pre-fetch
-                                                ↓
-                                    ┌───────────┴───────────┐
-                                    ▼                       ▼
-                            Deep Analysis           Deep Analysis
-                            Crew #1                  Crew #2
-                                    ↓                       ↓
-                                 Scoring              Scoring
-                                 Engine               Engine
-                                    ↓                       ↓
-                                    └───────────┬───────────┘
-                                                ▼
-                                         Report Generator
-                                                ↓
-                                          HTML Reports
+```mermaid
+flowchart TD
+    A[Portfolio CSV] --> B[Data Accessor]
+    B --> C[Validation]
+    C --> D[Cache]
+    D --> E[Batch Pre-fetch]
+    E --> F["Deep Analysis Crew #1"]
+    E --> G["Deep Analysis Crew #2"]
+    F --> H[Scoring Engine]
+    G --> I[Scoring Engine]
+    H --> J[Report Generator]
+    I --> J
+    J --> K[HTML Reports]
 ```
 
 **Learn More**: [Data Quality Guide](DATA_QUALITY_AND_FLOW_GUIDE.md)

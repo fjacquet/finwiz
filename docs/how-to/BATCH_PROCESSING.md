@@ -8,38 +8,17 @@ FinWiz's Batch Processing System revolutionizes portfolio analysis by implementi
 
 ### High-Level Flow
 
-```
-Portfolio Holdings (66 tickers)
-    ↓
-┌─────────────────────────────────────────────────────┐
-│  Phase 1: Batch Data Pre-Fetching (2-5 seconds)    │
-│                                                      │
-│  Yahoo Finance API: All 66 tickers in parallel     │
-│  Alpha Vantage API: Rate-limited requests (optional)│
-│                                                      │
-│  Result: Pre-fetched data cache for all tickers    │
-└─────────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────────┐
-│  Phase 2: Concurrent Crew Execution (15-35 min)    │
-│                                                      │
-│  Batch 1: [AAPL, MSFT, GOOGL, TSLA, NVDA]         │
-│  Batch 2: [AMZN, META, NFLX, CRM, ADBE]           │
-│  Batch 3: [ORCL, INTC, AMD, QCOM, AVGO]           │
-│  ...                                                │
-│  Batch 14: [Final remaining tickers]               │
-│                                                      │
-│  Each batch: 5 crews running in parallel           │
-│  Zero API latency (uses pre-fetched data)          │
-└─────────────────────────────────────────────────────┘
-    ↓
-┌─────────────────────────────────────────────────────┐
-│  Phase 3: Results Consolidation (< 1 minute)       │
-│                                                      │
-│  Collect all crew results                           │
-│  Generate performance metrics                       │
-│  Create consolidated portfolio analysis             │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Start["Portfolio Holdings (66 tickers)"]
+
+    Phase1["Phase 1: Batch Data Pre-Fetching (2-5 seconds)<br/>Yahoo Finance API: all 66 tickers in parallel<br/>Alpha Vantage API: rate-limited requests (optional)<br/>Result: pre-fetched data cache for all tickers"]
+
+    Phase2["Phase 2: Concurrent Crew Execution (15-35 min)<br/>Batch 1: [AAPL, MSFT, GOOGL, TSLA, NVDA]<br/>Batch 2: [AMZN, META, NFLX, CRM, ADBE]<br/>Batch 3: [ORCL, INTC, AMD, QCOM, AVGO]<br/>...<br/>Batch 14: [Final remaining tickers]<br/>Each batch: 5 crews running in parallel<br/>Zero API latency (uses pre-fetched data)"]
+
+    Phase3["Phase 3: Results Consolidation (&lt; 1 minute)<br/>Collect all crew results<br/>Generate performance metrics<br/>Create consolidated portfolio analysis"]
+
+    Start --> Phase1 --> Phase2 --> Phase3
 ```
 
 ### Key Components
