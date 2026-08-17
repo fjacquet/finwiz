@@ -219,3 +219,90 @@ def test_ten_or_more_holdings_keeps_five_and_five_unchanged():
     assert payload["n"] == 10
     assert [row["t"] for row in payload["weakest"]] == ["T0", "T1", "T2", "T3", "T4"]
     assert [row["t"] for row in payload["strongest"]] == ["T5", "T6", "T7", "T8", "T9"]
+
+
+@pytest.mark.parametrize("n", [0, 1, 3, 9, 10, 11, 60])
+def test_distribution_accounts_for_every_holding(n):
+    """`distribution` is the only channel by which mid-pack holdings reach the
+    synthesis model at all -- the payload's entire claim to not dropping data.
+    Every holding must land in exactly one bucket, so the bucket counts must
+    sum to `n` regardless of portfolio size."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(n)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert sum(payload["distribution"].values()) == payload["n"] == n
+
+
+def test_distribution_bucket_boundaries_are_pinned():
+    """Pins the `<` vs `<=` comparison and the bucket ordering in `_bucket`.
+
+    Scores sit exactly on each boundary (0.5, 0.65, 0.8) plus one holding just
+    below each (0.49, 0.64, 0.79), so a future edit that flips a comparison or
+    reorders `_SCORE_BUCKETS` moves a count between buckets and this test
+    catches it.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {
+        "BELOW_HALF": _analysis(0.49, "force", "menace"),
+        "AT_HALF": _analysis(0.50, "force", "menace"),
+        "BELOW_MID": _analysis(0.64, "force", "menace"),
+        "AT_MID": _analysis(0.65, "force", "menace"),
+        "BELOW_HIGH": _analysis(0.79, "force", "menace"),
+        "AT_HIGH": _analysis(0.80, "force", "menace"),
+    }
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["distribution"] == {
+        "<0.5": 1,
+        "0.5-0.65": 2,
+        "0.65-0.8": 2,
+        ">=0.8": 1,
+    }
+    assert sum(payload["distribution"].values()) == payload["n"] == 6
+
+
+def test_swot_mean_and_moat_mean_are_hand_computed_with_asymmetric_coverage():
+    """`swot_mean` and `moat_mean` must reflect the actual per-framework scores,
+    not a constant -- and when a holding is missing one framework, that mean
+    must average over fewer rows than `n` rather than treating the missing
+    framework as 0 or skipping the holding entirely.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {
+        # swot=0.6, five_forces=0.6 -> composite 0.6
+        "AAA": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["a"], threats=["x"], strategic_score=0.6),
+            five_forces=FiveForcesAnalysis(strategic_score=0.6),
+        ),
+        # swot=0.8, five_forces MISSING -> composite 0.8 (averaged over swot alone)
+        "BBB": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["b"], threats=["y"], strategic_score=0.8),
+            five_forces=None,
+        ),
+        # swot=0.4, five_forces=0.2 -> composite 0.3
+        "CCC": StrategicAnalysis(
+            swot=SwotAnalysis(strengths=["c"], threats=["z"], strategic_score=0.4),
+            five_forces=FiveForcesAnalysis(strategic_score=0.2),
+        ),
+    }
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 3
+    # swot_mean: all three holdings carry a swot score -> mean(0.6, 0.8, 0.4)
+    assert payload["swot_mean"] == pytest.approx(0.6)
+    # moat_mean: only AAA and CCC carry five_forces -- BBB is excluded from
+    # this average, not counted as 0 -- so the denominator is 2, not n=3.
+    assert payload["moat_mean"] == pytest.approx(0.4)
