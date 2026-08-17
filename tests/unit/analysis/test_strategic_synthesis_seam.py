@@ -48,7 +48,7 @@ async def test_coverage_is_merged_before_constructing_the_full_posture(mocker):
     """The LLM supplies only narrative fields; Python injects coverage before validation."""
     from finwiz.analysis import strategic_research
 
-    mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=_narrative()))
+    mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=_narrative()))
 
     posture = await strategic_research.synthesize_portfolio_posture(
         _one_holding(),
@@ -71,10 +71,10 @@ async def test_coverage_is_merged_before_constructing_the_full_posture(mocker):
 
 @pytest.mark.asyncio
 async def test_llm_schema_never_asked_for_coverage(mocker):
-    """perplexity_structured must be called with the narrative-only schema, not the full posture."""
+    """perplexity_with_retry must be called with the narrative-only schema, not the full posture."""
     from finwiz.analysis import strategic_research
 
-    called = mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=_narrative()))
+    called = mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=_narrative()))
 
     await strategic_research.synthesize_portfolio_posture(
         _one_holding(),
@@ -90,7 +90,7 @@ async def test_llm_schema_never_asked_for_coverage(mocker):
 async def test_uncovered_tickers_defaults_to_empty_when_omitted(mocker):
     from finwiz.analysis import strategic_research
 
-    mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=_narrative()))
+    mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=_narrative()))
 
     posture = await strategic_research.synthesize_portfolio_posture(
         _one_holding(),
@@ -108,7 +108,7 @@ async def test_returns_none_when_perplexity_returns_none(mocker):
     """A failed/unparseable LLM call must still yield None, not a half-built posture."""
     from finwiz.analysis import strategic_research
 
-    mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+    mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
 
     posture = await strategic_research.synthesize_portfolio_posture(
         _one_holding(),

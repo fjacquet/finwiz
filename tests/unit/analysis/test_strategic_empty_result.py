@@ -34,14 +34,14 @@ def _pestel() -> PestelAnalysis:
 class TestAllFrameworksFailed:
     async def test_gather_returns_none_when_all_three_frameworks_fail(self, strategic_research, mocker):
         """No evidence at all must not be dressed up as a StrategicAnalysis."""
-        mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
 
         result = await strategic_research.gather_strategic_analysis(ticker="AAPL")
 
         assert result is None
 
     def test_gather_sync_returns_none_when_all_three_frameworks_fail(self, strategic_research, mocker):
-        mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
 
         assert strategic_research.gather_strategic_analysis_sync(ticker="AAPL") is None
 
@@ -69,7 +69,7 @@ class TestPartialResultsSurvive:
         # makes the await order an implementation detail.
         mocker.patch.object(
             strategic_research,
-            "perplexity_structured",
+            "perplexity_with_retry",
             new=mocker.AsyncMock(side_effect=lambda **kwargs: pestel if kwargs["schema"] is PestelAnalysis else None),
         )
 

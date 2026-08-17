@@ -138,7 +138,7 @@ class TestAssetClassThreadsThroughGatherFunctions:
     async def test_gather_strategic_analysis_forwards_asset_class_to_prompts(self, mocker):
         import finwiz.analysis.strategic_research as strategic_research
 
-        mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
         pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
         swot_spy = mocker.spy(strategic_research, "_swot_prompt")
         porter_spy = mocker.spy(strategic_research, "_porter_prompt")
@@ -152,7 +152,7 @@ class TestAssetClassThreadsThroughGatherFunctions:
     def test_gather_strategic_analysis_sync_forwards_asset_class(self, mocker):
         import finwiz.analysis.strategic_research as strategic_research
 
-        mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
         pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
 
         strategic_research.gather_strategic_analysis_sync(ticker="BTC-USD", asset_class="crypto")
@@ -162,7 +162,7 @@ class TestAssetClassThreadsThroughGatherFunctions:
     def test_gather_strategic_analysis_sync_defaults_to_stock(self, mocker):
         import finwiz.analysis.strategic_research as strategic_research
 
-        mocker.patch.object(strategic_research, "perplexity_structured", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
         pestel_spy = mocker.spy(strategic_research, "_pestel_prompt")
 
         strategic_research.gather_strategic_analysis_sync(ticker="AAPL")

@@ -20,8 +20,7 @@ import asyncio
 import logging
 from typing import Any
 
-from crewai_custom_tools import perplexity_structured
-
+from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
 from finwiz.schemas.hybrid_analysis.strategic import (
     MAX_BULLET_CHARS,
     MAX_BULLETS_PESTEL,
@@ -240,22 +239,25 @@ async def gather_strategic_analysis(
     rather than its training cutoff (defaults to today in long French form).
     """
     date_anchor = current_date or _today_french()
-    pestel_coro = perplexity_structured(
+    pestel_coro = perplexity_with_retry(
         prompt=_pestel_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=PestelAnalysis,
         system=SYSTEM_FR,
+        search_recency_filter="month",
         timeout=timeout,
     )
-    swot_coro = perplexity_structured(
+    swot_coro = perplexity_with_retry(
         prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=SwotAnalysis,
         system=SYSTEM_FR,
+        search_recency_filter="month",
         timeout=timeout,
     )
-    porter_coro = perplexity_structured(
+    porter_coro = perplexity_with_retry(
         prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=FiveForcesAnalysis,
         system=SYSTEM_FR,
+        search_recency_filter="month",
         timeout=timeout,
     )
     pestel, swot, porter = await asyncio.gather(pestel_coro, swot_coro, porter_coro)
@@ -350,7 +352,7 @@ async def synthesize_portfolio_posture(
 
     payload = _serialize_holdings(holdings_strategic)
     date_anchor = current_date or _today_french()
-    narrative = await perplexity_structured(
+    narrative = await perplexity_with_retry(
         prompt=_portfolio_prompt(payload, date_anchor),
         schema=PortfolioPostureNarrative,
         system=SYSTEM_FR,
