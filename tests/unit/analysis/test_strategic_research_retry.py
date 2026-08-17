@@ -16,9 +16,17 @@ import pytest
 
 
 @pytest.mark.asyncio
-async def test_a_transient_failure_does_not_lose_a_framework(mocker):
+async def test_a_transient_failure_does_not_lose_a_framework(mocker, monkeypatch):
     """One 429 then success must yield the analysis, not None."""
     from finwiz.analysis import strategic_research
+
+    # perplexity_with_retry short-circuits to None when no key is configured, so
+    # without this the test asserts nothing on a machine without one and fails on
+    # a machine with one removed. PERPLEXITY_API_KEY is not in REQUIRED_API_KEYS,
+    # so conftest's isolation fixture does not clear it — it leaked in from the
+    # developer's .env via load_dotenv, which is why this passed locally and
+    # failed in CI.
+    monkeypatch.setenv("PERPLEXITY_API_KEY", "test-perplexity-key-not-a-real-secret")
 
     calls = {"n": 0}
 
