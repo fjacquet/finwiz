@@ -58,14 +58,13 @@ def _emit_pending(ctx: StageContext, reason: str | None = None) -> DeepAnalysisR
     pipeline cannot produce a real verdict so it emits a flagged placeholder that
     the report renderer maps to 'Analyse en attente'. Mirrors the v0.3.0 fix.
 
-    When the underlying ``reason`` indicates a circuit-breaker fast-fail (the
-    literal ``"Circuit breaker open"`` raised from ``crew_execution.py``), use
-    a more specific French phrasing so users can distinguish a genuine pending
-    holding from one that was skipped because the upstream breaker opened.
+    No circuit-breaker-specific phrasing here: crew_execution.py now waits out
+    the breaker's cooldown and retries the crew instead of failing the holding
+    (Task 2, 2026-08-16), so a breaker event no longer reaches this function as
+    a distinct ``reason`` — it either resolves after the wait or surfaces as
+    whatever error the retried crew itself raised.
     """
-    if reason and "Circuit breaker open" in reason:
-        pending_rationale = f"Analyse interrompue : circuit breaker ouvert — réessayer après cooldown ({reason})"
-    elif reason:
+    if reason:
         pending_rationale = f"Analyse en attente — ne pas décider sur ce holding. {reason}"
     else:
         pending_rationale = "Analyse en attente — ne pas décider sur ce holding"

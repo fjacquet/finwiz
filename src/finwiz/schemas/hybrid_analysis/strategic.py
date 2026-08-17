@@ -6,9 +6,13 @@ with Perplexity-grounded web research. Each framework self-rates its
 pure averaging — no Python derivation from item counts.
 """
 
+import logging
+import re
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
+
+logger = logging.getLogger(__name__)
 
 
 def _coerce_prose(v: object) -> str:
@@ -18,19 +22,117 @@ def _coerce_prose(v: object) -> str:
     return str(v) if v is not None else ""
 
 
-def _coerce_str_list(v: object) -> list[str]:
-    """Coerce a list whose entries may be dicts into a list of strings."""
-    if not isinstance(v, list):
+def _coerce_list_item(item: object) -> str:
+    """Coerce a single list entry (possibly a dict) into a string."""
+    if isinstance(item, dict):
+        label = item.get("name") or item.get("label") or item.get("description") or item.get("text") or str(item)
+        severity = item.get("severity") or item.get("impact") or item.get("level")
+        return f"{label} (Sévérité: {severity})" if severity else str(label)
+    return str(item)
+
+
+_LEADING_BULLET_MARKER_RE = re.compile(r"^[-•*]\s+")
+
+
+def _split_prose_into_bullets(text: str) -> list[str]:
+    """Split a prose string into bullets when it looks like a list.
+
+    Splits on newlines — the shape a model falls back to when asked for
+    bullets but writes a paragraph, or a manually-authored bullet list
+    joined into one string — and strips a leading ``-``/``•``/``*`` marker
+    from each resulting line. A single line with no newline is kept as one
+    bullet rather than being torn apart.
+    """
+    lines = [line.strip() for line in text.strip().splitlines()]
+    lines = [line for line in lines if line]
+    if not lines:
         return []
-    out: list[str] = []
-    for item in v:
-        if isinstance(item, dict):
-            label = item.get("name") or item.get("label") or item.get("description") or item.get("text") or str(item)
-            severity = item.get("severity") or item.get("impact") or item.get("level")
-            out.append(f"{label} (Sévérité: {severity})" if severity else str(label))
-        else:
-            out.append(str(item))
-    return out
+    return [_LEADING_BULLET_MARKER_RE.sub("", line).strip() or line for line in lines]
+
+
+def _warn_coerced_non_list_shape(v: object) -> None:
+    """Log the shape a non-list value had before it was coerced into bullets.
+
+    Silent coercion of an unexpected shape is how this class of defect
+    (an AI paragraph, or a pre-schema-change dict/string read back from a
+    ``*_enriched.json`` file, silently collapsing to ``[]``) stayed
+    invisible. Every coercion of a non-list shape is logged so it can be
+    seen, even though it is never rejected.
+    """
+    preview = repr(v)
+    if len(preview) > 120:
+        preview = preview[:120] + "…"
+    logger.warning("Coercing non-list value into bullets: type=%s preview=%s", type(v).__name__, preview)
+
+
+def _coerce_str_list(v: object) -> list[str]:
+    """Coerce a list, string, dict, or scalar into a list of strings.
+
+    A non-list shape must never collapse to an empty list — that reads
+    downstream as "no data" when data actually arrived, just not as a
+    ``list``. Two live paths depend on this: a model asked for bullets
+    that returns a paragraph instead, and re-validating a
+    ``strategic_analysis`` blob read back from a ``*_enriched.json`` file
+    written before PESTEL dimensions became ``list[str]`` (those files
+    have plain strings for ``political``/``economic``/etc.). Only ``None``
+    and an empty/blank string are genuinely absent data and correctly
+    yield ``[]``.
+    """
+    if isinstance(v, list):
+        return [_coerce_list_item(item) for item in v]
+    if v is None:
+        return []
+    if isinstance(v, str):
+        if not v.strip():
+            return []
+        _warn_coerced_non_list_shape(v)
+        return _split_prose_into_bullets(v)
+    if isinstance(v, dict):
+        _warn_coerced_non_list_shape(v)
+        prose = _coerce_prose(v)
+        return [prose] if prose else []
+    _warn_coerced_non_list_shape(v)
+    text = str(v)
+    return [text] if text else []
+
+
+MAX_BULLETS_PESTEL = 3
+MAX_BULLETS_SWOT = 4
+MAX_BULLET_CHARS = 200
+MAX_PROSE_CHARS = 400
+MAX_RATIONALE_CHARS = 250
+
+MAX_VERDICT_CHARS = 200
+"""Cap for a portfolio-level one-sentence verdict.
+
+Equal to ``MAX_BULLET_CHARS`` today, but deliberately a separate constant: a
+per-holding PESTEL bullet and a portfolio-wide verdict sentence are tuned
+against different prompts and different readers. Do not merge them — changing
+one must not silently move the other.
+"""
+
+MAX_PORTFOLIO_PROSE_CHARS = 800
+"""Cap for the three portfolio-level narrative fields.
+
+Deliberately larger than MAX_PROSE_CHARS (400): that cap bounds a single
+framework's synthesis for one company, while these fields summarize an
+entire portfolio's worth of PESTEL/SWOT/Porter output. Reusing MAX_PROSE_CHARS
+here would be too tight for what the field legitimately has to cover.
+"""
+
+
+def _clamp_bullets(v: object, max_items: int) -> list[str]:
+    """Trim a model's bullet list to the contract.
+
+    Never raises: an over-long response is clamped, because rejecting it
+    would cost the holding entirely.
+    """
+    items = _coerce_str_list(v)
+    return [item[:MAX_BULLET_CHARS].rstrip() for item in items[:max_items]]
+
+
+def _clamp_prose(v: object, max_chars: int) -> str:
+    return _coerce_prose(v)[:max_chars].rstrip()
 
 
 Intensity = Literal["LOW", "MEDIUM", "HIGH"]
@@ -39,12 +141,12 @@ Intensity = Literal["LOW", "MEDIUM", "HIGH"]
 class PestelAnalysis(BaseModel):
     """PESTEL macro-environmental analysis (Political/Economic/Social/Tech/Env/Legal)."""
 
-    political: str = Field(default="", description="Political factors: regulation, government stability, trade policy")
-    economic: str = Field(default="", description="Economic factors: inflation, interest rates, growth, FX")
-    social: str = Field(default="", description="Social factors: demographics, lifestyle, consumer behavior")
-    technological: str = Field(default="", description="Technological factors: innovation, disruption, R&D")
-    environmental: str = Field(default="", description="Environmental factors: climate, sustainability, ESG")
-    legal: str = Field(default="", description="Legal factors: laws, antitrust, IP, employment")
+    political: list[str] = Field(default_factory=list, description="Political factors: max 3 bullets")
+    economic: list[str] = Field(default_factory=list, description="Economic factors: max 3 bullets")
+    social: list[str] = Field(default_factory=list, description="Social factors: max 3 bullets")
+    technological: list[str] = Field(default_factory=list, description="Technological factors: max 3 bullets")
+    environmental: list[str] = Field(default_factory=list, description="Environmental factors: max 3 bullets")
+    legal: list[str] = Field(default_factory=list, description="Legal factors: max 3 bullets")
     key_threats: list[str] = Field(default_factory=list, description="Most material PESTEL-derived threats")
     key_opportunities: list[str] = Field(default_factory=list, description="Most material PESTEL-derived opportunities")
     strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall PESTEL favorability (0=hostile, 1=very favorable)")
@@ -52,13 +154,13 @@ class PestelAnalysis(BaseModel):
 
     @field_validator("political", "economic", "social", "technological", "environmental", "legal", mode="before")
     @classmethod
-    def _coerce_dimension(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_dimension(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 
     @field_validator("key_threats", "key_opportunities", mode="before")
     @classmethod
-    def _coerce_lists(cls, v: object) -> list[str]:
-        return _coerce_str_list(v)
+    def _clamp_key_lists(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -76,13 +178,13 @@ class SwotAnalysis(BaseModel):
 
     @field_validator("strengths", "weaknesses", "opportunities", "threats", mode="before")
     @classmethod
-    def _coerce_lists(cls, v: object) -> list[str]:
-        return _coerce_str_list(v)
+    def _clamp_lists(cls, v: object) -> list[str]:
+        return _clamp_bullets(v, MAX_BULLETS_SWOT)
 
     @field_validator("strategic_assessment", mode="before")
     @classmethod
-    def _coerce_assessment(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_assessment(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PROSE_CHARS)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -95,8 +197,8 @@ class ForceRating(BaseModel):
 
     @field_validator("rationale", mode="before")
     @classmethod
-    def _coerce_rationale(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_rationale(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_RATIONALE_CHARS)
 
     @field_validator("intensity", mode="before")
     @classmethod
@@ -127,8 +229,8 @@ class FiveForcesAnalysis(BaseModel):
 
     @field_validator("competitive_position_summary", mode="before")
     @classmethod
-    def _coerce_summary(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_summary(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PROSE_CHARS)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -155,8 +257,19 @@ class StrategicAnalysis(BaseModel):
         return sum(confs) / len(confs) if confs else None
 
 
-class PortfolioStrategicPosture(BaseModel):
-    """Portfolio-wide strategic synthesis (one per kickoff)."""
+class PortfolioPostureNarrative(BaseModel):
+    """Portfolio-level synthesis fields the LLM actually supplies.
+
+    Coverage (``holdings_covered`` / ``holdings_total`` / ``value_covered_pct``
+    / ``uncovered_tickers``) is never asked of the model — an LLM cannot know
+    which holdings Python actually analyzed. It is computed in Python and
+    merged in after this schema validates; see :class:`PortfolioStrategicPosture`,
+    which extends this class with those fields, and
+    ``synthesize_portfolio_posture`` in ``analysis/strategic_research.py``,
+    which performs the merge. Keeping this schema LLM-only means a response
+    that (correctly) omits coverage never fails validation before Python gets
+    the chance to add it.
+    """
 
     macro_environment_summary: str = Field(default="", description="Cross-portfolio PESTEL synthesis (regulatory/economic/geopolitical themes)")
     portfolio_strengths: list[str] = Field(default_factory=list, description="Concentration of moats, structural advantages")
@@ -166,13 +279,29 @@ class PortfolioStrategicPosture(BaseModel):
     competitive_landscape_summary: str = Field(default="", description="Cross-holding Porter synthesis (industries with strongest/weakest moats)")
     dominant_themes: list[str] = Field(default_factory=list, description="Top 3-5 strategic themes recurring across the portfolio")
     overall_assessment: str = Field(default="", description="AI's narrative on the portfolio's strategic posture")
-    strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's confidence in this synthesis")
+
+    # One-sentence verdicts, requested from the model rather than extracted
+    # from prose by Python — first-sentence extraction is how a markdown
+    # bullet list ends up as a headline. Required (a missing verdict must
+    # fail loudly) but clamped rather than max_length-constrained: an
+    # over-long sentence must not cost the whole posture — this is the
+    # single most expensive call in the run.
+    macro_verdict: str = Field(..., description="One sentence on the macro environment")
+    competitive_verdict: str = Field(..., description="One sentence on the competitive landscape")
+    swot_verdict: str = Field(..., description="One sentence on the aggregated SWOT")
+
+    strategic_score: float = Field(..., ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="AI's confidence in this synthesis")
 
     @field_validator("macro_environment_summary", "competitive_landscape_summary", "overall_assessment", mode="before")
     @classmethod
-    def _coerce_prose_fields(cls, v: object) -> str:
-        return _coerce_prose(v)
+    def _clamp_prose_fields(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_PORTFOLIO_PROSE_CHARS)
+
+    @field_validator("macro_verdict", "competitive_verdict", "swot_verdict", mode="before")
+    @classmethod
+    def _clamp_verdicts(cls, v: object) -> str:
+        return _clamp_prose(v, MAX_VERDICT_CHARS)
 
     @field_validator("portfolio_strengths", "portfolio_weaknesses", "portfolio_opportunities", "portfolio_threats", "dominant_themes", mode="before")
     @classmethod
@@ -180,3 +309,47 @@ class PortfolioStrategicPosture(BaseModel):
         return _coerce_str_list(v)
 
     model_config = {"str_strip_whitespace": True}
+
+
+class PortfolioStrategicPosture(PortfolioPostureNarrative):
+    """Portfolio-wide strategic synthesis (one per kickoff), coverage included.
+
+    Coverage is required so a posture cannot omit what it covers. The
+    2026-08-16 report printed "71%" from 1 of 64 holdings because this schema
+    had no way to say otherwise — and strategic_score/confidence defaulted to
+    0.5, so a posture built from nothing still reported a confident midpoint.
+    """
+
+    holdings_covered: int = Field(..., ge=0, description="Holdings with a real strategic analysis")
+    holdings_total: int = Field(..., ge=0, description="Holdings in the portfolio")
+    value_covered_pct: float = Field(..., ge=0.0, le=100.0, description="Share of portfolio value covered")
+    uncovered_tickers: list[str] = Field(default_factory=list, description="Named, never silently omitted")
+
+    @model_validator(mode="after")
+    def _coverage_counts_agree(self) -> "PortfolioStrategicPosture":
+        """Reject a posture whose own coverage numbers contradict each other.
+
+        ``holdings_covered`` is derivable — it is always
+        ``holdings_total - len(uncovered_tickers)`` — but it is stored rather
+        than computed, because the renderers and the JSON export both read it
+        as a field. Storing a derivable value means it can drift from the list
+        it summarises, and a posture that reports "26 of 64 covered" beside a
+        list naming three gaps is exactly the quietly-wrong number this schema
+        exists to make impossible.
+
+        Only enforced when ``uncovered_tickers`` is populated: an empty list is
+        ambiguous (either full coverage, or gaps that were never named), and
+        rejecting the ambiguous case would break callers that legitimately know
+        the counts without enumerating the gaps.
+        """
+        if self.uncovered_tickers:
+            expected = self.holdings_total - len(self.uncovered_tickers)
+            if self.holdings_covered != expected:
+                raise ValueError(
+                    f"coverage counts disagree: holdings_covered={self.holdings_covered} but "
+                    f"holdings_total={self.holdings_total} minus {len(self.uncovered_tickers)} "
+                    f"named uncovered tickers implies {expected}"
+                )
+        if self.holdings_covered > self.holdings_total:
+            raise ValueError(f"holdings_covered={self.holdings_covered} exceeds holdings_total={self.holdings_total}")
+        return self

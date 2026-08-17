@@ -7,7 +7,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 if TYPE_CHECKING:
     from finwiz.flow_state import FinwizState
@@ -76,7 +76,7 @@ class ReportEnrichmentMixin:
         economic_calendar = self._collect_economic_calendar(portfolio_review)
 
         # Synthesize portfolio-level strategic posture from per-holding strategic analyses (best-effort).
-        portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results, records=enriched_records)
+        portfolio_strategic_posture = self._synthesize_portfolio_strategic(deep_analysis_results, records=enriched_records, holdings=portfolio_review.holdings)
 
         # Distill per-holding "quintessence" cards from the costly enriched JSON (best-effort).
         holdings_insights = self._extract_holdings_insights(deep_analysis_results, records=enriched_records)
@@ -104,7 +104,48 @@ class ReportEnrichmentMixin:
             cost_summary=cost_summary,
         )
 
+        self._write_posture_page(
+            report_path,
+            portfolio_strategic_posture,
+            holdings_strategic=self._extract_holdings_strategic(deep_analysis_results, records=enriched_records),
+        )
+
         return report_path
+
+    def _write_posture_page(
+        self,
+        report_path: str,
+        portfolio_strategic_posture: dict[str, Any] | None,
+        *,
+        holdings_strategic: dict[str, dict] | None,
+    ) -> None:
+        """Write the dedicated posture page beside the family report.
+
+        Best-effort by design: the family report is the primary deliverable and
+        must be returned regardless of whether this companion page could be
+        written. The failure is still logged -- at warning level, with the
+        traceback -- rather than swallowed silently: a bare ``except Exception``
+        in this same mixin once turned a `TypeError` into a silently missing
+        posture section (Task 7). Catching broadly here is deliberate (an
+        uncaught exception would propagate to the caller's outer handler and
+        fail the whole report, even though the family HTML is already on disk),
+        but catching broadly must not mean discarding the traceback -- without
+        it, a genuine programming error is a single log line with no way to
+        diagnose it from the log alone.
+        """
+        if not portfolio_strategic_posture:
+            return
+        try:
+            from finwiz.reporting.sections.posture_page import generate_posture_page
+
+            posture_path = Path(report_path).parent / "finwiz_posture_strategique.html"
+            posture_path.write_text(
+                generate_posture_page(portfolio_strategic_posture, holdings_strategic=holdings_strategic),
+                encoding="utf-8",
+            )
+            self.logger.info("Posture page written: %s", posture_path)
+        except Exception as e:
+            self.logger.warning("Failed to write posture page beside %s: %s", report_path, e, exc_info=True)
 
     def _load_opportunity_shortlist(self) -> Any:
         """Return the gap-fill opportunity shortlist (state preferred, file fallback).
@@ -320,15 +361,80 @@ class ReportEnrichmentMixin:
                 strategic[ticker] = sa
         return strategic if strategic else None
 
+    def _strategic_coverage(
+        self,
+        holdings: list[HoldingDecision],
+        covered_tickers: set[str],
+    ) -> tuple[int, int, float, list[str]]:
+        """Derive (holdings_covered, holdings_total, value_covered_pct, uncovered_tickers) honestly.
+
+        ``holdings`` is ``portfolio_review.holdings`` — the authoritative list
+        of every holding in the *current* portfolio (priced or not). It is the
+        true denominator: unlike ``deep_analysis_results``, it can't silently
+        omit a holding that simply wasn't re-analyzed this run.
+
+        ``value_covered_pct`` is weighted by ``HoldingDecision.eur_value`` so a
+        single large uncovered position can't hide behind a healthy
+        count-based ratio — the report this task exists to fix printed "71%"
+        off 1 of 64 holdings, and by count alone there is no way to tell
+        whether the missing 63 were 2% of the portfolio's value or 40% of it.
+        When *no* holding in the portfolio carries a priced ``eur_value``
+        (e.g. an unpriced CSV import), there is nothing to weight by value —
+        Python does not invent one. It degrades to the honest count-based
+        ratio and logs the degrade explicitly, rather than defaulting to a
+        fabricated 100%.
+        """
+        all_tickers = sorted({h.ticker for h in holdings if h.ticker})
+        holdings_total = len(all_tickers)
+        covered_tickers = covered_tickers & set(all_tickers)
+        holdings_covered = len(covered_tickers)
+        uncovered_tickers = sorted(set(all_tickers) - covered_tickers)
+
+        # Summed, not last-wins: the same ticker can appear on several rows (the
+        # same position held in two accounts). A dict comprehension keyed by
+        # ticker would keep only the last row's eur_value, understating the
+        # portfolio total and reporting a value weight that does not match the
+        # real position sizes.
+        priced_values: dict[str, float] = {}
+        for h in holdings:
+            if h.ticker and h.eur_value is not None:
+                priced_values[h.ticker] = priced_values.get(h.ticker, 0.0) + h.eur_value
+        total_priced_value = sum(priced_values.values())
+        if total_priced_value > 0:
+            covered_value = sum(v for t, v in priced_values.items() if t in covered_tickers)
+            value_covered_pct = round(100.0 * covered_value / total_priced_value, 1)
+        else:
+            value_covered_pct = round(100.0 * holdings_covered / holdings_total, 1) if holdings_total else 0.0
+            self.logger.warning(
+                "No priced holdings (eur_value) in the portfolio; value_covered_pct "
+                "falls back to the count-based coverage ratio (%d/%d) as an honest "
+                "proxy instead of a fabricated percentage.",
+                holdings_covered,
+                holdings_total,
+            )
+        return holdings_covered, holdings_total, value_covered_pct, uncovered_tickers
+
     def _synthesize_portfolio_strategic(
         self,
         deep_analysis_results: dict[str, Any] | None,
         records: list[tuple[str, dict[str, Any]]] | None = None,
+        *,
+        holdings: list[HoldingDecision],
     ) -> dict | None:
         """Synthesize a portfolio-level :class:`PortfolioStrategicPosture` via Perplexity.
 
-        Best-effort: any failure (no strategic data, API down, parse error) returns
-        None so the rest of the report still renders.
+        ``holdings`` (``portfolio_review.holdings``) is required, not optional:
+        it is the only source of the true portfolio denominator and of the
+        per-holding EUR values that make ``value_covered_pct`` honest rather
+        than a count-based approximation.
+
+        Best-effort for *runtime* failures (no strategic data, API down, parse
+        error) — those still return None so the rest of the report renders.
+        Programming errors (wrong call signature, wrong attribute) are NOT
+        swallowed: a prior version of this method wrapped its whole body in a
+        bare ``except Exception`` that turned a `TypeError` from a stale call
+        site into a silent "non-fatal" warning, dropping the entire strategic
+        posture section with no visible failure.
         """
         try:
             holdings_strategic_dicts = self._extract_holdings_strategic(deep_analysis_results, records=records)
@@ -341,18 +447,50 @@ class ReportEnrichmentMixin:
             holdings_models: dict[str, StrategicAnalysis] = {}
             for ticker, sa_dict in holdings_strategic_dicts.items():
                 try:
-                    holdings_models[ticker] = StrategicAnalysis.model_validate(sa_dict)
+                    model = StrategicAnalysis.model_validate(sa_dict)
                 except Exception as e:
                     self.logger.debug(f"Skipping {ticker} for portfolio synthesis (invalid schema): {e}")
+                    continue
+                # Validating is not the same as carrying evidence. All three
+                # framework fields are Optional, so an all-None blob -- what a
+                # fully-failed strategic gather used to write to disk, and what
+                # legacy *_enriched.json files still contain -- validates
+                # cleanly and would otherwise be counted as covered by count
+                # AND by value, named in no gap list. composite_strategic_score
+                # is None exactly when no framework produced a rating; it is
+                # the same predicate stages/synthesize.py uses before
+                # recomputing a holding's grade off strategic data.
+                if model.composite_strategic_score is None:
+                    self.logger.warning("Excluding %s from strategic coverage: no framework produced a rating (all-None strategic_analysis)", ticker)
+                    continue
+                holdings_models[ticker] = model
 
             if not holdings_models:
+                self.logger.warning("No holding carries usable strategic evidence; skipping portfolio posture synthesis rather than synthesizing one from empty objects")
                 return None
 
-            posture = synthesize_portfolio_posture_sync(holdings_models)
+            holdings_covered, holdings_total, value_covered_pct, uncovered_tickers = self._strategic_coverage(holdings, set(holdings_models))
+
+            posture = synthesize_portfolio_posture_sync(
+                holdings_models,
+                holdings_covered=holdings_covered,
+                holdings_total=holdings_total,
+                value_covered_pct=value_covered_pct,
+                uncovered_tickers=uncovered_tickers,
+            )
             if posture is None:
-                self.logger.info("Portfolio strategic synthesis returned no posture")
+                # Warning, not info: the five required narrative fields mean a
+                # truncated model response now loses the *entire* posture, not
+                # a few sentences of it. At info this was indistinguishable
+                # from routine progress chatter.
+                self.logger.warning("Portfolio strategic synthesis returned no posture; the report will show it as unavailable for this run")
                 return None
             return posture.model_dump(mode="json")
+        except (TypeError, AttributeError):
+            # Programming errors, not runtime/API failures — let them propagate
+            # instead of being logged as "non-fatal" and silently dropping the
+            # whole section.
+            raise
         except Exception as e:
             self.logger.warning(f"Portfolio strategic synthesis failed (non-fatal): {e}")
             return None

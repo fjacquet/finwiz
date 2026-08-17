@@ -21,6 +21,7 @@ from finwiz.analysis._helpers import (
     _get_analysis_crew,  # noqa: F401 — re-exported for test compatibility
 )
 from finwiz.analysis.stages import run_pipeline
+from finwiz.analysis.stages._qualify_fallbacks import _create_fallback_qualitative  # noqa: F401 — re-exported for callers/tests
 from finwiz.analysis.stages._synthesize_helpers import (  # noqa: F401
     _calculate_word_count,
     _count_unique_insights,
@@ -31,11 +32,9 @@ from finwiz.analysis.stages._synthesize_helpers import (  # noqa: F401
 from finwiz.analysis.stages.collect import collect_raw_data  # noqa: F401 — re-exported for callers/tests
 from finwiz.analysis.stages.emit import build_verdict  # noqa: F401
 from finwiz.analysis.stages.qualify import (  # noqa: F401
-    _create_fallback_qualitative,
     _create_python_qualitative,
     _extract_qualitative,
     _has_qualitative_content,
-    _run_qualitative_and_strategic_in_parallel,
     _safe_strategic,
     generate_qualitative,
 )

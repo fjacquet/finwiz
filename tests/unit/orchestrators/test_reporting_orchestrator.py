@@ -701,6 +701,303 @@ class TestSentimentAndStrategicExtraction:
         assert set(result.keys()) == {"ETH-USD"}
 
 
+class TestSynthesizePortfolioStrategicCoverage:
+    """_synthesize_portfolio_strategic must compute honest coverage, never fabricate it.
+
+    Regression: after strategic.py made holdings_covered/holdings_total/
+    value_covered_pct required, this method's only production caller
+    (synthesize_portfolio_posture_sync(holdings_models)) called it with none
+    of the new required kwargs. Because the whole method body was wrapped in
+    a bare `except Exception: ... return None`, that TypeError was logged as
+    "non-fatal" and the report silently lost its entire strategic posture
+    section — every single run, with no visible failure.
+
+    These tests exercise the fix through the real ``ReportingOrchestrator``
+    (real logger, real mixin composition) using ``portfolio_review.holdings``
+    — the authoritative source for both the coverage denominator and the
+    per-holding EUR values that make ``value_covered_pct`` honest. The bare
+    ``ReportEnrichmentMixin`` + stubbed-logger variant of these same
+    scenarios lives in ``tests/unit/orchestrators/test_posture_coverage_wiring.py``.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _sa_dict(score: float = 0.6) -> dict:
+        return {"pestel": {"strategic_score": score, "confidence": 0.7}}
+
+    @classmethod
+    def _record(cls, ticker: str, with_strategic: bool = True) -> tuple[str, dict]:
+        data: dict = {"ticker": ticker}
+        if with_strategic:
+            data["qualitative"] = {"strategic_analysis": cls._sa_dict()}
+        return ("stock", data)
+
+    @classmethod
+    def _records(cls, *tickers: str) -> list[tuple[str, dict]]:
+        """Every ticker carries a valid strategic_analysis (fully covered)."""
+        return [cls._record(t) for t in tickers]
+
+    @staticmethod
+    def _holding(ticker: str, *, eur_value: float | None = None) -> HoldingDecision:
+        from finwiz.schemas.common import RiskAssessmentStandardized
+
+        return HoldingDecision(
+            ticker=ticker,
+            name=f"{ticker} Inc.",
+            asset_class="stock",
+            currency="USD",
+            decision="KEEP",
+            composite_score=0.7,
+            grade="B",
+            grade_description="Solide",
+            recommended_action="Conserver",
+            risk=RiskAssessmentStandardized(score=2.0, level="Medium"),
+            eur_value=eur_value,
+        )
+
+    def _mock_synthesize(self, mocker):
+        """Patch the real Perplexity call and capture the kwargs it was called with."""
+        captured: dict = {}
+
+        def _fake(_holdings_models, **kwargs):
+            captured.update(kwargs)
+            from finwiz.schemas.hybrid_analysis.strategic import PortfolioStrategicPosture
+
+            return PortfolioStrategicPosture(
+                macro_verdict="m",
+                competitive_verdict="c",
+                swot_verdict="s",
+                strategic_score=0.6,
+                confidence=0.6,
+                holdings_covered=kwargs["holdings_covered"],
+                holdings_total=kwargs["holdings_total"],
+                value_covered_pct=kwargs["value_covered_pct"],
+                uncovered_tickers=kwargs.get("uncovered_tickers") or [],
+            )
+
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", side_effect=_fake)
+        return captured
+
+    def test_value_weighted_coverage_from_real_portfolio_holdings(self, orchestrator, mocker):
+        """holdings_total/uncovered/value_covered_pct all come from portfolio_review.holdings."""
+        captured = self._mock_synthesize(mocker)
+        deep_analysis_results = {"total_holdings": 3}
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL", eur_value=900.0), self._holding("MSFT", eur_value=50.0), self._holding("TSLA", eur_value=50.0)]
+
+        result = orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+        assert result is not None
+        assert captured["holdings_covered"] == 1
+        assert captured["holdings_total"] == 3
+        assert sorted(captured["uncovered_tickers"]) == ["MSFT", "TSLA"]
+        # AAPL (covered) is 900 of 1000 total EUR -> 90%, not the 33% count-based ratio.
+        assert captured["value_covered_pct"] == pytest.approx(90.0)
+
+    def test_never_reports_full_coverage_when_holdings_are_missing(self, orchestrator, mocker):
+        """The exact defect being fixed: holdings_total must never equal holdings_covered
+        when there is a real, known gap — that would silently claim 100%."""
+        captured = self._mock_synthesize(mocker)
+        deep_analysis_results = {"total_holdings": 5}
+        records = self._records("AAPL")
+        holdings = [self._holding(t) for t in ("AAPL", "MSFT", "TSLA", "NVDA", "AMZN")]
+
+        orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+        assert captured["holdings_total"] != captured["holdings_covered"]
+        assert captured["holdings_total"] == 5
+
+    def test_falls_back_to_count_ratio_without_priced_holdings(self, orchestrator, mocker):
+        """No holding in the portfolio has an eur_value: value_covered_pct degrades to the
+        honest count-based ratio, logged loudly, never fabricated as 100%."""
+        captured = self._mock_synthesize(mocker)
+        deep_analysis_results = {"total_holdings": 2}
+        records = [self._record("AAPL", with_strategic=True), self._record("MSFT", with_strategic=False)]
+        holdings = [self._holding("AAPL"), self._holding("MSFT")]
+        warning = mocker.patch.object(orchestrator.logger, "warning")
+
+        orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+        assert captured["holdings_covered"] == 1  # only AAPL carries strategic_analysis
+        assert captured["holdings_total"] == 2
+        assert captured["uncovered_tickers"] == ["MSFT"]
+        assert captured["value_covered_pct"] == pytest.approx(50.0)
+        assert warning.called
+
+    def test_type_error_from_synthesis_call_propagates_not_swallowed(self, orchestrator, mocker):
+        """A programming error (wrong signature, wrong attribute) must surface as a loud
+        failure, not be logged as 'non-fatal' and silently drop the whole section — that
+        is exactly how the missing-kwargs regression went unnoticed."""
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", side_effect=TypeError("missing 3 required keyword-only arguments"))
+        deep_analysis_results = {"total_holdings": 1}
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL")]
+
+        with pytest.raises(TypeError):
+            orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+    def test_attribute_error_from_synthesis_call_propagates_not_swallowed(self, orchestrator, mocker):
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", side_effect=AttributeError("boom"))
+        deep_analysis_results = {"total_holdings": 1}
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL")]
+
+        with pytest.raises(AttributeError):
+            orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+    def test_genuine_runtime_failure_still_returns_none(self, orchestrator, mocker):
+        """API-down/parse-error style failures must remain best-effort: None, report still renders."""
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", side_effect=ConnectionError("Perplexity unreachable"))
+        deep_analysis_results = {"total_holdings": 1}
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL")]
+
+        result = orchestrator._synthesize_portfolio_strategic(deep_analysis_results, records=records, holdings=holdings)
+
+        assert result is None
+
+
+class TestEmptyStrategicAnalysisIsNotCoverage:
+    """An all-``None`` StrategicAnalysis is the absence of evidence, not coverage.
+
+    ``gather_strategic_analysis`` used to return
+    ``StrategicAnalysis(pestel=None, swot=None, five_forces=None)`` after all
+    three Perplexity calls failed. That blob is a truthy dict on disk, it
+    validates cleanly (all three fields are Optional), and it therefore entered
+    ``holdings_models`` and ``covered_tickers`` — so a total provider outage
+    rendered "64 / 64 holdings · 100.0 %" in green above a score the model was
+    forced to invent from ``{"T0": {}, "T1": {}, ...}``.
+
+    Layer 1 (returning ``None`` from the gather) stops new blobs being written.
+    This layer stops legacy ``*_enriched.json`` already on disk from counting.
+    The predicate is the one the codebase already trusts for this exact
+    question: ``StrategicAnalysis.composite_strategic_score is None`` — the same
+    guard ``stages/synthesize.py`` uses before recomputing a holding's grade.
+
+    The existing coverage tests above only ever use records where
+    ``strategic_analysis`` is *absent*; present-but-empty is the gap that let
+    this through.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    @staticmethod
+    def _empty_record(ticker: str) -> tuple[str, dict]:
+        """What a fully-failed strategic gather wrote to disk."""
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": None, "swot": None, "five_forces": None}}})
+
+    @staticmethod
+    def _partial_record(ticker: str) -> tuple[str, dict]:
+        """One framework of three succeeded — real evidence, must still count."""
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": {"strategic_score": 0.62, "confidence": 0.7}, "swot": None, "five_forces": None}}})
+
+    _holding = staticmethod(TestSynthesizePortfolioStrategicCoverage._holding)
+    _mock_synthesize = TestSynthesizePortfolioStrategicCoverage._mock_synthesize
+
+    def test_total_outage_reports_zero_coverage_not_full_coverage(self, orchestrator, mocker):
+        """64 holdings, every strategic_analysis all-None: nothing is covered."""
+        self._mock_synthesize(mocker)
+        tickers = [f"T{i}" for i in range(64)]
+        records = [self._empty_record(t) for t in tickers]
+        holdings = [self._holding(t, eur_value=100.0) for t in tickers]
+
+        result = orchestrator._synthesize_portfolio_strategic({"total_holdings": 64}, records=records, holdings=holdings)
+
+        # No holding carries evidence, so there is nothing to synthesize a
+        # posture from. Today layer 2 returns None before the synthesis call;
+        # this outer assertion keeps the test from going vacuous if that ever
+        # changes. If a posture were produced anyway it must name all 64 as
+        # uncovered and claim zero coverage — never 64/64 · 100 %.
+        assert result is None or result["holdings_covered"] == 0
+        if result is not None:
+            assert result["holdings_covered"] == 0
+            assert result["value_covered_pct"] == 0.0
+            assert sorted(result["uncovered_tickers"]) == sorted(tickers)
+
+    def test_total_outage_never_reaches_the_paid_synthesis_call(self, orchestrator, mocker):
+        """Zero evidence must not buy a synthesis call over 64 empty objects."""
+        synthesize = mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync")
+        tickers = [f"T{i}" for i in range(64)]
+        records = [self._empty_record(t) for t in tickers]
+        holdings = [self._holding(t, eur_value=100.0) for t in tickers]
+
+        assert orchestrator._synthesize_portfolio_strategic({"total_holdings": 64}, records=records, holdings=holdings) is None
+        synthesize.assert_not_called()
+
+    def test_empty_holdings_are_excluded_from_coverage_alongside_real_ones(self, orchestrator, mocker):
+        """Mixed run: one real blob, two empty ones. Coverage is 1/3, not 3/3."""
+        captured = self._mock_synthesize(mocker)
+        records = [self._partial_record("AAPL"), self._empty_record("MSFT"), self._empty_record("TSLA")]
+        holdings = [self._holding("AAPL", eur_value=900.0), self._holding("MSFT", eur_value=50.0), self._holding("TSLA", eur_value=50.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 3}, records=records, holdings=holdings)
+
+        assert captured["holdings_covered"] == 1
+        assert captured["holdings_total"] == 3
+        assert sorted(captured["uncovered_tickers"]) == ["MSFT", "TSLA"]
+        assert captured["value_covered_pct"] == pytest.approx(90.0)
+
+    def test_a_partial_strategic_analysis_still_counts_as_covered(self, orchestrator, mocker):
+        """Some frameworks present, some None: real evidence, real coverage.
+
+        Only *no* evidence must be excluded. Dropping partials would trade the
+        wrong-data failure for the lost-data one.
+        """
+        captured = self._mock_synthesize(mocker)
+        records = [self._partial_record("AAPL"), self._partial_record("MSFT")]
+        holdings = [self._holding("AAPL", eur_value=500.0), self._holding("MSFT", eur_value=500.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 2}, records=records, holdings=holdings)
+
+        assert captured["holdings_covered"] == 2
+        assert captured["uncovered_tickers"] == []
+        assert captured["value_covered_pct"] == pytest.approx(100.0)
+
+    def test_the_exclusion_is_logged_loudly(self, orchestrator, mocker):
+        """A holding dropped from coverage is a real degradation; it is not silent."""
+        self._mock_synthesize(mocker)
+        warning = mocker.patch.object(orchestrator.logger, "warning")
+        records = [self._partial_record("AAPL"), self._empty_record("MSFT")]
+        holdings = [self._holding("AAPL", eur_value=500.0), self._holding("MSFT", eur_value=500.0)]
+
+        orchestrator._synthesize_portfolio_strategic({"total_holdings": 2}, records=records, holdings=holdings)
+
+        assert any("MSFT" in str(call) for call in warning.call_args_list)
+
+
+class TestFailedSynthesisIsLoggedLoudly:
+    """Losing the whole posture is a degradation, not an incidental info line.
+
+    A truncated or partial model response now fails validation on the five
+    required narrative fields and drops the entire posture. That was logged at
+    ``info``, indistinguishable from routine progress chatter in a run that
+    produces thousands of lines.
+    """
+
+    @pytest.fixture
+    def orchestrator(self):
+        return ReportingOrchestrator(FinwizState())
+
+    _records = TestSynthesizePortfolioStrategicCoverage._records
+    _record = TestSynthesizePortfolioStrategicCoverage._record
+    _sa_dict = staticmethod(TestSynthesizePortfolioStrategicCoverage._sa_dict)
+    _holding = staticmethod(TestSynthesizePortfolioStrategicCoverage._holding)
+
+    def test_a_none_posture_from_synthesis_logs_at_warning(self, orchestrator, mocker):
+        mocker.patch("finwiz.analysis.strategic_research.synthesize_portfolio_posture_sync", return_value=None)
+        warning = mocker.patch.object(orchestrator.logger, "warning")
+        records = self._records("AAPL")
+        holdings = [self._holding("AAPL")]
+
+        assert orchestrator._synthesize_portfolio_strategic({"total_holdings": 1}, records=records, holdings=holdings) is None
+        assert any("posture" in str(call).lower() for call in warning.call_args_list)
+
+
 class TestIterEnrichedFiles:
     """_iter_enriched_files is the shared directory resolver (paths, not parsed dicts)."""
 

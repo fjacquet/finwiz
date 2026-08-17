@@ -19,7 +19,7 @@ def _make_analysis_context(ticker: str, ledger: RunLedger) -> Any:
 
     return AnalysisContext(
         ticker=ticker,
-        asset_class="etf",  # avoids strategic-research path
+        asset_class="etf",
         company_name="Test",
         ledger=ledger,
         run_id=ledger.run_id,
@@ -125,6 +125,13 @@ def test_three_holding_pipeline_ok_degraded_failed(tmp_path: Path, mocker: Any) 
         return_value=fake_fact_pack,
     )
 
+    # -- strategic research mock -------------------------------------------------
+    # Strategic research now runs unconditionally for every asset class (the old
+    # stock-only gate was removed), so it must be mocked here too — otherwise this
+    # unit test would attempt a real Perplexity call (blocked by pytest-socket,
+    # but there's no reason to rely on that being caught cleanly).
+    mocker.patch("finwiz.analysis.stages.qualify._safe_strategic", return_value=None)
+
     # -- run pipeline for each ticker ------------------------------------------
     for ticker in ("HAPPY_TKR", "DEGRADED_TKR", "FAILED_TKR"):
         ctx = _make_analysis_context(ticker, ledger)
@@ -185,6 +192,9 @@ def test_pipeline_short_circuits_when_fact_pack_fails(tmp_path: Path, mocker: An
         "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
         return_value=None,
     )
+    # fact_pack fails first, so strategic research is never reached here — mocked
+    # anyway for the same reason as above, to keep this a true unit test.
+    mocker.patch("finwiz.analysis.stages.qualify._safe_strategic", return_value=None)
 
     ledger = RunLedger(run_id="fp-fail", artifact_dir=tmp_path / "ledger")
     ctx = _make_analysis_context("FAILED_FP_TKR", ledger)
@@ -193,3 +203,60 @@ def test_pipeline_short_circuits_when_fact_pack_fails(tmp_path: Path, mocker: An
     # Pipeline halted — pending verdict
     assert result.grade == "N/A"
     assert "Analyse en attente" in result.rationale
+
+
+def test_strategic_research_runs_for_every_asset_class(tmp_path: Path, mocker: Any) -> None:
+    """Regression test for the stock-only strategic-research gate.
+
+    `stages/__init__.py` used to read `do_strategic = ctx.asset_class == "stock"`,
+    which structurally excluded every ETF and crypto holding (38 of 64 in the
+    portfolio this was found on) from strategic posture coverage. Every asset
+    class must now reach `_safe_strategic`, each tagged with its own asset_class.
+    """
+    mocker.patch(
+        "finwiz.analysis.stages.collect._collect_raw_data_inner",
+        return_value={"price_history": [1, 2, 3]},
+    )
+    fake_partial = DeepAnalysisResult.model_construct(ticker="X", asset_class="etf", grade="B", composite_score=0.7, recommendation="HOLD")
+    fake_quant = QuantitativeAnalysis.model_construct()
+    mocker.patch(
+        "finwiz.analysis.stages.quantify._calculate_quantitative_inner",
+        return_value=(fake_partial, fake_quant),
+    )
+    mocker.patch("finwiz.analysis.stages._compute_options_probabilities", return_value=None)
+
+    from datetime import UTC, datetime
+
+    fake_fact_pack = FactPack(
+        corporate_structure="Test Corp — independent.",
+        recent_events=[],
+        leadership="CEO Test",
+        fetched_at=datetime.now(UTC),
+        freshness="fresh",
+        confidence=0.9,
+        source_citations=[],
+    )
+    mocker.patch("finwiz.analysis.stages.fact_pack._fact_pack_inner", return_value=fake_fact_pack)
+    mocker.patch(
+        "finwiz.analysis.stages.qualify._try_ai_qualify",
+        return_value=QualitativeInsights.model_construct(),
+    )
+    fake_enriched = EnrichedAnalysis.model_construct()
+    mocker.patch("finwiz.analysis.stages.synthesize._synthesize_inner", return_value=fake_enriched)
+    fake_verdict = DeepAnalysisResult.model_construct(ticker="X", asset_class="etf", grade="B", composite_score=0.7, recommendation="HOLD")
+    mocker.patch(
+        "finwiz.analysis.stages.emit._build_verdict_inner",
+        return_value=(fake_verdict, fake_enriched),
+    )
+    safe_strategic_mock = mocker.patch("finwiz.analysis.stages.qualify._safe_strategic", return_value=None)
+
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    ledger = RunLedger(run_id="strategic-coverage", artifact_dir=tmp_path)
+    for ticker, asset_class in (("VUSA_ETF", "etf"), ("BTC_CRYPTO", "crypto"), ("AAPL_STOCK", "stock")):
+        ctx = AnalysisContext(ticker=ticker, asset_class=asset_class, company_name="Test", ledger=ledger, run_id=ledger.run_id)
+        run_pipeline(ctx)
+
+    assert safe_strategic_mock.call_count == 3
+    called_asset_classes = {call.kwargs.get("asset_class") for call in safe_strategic_mock.call_args_list}
+    assert called_asset_classes == {"etf", "crypto", "stock"}
