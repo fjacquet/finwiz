@@ -110,7 +110,7 @@ one must not silently move the other.
 """
 
 MAX_PORTFOLIO_PROSE_CHARS = 800
-"""Cap for the three portfolio-level narrative fields.
+"""Cap for the two portfolio-level narrative fields.
 
 Deliberately larger than MAX_PROSE_CHARS (400): that cap bounds a single
 framework's synthesis for one company, while these fields summarize an

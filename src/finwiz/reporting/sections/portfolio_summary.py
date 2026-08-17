@@ -104,7 +104,7 @@ def generate_strategic_posture_section(posture: dict | None) -> str:
     The block carries no score (0 % would read as a measurement) and no link to
     the companion page, which is not written when there is no posture.
 
-    The three verdicts are model-authored and go through the inline render
+    The two verdicts are model-authored and go through the inline render
     boundary, not bare ``escape()``: escaping alone left "Le **durcissement**
     réglementaire pèse [1]" in the family artifact, which is the same
     readability defect this branch exists to remove. No citations are threaded

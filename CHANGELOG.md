@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- PESTEL analysis removed from per-holding strategic research. Macro analysis
+  now runs once, outside FinWiz, instead of being repeated for every holding
+  in the portfolio. Per-holding strategic research keeps SWOT and Porter's
+  Five Forces.
+- `composite_strategic_score` now averages two frameworks (SWOT, Five Forces)
+  instead of three, so displayed grades and BUY/HOLD/SELL calls shift for
+  reasons unrelated to the market. Measured across the 26 researched holdings
+  of the 2026-08-16 run: mean composite 0.651 → 0.638, median delta −0.012,
+  range −0.090 to +0.057, with 4 of 26 holdings moving more than 0.05. The
+  next run's grades will differ from the last one's for this reason alone —
+  expect a few holdings to cross a grade boundary.
+  - The first run after this change may briefly mix grading bases: a holding
+    whose deep analysis fails re-analysis keeps its previous
+    `*_enriched.json`, whose grade was computed on the old three-framework
+    composite, and renders beside holdings computed on the new two-framework
+    basis with nothing marking the difference. This is confined to the
+    per-holding grade table — the portfolio posture is unaffected, since a
+    stale `pestel` key is dropped before the composite is computed there.
+- The posture page's macro block ("🌍 Environnement Macro") is removed, not
+  replaced. The posture page is now competitive landscape plus aggregated
+  SWOT.
+- The portfolio synthesis payload is now fixed-size aggregates and extremes
+  (holding count, per-framework means, a score distribution, and the five
+  weakest/strongest holdings) instead of a per-holding digest that grew with
+  the portfolio. Coverage figures (`holdings_covered`, `value_covered_pct`,
+  `uncovered_tickers`) are unaffected — they are computed in Python and
+  merged after the model responds.
+
 ## [5.12.0] - 2026-08-16
 
 Pipeline coverage pass (PR #130) + repository hygiene. 16 tasks, 39 commits,
