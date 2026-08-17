@@ -32,7 +32,7 @@ dependencies = [
     "psutil>=7.2.2",
     "python-dateutil>=2.9.0.post0",
     "tenacity>=9.1.4",
-    "crewai>=1.15.12",
+    "crewai>=1.15.16",
     "langchain-core>=1.5.4",
     "litellm>=1.94.1",
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.6.0",
