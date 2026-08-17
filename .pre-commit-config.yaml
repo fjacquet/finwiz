@@ -71,3 +71,20 @@ repos:
         language: system
         files: ^src/finwiz/.*\.py$
         pass_filenames: false
+
+  # Dead-code detection. Mirrors the `extra` CI job so an unused import fails
+  # here (~1s) instead of after a push. The flags must stay identical to
+  # .github/workflows/extra-checks.yml — a hook that disagrees with CI is worse
+  # than no hook, because it teaches you to trust a green commit that CI rejects.
+  #
+  # `pylint --enable=duplicate-code` from that same job is deliberately NOT
+  # mirrored: it takes ~24s against vulture's ~1s, and a hook that slow gets
+  # bypassed with --no-verify, which disables every hook above it too.
+  - repo: local
+    hooks:
+      - id: vulture
+        name: Dead code (vulture, matches CI)
+        entry: uvx vulture src/finwiz --min-confidence 80
+        language: system
+        files: ^src/finwiz/.*\.py$
+        pass_filenames: false

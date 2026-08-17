@@ -16,7 +16,6 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from finwiz.analysis._helpers import _build_crew_inputs, _get_analysis_crew
 from finwiz.analysis.stages._qualify_fallbacks import (
-    _create_fallback_qualitative,  # noqa: F401 — re-exported via deep_analysis_pipeline facade
     _create_python_qualitative,
 )
 from finwiz.analysis.stages._resilience import StageContext, stage
