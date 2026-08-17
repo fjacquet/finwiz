@@ -11,9 +11,9 @@ function:
 1. Remove PESTEL analysis from FinWiz entirely. Per-holding strategic research
    keeps SWOT and Porter's Five Forces; macro analysis moves outside this
    system.
-2. Cut the portfolio synthesis payload from ~610,000 chars to ~73,000 by
-   sending a lean per-holding digest instead of near-complete framework
-   objects.
+2. Cut the portfolio synthesis payload from ~610,000 chars to ~3,000 by sending
+   portfolio aggregates and the ten extreme holdings instead of a per-holding
+   digest of all 64.
 
 ## Why
 
@@ -31,7 +31,7 @@ measured and is false (pairwise vocabulary overlap 0.164 median for PESTEL vs
 
 | Area | File | Change |
 |---|---|---|
-| Research | `analysis/strategic_research.py` | `_pestel_prompt` and the PESTEL `perplexity_with_retry` call; `_SERIALIZE_RUNGS` and the whole degradation ladder; `_digest_one` rewritten to the lean shape |
+| Research | `analysis/strategic_research.py` | `_pestel_prompt` and the PESTEL `perplexity_with_retry` call; `_SERIALIZE_RUNGS`, `_digest_all`, `_digest_one` and the whole degradation ladder deleted; `_serialize_holdings` rewritten to emit aggregates plus extremes |
 | Schema | `schemas/hybrid_analysis/strategic.py` | `PestelAnalysis`; `StrategicAnalysis.pestel`; `macro_environment_summary` and `macro_verdict` on `PortfolioPostureNarrative` |
 | Schema | `schemas/hybrid_analysis/qualitative.py` | PESTEL references |
 | Pipeline | `analysis/stages/__init__.py`, `analysis/stages/qualify.py` | PESTEL references |
@@ -69,71 +69,79 @@ one's for reasons unrelated to the market**, and a few holdings may cross a
 grade boundary. That is acceptable and expected; it should be stated in the
 changelog rather than discovered by a reader.
 
-### The degradation ladder is deleted, not trimmed
+### The synthesis payload becomes aggregates plus extremes
 
-An earlier draft of this spec said the ladder stays load-bearing and must not
-be deleted. **That instruction was wrong**, and the measurement that corrects
-it is below.
+**Two corrections to earlier drafts of this spec, both from bad measurement on
+my part. The numbers below come from the real `_digest_one` logic.**
 
-The ladder's knobs are bullet count and prose inclusion. Measured on the run's
-real data, with PESTEL already removed and scaled to 64 holdings:
+First draft said the ladder stays load-bearing. Second draft said the ladder
+turns the wrong dial and quoted 408,817 chars for its coarsest rung, measured
+with a homemade digest that serialized every SWOT and Five Forces field. The
+real `_digest_one` sends only scores, `strengths[:n]`, `threats[:n]` and prose.
+Re-measured, PESTEL removed, scaled to 64 holdings:
 
 | rung | chars/holding | at 64 holdings |
 |---|---|---|
-| bullets=3, prose | 11,868 | 759,569 |
-| bullets=1, prose | 9,780 | 625,925 |
-| bullets=1, no prose (coarsest) | 6,388 | **408,817** |
+| bullets=3, prose | 5,022 | 321,376 |
+| bullets=2, prose | 4,495 | 287,665 |
+| bullets=1, prose | 3,972 | 254,176 |
+| bullets=1, no prose (coarsest) | 609 | **39,001** |
 
-Trimming from the finest rung to the coarsest saves only 17%, and even the
-coarsest sits at ~102k tokens. The bulk was never the bullets — it is every
-field of SWOT and Five Forces, times 64 holdings. The ladder cannot reach a
-sane size because it is turning the wrong dial.
+So removing PESTEL alone drops the payload from 610,786 to 39,001 — the ladder
+walks down, finds the first three rungs over budget, and lands on the coarsest.
+Prose is the dominant term, not bullets: dropping it cuts 85% in one step.
 
-### The lean digest
+That is still the wrong shape. 39,001 chars (~9,750 tokens) buys ~2,000 chars
+of portfolio verdict, of which **869 chars reach the family artifact**. A
+700:1 ratio, and it scales linearly with holdings.
 
-Replace `_digest_one`'s near-complete framework serialization with a fixed
-minimal shape, one object per holding:
+**The payload becomes aggregates plus extremes:**
 
 ```python
-{"t": ticker,
- "s": swot.strategic_score,          # rounded to 2dp
- "f": five_forces.strategic_score,   # rounded to 2dp
- "S": strengths[0], "W": weaknesses[0],
- "O": opportunities[0], "T": threats[0]}
+{"n": 64,
+ "swot_mean": 0.65, "moat_mean": 0.62,
+ "distribution": {"<0.5": 3, "0.5-0.65": 7, "0.65-0.8": 12, ">=0.8": 4},
+ "weakest":   [{"t": ticker, "c": composite, "T": threats[0]}   for the 5 lowest],
+ "strongest": [{"t": ticker, "c": composite, "S": strengths[0]} for the 5 highest]}
 ```
 
-Measured on real data: **1,134 chars per holding, 72,576 chars (~18k tokens)
-at 64 holdings** — 5.6× smaller than the ladder's coarsest rung, and 8.4×
-smaller than today's payload.
+Measured on real data: **2,904 chars (~726 tokens) at 26 holdings**, and it
+barely grows — aggregates are fixed-size and the extremes stay at 10 entries,
+so 64 holdings lands near 3,000–3,500 chars. **200× smaller than today, 13×
+smaller than the ladder's floor**, and no longer a function of portfolio size:
+a 200-position portfolio sends the same payload.
 
-This is the right shape for what the call actually does. The synthesis writes a
-portfolio-level verdict: dominant themes, aggregate SWOT, a strategic score.
-One sharp point per quadrant per holding is signal; the fourth-ranked weakness
-of the twelfth holding is noise it must read past. Cutting it is a quality
-argument as much as a cost one.
+This is the right level for the call. A portfolio posture is a judgement about
+distribution and outliers — concentration of moats, where the weak positions
+are, which themes recur. That is what aggregates and extremes carry.
 
-Consequences:
+### The trade-off, stated plainly
 
-- `_SERIALIZE_RUNGS`, `_digest_all`'s rung parameter, and the estimate-then-
-  select logic in `_serialize_holdings` are **deleted**. At 73k against a 240k
-  budget no rung could ever fire, and a degradation mechanism that cannot
-  trigger is dead code that rots.
-- `SYNTHESIS_PAYLOAD_BUDGET_CHARS` stays, demoted from a live trimming target
-  to a guard: assert the payload is under it and log loudly if a future
-  portfolio ever approaches it. At 64 holdings the digest uses 30% of budget;
-  the budget is not reached until roughly 210 holdings.
+The synthesis no longer sees the ~54 mid-pack holdings by name. It reasons from
+the distribution and the ten extremes.
 
-### Quality risk, stated rather than hidden
+`dominant_themes` was previously derived from reading all 64 digests. It will
+now be built from the extremes, so themes will be **sharper and less
+consensual**. That is a real change in character, not just in size, and the
+first run after this change should be read against the previous posture before
+the result is trusted.
 
-This spec shows the payload shrinks. It does **not** show the synthesis stays
-as good — no A/B was run. The proportion argument (94k tokens of input for ~2k
-chars of verdict) is strong but it is an argument, not a measurement.
+Coverage is unaffected: `holdings_covered`, `value_covered_pct` and
+`uncovered_tickers` are computed in Python and merged after the model responds,
+so "64 / 64" stays exact regardless of what the payload contains.
 
-The first run after this change should be read against the last one's posture
-output before the result is trusted. If the verdicts get vaguer, the digest is
-the first thing to widen — most likely by carrying two bullets per quadrant
-instead of one, which roughly doubles the payload to ~145k chars and is still
-well inside budget.
+No A/B was run on synthesis quality. If the verdicts come back vague, the first
+widening step is extremes of 8 instead of 5 — still a fixed-size payload.
+
+### Consequences for the ladder
+
+- `_SERIALIZE_RUNGS`, `_digest_all`'s rung parameter, `_digest_one`, and the
+  estimate-then-select logic in `_serialize_holdings` are **deleted**. At ~3,000
+  chars against a 240,000-char budget no rung can ever fire. Unlike the second
+  draft's claim, this deletion is now justified by measurement rather than
+  asserted.
+- `SYNTHESIS_PAYLOAD_BUDGET_CHARS` stays as a guard: assert the payload is under
+  it, log loudly if a future portfolio approaches it. It should never trigger.
 
 ### Backward compatibility is free
 
