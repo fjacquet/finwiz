@@ -155,3 +155,64 @@ class TestHoldingsAllocationColumns:
         first_row = tbody.split("</tr>")[0]
         n_td = first_row.count("<td")
         assert n_th == n_td, f"header cols {n_th} != pending row cols {n_td}"
+
+
+class TestTotalAndCountDescribeTheSameSet:
+    """The position count must describe the money shown beside it.
+
+    ``total_value_eur`` is priced holdings only (the schema says so), but the
+    hero captioned it with ``len(holdings)`` — every holding, priced or not. A
+    2026-08-17 run rendered 30 positions summing to 34 046 EUR under the label
+    "64 positions": the total understated the portfolio by roughly half, and
+    every weight was inflated by the missing denominator (ASML shown at 23.3 %).
+    Nothing on the page said so.
+    """
+
+    def test_the_count_matches_the_priced_holdings_the_total_is_built_from(self) -> None:
+        review = PortfolioReview(
+            as_of=datetime(2026, 8, 17),
+            total_value_eur=3000.0,
+            holdings=[
+                _make_holding(ticker="AAA", weight=0.6, eur_value=1800.0),
+                _make_holding(ticker="BBB", weight=0.4, eur_value=1200.0),
+                _make_holding(ticker="NESN.SW"),
+                _make_holding(ticker="UBSG.SW"),
+            ],
+        )
+
+        html = generate_allocation_section(review)
+
+        assert "2 positions" in html
+        assert "4 positions" not in html
+
+    def test_unpriced_holdings_are_disclosed_not_silently_dropped(self) -> None:
+        review = PortfolioReview(
+            as_of=datetime(2026, 8, 17),
+            total_value_eur=3000.0,
+            holdings=[
+                _make_holding(ticker="AAA", weight=1.0, eur_value=3000.0),
+                _make_holding(ticker="NESN.SW"),
+                _make_holding(ticker="UBSG.SW"),
+            ],
+        )
+
+        html = generate_allocation_section(review)
+
+        assert "2" in html
+        assert "non valoris" in html.lower(), "unpriced holdings vanish with no disclosure"
+
+    def test_a_fully_priced_portfolio_says_nothing_extra(self) -> None:
+        """The disclosure must appear only when something is actually missing."""
+        review = PortfolioReview(
+            as_of=datetime(2026, 8, 17),
+            total_value_eur=3000.0,
+            holdings=[
+                _make_holding(ticker="AAA", weight=0.6, eur_value=1800.0),
+                _make_holding(ticker="BBB", weight=0.4, eur_value=1200.0),
+            ],
+        )
+
+        html = generate_allocation_section(review)
+
+        assert "2 positions" in html
+        assert "non valoris" not in html.lower()

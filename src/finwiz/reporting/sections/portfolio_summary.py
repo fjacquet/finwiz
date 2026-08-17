@@ -49,8 +49,21 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
 """
         )
 
-    n_positions = len(portfolio_review.holdings)
+    # Count what the total is actually made of. ``total_value_eur`` is priced
+    # holdings only (see the field's own description), so captioning it with
+    # ``len(holdings)`` describes the money with the wrong set: a 2026-08-17 run
+    # showed 30 positions summing to 34 046 EUR labelled "64 positions", which
+    # understates the portfolio and inflates every weight via the missing
+    # denominator. The unpriced holdings get their own line rather than
+    # disappearing — a reader who cannot see them cannot question them.
+    n_positions = len(weighted)
     n_classes = len({h.asset_class for h in weighted})
+    n_unpriced = len(portfolio_review.holdings) - n_positions
+    unpriced_note = (
+        f'<div class="hero-meta muted">{n_unpriced} position{"s" if n_unpriced > 1 else ""} non valorisée{"s" if n_unpriced > 1 else ""} — exclue{"s" if n_unpriced > 1 else ""} du total et des pourcentages</div>'
+        if n_unpriced
+        else ""
+    )
 
     # Sort by weight desc so the largest exposure leads.
     rows = sorted(weighted, key=lambda h: h.weight or 0.0, reverse=True)
@@ -77,6 +90,7 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
       <div class="hero-meta">Valeur totale du portefeuille</div>
       <div class="hero-value num">{_fmt_eur(total)}</div>
       <div class="hero-meta">{n_positions} positions · {n_classes} classes d'actifs</div>
+      {unpriced_note}
     </div>
 
     <h3>📊 Répartition par position</h3>
