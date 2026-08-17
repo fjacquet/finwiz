@@ -207,18 +207,16 @@ def _porter_prompt(ticker: str, sector: str, industry: str, description: str, cu
 
 def _portfolio_prompt(per_holding_payload: str, current_date: str) -> str:
     return (
-        _date_preamble(current_date) + "Voici les analyses stratégiques (PESTEL/SWOT/Five Forces) déjà produites pour "
-        "chaque ligne du portefeuille au format JSON :\n\n"
+        _date_preamble(current_date) + "Voici la synthèse des analyses stratégiques (SWOT / Five Forces) "
+        "du portefeuille au format JSON — agrégats et positions extrêmes :\n\n"
         f"{per_holding_payload}\n\n"
         f"Synthétise une posture stratégique au niveau PORTEFEUILLE à la date du {current_date} :\n"
-        f"- macro_environment_summary : thèmes PESTEL transversaux (régulatoire, macro, géopolitique), "
-        f"{MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
         "- portfolio_strengths / weaknesses / opportunities / threats : SWOT agrégé.\n"
         f"- competitive_landscape_summary : industries avec moats les plus forts/faibles, "
         f"{MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
         "- dominant_themes : 3 à 5 thèmes stratégiques récurrents.\n"
         f"- overall_assessment : narratif final, {MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.\n"
-        f"- macro_verdict / competitive_verdict / swot_verdict : UNE phrase chacun, "
+        f"- competitive_verdict / swot_verdict : UNE phrase chacun, "
         f"{MAX_VERDICT_CHARS} caractères maximum, compréhensible par un lecteur non financier.\n"
         "Évalue strategic_score (favorabilité stratégique globale du portefeuille) et confidence."
     )

@@ -327,3 +327,34 @@ class TestPestelOldOnDiskShapeRegression:
 
         assert second_pass.pestel.political == first_pass.pestel.political
         assert all(second_pass.pestel.political)
+
+
+def test_the_posture_schema_has_no_macro_fields():
+    """PESTEL is gone, so nothing can fill a macro summary or verdict."""
+    from finwiz.schemas.hybrid_analysis.strategic import PortfolioPostureNarrative
+
+    fields = PortfolioPostureNarrative.model_fields
+
+    assert "macro_environment_summary" not in fields
+    assert "macro_verdict" not in fields
+    assert "competitive_verdict" in fields
+    assert "swot_verdict" in fields
+
+
+def test_a_legacy_posture_carrying_macro_fields_still_validates():
+    """Stale artifacts must not fail validation — they are reused on re-analysis failure."""
+    from finwiz.schemas.hybrid_analysis.strategic import PortfolioPostureNarrative
+
+    posture = PortfolioPostureNarrative.model_validate(
+        {
+            "macro_verdict": "Environnement porteur.",
+            "macro_environment_summary": "- Politique : durcissement",
+            "competitive_verdict": "Moats solides.",
+            "swot_verdict": "Équilibré.",
+            "strategic_score": 0.71,
+            "confidence": 0.83,
+        },
+    )
+
+    assert not hasattr(posture, "macro_verdict")
+    assert posture.competitive_verdict == "Moats solides."

@@ -767,7 +767,6 @@ class TestSynthesizePortfolioStrategicCoverage:
             from finwiz.schemas.hybrid_analysis.strategic import PortfolioStrategicPosture
 
             return PortfolioStrategicPosture(
-                macro_verdict="m",
                 competitive_verdict="c",
                 swot_verdict="s",
                 strategic_score=0.6,

@@ -33,7 +33,6 @@ def _one_holding() -> dict[str, StrategicAnalysis]:
 
 def _narrative(**overrides: object) -> PortfolioPostureNarrative:
     base = {
-        "macro_verdict": "Macro favorable.",
         "competitive_verdict": "Moats solides.",
         "swot_verdict": "Forces dominantes.",
         "strategic_score": 0.71,
@@ -66,7 +65,7 @@ async def test_coverage_is_merged_before_constructing_the_full_posture(mocker):
     # Narrative fields from the LLM response survive the merge.
     assert posture.strategic_score == 0.71
     assert posture.confidence == 0.83
-    assert posture.macro_verdict == "Macro favorable."
+    assert posture.competitive_verdict == "Moats solides."
 
 
 @pytest.mark.asyncio

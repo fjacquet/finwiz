@@ -271,7 +271,6 @@ class PortfolioPostureNarrative(BaseModel):
     the chance to add it.
     """
 
-    macro_environment_summary: str = Field(default="", description="Cross-portfolio PESTEL synthesis (regulatory/economic/geopolitical themes)")
     portfolio_strengths: list[str] = Field(default_factory=list, description="Concentration of moats, structural advantages")
     portfolio_weaknesses: list[str] = Field(default_factory=list, description="Concentration risks, weak moats, exposure gaps")
     portfolio_opportunities: list[str] = Field(default_factory=list, description="Cross-cutting tailwinds the holdings can ride")
@@ -286,19 +285,18 @@ class PortfolioPostureNarrative(BaseModel):
     # fail loudly) but clamped rather than max_length-constrained: an
     # over-long sentence must not cost the whole posture — this is the
     # single most expensive call in the run.
-    macro_verdict: str = Field(..., description="One sentence on the macro environment")
     competitive_verdict: str = Field(..., description="One sentence on the competitive landscape")
     swot_verdict: str = Field(..., description="One sentence on the aggregated SWOT")
 
     strategic_score: float = Field(..., ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
     confidence: float = Field(..., ge=0.0, le=1.0, description="AI's confidence in this synthesis")
 
-    @field_validator("macro_environment_summary", "competitive_landscape_summary", "overall_assessment", mode="before")
+    @field_validator("competitive_landscape_summary", "overall_assessment", mode="before")
     @classmethod
     def _clamp_prose_fields(cls, v: object) -> str:
         return _clamp_prose(v, MAX_PORTFOLIO_PROSE_CHARS)
 
-    @field_validator("macro_verdict", "competitive_verdict", "swot_verdict", mode="before")
+    @field_validator("competitive_verdict", "swot_verdict", mode="before")
     @classmethod
     def _clamp_verdicts(cls, v: object) -> str:
         return _clamp_prose(v, MAX_VERDICT_CHARS)

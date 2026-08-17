@@ -399,8 +399,8 @@ class TestFamilySectionSummarisesAndLinksOut:
 class TestMissingPostureIsVisibleToTheReader:
     """A posture that failed this run must say so, not vanish.
 
-    Making macro_verdict/competitive_verdict/swot_verdict/strategic_score/
-    confidence required was the right call -- a posture built from nothing can
+    Making competitive_verdict/swot_verdict/strategic_score/confidence
+    required was the right call -- a posture built from nothing can
     no longer report a confident midpoint by omission. But it also means a
     truncated or partial model response now fails validation and loses the
     *entire* posture, where before it produced a degraded one. Failing loudly is

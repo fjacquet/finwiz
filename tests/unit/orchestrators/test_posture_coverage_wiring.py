@@ -70,7 +70,6 @@ def _valid_posture(**overrides: Any) -> PortfolioStrategicPosture:
         "holdings_covered": 1,
         "holdings_total": 1,
         "value_covered_pct": 100.0,
-        "macro_verdict": "Macro favorable.",
         "competitive_verdict": "Moats solides.",
         "swot_verdict": "Forces dominantes.",
         "strategic_score": 0.71,

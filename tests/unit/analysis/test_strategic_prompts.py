@@ -33,7 +33,6 @@ def test_portfolio_prompt_states_verdict_and_prose_limits():
     prompt = _portfolio_prompt("{}", "16 août 2026")
     assert "800 caractères" in prompt
     assert "200 caractères" in prompt
-    assert "macro_verdict" in prompt
     assert "competitive_verdict" in prompt
     assert "swot_verdict" in prompt
 
