@@ -165,3 +165,59 @@ def test_an_empty_portfolio_serializes_without_raising():
     assert payload["n"] == 0
     assert payload["weakest"] == []
     assert payload["strongest"] == []
+
+
+@pytest.mark.parametrize("n", [0, 1, 3, 9, 10, 11, 60])
+def test_weakest_and_strongest_are_always_disjoint(n):
+    """No ticker may be named as both the portfolio's weakest and strongest position.
+
+    Below 2 * _EXTREMES holdings, naming the same ticker in both lists would hand
+    the model a self-contradictory payload -- exactly the small-portfolio case
+    where each holding carries the most weight in the verdict. `n` must still
+    report the true count regardless of how many holdings get named.
+    """
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(n)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == n
+    weak_tickers = {row["t"] for row in payload["weakest"]}
+    strong_tickers = {row["t"] for row in payload["strongest"]}
+    assert weak_tickers.isdisjoint(strong_tickers)
+
+
+def test_a_single_holding_is_named_in_exactly_one_list():
+    """At n=1 the lone holding cannot be both weakest and strongest -- it is
+    assigned to `weakest` deliberately (see _serialize_holdings), never both."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {"SOLO": _analysis(0.5, "force", "menace")}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 1
+    assert [row["t"] for row in payload["weakest"]] == ["SOLO"]
+    assert payload["strongest"] == []
+
+
+def test_ten_or_more_holdings_keeps_five_and_five_unchanged():
+    """At n >= 2 * _EXTREMES the disjoint split must reduce to the original
+    5-weakest / 5-strongest slicing -- this fix must not change behaviour at
+    the portfolio sizes it already worked for."""
+    import json
+
+    from finwiz.analysis.strategic_research import _serialize_holdings
+
+    holdings = {f"T{i}": _analysis(i / 100, f"force {i}", f"menace {i}") for i in range(10)}
+
+    payload = json.loads(_serialize_holdings(holdings))
+
+    assert payload["n"] == 10
+    assert [row["t"] for row in payload["weakest"]] == ["T0", "T1", "T2", "T3", "T4"]
+    assert [row["t"] for row in payload["strongest"]] == ["T5", "T6", "T7", "T8", "T9"]

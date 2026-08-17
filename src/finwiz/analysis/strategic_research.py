@@ -482,13 +482,38 @@ def _serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str
         strengths = sa.swot.strengths if sa.swot else []
         return {"t": ticker, "c": round(composite, 2), "S": strengths[0] if strengths else None}
 
+    # weakest/strongest must be disjoint at every n -- naming the same ticker as
+    # both the portfolio's weakest and strongest position is a contradiction the
+    # model would have to paper over. Splitting at the midpoint keeps both ends
+    # represented without overlap: at n >= 2 * _EXTREMES this reduces to exactly
+    # rows[:_EXTREMES] / rows[-_EXTREMES:] (unchanged from before this fix, since
+    # rows[len(rows) - _EXTREMES:] == rows[-_EXTREMES:] once half == _EXTREMES);
+    # below that it shrinks symmetrically, leaving any single middle holding
+    # unnamed (still counted in `n` and `distribution`) rather than duplicated.
+    half = min(_EXTREMES, len(rows) // 2)
+    if not rows:
+        weak_rows: list[tuple[float, str, StrategicAnalysis]] = []
+        strong_rows: list[tuple[float, str, StrategicAnalysis]] = []
+    elif half == 0:
+        # Exactly one holding (half == 0 only for len(rows) in {0, 1}, and the
+        # empty case is handled above). It cannot be named as both the
+        # portfolio's weakest and strongest position, so pick one deliberately:
+        # `weakest`, because a one-holding portfolio is maximally concentrated,
+        # and its downside is the more actionable framing for the posture
+        # narrative than its upside.
+        weak_rows = rows[:1]
+        strong_rows = []
+    else:
+        weak_rows = rows[:half]
+        strong_rows = rows[len(rows) - half :]
+
     payload = {
         "n": len(rows),
         "swot_mean": round(sum(swot_scores) / len(swot_scores), 2) if swot_scores else None,
         "moat_mean": round(sum(moat_scores) / len(moat_scores), 2) if moat_scores else None,
         "distribution": distribution,
-        "weakest": [_weak(r) for r in rows[:_EXTREMES]],
-        "strongest": [_strong(r) for r in rows[-_EXTREMES:]],
+        "weakest": [_weak(r) for r in weak_rows],
+        "strongest": [_strong(r) for r in strong_rows],
     }
 
     serialized = json.dumps(payload, ensure_ascii=False, default=str)
