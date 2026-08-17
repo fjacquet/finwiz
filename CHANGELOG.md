@@ -37,6 +37,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `uncovered_tickers`) are unaffected — they are computed in Python and
   merged after the model responds.
 
+## [5.13.0] - 2026-08-17
+
+Strategic posture coverage (PR #138). 13 tasks plus a whole-branch review and a
+CodeRabbit pass. **Validated against a live `crewai flow kickoff` run of 64
+holdings** — the defects below were found by that run, not only by review.
+
+The headline: the portfolio's strategic posture was synthesized from **1 of 64
+holdings** while reporting itself as complete. It now covers 64/64.
+
+### Added
+
+- Dedicated strategic posture page (`reporting/sections/posture_page.py`):
+  coverage banner first, verdicts in the open, analyst-length synthesis behind
+  `<details>`, per-holding PESTEL/SWOT/Porter score table with a plain-language
+  legend, and a sources list.
+- Escape-first markdown render boundary (`reporting/markdown_fragment.py`), so
+  model-authored text reaches HTML as rendered markup instead of literal `**`
+  and `[1]` markers. `_is_safe_url` gates every citation URL on both surfaces.
+- ETF- and crypto-specific strategic framings, instead of applying the equity
+  framing to every asset class.
+- `LLM_MAX_TOKENS_DEEP_ANALYSIS` (default 8192), sized from measured output:
+  ~800 tokens median, 4.5k p90, 5.1k max. Was 40960/61440.
+
+### Fixed
+
+- Strategic synthesis digested every holding instead of truncating to one. The
+  family artifact's posture section dropped from 17,818 to 869 characters, with
+  zero raw `**` and zero unresolved `[n]` markers.
+- Strategic framework research now routes through `perplexity_with_retry`
+  (bounded retries, exponential backoff, concurrency throttle) instead of
+  calling `perplexity_structured` directly. The live run lost all three
+  frameworks for two holdings to 429s; the wrapper already existed and was
+  simply not called. Attempts capped at 3 to stay inside the holding budget.
+- The deep-analysis crew can no longer author `strategic_analysis` it was never
+  asked for — the field is gone from the crew's output schema. Citation density
+  (0 markers vs 38–82) proved the LLM was filling it from the schema whenever
+  Perplexity failed.
+- Value-weighted coverage is computed from real holdings and duplicate tickers
+  are summed rather than collapsed; an all-`None` `StrategicAnalysis` counts as
+  no evidence, not as full coverage. Coverage identity is enforced in the
+  schema, not trusted from callers.
+- A failed posture synthesis is now visible to the reader instead of silently
+  rendering as a confident empty result.
+- Crew circuit breaker reworked: timeouts no longer open it, queued holdings
+  wait out the cooldown instead of failing immediately, and the recovery
+  timeout is configurable via `FINWIZ_CIRCUIT_BREAKER_RECOVERY`.
+- `_coerce_str_list` no longer silently discards non-list data.
+- Trust-banner states now have distinct CSS rules; `.verdict` is styled.
+
+### Changed
+
+- `FINWIZ_PARALLEL_LIMIT` default 10 → 4, to keep per-holding retry budgets
+  inside their timeout headroom.
+- Strategic fields are capped in the schema, so an over-long model response is
+  clamped rather than lost.
+- `vulture` added as a pre-commit hook; `tests/conftest.py` now isolates
+  `PERPLEXITY_API_KEY` and friends so a developer `.env` cannot make a test
+  pass that would fail in CI.
+
 ## [5.12.0] - 2026-08-16
 
 Pipeline coverage pass (PR #130) + repository hygiene. 16 tasks, 39 commits,
