@@ -157,11 +157,29 @@ def _porter_prompt(ticker: str, sector: str, industry: str, description: str, cu
     )
 
 
+# The payload's keys are abbreviated to keep it fixed-size, which makes them
+# opaque to the only thing that reads them. ``_serialize_holdings`` states the
+# invariant "``n`` always reports the true count, so the model cannot mistake
+# the extremes for the whole portfolio" -- but ``n`` arrives as a bare
+# two-character key. Enforcing that invariant in Python without expressing it to
+# the model is how a posture ends up describing 10 of 64 positions.
+_PAYLOAD_LEGEND = (
+    "Lecture du JSON :\n"
+    "- n : nombre TOTAL de lignes analysées dans le portefeuille. La posture doit porter sur ces n lignes.\n"
+    "- swot_mean / moat_mean : scores moyens sur ces n lignes (SWOT, Porter).\n"
+    "- distribution : répartition des n lignes par tranche de score composite — c'est par là que les lignes "
+    "non nommées ci-dessous sont représentées.\n"
+    "- weakest / strongest : UNIQUEMENT les positions extrêmes, pas le portefeuille. "
+    "t = ticker, c = score composite, T = principale menace, S = principale force.\n"
+)
+
+
 def _portfolio_prompt(per_holding_payload: str, current_date: str) -> str:
     return (
         _date_preamble(current_date) + "Voici la synthèse des analyses stratégiques (SWOT / Five Forces) "
         "du portefeuille au format JSON — agrégats et positions extrêmes :\n\n"
         f"{per_holding_payload}\n\n"
+        f"{_PAYLOAD_LEGEND}\n"
         f"Synthétise une posture stratégique au niveau PORTEFEUILLE à la date du {current_date} :\n"
         "- portfolio_strengths / weaknesses / opportunities / threats : SWOT agrégé.\n"
         f"- competitive_landscape_summary : industries avec moats les plus forts/faibles, "

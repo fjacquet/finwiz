@@ -58,3 +58,36 @@ def test_prompts_interpolate_constants_not_hardcoded(mocker):
     portfolio = _portfolio_prompt("{}", "16 août 2026")
     assert "555 caractères" in portfolio, "Portfolio prompt should interpolate MAX_VERDICT_CHARS"
     assert "666 caractères" in portfolio, "Portfolio prompt should interpolate MAX_PORTFOLIO_PROSE_CHARS"
+
+
+class TestPortfolioPayloadLegend:
+    """The synthesis prompt must explain the payload it sends.
+
+    ``_serialize_holdings`` states the invariant "``n`` always reports the true
+    count, so the model cannot mistake the extremes for the whole portfolio" --
+    but ``n`` reaches the model as a bare two-character key. Enforcing that
+    invariant in Python while never expressing it to its only consumer is how a
+    posture ends up describing 10 of 64 positions, which is the defect this
+    whole branch exists to fix, one layer up.
+    """
+
+    def test_the_prompt_glosses_every_abbreviated_payload_key(self) -> None:
+        from finwiz.analysis.strategic_research import _portfolio_prompt
+
+        prompt = _portfolio_prompt('{"n": 64}', "2026-08-17")
+
+        for key in ("n", "swot_mean", "moat_mean", "distribution", "weakest", "strongest"):
+            assert key in prompt, f"payload key {key!r} is sent but never explained"
+        # The single-letter keys inside weakest/strongest entries.
+        assert "t = ticker" in prompt
+        assert "c = score composite" in prompt
+        assert "T = principale menace" in prompt
+        assert "S = principale force" in prompt
+
+    def test_the_prompt_says_n_is_the_whole_portfolio_not_what_was_shown(self) -> None:
+        from finwiz.analysis.strategic_research import _portfolio_prompt
+
+        prompt = _portfolio_prompt('{"n": 64}', "2026-08-17")
+
+        assert "TOTAL" in prompt
+        assert "UNIQUEMENT les positions extrêmes" in prompt
