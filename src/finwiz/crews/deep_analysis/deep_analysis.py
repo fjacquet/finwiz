@@ -85,6 +85,29 @@ from finwiz.tools.logger import get_logger
 # Get logger for this module
 logger = get_logger(__name__)
 
+# Output cap for the qualitative crew. Sized from measurement, not from the
+# provider maximum: see _get_configured_llm for the observed distribution.
+# Overridable because the right value tracks the model and the prompt, both of
+# which change without touching this file.
+_DEFAULT_DEEP_ANALYSIS_MAX_TOKENS = 8192
+
+
+def _get_deep_analysis_max_tokens() -> int:
+    """Resolve LLM_MAX_TOKENS_DEEP_ANALYSIS, falling back to the measured default."""
+    raw = os.getenv("LLM_MAX_TOKENS_DEEP_ANALYSIS", "").strip()
+    if not raw:
+        return _DEFAULT_DEEP_ANALYSIS_MAX_TOKENS
+    try:
+        value = int(raw)
+    except ValueError:
+        logger.warning(f"Invalid LLM_MAX_TOKENS_DEEP_ANALYSIS={raw!r}, using {_DEFAULT_DEEP_ANALYSIS_MAX_TOKENS}")
+        return _DEFAULT_DEEP_ANALYSIS_MAX_TOKENS
+    if value <= 0:
+        logger.warning(f"LLM_MAX_TOKENS_DEEP_ANALYSIS={value} is not positive, using {_DEFAULT_DEEP_ANALYSIS_MAX_TOKENS}")
+        return _DEFAULT_DEEP_ANALYSIS_MAX_TOKENS
+    return value
+
+
 load_dotenv()
 
 # Apply JSON repair patch for LLM outputs (handles trailing commas, etc.)
@@ -233,16 +256,23 @@ class DeepAnalysisCrew:
         structured-output-capable model (e.g. ``openrouter/google/gemini-3-flash-preview``)
         independently of the global mini/standard slot. Unset → existing behavior.
         """
-        # Deep analysis needs high max_tokens regardless of model — full JSON output
-        # requires 1500-2000 words across 5 sections. Mini default (1024) is far too low.
+        # Deep analysis needs a raised max_tokens regardless of model — full JSON output
+        # spans 5 sections, and the mini default (1024) truncates it. But 40960/61440 was
+        # far past what this crew ever emits: measured over the 2026-08-16 run, the
+        # crew-authored payload is ~800 tokens median, 4.5k at p90 and 5.1k at the largest
+        # holding. 8192 clears the observed maximum with room to spare while dropping the
+        # reservation to something proportionate. Raise it only against measured
+        # truncation -- a cap set below real output loses a holding's analysis silently,
+        # which is the failure this pipeline refuses.
+        #
         # force_json_object: this crew is tool-less and single-task, so every turn is a JSON
         # emission — provider JSON mode kills the markdown-fenced / malformed output that
         # otherwise drops a holding's qualitative section. Coercion validators on
         # _QualitativeInsightsRaw + the json-repair patch handle any residual shape variance.
         deep_model = os.getenv("LLM_MODEL_DEEP_ANALYSIS", "").strip() or None
         if self.perf_config.should_use_mini_model():
-            return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=40960, force_json_object=True)
-        return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=61440, force_json_object=True)
+            return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=_get_deep_analysis_max_tokens(), force_json_object=True)
+        return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=_get_deep_analysis_max_tokens(), force_json_object=True)
 
     @agent
     def asset_analyst(self) -> Agent:
