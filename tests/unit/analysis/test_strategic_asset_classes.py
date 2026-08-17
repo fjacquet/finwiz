@@ -1,6 +1,6 @@
 """Tests for asset-class-aware strategic analysis (ETF/crypto framing, not just stock).
 
-Strategic research (PESTEL/SWOT/Porter) used to be gated to
+Strategic research (SWOT/Porter) used to be gated to
 ``asset_class == "stock"`` at two separate call sites (`stages/__init__.py` and
 the legacy `_run_qualitative_and_strategic_in_parallel` helper), which
 structurally excluded 38 of 64 holdings — every ETF and crypto — from any

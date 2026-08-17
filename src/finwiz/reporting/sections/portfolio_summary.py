@@ -90,7 +90,7 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
 def generate_strategic_posture_section(posture: dict | None) -> str:
     """Verdict and link only; the analyst-length synthesis lives on its own page.
 
-    This section used to embed the full PESTEL/SWOT/Porter prose, which rendered
+    This section used to embed the full SWOT/Porter prose, which rendered
     as a wall of raw markdown in a document meant for a family. ``posture`` is a
     :class:`PortfolioStrategicPosture` model_dump.
 

@@ -103,7 +103,7 @@ class TestPostureAndBannerClassesAreStyled:
                 "dominant_themes": ["Résilience énergétique"],
                 "portfolio_strengths": ["Moats larges"],
             },
-            holdings_strategic={"AAPL": {"pestel": {"strategic_score": 0.6}}},
+            holdings_strategic={"AAPL": {"swot": {"strategic_score": 0.6}}},
         )
         banner_html = "".join(
             render_trust_banner(TrustBanner.from_coverage(CoverageSummary(analyzed=a, degraded=d, failed=f, total=5))) for a, d, f in [(5, 0, 0), (4, 1, 0), (1, 0, 4), (0, 0, 0)]

@@ -726,7 +726,7 @@ class TestSynthesizePortfolioStrategicCoverage:
 
     @staticmethod
     def _sa_dict(score: float = 0.6) -> dict:
-        return {"pestel": {"strategic_score": score, "confidence": 0.7}}
+        return {"swot": {"strategic_score": score, "confidence": 0.7}}
 
     @classmethod
     def _record(cls, ticker: str, with_strategic: bool = True) -> tuple[str, dict]:
@@ -863,9 +863,9 @@ class TestEmptyStrategicAnalysisIsNotCoverage:
     """An all-``None`` StrategicAnalysis is the absence of evidence, not coverage.
 
     ``gather_strategic_analysis`` used to return
-    ``StrategicAnalysis(pestel=None, swot=None, five_forces=None)`` after all
-    three Perplexity calls failed. That blob is a truthy dict on disk, it
-    validates cleanly (all three fields are Optional), and it therefore entered
+    ``StrategicAnalysis(swot=None, five_forces=None)`` after both Perplexity
+    calls failed. That blob is a truthy dict on disk, it
+    validates cleanly (both fields are Optional), and it therefore entered
     ``holdings_models`` and ``covered_tickers`` — so a total provider outage
     rendered "64 / 64 holdings · 100.0 %" in green above a score the model was
     forced to invent from ``{"T0": {}, "T1": {}, ...}``.
@@ -888,12 +888,12 @@ class TestEmptyStrategicAnalysisIsNotCoverage:
     @staticmethod
     def _empty_record(ticker: str) -> tuple[str, dict]:
         """What a fully-failed strategic gather wrote to disk."""
-        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": None, "swot": None, "five_forces": None}}})
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"swot": None, "five_forces": None}}})
 
     @staticmethod
     def _partial_record(ticker: str) -> tuple[str, dict]:
-        """One framework of three succeeded — real evidence, must still count."""
-        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"pestel": {"strategic_score": 0.62, "confidence": 0.7}, "swot": None, "five_forces": None}}})
+        """One framework of two succeeded — real evidence, must still count."""
+        return ("stock", {"ticker": ticker, "qualitative": {"strategic_analysis": {"swot": {"strategic_score": 0.62, "confidence": 0.7}, "five_forces": None}}})
 
     _holding = staticmethod(TestSynthesizePortfolioStrategicCoverage._holding)
     _mock_synthesize = TestSynthesizePortfolioStrategicCoverage._mock_synthesize

@@ -141,11 +141,11 @@ def validate_qualitative_insights(result: dict) -> QualitativeInsights:
     # strategic_analysis is Python-authored: gather_strategic_analysis is its
     # only legitimate writer (stages/__init__.py). It was removed from the
     # LLM-facing schema because a model fills any field it is handed, prompted
-    # or not, and an invented PESTEL is indistinguishable downstream from a
-    # researched one -- it counts as covered and carries no sources. This path
-    # validates LLM-derived dicts against the *full* schema, which still
-    # declares the field, so drop it here too rather than trusting every future
-    # caller to hand over scrubbed input.
+    # or not, and an invented strategic analysis is indistinguishable
+    # downstream from a researched one -- it counts as covered and carries no
+    # sources. This path validates LLM-derived dicts against the *full*
+    # schema, which still declares the field, so drop it here too rather than
+    # trusting every future caller to hand over scrubbed input.
     if isinstance(result, dict):
         result.pop("strategic_analysis", None)
 

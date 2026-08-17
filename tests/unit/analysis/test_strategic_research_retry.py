@@ -70,7 +70,7 @@ async def test_strategic_calls_go_through_the_retry_wrapper(mocker):
 
 @pytest.mark.asyncio
 async def test_only_two_frameworks_are_researched(mocker):
-    """PESTEL is macro and runs outside FinWiz."""
+    """Only SWOT and Five Forces are researched; macro analysis runs outside FinWiz."""
     from finwiz.analysis import strategic_research
 
     wrapper = mocker.patch(

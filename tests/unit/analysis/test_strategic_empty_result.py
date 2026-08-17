@@ -1,11 +1,11 @@
 """A strategic gather that produced nothing must say so, not hand back an empty shell.
 
-``gather_strategic_analysis`` used to return ``StrategicAnalysis(pestel=None,
-swot=None, five_forces=None)`` after logging that all three frameworks had
-failed. That object is truthy end-to-end: it survives ``if ticker and sa``,
-validates cleanly (all fields are Optional), and lands in the portfolio
-coverage set — so a total provider outage rendered "64 / 64 holdings · 100.0 %"
-above a score synthesized from 64 empty objects.
+``gather_strategic_analysis`` used to return ``StrategicAnalysis(swot=None,
+five_forces=None)`` after logging that both frameworks had failed. That
+object is truthy end-to-end: it survives ``if ticker and sa``, validates
+cleanly (all fields are Optional), and lands in the portfolio coverage set —
+so a total provider outage rendered "64 / 64 holdings · 100.0 %" above a
+score synthesized from 64 empty objects.
 
 The absence of data must be representable. ``None`` is that representation, and
 every caller already handles it (``stages/__init__.py`` guards

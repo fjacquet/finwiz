@@ -95,7 +95,7 @@ def run_pipeline(
         return _emit_pending(stage_ctx, reason=qr3.provenance.reason), _pending_enriched(stage_ctx, reason=qr3.provenance.reason)
     qual = qr3.payload
     # Run strategic research for every asset class — stock, ETF, crypto all get
-    # PESTEL/SWOT/Porter, framed to fit the asset (see strategic_research.py).
+    # SWOT/Porter, framed to fit the asset (see strategic_research.py).
     # The old stock-only gate excluded 38 of 64 holdings, which made full
     # portfolio strategic-posture coverage structurally impossible.
     from finwiz.analysis.stages.qualify import _safe_strategic

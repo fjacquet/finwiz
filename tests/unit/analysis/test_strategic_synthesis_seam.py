@@ -13,7 +13,6 @@ import pytest
 
 from finwiz.schemas.hybrid_analysis.strategic import (
     FiveForcesAnalysis,
-    PestelAnalysis,
     PortfolioPostureNarrative,
     PortfolioStrategicPosture,
     StrategicAnalysis,
@@ -24,7 +23,6 @@ from finwiz.schemas.hybrid_analysis.strategic import (
 def _one_holding() -> dict[str, StrategicAnalysis]:
     return {
         "AAPL": StrategicAnalysis(
-            pestel=PestelAnalysis(strategic_score=0.6, confidence=0.7),
             swot=SwotAnalysis(strategic_score=0.5, confidence=0.6),
             five_forces=FiveForcesAnalysis(strategic_score=0.4, confidence=0.5),
         )

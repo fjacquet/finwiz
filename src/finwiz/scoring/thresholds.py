@@ -213,7 +213,7 @@ class ScoringThresholds:
     weight_fundamental_with_strategic: float = 0.35
     weight_technical_with_strategic: float = 0.25
     weight_risk_with_strategic: float = 0.25
-    weight_strategic: float = 0.15  # 15% strategic (AI-rated PESTEL/SWOT/Porter average)
+    weight_strategic: float = 0.15  # 15% strategic (AI-rated SWOT/Porter average)
 
     # Stock fundamental weights
     weight_stock_roe: float = 0.40  # 40% ROE
