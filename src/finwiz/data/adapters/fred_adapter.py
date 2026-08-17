@@ -38,6 +38,18 @@ FRED_SERIES: dict[str, str] = {
     "vix": "VIXCLS",
 }
 
+# FRED unit transforms, applied server-side, for series whose raw form is not
+# what the field name promises.
+#
+# CPIAUCSL is an index level (~332 in 2025), not a rate, so taking its latest
+# observation as ``cpi_yoy`` put "IPC (Inflation) 332.8 %" in front of the
+# family — and pinned the indicator permanently red, since the scorer's band
+# tops out at 5 %. ``pc1`` asks FRED for percent change from a year ago, which
+# is the year-over-year rate every consumer of this field already assumes.
+FRED_SERIES_UNITS: dict[str, str] = {
+    "cpi_yoy": "pc1",
+}
+
 # On-disk fallback cache (JSON via Pydantic serializer).
 FRED_CACHE_PATH = Path("output") / "cache" / "fred_snapshot.json"
 FRED_CACHE_MAX_AGE = timedelta(days=7)
@@ -49,8 +61,14 @@ FRED_CACHE_MAX_AGE = timedelta(days=7)
     retry=retry_if_exception_type(Exception),
     reraise=True,
 )
-def _fetch_series_with_retry(fred, series_id: str, observation_start: str):
-    """Fetch a single FRED series with exponential backoff retry."""
+def _fetch_series_with_retry(fred, series_id: str, observation_start: str, units: str | None = None):
+    """Fetch a single FRED series with exponential backoff retry.
+
+    ``units`` is a FRED server-side transform (e.g. ``pc1`` for percent change
+    from a year ago); omitted, the series comes back in its native form.
+    """
+    if units is not None:
+        return fred.get_series(series_id, observation_start=observation_start, units=units)
     return fred.get_series(series_id, observation_start=observation_start)
 
 
@@ -89,12 +107,13 @@ class FREDAdapter:
         failed_series: list[str] = []
 
         for field, series_id in FRED_SERIES.items():
+            units = FRED_SERIES_UNITS.get(field)
             try:
-                series = _fetch_series_with_retry(fred, series_id, observation_start)
+                series = _fetch_series_with_retry(fred, series_id, observation_start, units)
                 series = series.dropna()
                 if not series.empty:
                     data[field] = float(series.iloc[-1])
-                    sources[field] = f"FRED:{series_id}"
+                    sources[field] = f"FRED:{series_id}({units})" if units else f"FRED:{series_id}"
                 else:
                     data[field] = None
                     logger.warning(f"FRED series {series_id} returned no data for {field}")
