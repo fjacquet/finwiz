@@ -8,7 +8,7 @@ license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "python-dotenv>=1.2.2",
-    "yfinance>=0.2.62",
+    "yfinance>=1.6.0",
     "ta-lib>=0.7.1",
     "backtrader>=1.9.78.123",
     "quantlib>=1.43",
