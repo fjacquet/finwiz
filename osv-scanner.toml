@@ -1,9 +1,45 @@
 # osv-scanner config — allowlisted advisories with documented justification.
 # Reviewed on each dependency change.
+#
+# ---------------------------------------------------------------------------
+# chromadb: one family, one review date (2026-12-01).
+#
+# Every entry below is the SAME finding class. All of them require a running
+# ChromaDB *server* with an authenticated caller (each targets the /api/v2 HTTP
+# surface). FinWiz never runs one — crewai uses in-process memory only. If that
+# ever changes, every entry here must be re-evaluated.
+#
+# chromadb is a hard transitive of crewai core and cannot be dropped by
+# configuration, which is why it is deliberately absent from
+# constraint-dependencies in pyproject.toml.
+#
+# There is nothing to upgrade to (checked 2026-09-02): every record ends at
+# `last_affected: 1.5.9` with no `fixed` event, 1.5.9 is the newest release on
+# PyPI, and the upstream fix (chroma-core/chroma PR #7602) is still open.
+#
+# Per-id entries rather than a [[PackageOverrides]] block: a package-level
+# ignore would also hide a future advisory that DOES reach the embedded client,
+# and would hide the arrival of a fixed version.
+#
+# Re-check: https://github.com/chroma-core/chroma/pull/7602
+# ---------------------------------------------------------------------------
 
 [[IgnoredVulns]]
-id = "GHSA-f4j7-r4q5-qw2c"
-# chromadb pre-auth code injection is in ChromaDB's SERVER, which FinWiz never
-# runs (crewai uses in-process memory only). No patched release exists and
-# chromadb is a hard transitive of crewai core, so it cannot be removed.
+id = "GHSA-f4j7-r4q5-qw2c"  # CVE-2026-45829 — pre-auth RCE ("ChromaToast", CVSS 9.3)
+ignoreUntil = 2026-12-01
 reason = "Vulnerable code path (Chroma server) is not used; no fix available; crewai-core transitive."
+
+[[IgnoredVulns]]
+id = "GHSA-36p7-vc44-83pf"  # CVE-2026-45833 — code injection via trust_remote_code (CVSS 9.4)
+ignoreUntil = 2026-12-01
+reason = "Vulnerable code path (Chroma server) is not used; no fix available; crewai-core transitive."
+
+[[IgnoredVulns]]
+id = "GHSA-2wm9-hf6c-p5cr"  # CVE-2026-45830 — any authenticated caller can read/write other tenants' collections
+ignoreUntil = 2026-12-01
+reason = "Vulnerable code path (Chroma server) is not used; FinWiz has no server, no remote callers and no tenants; no fix available; crewai-core transitive."
+
+[[IgnoredVulns]]
+id = "GHSA-xph7-9rjv-w5fr"  # CVE-2026-45831 — SimpleRBACAuthorizationProvider scope bypass
+ignoreUntil = 2026-12-01
+reason = "SimpleRBACAuthorizationProvider is server-side and is never instantiated in embedded use; no fix available; crewai-core transitive."
