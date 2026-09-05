@@ -26,6 +26,20 @@ logger = get_logger(__name__)
 _STATE_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"  # FinwizState.timestamp
 
 
+def _instant(value: datetime) -> datetime:
+    """Put a datetime on the one clock the gate measures with.
+
+    ``state.timestamp`` is naive local wall-clock and ``finished`` is aware UTC.
+    Subtracting them as if both were naive UTC yields a negative duration
+    anywhere east of UTC -- a full run judged ERROR for being two hours long in
+    the wrong direction. A naive value is therefore read as local time (the only
+    thing a naive stamp from ``datetime.now()`` can mean) and given the offset
+    that was in force at that moment, so the subtraction is in absolute time and
+    survives DST.
+    """
+    return value.astimezone() if value.tzinfo is None else value
+
+
 def coverage_from(ledger: Any) -> CoverageInput:
     """Read coverage off the run ledger. ``None`` -- no ledger -- is unavailable, not zero."""
     if ledger is None:
@@ -35,11 +49,21 @@ def coverage_from(ledger: Any) -> CoverageInput:
 
 
 def valuation_from(portfolio_review: Any) -> ValuationInput:
-    """Priced = ``weight is not None`` -- the same set the allocation hero counts."""
-    holdings = getattr(portfolio_review, "holdings", None)
-    if holdings is None:
+    """Priced = ``weight is not None`` -- the same set the allocation hero counts.
+
+    ``state.portfolio_review`` is a plain dict: ``validation_orchestrator`` sets it
+    to ``json.loads`` of the review file. A validated ``PortfolioReview`` is read
+    too, because ``reporting/`` hands both shapes around.
+    """
+    holdings = _field(portfolio_review, "holdings")
+    if not isinstance(holdings, list):
         return ValuationInput()
-    return ValuationInput(available=True, priced=sum(1 for h in holdings if getattr(h, "weight", None) is not None), total=len(holdings))
+    return ValuationInput(available=True, priced=sum(1 for h in holdings if _field(h, "weight") is not None), total=len(holdings))
+
+
+def _field(obj: Any, name: str) -> Any:
+    """Read one field off either shape the review reaches state in."""
+    return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
 
 
 def fact_pack_from(freshness: dict[str, Any] | None) -> FactPackInput:
@@ -55,8 +79,11 @@ def fact_pack_from(freshness: dict[str, Any] | None) -> FactPackInput:
 
 def phases_from(state: Any) -> PhasesInput:
     """Read the phase-outcome counts the roadmap tracks as known gaps. An absent phase result is honestly a zero."""
-    discovery = getattr(state, "investment_discovery_result", None) or {}
-    opportunities = discovery.get("opportunities") if isinstance(discovery, dict) else None
+    # discovery_orchestrator.py consolidates every asset class onto
+    # `all_discovery_opportunities`; `investment_discovery_result` is declared on
+    # the state model but has no writer anywhere under src/, so reading it counted
+    # a healthy discovery as zero and WARNed on it forever.
+    opportunities = getattr(state, "all_discovery_opportunities", None)
     gap_profile = getattr(state, "portfolio_gap_profile", None) or {}
     return PhasesInput(
         discovery_candidates=len(opportunities) if isinstance(opportunities, list) else 0,
@@ -68,10 +95,21 @@ def phases_from(state: Any) -> PhasesInput:
 
 
 def cost_from(summary: dict[str, Any] | None) -> CostInput:
-    """Read the cost monitor's summary. Any crew missing ``cost_known`` makes the whole total untrusted."""
+    """Read the cost monitor's summary. Any crew missing ``cost_known`` makes the whole total untrusted.
+
+    ``get_cost_summary()`` returns a populated dict even when it recorded
+    nothing, and a run that measured nothing is not proof of zero usage --
+    ``log_cost_summary`` refuses to claim "No LLM calls made" for exactly this
+    reason. The two are indistinguishable from the callback's data, so an
+    unmeasured run is unavailable, and its check FAILs as "not measured". A
+    false FAIL is recoverable; "$0.00 over 0 calls -- PASS" is the defect this
+    gate exists to catch.
+    """
     if not summary:
         return CostInput()
     per_crew = summary.get("per_crew") or {}
+    if not per_crew and not int(summary.get("call_count") or 0):
+        return CostInput()
     unpriced = sorted(name for name, entry in per_crew.items() if not entry.get("cost_known", True))
     return CostInput(
         available=True,
@@ -122,14 +160,14 @@ class RunGateOrchestrator:
         cost = cost_from(getattr(self.state, "llm_cost_summary", None))
         checks = evaluate(coverage, valuation, fact_pack, phases, cost, thresholds)
 
-        finished = self._now()
+        finished = _instant(self._now())
         started = self._started_at()
         ledger = getattr(self.state, "run_ledger", None)
         return RunSummary(
             run_id=getattr(ledger, "run_id", None) or str(getattr(self.state, "id", "unknown")),
             started_at=started,
             finished_at=finished,
-            duration_seconds=(finished.replace(tzinfo=None) - started).total_seconds() if started else None,
+            duration_seconds=self._duration(started, finished),
             coverage=coverage,
             valuation=valuation,
             fact_pack=fact_pack,
@@ -140,11 +178,30 @@ class RunGateOrchestrator:
         )
 
     def _started_at(self) -> datetime | None:
+        """``state.timestamp`` is naive LOCAL wall-clock (``flow_state_models.py`` stamps it with ``datetime.now()``)."""
         raw = getattr(self.state, "timestamp", None)
         try:
-            return datetime.strptime(raw, _STATE_TIMESTAMP_FORMAT) if raw else None
+            return _instant(datetime.strptime(raw, _STATE_TIMESTAMP_FORMAT)) if raw else None
         except ValueError:
             return None
+
+    def _duration(self, started: datetime | None, finished: datetime) -> float | None:
+        """Elapsed seconds between two instants, or ``None`` when there is no honest answer.
+
+        Both ends are timezone-aware by the time they get here, so a negative
+        result means the clock itself moved (an NTP step, a hand-edited
+        timestamp). Duration is informational -- no check reads it -- so an
+        impossible one is recorded as unknown rather than allowed to fail
+        ``RunSummary``'s ``ge=0.0`` and take the whole summary down with it.
+        """
+        if started is None:
+            return None
+        elapsed = (finished - started).total_seconds()
+        if elapsed < 0:
+            # Not prefixed "run gate: " -- that prefix belongs to the verdict block, one line per check.
+            logger.warning(f"run gate could not measure duration: {elapsed:.1f}s between {started.isoformat()} and {finished.isoformat()}; recorded as unknown")
+            return None
+        return elapsed
 
     def _write(self, summary: RunSummary) -> None:
         payload = summary.model_dump_json(indent=2)
