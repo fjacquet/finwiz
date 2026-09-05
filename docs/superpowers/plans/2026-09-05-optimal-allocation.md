@@ -740,10 +740,7 @@ class AllocationOrchestrator:
             return None
 
         return OptimalAllocation(
-            targets=[
-                HoldingTarget(ticker=t, asset_class=class_of.get(t, "unknown"), current_weight=current.get(t, 0.0), target_weight=w)
-                for t, w in weights.items()
-            ],
+            targets=[HoldingTarget(ticker=t, asset_class=class_of.get(t, "unknown"), current_weight=current.get(t, 0.0), target_weight=w) for t, w in weights.items()],
             excluded=sorted(excluded, key=lambda e: e.ticker),
             observations=len(matrix),
             window_start=str(matrix.index.min().date()),
