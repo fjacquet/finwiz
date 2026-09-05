@@ -292,6 +292,18 @@ class FinwizFlow(Flow[FinwizState]):
 
         self._log_post_flow_summaries()
 
+        # Run gate -- the last act. Reads coverage, valuation, freshness, phases
+        # and cost from state, writes output/run_summary.json, and leaves the
+        # verdict on state for app_initializer to turn into the exit code. The
+        # orchestrator never raises; this guard only covers its construction.
+        try:
+            from finwiz.orchestrators.run_gate_orchestrator import RunGateOrchestrator
+
+            RunGateOrchestrator(self.state).run()
+        except Exception:
+            logger.exception("run gate could not start; verdict ERROR")
+            self.state.gate_verdict = "ERROR"
+
         logger.info("Sequential workflow completed")
         return {"status": "completed"}
 

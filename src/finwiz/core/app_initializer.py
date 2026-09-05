@@ -12,6 +12,7 @@ import warnings
 
 from dotenv import load_dotenv
 
+from finwiz.analysis.run_gate import exit_code_for
 from finwiz.cli.argument_parser import (
     initialize_configuration,
     initialize_environment,
@@ -69,13 +70,18 @@ def kickoff() -> None:
         # class. Same philosophy as the v0.3.0 deep-analysis fix.
         logger.info("🚀 Starting FinWiz analysis execution")
         finwiz_flow.kickoff()
-        logger.info("✅ FinWiz analysis workflow completed successfully")
+        # Step 6: The run gate left its verdict on state. PASS/WARN → 0, FAIL → 1,
+        # ERROR or no verdict at all → 2. "Nothing to report" and "I did not look"
+        # must never share an exit code.
+        gate_verdict = getattr(flow_state, "gate_verdict", None)
+        exit_code = exit_code_for(gate_verdict)
+        logger.info(f"✅ FinWiz analysis workflow completed — run gate {gate_verdict or 'ERROR'} (exit {exit_code})")
 
         # Step 7: Force-exit the process so third-party thread pools
         # (CrewAI, LiteLLM, httpx) don't block Python's threading._shutdown().
         # Flush logs first to ensure nothing is lost.
         logging.shutdown()
-        os._exit(0)
+        os._exit(exit_code)
 
     except SystemExit:
         # Re-raise SystemExit to allow proper application termination
