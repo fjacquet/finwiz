@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.14.1] - 2026-09-05
+
+A reporting correctness fix, a CI hardening, and a dependency sweep that moves
+two majors.
+
+**Not validated against a live `crewai flow kickoff`.** The 5138-test suite
+passes on the new dependency set, but it mocks the network, so yfinance 1.7.0
+is unexercised against the real API in this release.
+
+### Fixed
+
+- **The position count now describes the money beside it.** `total_value_eur`
+  covers priced holdings only — the field's own description says so — but the
+  allocation hero captioned it with `len(holdings)`. The 2026-08-17 run
+  rendered **30 positions summing to 34 046 EUR under the label "64
+  positions"**: the total understated the portfolio by roughly half, and every
+  weight was inflated by the missing denominator, showing ASML at 23.3 %. The
+  count now comes from the same set as the total, and holdings that could not
+  be priced get their own line instead of vanishing.
+
+### Security
+
+- **The Dependabot auto-merge workflow no longer trusts a spoofable actor
+  check.** The guard read `github.actor`, which zizmor's `bot-conditions` audit
+  flags as spoofable; it now reads `github.event.pull_request.user.login` from
+  the event payload. `pull_request_target` is kept — a `pull_request` event
+  gives Dependabot a read-only token that cannot enable auto-merge — and is
+  safe here only because the job never checks out the PR. That reasoning is now
+  written into the workflow so a future edit does not silently add a checkout
+  step.
+
+### Changed
+
+- **Dependency sweep, 11 constraint bumps and a full lockfile refresh** (66
+  packages). Two majors: `plotly >=7.0.0` (used only by
+  `quantitative/performance_benchmarks.py`) and `yfinance >=1.6.0`, locked at
+  1.7.0 and imported across the price service, data loaders and ETF tooling.
+  Also `numpy >=2.5.2`, `litellm >=1.97.0`, `langchain-core`, `feedparser`,
+  `pre-commit`, `pytest-socket >=0.8.1`, `mkdocs-material`.
+- **Documentation code blocks now follow `ruff format`.** ruff 0.16.5 extends
+  the formatter to Python snippets inside Markdown, which reformatted 66 files
+  under `docs/`, `.claude/skills/` and the per-package `CLAUDE.md`. Applied
+  rather than suppressed. Note that ruff de-indents class-body snippets, so a
+  few examples now read as top-level code.
+
+### Chore
+
+- `make check` passes end to end again. It had been failing at `docs-lint` on
+  10 MD032 violations in the drop-PESTEL plan. No CI workflow runs markdownlint,
+  so only the local gate ever saw it.
+
 ## [5.14.0] - 2026-08-17
 
 PESTEL removal, plus two data-correctness fixes found by the live 64-holding
