@@ -73,7 +73,13 @@ def kickoff() -> None:
         # Step 6: The run gate left its verdict on state. PASS/WARN → 0, FAIL → 1,
         # ERROR or no verdict at all → 2. "Nothing to report" and "I did not look"
         # must never share an exit code.
-        gate_verdict = getattr(flow_state, "gate_verdict", None)
+        #
+        # Read it off the FLOW's state, not off `flow_state`: crewai's Flow.__init__
+        # validates the state argument into a copy (`finwiz_flow.state is not
+        # flow_state`, and even its `id` differs), so the gate wrote the verdict on
+        # an object the caller never sees. Reading the outer one gave None — exit 2
+        # — for PASS, WARN and FAIL alike.
+        gate_verdict = getattr(finwiz_flow.state, "gate_verdict", None)
         exit_code = exit_code_for(gate_verdict)
         logger.info(f"✅ FinWiz analysis workflow completed — run gate {gate_verdict or 'ERROR'} (exit {exit_code})")
 
