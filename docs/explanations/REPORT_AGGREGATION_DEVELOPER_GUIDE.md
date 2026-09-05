@@ -41,8 +41,10 @@ from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 from datetime import datetime
 
+
 class MyNewCrewExport(CrewExportBase):
     """Export schema for MyNewCrew analysis."""
+
     crew_name: str = Field(default="my_new_crew")
 
     # Analysis Results
@@ -65,7 +67,7 @@ class MyNewCrewExport(CrewExportBase):
 
     model_config = {
         "extra": "forbid",  # Reject unknown fields
-        "str_strip_whitespace": True
+        "str_strip_whitespace": True,
     }
 ```
 
@@ -89,6 +91,7 @@ from finwiz.schemas.crew_exports import MyNewCrewExport
 import json
 from pathlib import Path
 
+
 @final_reporter
 @agent
 def investment_reporter(self) -> Agent:
@@ -96,8 +99,9 @@ def investment_reporter(self) -> Agent:
     return Agent(
         config=self.agents_config["investment_reporter"],
         tools=[],  # MUST be empty - enforced by decorator
-        verbose=True
+        verbose=True,
     )
+
 
 @task
 def generate_export_task(self) -> Task:
@@ -117,7 +121,7 @@ def generate_export_task(self) -> Task:
         """,
         expected_output="Validated MyNewCrewExport object saved to JSON",
         agent=self.investment_reporter(),
-        async_execution=False  # Final task must be synchronous
+        async_execution=False,  # Final task must be synchronous
     )
 ```
 
@@ -137,6 +141,7 @@ Update the Flow to call Python HTML generation after crew execution:
 
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 
+
 @listen("initialize_flow")
 def execute_my_new_crew(self) -> dict[str, Any]:
     """Execute MyNewCrew and generate HTML report."""
@@ -150,9 +155,7 @@ def execute_my_new_crew(self) -> dict[str, Any]:
     # Generate HTML from JSON using Python template
     generator = HTMLReportGenerator()
     html_path = generator.generate_crew_report(
-        crew_name="my_new_crew",
-        export_data=json.loads(Path(json_path).read_text()),
-        output_path=json_path.replace("_export.json", "_report.html")
+        crew_name="my_new_crew", export_data=json.loads(Path(json_path).read_text()), output_path=json_path.replace("_export.json", "_report.html")
     )
 
     # Store paths in state
@@ -176,6 +179,7 @@ Update `ReportConsolidator` to handle the new crew type:
 
 from finwiz.schemas.crew_exports import MyNewCrewExport
 
+
 class ReportConsolidator:
     def consolidate_reports(self, crew_export_paths: Dict[str, List[str]]) -> ConsolidatedReportExport:
         """Consolidate all crew exports."""
@@ -184,16 +188,13 @@ class ReportConsolidator:
         # Load MyNewCrew exports
         my_new_analyses = []
         if "my_new_crew" in crew_export_paths:
-            my_new_analyses = self._load_exports(
-                crew_export_paths["my_new_crew"],
-                MyNewCrewExport
-            )
+            my_new_analyses = self._load_exports(crew_export_paths["my_new_crew"], MyNewCrewExport)
 
         # Create consolidated export
         consolidated = ConsolidatedReportExport(
             session_id=self.session_id,
             # ... existing fields ...
-            my_new_analyses=my_new_analyses
+            my_new_analyses=my_new_analyses,
         )
 
         return consolidated
@@ -353,13 +354,9 @@ Update `HTMLReportGenerator` to load your template:
 ```python
 # In src/finwiz/tools/html_report_generator.py
 
+
 class HTMLReportGenerator:
-    def generate_crew_report(
-        self,
-        crew_name: str,
-        export_data: dict,
-        output_path: str
-    ) -> str:
+    def generate_crew_report(self, crew_name: str, export_data: dict, output_path: str) -> str:
         """Generate HTML report from crew export data."""
         # Map crew names to templates
         template_map = {
@@ -379,7 +376,7 @@ class HTMLReportGenerator:
 
         # Save HTML
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(output_path).write_text(html_content, encoding='utf-8')
+        Path(output_path).write_text(html_content, encoding="utf-8")
 
         return output_path
 ```
@@ -393,19 +390,15 @@ To add fields to an existing export schema:
 ```python
 # In src/finwiz/schemas/crew_exports.py
 
+
 class StockCrewExport(CrewExportBase):
     # ... existing fields ...
 
     # Add new field
-    new_metric: float = Field(
-        ...,
-        ge=0.0,
-        le=100.0,
-        description="New metric description"
-    )
+    new_metric: float = Field(..., ge=0.0, le=100.0, description="New metric description")
 
     # Add field validator
-    @field_validator('new_metric')
+    @field_validator("new_metric")
     @classmethod
     def validate_new_metric(cls, v: float) -> float:
         """Validate new metric is reasonable."""
@@ -421,11 +414,13 @@ For complex data structures, create nested Pydantic models:
 ```python
 class DetailedAnalysis(BaseModel):
     """Nested model for detailed analysis."""
+
     metric_1: float
     metric_2: float
     summary: str
 
     model_config = {"extra": "forbid"}
+
 
 class StockCrewExport(CrewExportBase):
     # ... existing fields ...
@@ -441,6 +436,7 @@ When making breaking changes, version your schemas:
 ```python
 class StockCrewExportV2(CrewExportBase):
     """Version 2 of StockCrewExport with breaking changes."""
+
     schema_version: str = Field(default="2.0")
 
     # ... new fields ...
@@ -489,7 +485,7 @@ def generate_html_report(self) -> Task:
 ```python
 def generate_html_report(json_data: dict) -> str:
     """Generate HTML report using Jinja2 template."""
-    template = jinja_env.get_template('report.html')
+    template = jinja_env.get_template("report.html")
     return template.render(data=json_data)
     # CORRECT: Fast, cheap, testable
 ```
@@ -543,6 +539,7 @@ import pytest
 from finwiz.schemas.crew_exports import MyNewCrewExport
 from pydantic import ValidationError
 
+
 def test_should_validate_valid_export():
     """Test that valid export data passes validation."""
     export = MyNewCrewExport(
@@ -555,11 +552,12 @@ def test_should_validate_valid_export():
         rationale="Strong fundamentals and growth prospects",
         data_sources=["Yahoo Finance", "SEC EDGAR"],
         report_html_path="output/reports/session/my_new_crew/AAPL_report.html",
-        report_json_path="output/reports/session/my_new_crew/AAPL_export.json"
+        report_json_path="output/reports/session/my_new_crew/AAPL_export.json",
     )
 
     assert export.ticker == "AAPL"
     assert export.grade == "A"
+
 
 def test_should_reject_invalid_grade():
     """Test that invalid grade is rejected."""
@@ -571,6 +569,7 @@ def test_should_reject_invalid_grade():
         )
 
     assert "grade" in str(exc_info.value)
+
 
 def test_should_reject_extra_fields():
     """Test that extra fields are rejected (extra='forbid')."""
@@ -592,6 +591,7 @@ def test_should_reject_extra_fields():
 import pytest
 from finwiz.tools.html_report_generator import HTMLReportGenerator
 
+
 def test_should_generate_html_from_export(mocker, tmp_path):
     """Test HTML generation from crew export."""
     # Arrange
@@ -605,11 +605,7 @@ def test_should_generate_html_from_export(mocker, tmp_path):
     output_path = tmp_path / "report.html"
 
     # Act
-    result_path = generator.generate_crew_report(
-        crew_name="my_new_crew",
-        export_data=export_data,
-        output_path=str(output_path)
-    )
+    result_path = generator.generate_crew_report(crew_name="my_new_crew", export_data=export_data, output_path=str(output_path))
 
     # Assert
     assert output_path.exists()
@@ -627,6 +623,7 @@ def test_should_generate_html_from_export(mocker, tmp_path):
 import pytest
 from finwiz.reporting.consolidator import ReportConsolidator
 
+
 def test_should_consolidate_crew_exports(mocker, tmp_path):
     """Test consolidation of multiple crew exports."""
     # Arrange
@@ -636,9 +633,7 @@ def test_should_consolidate_crew_exports(mocker, tmp_path):
     stock_export = tmp_path / "stock_export.json"
     stock_export.write_text('{"ticker": "AAPL", "grade": "A", ...}')
 
-    crew_export_paths = {
-        "stock_crew": [str(stock_export)]
-    }
+    crew_export_paths = {"stock_crew": [str(stock_export)]}
 
     # Act
     consolidated = consolidator.consolidate_reports(crew_export_paths)
@@ -661,7 +656,7 @@ class MyNewCrew:
         return Agent(
             config=self.agents_config["investment_reporter"],
             tools=[],  # Enforced empty
-            verbose=True
+            verbose=True,
         )
 
     @task
@@ -670,7 +665,7 @@ class MyNewCrew:
             description="Generate validated export from context",
             expected_output="MyNewCrewExport object saved to JSON",
             agent=self.investment_reporter(),
-            async_execution=False  # Final task must be sync
+            async_execution=False,  # Final task must be sync
         )
 ```
 
@@ -690,9 +685,7 @@ def execute_crew_with_html(self) -> dict[str, Any]:
     # 3. Generate HTML using Python
     generator = HTMLReportGenerator()
     html_path = generator.generate_crew_report(
-        crew_name=crew_name,
-        export_data=json.loads(Path(json_path).read_text()),
-        output_path=json_path.replace("_export.json", "_report.html")
+        crew_name=crew_name, export_data=json.loads(Path(json_path).read_text()), output_path=json_path.replace("_export.json", "_report.html")
     )
 
     # 4. Store paths in state
@@ -712,12 +705,7 @@ def consolidate_reports(crew_export_paths: Dict[str, List[str]]) -> Consolidated
     etf_analyses = _load_exports(crew_export_paths.get("etf_crew", []), ETFCrewExport)
 
     # 2. Create consolidated export
-    consolidated = ConsolidatedReportExport(
-        session_id=session_id,
-        stock_analyses=stock_analyses,
-        etf_analyses=etf_analyses,
-        consolidation_date=datetime.now()
-    )
+    consolidated = ConsolidatedReportExport(session_id=session_id, stock_analyses=stock_analyses, etf_analyses=etf_analyses, consolidation_date=datetime.now())
 
     # 3. Save to JSON
     output_path = f"output/reports/{session_id}/consolidated_report.json"

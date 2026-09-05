@@ -262,10 +262,7 @@ consistency_confidence = max(0.5, 1.0 - score_std * 2)
 
 # Data quality: -0.1 per missing field among current_price, volatility, rsi
 data_quality = 1.0
-missing_fields = sum(
-    1 for field in ["current_price", "volatility", "rsi"]
-    if field not in data or data[field] is None
-)
+missing_fields = sum(1 for field in ["current_price", "volatility", "rsi"] if field not in data or data[field] is None)
 data_quality -= missing_fields * 0.1
 
 confidence_level = min(1.0, max(0.3, consistency_confidence * data_quality))

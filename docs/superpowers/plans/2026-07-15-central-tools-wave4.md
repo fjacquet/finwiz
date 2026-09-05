@@ -41,8 +41,8 @@
 ```python
 from crewai_custom_tools.core.rate_limiter import get_rate_limiter
 
-await asyncio.to_thread(get_rate_limiter().acquire, "YahooFinance")   # coordinator
-await asyncio.to_thread(get_rate_limiter().acquire, "AlphaVantage")   # prefetcher
+await asyncio.to_thread(get_rate_limiter().acquire, "YahooFinance")  # coordinator
+await asyncio.to_thread(get_rate_limiter().acquire, "AlphaVantage")  # prefetcher
 ```
 
 Central provider strings: "YahooFinance", "AlphaVantage" (registry-backed, bounded by CREWAI_TOOLS_RATE_LIMIT_MAX_WAIT). Premium-tier env vars (`ALPHA_VANTAGE_PREMIUM`, `TWELVE_DATA_PREMIUM`) are already honored by central — finwiz loses no behavior. Any RateLimiter attribute the coordinator exposes (`orchestrator.rate_limiter` — a perf test asserts non-None) must be adapted or the assertion updated (read `test_holding_analyzer_orchestrator_performance.py:55`).

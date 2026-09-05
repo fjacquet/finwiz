@@ -158,12 +158,7 @@ else:
 The system automatically determines the optimization mode based on configuration:
 
 ```python
-def _determine_optimization_mode(
-    self,
-    use_mini: bool,
-    minimal_tools: bool,
-    ai_summary: bool
-) -> OptimizationMode:
+def _determine_optimization_mode(self, use_mini: bool, minimal_tools: bool, ai_summary: bool) -> OptimizationMode:
     """Determine optimization mode based on configuration."""
     if use_mini and minimal_tools and not ai_summary:
         return OptimizationMode.MAXIMUM_SPEED
@@ -184,11 +179,11 @@ The system tracks comprehensive performance metrics:
 class PerformanceMetrics:
     """Performance metrics tracking."""
 
-    execution_time: float = 0.0      # Total execution time
-    llm_call_count: int = 0          # Number of LLM API calls
-    api_call_count: int = 0          # Number of external API calls
-    cost_estimate: float = 0.0       # Estimated cost in USD
-    ticker: str = ""                 # Analyzed ticker
+    execution_time: float = 0.0  # Total execution time
+    llm_call_count: int = 0  # Number of LLM API calls
+    api_call_count: int = 0  # Number of external API calls
+    cost_estimate: float = 0.0  # Estimated cost in USD
+    ticker: str = ""  # Analyzed ticker
     mode: OptimizationMode = OptimizationMode.BASELINE
 ```
 
@@ -347,29 +342,29 @@ def configure_crew_for_mode(mode: OptimizationMode) -> Dict[str, Any]:
 
     if mode == OptimizationMode.MAXIMUM_SPEED:
         return {
-            "reasoning": False,        # Disable reasoning for speed
-            "planning": False,         # Disable planning for speed
-            "allow_delegation": False, # Disable delegation for speed
-            "max_rpm": 30,            # Higher rate limit
-            "llm": "gpt-4o-mini"       # Faster, cheaper model
+            "reasoning": False,  # Disable reasoning for speed
+            "planning": False,  # Disable planning for speed
+            "allow_delegation": False,  # Disable delegation for speed
+            "max_rpm": 30,  # Higher rate limit
+            "llm": "gpt-4o-mini",  # Faster, cheaper model
         }
 
     elif mode == OptimizationMode.BALANCED:
         return {
-            "reasoning": True,         # Enable reasoning for quality
-            "planning": False,         # Disable planning for speed
-            "allow_delegation": False, # Disable delegation for speed
-            "max_rpm": 20,            # Standard rate limit
-            "llm": "gpt-4o-mini"       # Balanced model
+            "reasoning": True,  # Enable reasoning for quality
+            "planning": False,  # Disable planning for speed
+            "allow_delegation": False,  # Disable delegation for speed
+            "max_rpm": 20,  # Standard rate limit
+            "llm": "gpt-4o-mini",  # Balanced model
         }
 
     else:  # BASELINE
         return {
-            "reasoning": True,         # Full reasoning enabled
-            "planning": True,          # Full planning enabled
+            "reasoning": True,  # Full reasoning enabled
+            "planning": True,  # Full planning enabled
             "allow_delegation": True,  # Full delegation enabled
-            "max_rpm": 15,            # Conservative rate limit
-            "llm": "gpt-4"            # Highest quality model
+            "max_rpm": 15,  # Conservative rate limit
+            "llm": "gpt-4",  # Highest quality model
         }
 ```
 
@@ -464,27 +459,15 @@ def optimize_for_portfolio_size(portfolio_size: int) -> OptimizationConfig:
 
     if portfolio_size <= 5:
         # Small portfolio - use baseline for quality
-        return OptimizationConfig(
-            mode=OptimizationMode.BASELINE,
-            deep_analysis_batch_size=1,
-            risk_assessment_use_mini=False
-        )
+        return OptimizationConfig(mode=OptimizationMode.BASELINE, deep_analysis_batch_size=1, risk_assessment_use_mini=False)
 
     elif portfolio_size <= 20:
         # Medium portfolio - use balanced approach
-        return OptimizationConfig(
-            mode=OptimizationMode.BALANCED,
-            deep_analysis_batch_size=3,
-            deep_analysis_ai_summary=True
-        )
+        return OptimizationConfig(mode=OptimizationMode.BALANCED, deep_analysis_batch_size=3, deep_analysis_ai_summary=True)
 
     else:
         # Large portfolio - use maximum speed
-        return OptimizationConfig(
-            mode=OptimizationMode.MAXIMUM_SPEED,
-            deep_analysis_batch_size=min(8, portfolio_size // 8),
-            deep_analysis_ai_summary=False
-        )
+        return OptimizationConfig(mode=OptimizationMode.MAXIMUM_SPEED, deep_analysis_batch_size=min(8, portfolio_size // 8), deep_analysis_ai_summary=False)
 ```
 
 ### Time-Based Optimization
@@ -497,8 +480,8 @@ def optimize_for_time_constraint(max_time_minutes: int, portfolio_size: int) -> 
 
     estimated_time = {
         OptimizationMode.MAXIMUM_SPEED: portfolio_size * 0.5,  # 30s per ticker
-        OptimizationMode.BALANCED: portfolio_size * 0.75,      # 45s per ticker
-        OptimizationMode.BASELINE: portfolio_size * 8.0        # 8 min per ticker
+        OptimizationMode.BALANCED: portfolio_size * 0.75,  # 45s per ticker
+        OptimizationMode.BASELINE: portfolio_size * 8.0,  # 8 min per ticker
     }
 
     # Choose fastest mode that fits time constraint
@@ -507,10 +490,7 @@ def optimize_for_time_constraint(max_time_minutes: int, portfolio_size: int) -> 
             return OptimizationConfig(mode=mode)
 
     # If no mode fits, use maximum speed with larger batches
-    return OptimizationConfig(
-        mode=OptimizationMode.MAXIMUM_SPEED,
-        deep_analysis_batch_size=min(15, portfolio_size // 4)
-    )
+    return OptimizationConfig(mode=OptimizationMode.MAXIMUM_SPEED, deep_analysis_batch_size=min(15, portfolio_size // 4))
 ```
 
 ### Cost-Based Optimization
@@ -522,9 +502,9 @@ def optimize_for_budget(max_cost_usd: float, portfolio_size: int) -> Optimizatio
     """Optimize configuration for budget constraints."""
 
     estimated_cost = {
-        OptimizationMode.MAXIMUM_SPEED: 0.0,                    # $0 per ticker
-        OptimizationMode.BALANCED: portfolio_size * 0.01,       # $0.01 per ticker
-        OptimizationMode.BASELINE: portfolio_size * 0.075       # $0.075 per ticker
+        OptimizationMode.MAXIMUM_SPEED: 0.0,  # $0 per ticker
+        OptimizationMode.BALANCED: portfolio_size * 0.01,  # $0.01 per ticker
+        OptimizationMode.BASELINE: portfolio_size * 0.075,  # $0.075 per ticker
     }
 
     # Choose most comprehensive mode within budget
@@ -567,6 +547,7 @@ os.environ["ENABLE_ALPHA_VANTAGE"] = "false"  # Disable for speed
 ```python
 # Diagnosis
 import psutil
+
 memory_usage = psutil.virtual_memory().percent
 
 if memory_usage > 80:
@@ -586,9 +567,9 @@ logger.info(f"Reduced batch size from {current_batch_size} to {new_batch_size}")
 # fallback; on failure run_batch_prefetch just returns {} and logs the
 # exception, then deep analysis continues without the prefetched cache)
 import subprocess
-result = subprocess.run(["grep", "Batch prefetch failed", "logs/finwiz.log"],
-                       capture_output=True, text=True)
-failures = result.stdout.strip().split('\n')
+
+result = subprocess.run(["grep", "Batch prefetch failed", "logs/finwiz.log"], capture_output=True, text=True)
+failures = result.stdout.strip().split("\n")
 
 for failure in failures[-5:]:  # Last 5 failures
     logger.info(f"Recent failure: {failure}")
@@ -617,9 +598,9 @@ os.environ["DEEP_ANALYSIS_AI_SUMMARY"] = "false"
 ```python
 # Diagnosis: Check for ticker-specific failures
 import subprocess
-result = subprocess.run(["grep", "Failed to process.*data for", "logs/finwiz.log"],
-                       capture_output=True, text=True)
-failed_tickers = result.stdout.strip().split('\n')
+
+result = subprocess.run(["grep", "Failed to process.*data for", "logs/finwiz.log"], capture_output=True, text=True)
+failed_tickers = result.stdout.strip().split("\n")
 
 # Analyze failure patterns
 ticker_failures = {}

@@ -18,17 +18,13 @@ For quality companies with exceptional fundamentals, adaptive weights (50%/25%/2
 
 ```python
 # Standard weighting (most companies)
-composite_score = (
-    0.40 * fundamental_score +
-    0.30 * technical_score +
-    0.30 * risk_score
-)
+composite_score = 0.40 * fundamental_score + 0.30 * technical_score + 0.30 * risk_score
 
 # Adaptive weighting (quality companies)
 composite_score = (
-    0.50 * fundamental_score +  # +10% emphasis
-    0.25 * technical_score +    # -5% reduction
-    0.25 * risk_score           # -5% reduction
+    0.50 * fundamental_score  # +10% emphasis
+    + 0.25 * technical_score  # -5% reduction
+    + 0.25 * risk_score  # -5% reduction
 )
 ```
 
@@ -68,12 +64,7 @@ Evaluates long-term financial health and business quality.
 ### Fundamental Score Calculation
 
 ```python
-fundamental_score = (
-    0.40 * roe_score +
-    0.30 * debt_score +
-    0.20 * growth_score +
-    0.10 * margin_score
-)
+fundamental_score = 0.40 * roe_score + 0.30 * debt_score + 0.20 * growth_score + 0.10 * margin_score
 ```
 
 ### Key Principles
@@ -98,11 +89,7 @@ Evaluates price momentum, trends, and market sentiment.
 ### Technical Score Calculation
 
 ```python
-technical_score = (
-    0.40 * rsi_score +
-    0.40 * trend_score +
-    0.20 * momentum_score
-)
+technical_score = 0.40 * rsi_score + 0.40 * trend_score + 0.20 * momentum_score
 ```
 
 ### Trend Classification
@@ -127,11 +114,7 @@ Evaluates volatility, downside risk, and market sensitivity.
 ### Risk Score Calculation
 
 ```python
-risk_score = (
-    0.50 * volatility_score +
-    0.30 * drawdown_score +
-    0.20 * beta_score
-)
+risk_score = 0.50 * volatility_score + 0.30 * drawdown_score + 0.20 * beta_score
 ```
 
 ### Key Adjustments
@@ -197,7 +180,7 @@ All metrics undergo validation before scoring:
 
 ```python
 financials = ticker_data.financials
-revenues = financials.loc['Total Revenue'].sort_index(ascending=False)
+revenues = financials.loc["Total Revenue"].sort_index(ascending=False)
 latest = revenues.iloc[0]
 previous = revenues.iloc[1]
 revenue_growth = (latest - previous) / previous

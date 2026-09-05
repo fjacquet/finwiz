@@ -28,10 +28,7 @@ The Portfolio Deep Analyzer (`portfolio_deep_analyzer.py`) replaces AI-based Dee
 ```python
 from finwiz.scoring.portfolio_deep_analyzer import analyze_portfolio_with_python
 
-results = analyze_portfolio_with_python(
-    holdings=portfolio_holdings,
-    session_id="analysis_session_123"
-)
+results = analyze_portfolio_with_python(holdings=portfolio_holdings, session_id="analysis_session_123")
 
 # Access results
 print(f"Successful: {results['successful_analyses']}")
@@ -75,9 +72,7 @@ output/crypto/*.json ─┘
 ```python
 from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
-discovery_results = integrate_aplus_discovery_with_deep_analysis(
-    session_id="analysis_session_123"
-)
+discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id="analysis_session_123")
 
 if discovery_results["has_a_plus_analysis"]:
     print(f"Found {discovery_results['total_opportunities_found']} opportunities")
@@ -133,9 +128,7 @@ The Backtesting Pipeline Connector (`backtesting_pipeline_connector.py`) automat
 ```python
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 
-backtesting_results = connect_backtesting_to_discovery_results(
-    session_id="analysis_session_123"
-)
+backtesting_results = connect_backtesting_to_discovery_results(session_id="analysis_session_123")
 
 if backtesting_results["backtesting_executed"]:
     print(f"Backtested {backtesting_results['candidates_count']} candidates")
@@ -210,11 +203,7 @@ The Python Report Generator (`python_report_generator.py`) generates comprehensi
 ```python
 from finwiz.reporting.python_report_generator import generate_python_report
 
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id="analysis_session_123"
-)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id="analysis_session_123")
 
 print(f"Report generated: {report_path}")
 ```

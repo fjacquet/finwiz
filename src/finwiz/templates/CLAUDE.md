@@ -42,7 +42,7 @@ Templates are rendered through a shared Jinja2 environment — there is no
 ```python
 from finwiz.reporting.base_report_generator import create_report_jinja_env
 
-env = create_report_jinja_env(template_dir)   # autoescape=True, trim/lstrip_blocks
+env = create_report_jinja_env(template_dir)  # autoescape=True, trim/lstrip_blocks
 template = env.get_template("portfolio_review.html")
 
 html = template.render(

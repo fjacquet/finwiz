@@ -166,6 +166,7 @@ Optimize for different market regimes:
 ```python
 import numpy as np
 
+
 def calculate_sample_covariance(returns):
     """Calculate sample covariance matrix."""
     return np.cov(returns.T)
@@ -216,6 +217,7 @@ def capm_expected_returns(returns, market_returns, risk_free_rate):
 ```python
 import cvxpy as cp
 
+
 def mean_variance_optimization(mu, Sigma, risk_aversion):
     """Solve mean-variance optimization problem."""
     n = len(mu)
@@ -227,7 +229,7 @@ def mean_variance_optimization(mu, Sigma, risk_aversion):
     # Constraints
     constraints = [
         cp.sum(w) == 1,  # Weights sum to 1
-        w >= 0           # Long-only
+        w >= 0,  # Long-only
     ]
 
     # Solve
@@ -287,8 +289,8 @@ def equal_risk_contribution(cov_matrix):
 
     # Constraints
     constraints = [
-        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},  # Sum to 1
-        {'type': 'ineq', 'fun': lambda w: w}             # Non-negative
+        {"type": "eq", "fun": lambda w: np.sum(w) - 1},  # Sum to 1
+        {"type": "ineq", "fun": lambda w: w},  # Non-negative
     ]
 
     # Initial guess
@@ -329,11 +331,7 @@ def factor_attribution(portfolio_returns, factor_returns, factor_loadings):
     # Specific return (alpha)
     specific_return = portfolio_returns - factor_contrib
 
-    return {
-        'factor_contributions': factor_contrib,
-        'specific_return': specific_return,
-        'total_return': portfolio_returns
-    }
+    return {"factor_contributions": factor_contrib, "specific_return": specific_return, "total_return": portfolio_returns}
 ```
 
 ## Backtesting Framework
@@ -348,20 +346,16 @@ def walk_forward_backtest(returns, optimization_func, window=252, rebalance_freq
 
     for t in range(window, len(returns), rebalance_freq):
         # Training data
-        train_data = returns.iloc[t-window:t]
+        train_data = returns.iloc[t - window : t]
 
         # Optimize portfolio
         weights = optimization_func(train_data)
 
         # Out-of-sample performance
-        oos_returns = returns.iloc[t:t+rebalance_freq]
+        oos_returns = returns.iloc[t : t + rebalance_freq]
         portfolio_returns = (oos_returns * weights).sum(axis=1)
 
-        results.append({
-            'date': returns.index[t],
-            'weights': weights,
-            'returns': portfolio_returns
-        })
+        results.append({"date": returns.index[t], "weights": weights, "returns": portfolio_returns})
 
     return results
 ```
@@ -384,12 +378,12 @@ def calculate_performance_metrics(returns):
     max_drawdown = drawdown.min()
 
     return {
-        'total_return': total_return,
-        'annualized_return': annualized_return,
-        'volatility': volatility,
-        'sharpe_ratio': sharpe_ratio,
-        'max_drawdown': max_drawdown,
-        'calmar_ratio': annualized_return / abs(max_drawdown)
+        "total_return": total_return,
+        "annualized_return": annualized_return,
+        "volatility": volatility,
+        "sharpe_ratio": sharpe_ratio,
+        "max_drawdown": max_drawdown,
+        "calmar_ratio": annualized_return / abs(max_drawdown),
     }
 ```
 

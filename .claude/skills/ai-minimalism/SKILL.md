@@ -70,7 +70,7 @@ def generate_html_report(self) -> Task:
 ```python
 def generate_html_report(json_data: dict) -> str:
     """Generate HTML report using Jinja2 template."""
-    template = jinja_env.get_template('report.html')
+    template = jinja_env.get_template("report.html")
     return template.render(data=json_data)
     # CORRECT: Fast, cheap, testable
 ```

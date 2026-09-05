@@ -219,10 +219,10 @@ All schemas use strict validation:
 ```python
 class BaseSchema(BaseModel):
     model_config = ConfigDict(
-        extra='forbid',           # Reject unknown fields
-        str_strip_whitespace=True, # Strip whitespace
+        extra="forbid",  # Reject unknown fields
+        str_strip_whitespace=True,  # Strip whitespace
         validate_assignment=True,  # Validate on assignment
-        use_enum_values=True      # Use enum values
+        use_enum_values=True,  # Use enum values
     )
 ```
 
@@ -234,17 +234,17 @@ Schemas include custom validation logic:
 class TenKInsight(BaseModel):
     ticker: str = Field(..., description="Stock ticker symbol")
 
-    @field_validator('ticker')
+    @field_validator("ticker")
     @classmethod
     def validate_ticker_format(cls, v: str) -> str:
-        if not re.match(r'^[A-Z]{1,5}$', v):
-            raise ValueError('Ticker must be 1-5 uppercase letters')
+        if not re.match(r"^[A-Z]{1,5}$", v):
+            raise ValueError("Ticker must be 1-5 uppercase letters")
         return v.upper()
 
-    @model_validator(mode='after')
-    def validate_score_consistency(self) -> 'TenKInsight':
-        if self.composite_score > 0.95 and self.grade != 'A+':
-            raise ValueError('High composite score must have A+ grade')
+    @model_validator(mode="after")
+    def validate_score_consistency(self) -> "TenKInsight":
+        if self.composite_score > 0.95 and self.grade != "A+":
+            raise ValueError("High composite score must have A+ grade")
         return self
 ```
 
@@ -261,7 +261,7 @@ data = {
     "rationale": "Strong fundamentals with excellent growth prospects and technical momentum",
     "risk_score": 3,
     "analysis_date": "2025-10-26T10:30:00Z",
-    "data_sources": ["SEC EDGAR", "Yahoo Finance"]
+    "data_sources": ["SEC EDGAR", "Yahoo Finance"],
 }
 
 # Create validated instance
@@ -294,9 +294,9 @@ except ValidationError as e:
 @task
 def analysis_task(self) -> Task:
     return Task(
-        config=self.tasks_config['analysis_task'],
+        config=self.tasks_config["analysis_task"],
         output_pydantic=TenKInsight,  # Automatic validation
-        output_json=True
+        output_json=True,
     )
 ```
 
@@ -319,7 +319,7 @@ insight_dict = insight.model_dump()
 # Version-aware schema loading
 def load_analysis_result(data: dict) -> TenKInsight:
     # Handle legacy format
-    if 'version' not in data or data['version'] < '2.0':
+    if "version" not in data or data["version"] < "2.0":
         data = migrate_legacy_format(data)
 
     return TenKInsight.model_validate(data)

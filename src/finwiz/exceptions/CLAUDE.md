@@ -35,6 +35,7 @@ from finwiz.exceptions import (
 # Or from specific module
 from finwiz.exceptions.orchestrator import PortfolioRebalancingError
 
+
 def rebalance_portfolio(symbols: list[str]) -> dict:
     try:
         prices = fetch_prices(symbols)

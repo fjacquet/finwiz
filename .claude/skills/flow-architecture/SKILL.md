@@ -31,18 +31,22 @@ The original flow had discovery crews running BEFORE portfolio analysis. This is
 def validate_data_integration(self):
     pass
 
+
 @listen("validate_data_integration")
 def check_portfolio(self):  # Portfolio analysis FIRST
     pass
+
 
 @listen("analyze_and_update_portfolio")
 def check_crypto(self):  # Discovery AFTER
     pass
 
+
 # ❌ WRONG: Discovery before portfolio analysis
 @listen("validate_data_integration")
 def check_crypto(self):  # Discovery crew
     pass
+
 
 @listen(and_("check_crypto", "check_stock", "check_etf"))
 def check_portfolio(self):  # Portfolio analysis
@@ -261,7 +265,7 @@ def investment_reporter(self) -> Agent:
     return Agent(
         config=self.agents_config["investment_reporter"],
         tools=[],  # MUST be empty - enforced by decorator
-        verbose=True
+        verbose=True,
     )
 ```
 

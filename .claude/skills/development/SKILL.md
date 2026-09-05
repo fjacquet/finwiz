@@ -63,9 +63,10 @@ def calculate_sharpe_ratio(returns: list[float], risk_free_rate: float) -> float
     # Implementation with clear logic...
     return sharpe_ratio
 
+
 # ❌ BAD: Unclear names, no error handling
 def calc(r, rf):
-    return (sum(r)/len(r) - rf) / (sum([(x-sum(r)/len(r))**2 for x in r])/len(r))**0.5
+    return (sum(r) / len(r) - rf) / (sum([(x - sum(r) / len(r)) ** 2 for x in r]) / len(r)) ** 0.5
 ```
 
 ## Version Control Standards

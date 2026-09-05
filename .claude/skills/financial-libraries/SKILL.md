@@ -114,7 +114,8 @@ volatility = np.std(returns) * np.sqrt(252)
 
 # FUTURE (Empyrical for calculation)
 from empyrical import annual_volatility
-volatility = annual_volatility(returns, period='daily')
+
+volatility = annual_volatility(returns, period="daily")
 
 # KEEP (custom scoring threshold)
 if volatility <= 0.10:

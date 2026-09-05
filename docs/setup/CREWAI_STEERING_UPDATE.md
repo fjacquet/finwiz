@@ -58,6 +58,7 @@ class MyFlowState(BaseModel):
     counter: int = 0
     # Note: 'id' field automatically added
 
+
 class MyFlow(Flow[MyFlowState]):
     @start()
     def first_method(self):
@@ -103,9 +104,11 @@ class PersistentFlow(Flow[MyState]):
 def init(self):
     return {"initialized": True}
 
+
 @start("init")  # Conditional: after init OR external trigger
 def maybe_begin(self):
     return {"started": True}
+
 
 @listen(and_(init, maybe_begin))  # Wait for BOTH
 def proceed(self):
@@ -123,15 +126,12 @@ def proceed(self):
 **Example**:
 
 ```python
-research_task = Task(
-    description="Research quantum computing",
-    agent=researcher
-)
+research_task = Task(description="Research quantum computing", agent=researcher)
 
 writing_task = Task(
     description="Write article based on research",
     agent=writer,
-    context=[research_task]  # Gets research output
+    context=[research_task],  # Gets research output
 )
 ```
 
@@ -149,19 +149,19 @@ writing_task = Task(
 ```python
 @CrewBase
 class ResearchCrew:
-    agents_config = 'config/agents.yaml'
-    tasks_config = 'config/tasks.yaml'
+    agents_config = "config/agents.yaml"
+    tasks_config = "config/tasks.yaml"
 
     @agent
     def researcher(self) -> Agent:
-        return Agent(config=self.agents_config['researcher'])
+        return Agent(config=self.agents_config["researcher"])
 
     @crew
     def crew(self) -> Crew:
         return Crew(
             agents=self.agents,  # Auto-collected
-            tasks=self.tasks,    # Auto-collected
-            process=Process.sequential
+            tasks=self.tasks,  # Auto-collected
+            process=Process.sequential,
         )
 ```
 
@@ -183,9 +183,7 @@ class PoemFlow(Flow[PoemState]):
         count = data["count"]
 
         # Execute crew
-        result = PoemCrew().crew().kickoff(
-            inputs={"sentence_count": count}
-        )
+        result = PoemCrew().crew().kickoff(inputs={"sentence_count": count})
 
         # Store in state
         self.state.poem = result.raw

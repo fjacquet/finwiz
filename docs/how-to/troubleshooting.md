@@ -176,6 +176,7 @@ else:
 discovery_date_str = data.get("analysis_date") or data.get("discovery_date")
 if discovery_date_str and isinstance(discovery_date_str, str):
     from dateutil import parser
+
     discovery_date = parser.parse(discovery_date_str)
 ```
 
@@ -210,6 +211,7 @@ class StockCrewExport(CrewExportBase):
     risk_assessment: RiskAssessmentStandardized  # Nested object
     # RiskAssessmentStandardized.score is 0-5 scale, not 0-10 (see
     # src/finwiz/schemas/common.py:41 — there is no `risk_score` attribute)
+
 
 # Python Schema (PythonDeepAnalysisResult)
 class PythonDeepAnalysisResult(BaseModel):
@@ -319,22 +321,10 @@ class FinwizState(BaseModel):
     # ... existing fields ...
 
     # Error tracking
-    errors: list[str] = Field(
-        default_factory=list,
-        description="List of error messages from flow execution"
-    )
-    failed_holdings: list[str] = Field(
-        default_factory=list,
-        description="List of tickers that failed analysis"
-    )
-    retry_counts: dict[str, int] = Field(
-        default_factory=dict,
-        description="Retry count per ticker"
-    )
-    timeout_holdings: list[str] = Field(
-        default_factory=list,
-        description="List of tickers that timed out"
-    )
+    errors: list[str] = Field(default_factory=list, description="List of error messages from flow execution")
+    failed_holdings: list[str] = Field(default_factory=list, description="List of tickers that failed analysis")
+    retry_counts: dict[str, int] = Field(default_factory=dict, description="Retry count per ticker")
+    timeout_holdings: list[str] = Field(default_factory=list, description="List of tickers that timed out")
 ```
 
 **Usage in Flow**:

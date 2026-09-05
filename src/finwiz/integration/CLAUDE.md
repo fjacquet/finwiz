@@ -43,9 +43,7 @@ whole-crew artifacts — there is no per-ticker accessor.
 from finwiz.integration import CrewDataIntegrationManager
 
 manager = CrewDataIntegrationManager(output_dir=Path("output"))
-data = manager.get_crew_data_with_freshness_check(
-    crew_name="stock_crew", max_age_hours=24, warn_on_stale=True
-)
+data = manager.get_crew_data_with_freshness_check(crew_name="stock_crew", max_age_hours=24, warn_on_stale=True)
 ```
 
 For a plain read without the freshness check, use `CrewDataAccessor`:

@@ -32,12 +32,8 @@ holdings = [
         grade_description="Grade B - Good quality stock",
         recommended_action="HOLD",
         rationale_bullets=["Strong fundamentals", "Market leader"],
-        risk=RiskAssessmentStandardized(
-            score=2.5,
-            level="Medium",
-            risk_factors=["Market volatility", "Competition"]
-        ),
-        alternatives=[]
+        risk=RiskAssessmentStandardized(score=2.5, level="Medium", risk_factors=["Market volatility", "Competition"]),
+        alternatives=[],
     ),
     # Add more holdings...
 ]
@@ -55,10 +51,7 @@ import time
 session_id = f"analysis_{int(time.time())}"
 
 # Run deep analysis
-analysis_results = analyze_portfolio_with_python(
-    holdings=holdings,
-    session_id=session_id
-)
+analysis_results = analyze_portfolio_with_python(holdings=holdings, session_id=session_id)
 
 # Check results
 print(f"✅ Analyzed {analysis_results['successful_analyses']} holdings")
@@ -74,9 +67,7 @@ Identify A+ and A grade holdings:
 from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
 # Run A+ discovery
-discovery_results = integrate_aplus_discovery_with_deep_analysis(
-    session_id=session_id
-)
+discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 
 # Check results
 if discovery_results["has_a_plus_analysis"]:
@@ -95,17 +86,13 @@ Run backtesting for A+ candidates:
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 
 # Run backtesting
-backtesting_results = connect_backtesting_to_discovery_results(
-    session_id=session_id
-)
+backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
 
 # Check results
 if backtesting_results["backtesting_executed"]:
     print(f"🔬 Backtested {backtesting_results['candidates_count']} candidates")
     for result in backtesting_results["results"]:
-        print(f"  {result['ticker']}: {result['annual_return']:.1%} return, "
-              f"Sharpe {result['sharpe_ratio']:.2f}, "
-              f"Max DD {result['max_drawdown']:.1%}")
+        print(f"  {result['ticker']}: {result['annual_return']:.1%} return, Sharpe {result['sharpe_ratio']:.2f}, Max DD {result['max_drawdown']:.1%}")
 else:
     print(f"ℹ️ Backtesting not executed: {backtesting_results.get('reason', 'Unknown')}")
 ```
@@ -120,18 +107,10 @@ from finwiz.schemas.portfolio_review import PortfolioReview
 from datetime import datetime
 
 # Create portfolio review
-portfolio_review = PortfolioReview(
-    as_of=datetime.now(),
-    base_currency="USD",
-    holdings=holdings
-)
+portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=holdings)
 
 # Generate report
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id=session_id
-)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 
 print(f"📊 Report generated: {report_path}")
 ```
@@ -164,7 +143,7 @@ holdings = [
         recommended_action="BUY",
         rationale_bullets=["AI market leader", "Strong growth"],
         risk=RiskAssessmentStandardized(score=2.8, level="Medium", risk_factors=["Tech volatility"]),
-        alternatives=[]
+        alternatives=[],
     ),
     HoldingDecision(
         ticker="TSLA",
@@ -178,7 +157,7 @@ holdings = [
         recommended_action="BUY",
         rationale_bullets=["EV market leader", "Innovation"],
         risk=RiskAssessmentStandardized(score=3.2, level="High", risk_factors=["Volatility"]),
-        alternatives=[]
+        alternatives=[],
     ),
 ]
 
@@ -191,25 +170,17 @@ print("=" * 60)
 
 # Deep Analysis
 print("\n1️⃣ Running deep analysis...")
-analysis_results = analyze_portfolio_with_python(
-    holdings=holdings,
-    session_id=session_id
-)
-print(f"   ✅ Analyzed {analysis_results['successful_analyses']} holdings in "
-      f"{analysis_results['performance_metrics']['total_execution_time_seconds']:.2f}s")
+analysis_results = analyze_portfolio_with_python(holdings=holdings, session_id=session_id)
+print(f"   ✅ Analyzed {analysis_results['successful_analyses']} holdings in {analysis_results['performance_metrics']['total_execution_time_seconds']:.2f}s")
 
 # A+ Discovery
 print("\n2️⃣ Running A+ discovery...")
-discovery_results = integrate_aplus_discovery_with_deep_analysis(
-    session_id=session_id
-)
+discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 print(f"   ✅ Found {discovery_results['total_opportunities_found']} A+ opportunities")
 
 # Backtesting
 print("\n3️⃣ Running backtesting...")
-backtesting_results = connect_backtesting_to_discovery_results(
-    session_id=session_id
-)
+backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
 if backtesting_results["backtesting_executed"]:
     print(f"   ✅ Backtested {backtesting_results['candidates_count']} candidates")
 else:
@@ -217,16 +188,8 @@ else:
 
 # Report Generation
 print("\n4️⃣ Generating report...")
-portfolio_review = PortfolioReview(
-    as_of=datetime.now(),
-    base_currency="USD",
-    holdings=holdings
-)
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id=session_id
-)
+portfolio_review = PortfolioReview(as_of=datetime.now(), base_currency="USD", holdings=holdings)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 print(f"   ✅ Report generated: {report_path}")
 
 print("\n" + "=" * 60)
@@ -265,10 +228,7 @@ logger = logging.getLogger(__name__)
 
 try:
     # Deep Analysis
-    analysis_results = analyze_portfolio_with_python(
-        holdings=holdings,
-        session_id=session_id
-    )
+    analysis_results = analyze_portfolio_with_python(holdings=holdings, session_id=session_id)
 
     if analysis_results["successful_analyses"] == 0:
         logger.warning("No holdings analyzed successfully")
@@ -277,11 +237,7 @@ try:
 except Exception as e:
     logger.error(f"Deep analysis failed: {e}", exc_info=True)
     # Implement fallback strategy
-    analysis_results = {
-        "successful_analyses": 0,
-        "failed_analyses": len(holdings),
-        "deep_analysis_results": {}
-    }
+    analysis_results = {"successful_analyses": 0, "failed_analyses": len(holdings), "deep_analysis_results": {}}
 
 # Continue with remaining pipeline steps...
 ```
@@ -292,22 +248,15 @@ Execute components conditionally:
 
 ```python
 # Always run deep analysis
-analysis_results = analyze_portfolio_with_python(
-    holdings=holdings,
-    session_id=session_id
-)
+analysis_results = analyze_portfolio_with_python(holdings=holdings, session_id=session_id)
 
 # Only run discovery if analysis succeeded
 if analysis_results["successful_analyses"] > 0:
-    discovery_results = integrate_aplus_discovery_with_deep_analysis(
-        session_id=session_id
-    )
+    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 
     # Only run backtesting if A+ opportunities found
     if discovery_results["has_a_plus_analysis"]:
-        backtesting_results = connect_backtesting_to_discovery_results(
-            session_id=session_id
-        )
+        backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
     else:
         print("ℹ️ No A+ opportunities - skipping backtesting")
         backtesting_results = {"backtesting_executed": False}
@@ -317,11 +266,7 @@ else:
     backtesting_results = {"backtesting_executed": False}
 
 # Always generate report (even with partial data)
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id=session_id
-)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 ```
 
 ### Performance Monitoring
@@ -417,6 +362,7 @@ Always use unique session IDs to avoid file conflicts:
 
 ```python
 import time
+
 session_id = f"analysis_{int(time.time())}"
 ```
 

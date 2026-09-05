@@ -62,6 +62,7 @@ The `QuantitativeAnalysisTool` is returning default values instead of real marke
 
    ```python
    import logging
+
    logging.basicConfig(level=logging.DEBUG)
 
    # Run analysis and check logs
@@ -138,10 +139,7 @@ discovery_results["total_opportunities_found"] == 0
 
    ```python
    # Look for A+ or A grades
-   aplus_count = sum(
-       1 for r in analysis_results["deep_analysis_results"].values()
-       if r.grade in ["A+", "A"]
-   )
+   aplus_count = sum(1 for r in analysis_results["deep_analysis_results"].values() if r.grade in ["A+", "A"])
    print(f"Found {aplus_count} A+/A grade holdings")
    ```
 
@@ -384,6 +382,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
    # Cache market data to avoid redundant API calls
    from functools import lru_cache
 
+
    @lru_cache(maxsize=1000)
    def get_cached_data(ticker, date):
        return fetch_market_data(ticker, date)
@@ -395,7 +394,7 @@ Analysis takes longer than expected (> 2 seconds per holding).
    # Process holdings in batches
    BATCH_SIZE = 10
    for i in range(0, len(holdings), BATCH_SIZE):
-       batch = holdings[i:i + BATCH_SIZE]
+       batch = holdings[i : i + BATCH_SIZE]
        process_batch(batch)
    ```
 
@@ -437,6 +436,7 @@ Memory usage increases significantly during analysis.
        for holding in holdings:
            yield analyze_holding(holding)
 
+
    # Process one at a time
    for result in analyze_holdings_generator(holdings):
        export_result(result)
@@ -459,10 +459,7 @@ Memory usage increases significantly during analysis.
 ```python
 import logging
 
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
 # Run analysis with debug logging
 results = analyze_portfolio_with_python(holdings, session_id)

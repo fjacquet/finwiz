@@ -68,11 +68,7 @@ The analysis pipeline follows functional programming principles with pure functi
 from finwiz.analysis import analyze_holding
 
 # Analyze a single holding
-result, enriched = analyze_holding(
-    ticker="AAPL",
-    asset_class="stock",
-    company_name="Apple Inc."
-)
+result, enriched = analyze_holding(ticker="AAPL", asset_class="stock", company_name="Apple Inc.")
 
 # result: DeepAnalysisResult for caching/state
 print(f"Grade: {result.grade}, Score: {result.composite_score:.2f}")
@@ -151,17 +147,17 @@ class DeepAnalysisResult(BaseModel):
     ticker: str
     asset_class: str
     crew_name: str
-    composite_score: float          # 0.0-1.0
-    grade: str                      # A+ to F
-    recommendation: str             # BUY, HOLD, SELL
+    composite_score: float  # 0.0-1.0
+    grade: str  # A+ to F
+    recommendation: str  # BUY, HOLD, SELL
     rationale: str
-    data_freshness_hours: float     # >= 0.0
-    confidence_level: float         # 0.0-1.0
+    data_freshness_hours: float  # >= 0.0
+    confidence_level: float  # 0.0-1.0
 
     # optional component scores
     fundamental_score: float | None  # 0.0-1.0
-    technical_score: float | None    # 0.0-1.0
-    risk_score: float | None         # 0.0-5.0  (note: 0-5, not 0-1)
+    technical_score: float | None  # 0.0-1.0
+    risk_score: float | None  # 0.0-5.0  (note: 0-5, not 0-1)
 ```
 
 ### EnrichedAnalysis (Pydantic)
@@ -171,8 +167,8 @@ Used for HTML report generation:
 ```python
 class EnrichedAnalysis(BaseModel):
     ticker: str
-    quantitative: QuantitativeAnalysis   # Python-calculated
-    qualitative: QualitativeInsights     # AI-generated
+    quantitative: QuantitativeAnalysis  # Python-calculated
+    qualitative: QualitativeInsights  # AI-generated
     final_grade: str
     final_score: float
     final_recommendation: str

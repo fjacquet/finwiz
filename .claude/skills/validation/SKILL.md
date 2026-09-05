@@ -39,26 +39,27 @@ Configure via `VALIDATION_STRICTNESS` environment variable:
 from pydantic import BaseModel, Field, field_validator
 from typing import Literal
 
+
 class StockAnalysis(BaseModel):
     """Stock analysis with strict validation."""
 
     model_config = {
-        "extra": "forbid",           # Reject unknown fields
-        "str_strip_whitespace": True, # Auto-clean strings
+        "extra": "forbid",  # Reject unknown fields
+        "str_strip_whitespace": True,  # Auto-clean strings
         "validate_assignment": True,  # Validate on assignment
-        "use_enum_values": True      # Use enum values, not names
+        "use_enum_values": True,  # Use enum values, not names
     }
 
-    ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$', description="Stock ticker symbol")
+    ticker: str = Field(..., pattern=r"^[A-Z]{1,5}$", description="Stock ticker symbol")
     recommendation: Literal["BUY", "HOLD", "SELL"] = Field(..., description="Investment recommendation")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence level 0-1")
     risk_score: int = Field(..., ge=1, le=10, description="Risk score 1-10")
 
-    @field_validator('ticker')
+    @field_validator("ticker")
     @classmethod
     def validate_ticker(cls, v: str) -> str:
         if not v.isalpha():
-            raise ValueError('Ticker must contain only letters')
+            raise ValueError("Ticker must contain only letters")
         return v.upper()
 ```
 
@@ -68,19 +69,15 @@ class StockAnalysis(BaseModel):
 class TickerInput(BaseModel):
     """Validate ticker input with strict rules."""
 
-    model_config = {
-        "str_strip_whitespace": True,
-        "str_upper": True,
-        "extra": "forbid"
-    }
+    model_config = {"str_strip_whitespace": True, "str_upper": True, "extra": "forbid"}
 
-    symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
+    symbol: str = Field(..., pattern=r"^[A-Z]{1,5}$")
 
-    @field_validator('symbol')
+    @field_validator("symbol")
     @classmethod
     def validate_ticker(cls, v: str) -> str:
         if not v.isalpha():
-            raise ValueError('Ticker must contain only letters')
+            raise ValueError("Ticker must contain only letters")
         return v.upper()
 ```
 
@@ -219,16 +216,17 @@ class DataQuality(BaseModel):
 ```python
 from datetime import datetime, timedelta
 
+
 class DataFreshness(BaseModel):
     """Validate data timestamps and freshness."""
 
     timestamp: datetime = Field(..., description="Data timestamp")
 
-    @field_validator('timestamp')
+    @field_validator("timestamp")
     @classmethod
     def validate_freshness(cls, v: datetime) -> datetime:
         if datetime.now() - v > timedelta(days=30):
-            raise ValueError('Data is stale (>30 days old)')
+            raise ValueError("Data is stale (>30 days old)")
         return v
 ```
 
@@ -243,12 +241,12 @@ class DataSources(BaseModel):
     urls: list[str] = Field(default=[], description="Source URLs where applicable")
     limitations: list[str] = Field(default=[], description="Data limitations")
 
-    @field_validator('as_of_dates')
+    @field_validator("as_of_dates")
     @classmethod
     def validate_dates_match_sources(cls, v, info):
-        sources = info.data.get('sources', [])
+        sources = info.data.get("sources", [])
         if len(v) != len(sources):
-            raise ValueError('Must have as-of date for each source')
+            raise ValueError("Must have as-of date for each source")
         return v
 ```
 
@@ -272,13 +270,7 @@ class ValidationError(BaseModel):
 def handle_validation_error(error: ValidationError) -> dict:
     """Handle validation errors with clear messaging."""
 
-    response = {
-        "error": True,
-        "field": error.field_path,
-        "message": error.message,
-        "suggestion": get_remediation_suggestion(error.error_type),
-        "context": error.context
-    }
+    response = {"error": True, "field": error.field_path, "message": error.message, "suggestion": get_remediation_suggestion(error.error_type), "context": error.context}
 
     # Log for debugging
     logger.error(f"Validation failed: {error.field_path} - {error.message}")
@@ -342,8 +334,8 @@ def analysis_task(self) -> Task:
         description="Analyze stock with validation",
         expected_output="Validated StockAnalysis object",
         output_pydantic=StockAnalysis,  # Automatic validation
-        output_json=True,               # Machine-readable format
-        agent=self.analyst()
+        output_json=True,  # Machine-readable format
+        agent=self.analyst(),
     )
 ```
 

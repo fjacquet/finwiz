@@ -276,10 +276,7 @@ from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 crew = DeepAnalysisCrew()
 
 # Execute analysis
-result = crew.crew().kickoff(inputs={
-    "ticker": "AAPL",
-    "asset_class": "stock"
-})
+result = crew.crew().kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
 
 # Access results
 print(f"Grade: {result.grade}")
@@ -289,19 +286,13 @@ print(f"Composite Score: {result.composite_score}")
 **Analyze an ETF:**
 
 ```python
-result = crew.crew().kickoff(inputs={
-    "ticker": "VOO",
-    "asset_class": "etf"
-})
+result = crew.crew().kickoff(inputs={"ticker": "VOO", "asset_class": "etf"})
 ```
 
 **Analyze Crypto:**
 
 ```python
-result = crew.crew().kickoff(inputs={
-    "ticker": "BTC",
-    "asset_class": "crypto"
-})
+result = crew.crew().kickoff(inputs={"ticker": "BTC", "asset_class": "crypto"})
 ```
 
 ### Configuration
@@ -903,7 +894,7 @@ export FINWIZ_FLOW_TIMEOUT=14400
 ```python
 from finwiz.config.resilience_config import get_resilience_config
 
-config = get_resilience_config()   # singleton, built from the environment
+config = get_resilience_config()  # singleton, built from the environment
 ```
 
 If you do construct one directly, all 13 fields are required: `max_retries`,
@@ -1196,8 +1187,8 @@ from finwiz.quantitative.portfolio_monitor import MonitoringRule
 rule = MonitoringRule(
     rule_id="portfolio_monitor",
     rule_name="Standard Portfolio Monitoring",
-    max_deviation_threshold=0.08,     # 8% threshold
-    min_check_interval_hours=1,       # 1-168
+    max_deviation_threshold=0.08,  # 8% threshold
+    min_check_interval_hours=1,  # 1-168
     alert_on_deviation=True,
     alert_on_multiple_positions=True,
     min_positions_for_alert=2,
@@ -1330,16 +1321,16 @@ Configure caching behavior through `CacheConfig`:
 from finwiz.infrastructure.caching.manager import CacheBackend, CacheConfig, CacheManager, CacheStrategy
 
 config = CacheConfig(
-    backend=CacheBackend.HYBRID,        # memory, file, or hybrid
-    default_ttl=2700,                   # 45 minutes default TTL
-    max_memory_items=1000,              # Memory cache size limit
-    max_file_size_mb=100,               # File cache size limit
-    cache_directory="cache",            # Cache file directory
-    strategy=CacheStrategy.TTL,         # Eviction strategy
-    enable_compression=True,            # Compress cached data
-    auto_cleanup=True,                  # Automatic cleanup
-    cleanup_interval=3600,              # Cleanup every hour
-    hit_rate_threshold=0.7              # Minimum effective hit rate
+    backend=CacheBackend.HYBRID,  # memory, file, or hybrid
+    default_ttl=2700,  # 45 minutes default TTL
+    max_memory_items=1000,  # Memory cache size limit
+    max_file_size_mb=100,  # File cache size limit
+    cache_directory="cache",  # Cache file directory
+    strategy=CacheStrategy.TTL,  # Eviction strategy
+    enable_compression=True,  # Compress cached data
+    auto_cleanup=True,  # Automatic cleanup
+    cleanup_interval=3600,  # Cleanup every hour
+    hit_rate_threshold=0.7,  # Minimum effective hit rate
 )
 
 cache = CacheManager(config)
@@ -1542,9 +1533,9 @@ The circuit breaker pattern automatically disables failing services:
 degradation_manager = get_degradation_manager()
 degradation_manager.update_service_config(
     "external_api",
-    error_threshold=5,        # Open circuit after 5 failures
+    error_threshold=5,  # Open circuit after 5 failures
     circuit_breaker_timeout=300,  # Wait 5 minutes before retry
-    recovery_threshold=2      # Close circuit after 2 successes
+    recovery_threshold=2,  # Close circuit after 2 successes
 )
 ```
 

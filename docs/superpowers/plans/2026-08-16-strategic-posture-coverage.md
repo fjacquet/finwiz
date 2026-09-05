@@ -228,11 +228,13 @@ def test_oversized_model_output_is_clamped_not_rejected():
     """
     from finwiz.schemas.hybrid_analysis.strategic import MAX_BULLET_CHARS, PestelAnalysis
 
-    pestel = PestelAnalysis.model_validate({
-        "political": ["x" * 5000, "y" * 5000, "z" * 5000, "w" * 5000, "v" * 5000],
-        "strategic_score": 0.7,
-        "confidence": 0.8,
-    })
+    pestel = PestelAnalysis.model_validate(
+        {
+            "political": ["x" * 5000, "y" * 5000, "z" * 5000, "w" * 5000, "v" * 5000],
+            "strategic_score": 0.7,
+            "confidence": 0.8,
+        }
+    )
 
     assert len(pestel.political) == 3
     assert all(len(b) <= MAX_BULLET_CHARS for b in pestel.political)
@@ -288,29 +290,31 @@ Change `PestelAnalysis`'s six dimension fields from `str` to `list[str]`:
 and replace its `_coerce_dimension` validator:
 
 ```python
-    @field_validator("political", "economic", "social", "technological", "environmental", "legal", mode="before")
-    @classmethod
-    def _clamp_dimension(cls, v: object) -> list[str]:
-        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
+@field_validator("political", "economic", "social", "technological", "environmental", "legal", mode="before")
+@classmethod
+def _clamp_dimension(cls, v: object) -> list[str]:
+    return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 
-    @field_validator("key_threats", "key_opportunities", mode="before")
-    @classmethod
-    def _clamp_key_lists(cls, v: object) -> list[str]:
-        return _clamp_bullets(v, MAX_BULLETS_PESTEL)
+
+@field_validator("key_threats", "key_opportunities", mode="before")
+@classmethod
+def _clamp_key_lists(cls, v: object) -> list[str]:
+    return _clamp_bullets(v, MAX_BULLETS_PESTEL)
 ```
 
 In `SwotAnalysis`:
 
 ```python
-    @field_validator("strengths", "weaknesses", "opportunities", "threats", mode="before")
-    @classmethod
-    def _clamp_lists(cls, v: object) -> list[str]:
-        return _clamp_bullets(v, MAX_BULLETS_SWOT)
+@field_validator("strengths", "weaknesses", "opportunities", "threats", mode="before")
+@classmethod
+def _clamp_lists(cls, v: object) -> list[str]:
+    return _clamp_bullets(v, MAX_BULLETS_SWOT)
 
-    @field_validator("strategic_assessment", mode="before")
-    @classmethod
-    def _clamp_assessment(cls, v: object) -> str:
-        return _clamp_prose(v, MAX_PROSE_CHARS)
+
+@field_validator("strategic_assessment", mode="before")
+@classmethod
+def _clamp_assessment(cls, v: object) -> str:
+    return _clamp_prose(v, MAX_PROSE_CHARS)
 ```
 
 In `ForceRating`:
@@ -460,12 +464,7 @@ def test_every_holding_survives_the_digest():
     from finwiz.analysis.strategic_research import _serialize_holdings
     from finwiz.schemas.hybrid_analysis.strategic import PestelAnalysis, StrategicAnalysis
 
-    holdings = {
-        f"TICK{i}": StrategicAnalysis(
-            pestel=PestelAnalysis(political=["p" * 200] * 3, economic=["e" * 200] * 3, strategic_score=0.6, confidence=0.7)
-        )
-        for i in range(200)
-    }
+    holdings = {f"TICK{i}": StrategicAnalysis(pestel=PestelAnalysis(political=["p" * 200] * 3, economic=["e" * 200] * 3, strategic_score=0.6, confidence=0.7)) for i in range(200)}
 
     payload = _serialize_holdings(holdings)
     parsed = json.loads(payload)
@@ -480,10 +479,7 @@ def test_digest_shrinks_detail_under_budget(mocker):
     from finwiz.schemas.hybrid_analysis.strategic import PestelAnalysis, StrategicAnalysis
 
     mocker.patch.object(strategic_research, "SYNTHESIS_PAYLOAD_BUDGET_CHARS", 5_000)
-    holdings = {
-        f"T{i}": StrategicAnalysis(pestel=PestelAnalysis(political=["p" * 200] * 3, strategic_score=0.6, confidence=0.7))
-        for i in range(100)
-    }
+    holdings = {f"T{i}": StrategicAnalysis(pestel=PestelAnalysis(political=["p" * 200] * 3, strategic_score=0.6, confidence=0.7)) for i in range(100)}
 
     payload = strategic_research._serialize_holdings(holdings)
 
@@ -603,8 +599,12 @@ def test_posture_score_has_no_plausible_default():
 
     with pytest.raises(ValidationError):
         PortfolioStrategicPosture(
-            holdings_covered=64, holdings_total=64, value_covered_pct=100.0,
-            macro_verdict="m", competitive_verdict="c", swot_verdict="s",
+            holdings_covered=64,
+            holdings_total=64,
+            value_covered_pct=100.0,
+            macro_verdict="m",
+            competitive_verdict="c",
+            swot_verdict="s",
         )
 ```
 
@@ -640,8 +640,9 @@ In `PortfolioStrategicPosture`, add the coverage block and the verdicts, and mak
 Extend `_portfolio_prompt` in `strategic_research.py` to request the three verdicts:
 
 ```python
-        "- macro_verdict / competitive_verdict / swot_verdict : UNE phrase chacun, "
-        "200 caractères maximum, compréhensible par un lecteur non financier.\n"
+"- macro_verdict / competitive_verdict / swot_verdict : UNE phrase chacun,"
+
+"200 caractères maximum, compréhensible par un lecteur non financier.\n"
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -705,19 +706,23 @@ Expected: FAIL — `_synthesize_portfolio_strategic` takes no `all_tickers`.
 In `_synthesize_portfolio_strategic`, after `posture = synthesize_portfolio_posture_sync(holdings_models)`:
 
 ```python
-            covered = sorted(holdings_models)
-            uncovered = sorted(set(all_tickers) - set(covered))
-            posture = posture.model_copy(update={
-                "holdings_covered": len(covered),
-                "holdings_total": len(all_tickers),
-                "uncovered_tickers": uncovered,
-            })
+covered = sorted(holdings_models)
+uncovered = sorted(set(all_tickers) - set(covered))
+posture = posture.model_copy(
+    update={
+        "holdings_covered": len(covered),
+        "holdings_total": len(all_tickers),
+        "uncovered_tickers": uncovered,
+    }
+)
 
-            if uncovered:
-                self.logger.error(
-                    "Strategic coverage incomplete: %d/%d holdings. Missing: %s",
-                    len(covered), len(all_tickers), ", ".join(uncovered),
-                )
+if uncovered:
+    self.logger.error(
+        "Strategic coverage incomplete: %d/%d holdings. Missing: %s",
+        len(covered),
+        len(all_tickers),
+        ", ".join(uncovered),
+    )
 ```
 
 Update the call site at `enrichment.py:79` to pass `all_tickers=[h.ticker for h in portfolio_review.holdings if h.ticker]`.
@@ -781,19 +786,16 @@ Expected: FAIL — `_pestel_prompt` takes no `asset_class`.
 Add `asset_class: str = "stock"` to each prompt builder and branch on it. For `_pestel_prompt`:
 
 ```python
-    if asset_class == "etf":
-        focus = (
-            "Pour un ETF, traite : régime réglementaire et fiscal, concentration "
-            "sectorielle et géographique, frais et qualité de réplication, liquidité."
-        )
-    elif asset_class == "crypto":
-        focus = (
-            "Pour un actif crypto, traite : économie du protocole et émission, "
-            "posture réglementaire par juridiction, effets de réseau et activité "
-            "des développeurs, risque de conservation et de contrepartie."
-        )
-    else:
-        focus = "Couvre les six dimensions PESTEL classiques pour l'entreprise."
+if asset_class == "etf":
+    focus = "Pour un ETF, traite : régime réglementaire et fiscal, concentration sectorielle et géographique, frais et qualité de réplication, liquidité."
+elif asset_class == "crypto":
+    focus = (
+        "Pour un actif crypto, traite : économie du protocole et émission, "
+        "posture réglementaire par juridiction, effets de réseau et activité "
+        "des développeurs, risque de conservation et de contrepartie."
+    )
+else:
+    focus = "Couvre les six dimensions PESTEL classiques pour l'entreprise."
 ```
 
 and interpolate `focus` into the returned prompt. Apply the same pattern to `_swot_prompt` and `_porter_prompt` (for ETFs, Porter's forces map to provider competition and fee pressure).
@@ -971,13 +973,20 @@ def test_coverage_leads_the_page():
     """Coverage is the first thing a reader sees, not a footnote."""
     from finwiz.reporting.sections.posture_page import generate_posture_page
 
-    html = generate_posture_page({
-        "holdings_covered": 26, "holdings_total": 64, "value_covered_pct": 38.2,
-        "uncovered_tickers": ["TSLA"], "macro_verdict": "Environnement porteur.",
-        "competitive_verdict": "Moats solides.", "swot_verdict": "Équilibré.",
-        "strategic_score": 0.71, "confidence": 0.83,
-        "macro_environment_summary": "- **Politique** : durcissement",
-    })
+    html = generate_posture_page(
+        {
+            "holdings_covered": 26,
+            "holdings_total": 64,
+            "value_covered_pct": 38.2,
+            "uncovered_tickers": ["TSLA"],
+            "macro_verdict": "Environnement porteur.",
+            "competitive_verdict": "Moats solides.",
+            "swot_verdict": "Équilibré.",
+            "strategic_score": 0.71,
+            "confidence": 0.83,
+            "macro_environment_summary": "- **Politique** : durcissement",
+        }
+    )
 
     assert "26 / 64" in html
     assert html.index("26 / 64") < html.index("Environnement porteur.")
@@ -1063,8 +1072,8 @@ def generate_posture_page(
         cards = f"<section><h2>Par ligne</h2><ul>{rows}</ul></section>"
 
     return (
-        "<!DOCTYPE html><html lang=\"fr\"><head><meta charset=\"utf-8\">"
-        "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+        '<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">'
+        '<meta name="viewport" content="width=device-width, initial-scale=1">'
         "<title>Posture Stratégique — FinWiz</title>"
         f"<style>{get_report_css()}</style></head><body>"
         "<h1>Posture Stratégique du Portefeuille</h1>"

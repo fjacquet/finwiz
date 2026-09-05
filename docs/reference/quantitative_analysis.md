@@ -81,7 +81,7 @@ result = engine.run_strategy_backtest(
     symbol="AAPL",
     start_date=datetime(2023, 1, 1),
     end_date=datetime(2024, 1, 1),
-    strategy_params={"short_period": 20, "long_period": 50}
+    strategy_params={"short_period": 20, "long_period": 50},
 )
 
 print(f"Total Return: {result.total_return:.2f}%")
@@ -95,6 +95,7 @@ print(f"Max Drawdown: {result.max_drawdown:.2f}%")
 from finwiz.quantitative.backtesting import StrategyFramework
 import backtrader as bt
 
+
 class CustomStrategy(StrategyFramework):
     params = (
         ("period", 20),
@@ -104,9 +105,7 @@ class CustomStrategy(StrategyFramework):
 
     def __init__(self):
         super().__init__()
-        self.sma = bt.indicators.SimpleMovingAverage(
-            self.datas[0], period=self.params.period
-        )
+        self.sma = bt.indicators.SimpleMovingAverage(self.datas[0], period=self.params.period)
 
     def next(self):
         super().next()
@@ -142,16 +141,7 @@ from finwiz.quantitative.technical import TechnicalAnalysisEngine
 engine = TechnicalAnalysisEngine()
 
 # Analyze with multiple indicators
-result = engine.analyze_symbol(
-    data=price_data,
-    symbol="AAPL",
-    timeframe="1d",
-    indicators=[
-        TechnicalIndicator.RSI,
-        TechnicalIndicator.MACD,
-        TechnicalIndicator.BOLLINGER_BANDS
-    ]
-)
+result = engine.analyze_symbol(data=price_data, symbol="AAPL", timeframe="1d", indicators=[TechnicalIndicator.RSI, TechnicalIndicator.MACD, TechnicalIndicator.BOLLINGER_BANDS])
 
 print(f"Overall Signal: {result.overall_signal}")
 print(f"Confidence: {result.overall_confidence:.2f}")
@@ -181,12 +171,7 @@ from finwiz.quantitative import get_performance_analyzer
 analyzer = get_performance_analyzer()
 
 # Analyze strategy performance
-report = analyzer.analyze_performance(
-    returns=strategy_returns,
-    benchmark_returns=benchmark_returns,
-    strategy_name="My Strategy",
-    benchmark_name="S&P 500"
-)
+report = analyzer.analyze_performance(returns=strategy_returns, benchmark_returns=benchmark_returns, strategy_name="My Strategy", benchmark_name="S&P 500")
 
 # Access comprehensive metrics
 metrics = report.performance_metrics
@@ -200,11 +185,7 @@ print(f"VaR (95%): {metrics.var_95:.2f}%")
 
 ```python
 # Optimize portfolio using modern portfolio theory
-optimization_result = analyzer.optimize_portfolio(
-    price_data=price_data,
-    method="max_sharpe",
-    total_portfolio_value=100000
-)
+optimization_result = analyzer.optimize_portfolio(price_data=price_data, method="max_sharpe", total_portfolio_value=100000)
 
 print("Optimal Weights:")
 for asset, weight in optimization_result.weights.items():
@@ -220,9 +201,7 @@ print(f"Sharpe Ratio: {optimization_result.sharpe_ratio:.2f}")
 ### Options Pricing
 
 ```python
-from finwiz.quantitative.derivatives import (
-    DerivativesPricer, OptionParameters, OptionType, PricingModel
-)
+from finwiz.quantitative.derivatives import DerivativesPricer, OptionParameters, OptionType, PricingModel
 
 pricer = DerivativesPricer()
 
@@ -233,7 +212,7 @@ option_params = OptionParameters(
     time_to_expiry=0.25,  # 3 months
     risk_free_rate=0.05,
     volatility=0.20,
-    option_type=OptionType.CALL
+    option_type=OptionType.CALL,
 )
 
 # Price the option
@@ -260,13 +239,7 @@ print(f"Implied Volatility: {implied_vol:.2%}")
 ```python
 from finwiz.quantitative.derivatives import BondParameters
 
-bond_params = BondParameters(
-    face_value=1000.0,
-    coupon_rate=0.05,
-    years_to_maturity=5.0,
-    yield_to_maturity=0.04,
-    coupon_frequency=2
-)
+bond_params = BondParameters(face_value=1000.0, coupon_rate=0.05, years_to_maturity=5.0, yield_to_maturity=0.04, coupon_frequency=2)
 
 bond_result = pricer.price_bond(bond_params)
 
@@ -280,26 +253,15 @@ print(f"Convexity: {bond_result.convexity:.2f}")
 ### Modern Portfolio Theory
 
 ```python
-from finwiz.quantitative.optimization import (
-    PortfolioOptimizer, PortfolioInputs, ObjectiveFunction, OptimizationMethod
-)
+from finwiz.quantitative.optimization import PortfolioOptimizer, PortfolioInputs, ObjectiveFunction, OptimizationMethod
 
 optimizer = PortfolioOptimizer()
 
 # Define portfolio inputs
-inputs = PortfolioInputs(
-    symbols=["AAPL", "MSFT", "GOOGL", "AMZN"],
-    expected_returns=[0.12, 0.10, 0.15, 0.14],
-    covariance_matrix=covariance_matrix,
-    risk_free_rate=0.03
-)
+inputs = PortfolioInputs(symbols=["AAPL", "MSFT", "GOOGL", "AMZN"], expected_returns=[0.12, 0.10, 0.15, 0.14], covariance_matrix=covariance_matrix, risk_free_rate=0.03)
 
 # Optimize for maximum Sharpe ratio
-result = optimizer.optimize_portfolio(
-    inputs=inputs,
-    objective=ObjectiveFunction.MAX_SHARPE,
-    method=OptimizationMethod.MEAN_VARIANCE
-)
+result = optimizer.optimize_portfolio(inputs=inputs, objective=ObjectiveFunction.MAX_SHARPE, method=OptimizationMethod.MEAN_VARIANCE)
 
 print("Optimal Portfolio:")
 for symbol, weight in zip(inputs.symbols, result.optimal_weights):
@@ -352,21 +314,10 @@ SCREENER_MAX_RESULTS=50
 from finwiz.quantitative.config import BacktestConfig, QuantConfig
 
 # Backtesting configuration
-backtest_config = BacktestConfig(
-    initial_capital=100000.0,
-    commission_pct=0.001,
-    stop_loss_pct=0.05,
-    take_profit_pct=0.15,
-    max_drawdown_limit=0.20
-)
+backtest_config = BacktestConfig(initial_capital=100000.0, commission_pct=0.001, stop_loss_pct=0.05, take_profit_pct=0.15, max_drawdown_limit=0.20)
 
 # General quantitative configuration
-quant_config = QuantConfig(
-    risk_free_rate=0.02,
-    confidence_level=0.95,
-    lookback_period=252,
-    min_data_points=50
-)
+quant_config = QuantConfig(risk_free_rate=0.02, confidence_level=0.95, lookback_period=252, min_data_points=50)
 ```
 
 ## Integration with Crews
@@ -383,12 +334,7 @@ tools = [
 ]
 
 # Use in agent task
-result = quantitative_tool.run(
-    symbol="AAPL",
-    asset_class="stock",
-    analysis_type="comprehensive",
-    timeframe="1y"
-)
+result = quantitative_tool.run(symbol="AAPL", asset_class="stock", analysis_type="comprehensive", timeframe="1y")
 ```
 
 ### Enhanced Schemas
@@ -411,7 +357,7 @@ enhanced_analysis = EnhancedStockAnalysis(
     technical_analysis=technical_result,
     backtest_result=backtest_result,
     performance_metrics=performance_metrics,
-    quantitative_recommendation=recommendation
+    quantitative_recommendation=recommendation,
 )
 ```
 
@@ -537,15 +483,18 @@ The quantitative framework leverages FinWiz's intelligent caching system:
 ```python
 # Enable detailed logging
 import logging
-logging.getLogger('finwiz.quantitative').setLevel(logging.DEBUG)
+
+logging.getLogger("finwiz.quantitative").setLevel(logging.DEBUG)
 
 # Validate data quality
 from finwiz.quantitative.data import DataQualityValidator
+
 validator = DataQualityValidator()
 quality_report = validator.validate_data(price_data)
 
 # Check configuration
 from finwiz.quantitative.config import get_quant_config
+
 config = get_quant_config()
 print(f"Risk-free rate: {config.risk_free_rate}")
 ```

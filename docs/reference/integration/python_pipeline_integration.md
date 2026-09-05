@@ -35,9 +35,7 @@ def integrate_aplus_discovery_with_deep_analysis(session_id: str) -> dict[str, A
 ```python
 from finwiz.orchestrators.discovery.aplus_discovery_integrator import integrate_aplus_discovery_with_deep_analysis
 
-discovery_results = integrate_aplus_discovery_with_deep_analysis(
-    session_id="analysis_session_123"
-)
+discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id="analysis_session_123")
 
 if discovery_results["has_a_plus_analysis"]:
     print(f"Found {discovery_results['total_opportunities_found']} A+ opportunities")
@@ -96,15 +94,12 @@ def connect_backtesting_to_discovery_results(session_id: str) -> dict[str, Any]
 ```python
 from finwiz.integration.backtesting_pipeline_connector import connect_backtesting_to_discovery_results
 
-backtesting_results = connect_backtesting_to_discovery_results(
-    session_id="analysis_session_123"
-)
+backtesting_results = connect_backtesting_to_discovery_results(session_id="analysis_session_123")
 
 if backtesting_results["backtesting_executed"]:
     print(f"Backtested {backtesting_results['candidates_count']} candidates")
     for result in backtesting_results["results"]:
-        print(f"  {result['ticker']}: {result['annual_return']:.1%} return, "
-              f"Sharpe {result['sharpe_ratio']:.2f}")
+        print(f"  {result['ticker']}: {result['annual_return']:.1%} return, Sharpe {result['sharpe_ratio']:.2f}")
 ```
 
 **Data Sources:**
@@ -256,27 +251,16 @@ from finwiz.integration.backtesting_pipeline_connector import connect_backtestin
 from finwiz.reporting.python_report_generator import generate_python_report
 
 # Step 1: Deep Analysis
-analysis_results = analyze_portfolio_with_python(
-    holdings=portfolio_holdings,
-    session_id=session_id
-)
+analysis_results = analyze_portfolio_with_python(holdings=portfolio_holdings, session_id=session_id)
 
 # Step 2: A+ Discovery
-discovery_results = integrate_aplus_discovery_with_deep_analysis(
-    session_id=session_id
-)
+discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 
 # Step 3: Backtesting
-backtesting_results = connect_backtesting_to_discovery_results(
-    session_id=session_id
-)
+backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
 
 # Step 4: Report Generation
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id=session_id
-)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 ```
 
 ### Pattern 2: Conditional Execution
@@ -285,22 +269,15 @@ Execute components conditionally based on results:
 
 ```python
 # Always run deep analysis
-analysis_results = analyze_portfolio_with_python(
-    holdings=portfolio_holdings,
-    session_id=session_id
-)
+analysis_results = analyze_portfolio_with_python(holdings=portfolio_holdings, session_id=session_id)
 
 # Only run discovery if analysis succeeded
 if analysis_results["successful_analyses"] > 0:
-    discovery_results = integrate_aplus_discovery_with_deep_analysis(
-        session_id=session_id
-    )
+    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 
     # Only run backtesting if A+ opportunities found
     if discovery_results["has_a_plus_analysis"]:
-        backtesting_results = connect_backtesting_to_discovery_results(
-            session_id=session_id
-        )
+        backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
 ```
 
 ### Pattern 3: Error Handling
@@ -310,19 +287,14 @@ Implement comprehensive error handling:
 ```python
 try:
     # Deep Analysis
-    analysis_results = analyze_portfolio_with_python(
-        holdings=portfolio_holdings,
-        session_id=session_id
-    )
+    analysis_results = analyze_portfolio_with_python(holdings=portfolio_holdings, session_id=session_id)
 except Exception as e:
     logger.error(f"Deep analysis failed: {e}")
     analysis_results = {"successful_analyses": 0}
 
 try:
     # A+ Discovery
-    discovery_results = integrate_aplus_discovery_with_deep_analysis(
-        session_id=session_id
-    )
+    discovery_results = integrate_aplus_discovery_with_deep_analysis(session_id=session_id)
 except Exception as e:
     logger.error(f"A+ discovery failed: {e}")
     discovery_results = {"has_a_plus_analysis": False}
@@ -330,19 +302,13 @@ except Exception as e:
 try:
     # Backtesting
     if discovery_results.get("has_a_plus_analysis"):
-        backtesting_results = connect_backtesting_to_discovery_results(
-            session_id=session_id
-        )
+        backtesting_results = connect_backtesting_to_discovery_results(session_id=session_id)
 except Exception as e:
     logger.error(f"Backtesting failed: {e}")
     backtesting_results = {"backtesting_executed": False}
 
 # Always generate report (even with partial data)
-report_path = generate_python_report(
-    portfolio_review=portfolio_review,
-    deep_analysis_results=analysis_results,
-    session_id=session_id
-)
+report_path = generate_python_report(portfolio_review=portfolio_review, deep_analysis_results=analysis_results, session_id=session_id)
 ```
 
 ## File Structure

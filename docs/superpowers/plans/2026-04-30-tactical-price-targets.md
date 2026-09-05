@@ -212,8 +212,7 @@ class TestConfidence:
             current_price=130.0,
         )
         assert result is not None
-        assert "high" in (result.buy_rationale + result.sell_rationale).lower() or \
-            "élevée" in (result.buy_rationale + result.sell_rationale).lower()
+        assert "high" in (result.buy_rationale + result.sell_rationale).lower() or "élevée" in (result.buy_rationale + result.sell_rationale).lower()
 
     def test_low_confidence_when_history_short(self) -> None:
         # 80 days of history, just over the 60-day floor but below 120 → low confidence.
@@ -363,8 +362,7 @@ def compute_tactical_pricing(
         return None
     if len(price_history) < _MIN_HISTORY_DAYS:
         logger.warning(
-            f"tactical_pricing: insufficient history for {ticker} "
-            f"({len(price_history)} < {_MIN_HISTORY_DAYS} days)",
+            f"tactical_pricing: insufficient history for {ticker} ({len(price_history)} < {_MIN_HISTORY_DAYS} days)",
         )
         return None
     if not _is_history_fresh(price_history):
@@ -412,12 +410,8 @@ def compute_tactical_pricing(
     confidence = _confidence(price_history, target, drift_target_capped, current_price)
     confidence_fr = {"high": "élevée", "medium": "moyenne", "low": "faible"}[confidence]
 
-    buy_rationale = (
-        f"Target {target_method} sur {horizon_months} mois — confiance {confidence_fr}."
-    )
-    sell_rationale = (
-        f"Plancher = max(support technique, prix − 2×ATR) — confiance {confidence_fr}."
-    )
+    buy_rationale = f"Target {target_method} sur {horizon_months} mois — confiance {confidence_fr}."
+    sell_rationale = f"Plancher = max(support technique, prix − 2×ATR) — confiance {confidence_fr}."
 
     return PriceTargets(
         current_price=current_price,
@@ -956,11 +950,7 @@ def _format_target_cell(price_targets, current_price: float | None, kind: str) -
     """
     if price_targets is None or current_price is None or current_price <= 0:
         return '<td class="muted">—</td>'
-    value = (
-        price_targets.buy_target_primary
-        if kind == "target"
-        else price_targets.sell_target_primary
-    )
+    value = price_targets.buy_target_primary if kind == "target" else price_targets.sell_target_primary
     if value is None:
         return '<td class="muted">—</td>'
     delta_pct = (value - current_price) / current_price * 100

@@ -29,10 +29,10 @@ def analyst(self) -> Agent:
     return Agent(
         config=self.agents_config["analyst"],
         tools=get_stock_crew_tools(include_rag=True),
-        reasoning=True,              # For complex analysis
-        max_reasoning_attempts=3,    # Prevent infinite loops
-        allow_delegation=False,      # Only for coordinators
-        verbose=True
+        reasoning=True,  # For complex analysis
+        max_reasoning_attempts=3,  # Prevent infinite loops
+        allow_delegation=False,  # Only for coordinators
+        verbose=True,
     )
 ```
 
@@ -41,13 +41,14 @@ def analyst(self) -> Agent:
 ```python
 from finwiz.utils.agent_validators import final_reporter
 
+
 @final_reporter  # Enforces empty tools
 @agent
 def investment_reporter(self) -> Agent:
     return Agent(
-        config=self.agents_config['investment_reporter'],
+        config=self.agents_config["investment_reporter"],
         tools=[],  # MUST be empty - enforced by decorator
-        verbose=True
+        verbose=True,
     )
 ```
 
@@ -90,10 +91,13 @@ analysis_task:
 from pydantic import BaseModel
 from crewai.flow import Flow, listen, start
 
+
 class FinwizState(BaseModel):
     """Type-safe state with validation."""
+
     analysis_results: Dict[str, Any] = {}
     processing_success: bool = False
+
 
 class FinwizFlow(Flow[FinwizState]):
     @start()
@@ -138,9 +142,9 @@ class FinwizFlow(Flow[FinwizState]):
 crew = Crew(
     agents=[analyst],  # Single agent
     tasks=self.tasks,  # Simple workflow
-    planning=False,    # Avoid overhead
-    reasoning=False,   # Fast execution
-    max_rpm=20
+    planning=False,  # Avoid overhead
+    reasoning=False,  # Fast execution
+    max_rpm=20,
 )
 ```
 
@@ -169,9 +173,9 @@ crew = Crew(
 ```python
 # Get standardized tool set
 tools = get_stock_crew_tools(
-    include_rag=True,           # Include RAG tools
+    include_rag=True,  # Include RAG tools
     include_quantitative=True,  # Include quantitative analysis
-    collection_suffix="stock"   # RAG collection suffix
+    collection_suffix="stock",  # RAG collection suffix
 )
 ```
 

@@ -52,6 +52,7 @@ crewai flow kickoff    # Run full pipeline
 
 ```python
 from finwiz.flows.orchestrator import FinwizFlow, plot
+
 plot()  # Visualize flow structure
 ```
 

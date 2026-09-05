@@ -67,7 +67,7 @@ from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 # Alpha Vantage is DISABLED by default (recommended)
 prefetcher = BatchDataPreFetcher(
     session_id="session-123",
-    enable_alpha_vantage=False  # Recommended: Yahoo Finance only
+    enable_alpha_vantage=False,  # Recommended: Yahoo Finance only
 )
 
 # Pre-fetch data (memory is monitored automatically)
@@ -121,6 +121,7 @@ cleanup_result = memory_manager.cleanup_cache()
 from finwiz.integration.batch_data_prefetcher import BatchDataPreFetcher
 from finwiz.infrastructure.monitoring.memory_manager import get_memory_manager
 
+
 class FinwizFlow(Flow[FinwizState]):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -135,7 +136,7 @@ class FinwizFlow(Flow[FinwizState]):
         session_id = self.state.session_id
         self.prefetcher = BatchDataPreFetcher(
             session_id=session_id,
-            enable_alpha_vantage=False  # Yahoo Finance only for speed
+            enable_alpha_vantage=False,  # Yahoo Finance only for speed
         )
 
         # Get memory manager reference
@@ -181,11 +182,7 @@ class FinwizFlow(Flow[FinwizState]):
             logger.warning("Memory constraints were exceeded during execution")
 
         # Store metrics in state
-        self.state.batch_prefetch_metrics = {
-            "memory": memory_metrics,
-            "tickers_analyzed": len(results),
-            "successful": sum(1 for r in results.values() if r.get("success", False))
-        }
+        self.state.batch_prefetch_metrics = {"memory": memory_metrics, "tickers_analyzed": len(results), "successful": sum(1 for r in results.values() if r.get("success", False))}
 
         return {"results": results, "memory_metrics": memory_metrics}
 
@@ -194,10 +191,7 @@ class FinwizFlow(Flow[FinwizState]):
         if self.prefetcher:
             logger.info("Cleaning up batch prefetch cache...")
             cleanup_result = self.prefetcher.cleanup_cache()
-            logger.info(
-                f"Cache cleanup complete: {cleanup_result['files_removed']} files, "
-                f"{cleanup_result['disk_freed_mb']} MB freed"
-            )
+            logger.info(f"Cache cleanup complete: {cleanup_result['files_removed']} files, {cleanup_result['disk_freed_mb']} MB freed")
 ```
 
 ## Memory Monitoring
@@ -297,16 +291,10 @@ cleanup_result = memory_manager.cleanup_cache()
     "within_limit": True,
     "peak_usage_percent": 14.6,
     "samples": [
-        {
-            "stage": "pre-fetch-start",
-            "memory_mb": 100.0,
-            "delta_mb": 0.0,
-            "peak_mb": 100.0,
-            "within_limit": True
-        },
+        {"stage": "pre-fetch-start", "memory_mb": 100.0, "delta_mb": 0.0, "peak_mb": 100.0, "within_limit": True},
         # ... more samples ...
     ],
-    "sample_count": 10
+    "sample_count": 10,
 }
 ```
 
@@ -316,15 +304,7 @@ Memory metrics should be included in batch execution reports:
 
 ```python
 # Save to batch_execution_metrics.json
-metrics = {
-    "execution": {
-        "total_time": 120.5,
-        "tickers_analyzed": 66,
-        "successful": 64
-    },
-    "memory": prefetcher.get_memory_metrics(),
-    "cleanup": cleanup_result
-}
+metrics = {"execution": {"total_time": 120.5, "tickers_analyzed": 66, "successful": 64}, "memory": prefetcher.get_memory_metrics(), "cleanup": cleanup_result}
 
 with open("batch_execution_metrics.json", "w") as f:
     json.dump(metrics, f, indent=2)
@@ -425,6 +405,7 @@ def test_memory_monitoring(tmp_path):
     sample2 = manager.monitor_memory("stage-2")
     assert sample2["peak_mb"] >= sample1["memory_mb"]
 
+
 def test_cache_cleanup(tmp_path):
     """Test cache cleanup functionality."""
     manager = MemoryManager(session_id="test-123")
@@ -438,6 +419,7 @@ def test_cache_cleanup(tmp_path):
     result = manager.cleanup_cache()
     assert result["success"]
     assert not cache_dir.exists()
+
 
 def test_memory_constraints():
     """Test memory constraint validation."""

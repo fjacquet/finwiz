@@ -101,6 +101,7 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
+
 def calculate_score(data: dict) -> float:
     try:
         if "required_field" not in data:
@@ -132,6 +133,7 @@ def calculate_score(data: dict) -> float:
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
+
 
 def process_data(ticker: str):
     logger.info(f"Processing {ticker}")
@@ -304,6 +306,7 @@ __all__ = [
 
 ```python
 from typing import Any
+
 
 def process_data(ticker: str, data: dict[str, Any]) -> dict[str, Any]:
     """Process data with type hints."""

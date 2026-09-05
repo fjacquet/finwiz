@@ -82,7 +82,7 @@ def calculate_fundamental_score(self, data: dict) -> float:
     base_score = 0.5
 
     # ROE bonus/penalty
-    roe = data.get('roe', 0)
+    roe = data.get("roe", 0)
     if roe > 0.20:  # 20%+
         base_score += 0.3
     elif roe > 0.15:  # 15-20%
@@ -91,14 +91,14 @@ def calculate_fundamental_score(self, data: dict) -> float:
         base_score -= 0.2
 
     # Debt-to-equity penalty
-    debt_equity = data.get('debt_to_equity', 0)
+    debt_equity = data.get("debt_to_equity", 0)
     if debt_equity > 0.5:
         base_score -= 0.2
     elif debt_equity > 0.3:
         base_score -= 0.1
 
     # Growth bonus
-    revenue_growth = data.get('revenue_growth', 0)
+    revenue_growth = data.get("revenue_growth", 0)
     if revenue_growth > 0.15:  # 15%+
         base_score += 0.2
     elif revenue_growth > 0.10:  # 10-15%
@@ -117,7 +117,7 @@ def calculate_technical_score(self, data: dict) -> float:
     base_score = 0.5
 
     # RSI analysis
-    rsi = data.get('rsi', 50)
+    rsi = data.get("rsi", 50)
     if 30 <= rsi <= 70:  # Neutral zone
         base_score += 0.2
     elif rsi < 30:  # Oversold
@@ -126,10 +126,10 @@ def calculate_technical_score(self, data: dict) -> float:
         base_score -= 0.2
 
     # Trend analysis
-    trend = data.get('trend_direction', 'neutral')
-    if trend == 'bullish':
+    trend = data.get("trend_direction", "neutral")
+    if trend == "bullish":
         base_score += 0.3
-    elif trend == 'bearish':
+    elif trend == "bearish":
         base_score -= 0.3
 
     return max(0.0, min(1.0, base_score))
@@ -145,7 +145,7 @@ def calculate_risk_score(self, data: dict) -> int:
     risk_score = 2  # Base moderate risk
 
     # Volatility adjustment
-    volatility = data.get('volatility', 0.2)
+    volatility = data.get("volatility", 0.2)
     if volatility > 0.4:  # High volatility
         risk_score += 2
     elif volatility > 0.3:
@@ -154,7 +154,7 @@ def calculate_risk_score(self, data: dict) -> int:
         risk_score -= 1
 
     # Maximum drawdown adjustment
-    max_drawdown = abs(data.get('max_drawdown', 0.1))
+    max_drawdown = abs(data.get("max_drawdown", 0.1))
     if max_drawdown > 0.3:  # >30% drawdown
         risk_score += 1
     elif max_drawdown < 0.1:  # <10% drawdown
@@ -185,12 +185,12 @@ Investment recommendations follow deterministic rules:
 ```python
 def generate_recommendation(self, composite_score: float, grade: str) -> str:
     """Generate BUY/HOLD/SELL recommendation."""
-    if grade in ['A+', 'A']:
-        return 'BUY'
-    elif grade in ['B', 'C']:
-        return 'HOLD'
+    if grade in ["A+", "A"]:
+        return "BUY"
+    elif grade in ["B", "C"]:
+        return "HOLD"
     else:  # D, F
-        return 'SELL'
+        return "SELL"
 ```
 
 ## Integration Architecture
@@ -210,6 +210,7 @@ def analyze_portfolio_with_python(holdings: list[HoldingDecision], session_id: s
     """Convenience function for Flow integration."""
     analyzer = PortfolioDeepAnalyzer()
     return analyzer.analyze_portfolio_holdings(holdings)
+
 
 def generate_python_report(analysis_data: dict) -> str:
     """Convenience function for report generation."""
@@ -364,7 +365,7 @@ For maximum flexibility, FinWiz supports a hybrid approach:
 
 ```python
 # Optional AI summary after Python scoring
-if os.getenv('DEEP_ANALYSIS_AI_SUMMARY', 'false').lower() == 'true':
+if os.getenv("DEEP_ANALYSIS_AI_SUMMARY", "false").lower() == "true":
     # Python scoring (10-30 seconds, $0)
     python_result = scorer.calculate_composite_score(data)
 

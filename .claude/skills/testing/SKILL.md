@@ -34,10 +34,11 @@ We have 4 layers of enforcement:
 # ❌ BANNED - Will be blocked by all 4 enforcement layers
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
+
 # ✅ REQUIRED - Only acceptable approach
 def test_example(mocker):
-    mock_obj = mocker.patch('module.function')
-    mock_obj.return_value = 'test'
+    mock_obj = mocker.patch("module.function")
+    mock_obj.return_value = "test"
 ```
 
 ## Standard Test Structure
@@ -47,15 +48,15 @@ def test_example(mocker):
 ```python
 def test_should_return_buy_recommendation_when_strong_metrics(mocker):
     # Arrange - Set up test data and mocks
-    mock_api = mocker.patch('finwiz.tools.yahoo_finance_tool.get_data')
-    mock_api.return_value = {'pe_ratio': 15, 'growth': 0.25}
+    mock_api = mocker.patch("finwiz.tools.yahoo_finance_tool.get_data")
+    mock_api.return_value = {"pe_ratio": 15, "growth": 0.25}
 
     # Act - Execute the code under test
-    result = analyze_stock('AAPL')
+    result = analyze_stock("AAPL")
 
     # Assert - Verify the results
-    assert result.recommendation == 'BUY'
-    mock_api.assert_called_once_with('AAPL')
+    assert result.recommendation == "BUY"
+    mock_api.assert_called_once_with("AAPL")
 ```
 
 ## Common Mocking Patterns
@@ -65,53 +66,53 @@ def test_should_return_buy_recommendation_when_strong_metrics(mocker):
 ```python
 def test_should_fetch_stock_data_when_valid_ticker(mocker):
     # Mock external API call
-    mock_get = mocker.patch('finwiz.tools.yahoo_finance_tool.yf.Ticker')
+    mock_get = mocker.patch("finwiz.tools.yahoo_finance_tool.yf.Ticker")
     mock_ticker = mocker.Mock()
-    mock_ticker.info = {'symbol': 'AAPL', 'price': 150.0}
+    mock_ticker.info = {"symbol": "AAPL", "price": 150.0}
     mock_get.return_value = mock_ticker
 
     # Test the function
-    result = get_stock_data('AAPL')
+    result = get_stock_data("AAPL")
 
     # Verify
-    assert result['symbol'] == 'AAPL'
-    assert result['price'] == 150.0
-    mock_get.assert_called_once_with('AAPL')
+    assert result["symbol"] == "AAPL"
+    assert result["price"] == 150.0
+    mock_get.assert_called_once_with("AAPL")
 ```
 
 ### Mock File Operations
 
 ```python
 def test_should_read_config_file(mocker):
-    mock_open = mocker.patch('builtins.open', mocker.mock_open(read_data='{"key": "value"}'))
+    mock_open = mocker.patch("builtins.open", mocker.mock_open(read_data='{"key": "value"}'))
 
-    result = load_config('config.json')
+    result = load_config("config.json")
 
-    assert result['key'] == 'value'
-    mock_open.assert_called_once_with('config.json')
+    assert result["key"] == "value"
+    mock_open.assert_called_once_with("config.json")
 ```
 
 ### Mock Environment Variables
 
 ```python
 def test_should_use_api_key_from_env(mocker):
-    mocker.patch.dict('os.environ', {'API_KEY': 'test_key'})
+    mocker.patch.dict("os.environ", {"API_KEY": "test_key"})
 
     result = get_api_key()
 
-    assert result == 'test_key'
+    assert result == "test_key"
 ```
 
 ### Mock Datetime
 
 ```python
 def test_should_use_current_timestamp(mocker):
-    mock_now = mocker.patch('datetime.datetime')
+    mock_now = mocker.patch("datetime.datetime")
     mock_now.now.return_value = datetime(2025, 3, 10)
 
     result = generate_report()
 
-    assert '2025-03-10' in result.timestamp
+    assert "2025-03-10" in result.timestamp
 ```
 
 ## CrewAI Testing Standards (CRITICAL)
@@ -158,6 +159,7 @@ def test_should_load_agent_configurations_from_yaml(self):
     assert "asset_analyst" in config
     assert "role" in config["asset_analyst"]
 
+
 def test_should_validate_asset_class_parameter(self):
     """Test validation logic without instantiating crew."""
     valid_asset_classes = ["stock", "etf", "crypto"]
@@ -188,6 +190,7 @@ def test_crew_execution(self, mocker):
 from faker import Faker
 
 fake = Faker()
+
 
 def test_portfolio_analysis():
     # Generate realistic test data
@@ -223,10 +226,12 @@ tests/
 def test_should_calculate_score():
     pass
 
+
 # Integration tests
 @pytest.mark.integration
 def test_should_fetch_real_stock_data():
     pass
+
 
 # Slow tests
 @pytest.mark.slow
@@ -298,9 +303,10 @@ If you see `unittest.mock` anywhere:
 # Remove this line
 from unittest.mock import patch
 
+
 # Add mocker parameter
 def test_example(mocker):
-    mock_obj = mocker.patch('module.function')
+    mock_obj = mocker.patch("module.function")
 ```
 
 Apply these testing standards consistently across all FinWiz test code.

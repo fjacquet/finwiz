@@ -90,9 +90,9 @@ result = engine.run_strategy_backtest(
     symbol="AAPL",
     start_date=start,
     end_date=end,
-    strategy_params={...},          # optional
-    benchmark_symbol="SPY",         # optional
-)                                    # -> BacktestResult | None
+    strategy_params={...},  # optional
+    benchmark_symbol="SPY",  # optional
+)  # -> BacktestResult | None
 
 # Several strategies over one symbol
 results = engine.run_multi_strategy_backtest(
@@ -107,7 +107,7 @@ result = optimizer.optimize_portfolio(
     inputs=portfolio_inputs,
     objective=ObjectiveFunction.MAX_SHARPE,
     method=OptimizationMethod.MEAN_VARIANCE,
-)                                    # -> OptimizationResult
+)  # -> OptimizationResult
 ```
 
 ## Related Modules

@@ -127,11 +127,11 @@ Every view model embeds evidence as a mandatory field:
 
 ```python
 class Evidence(BaseModel):
-    covered: int              # items this section actually used
-    total: int                # items it claims to describe
-    basis: list[str] = []     # tickers or sources behind it
-    known: bool = True        # False = measured but not trustworthy
-    missing: list[str] = []   # named gaps
+    covered: int  # items this section actually used
+    total: int  # items it claims to describe
+    basis: list[str] = []  # tickers or sources behind it
+    known: bool = True  # False = measured but not trustworthy
+    missing: list[str] = []  # named gaps
 ```
 
 Renderers enforce it; sections cannot opt out:
@@ -162,9 +162,9 @@ Renderers enforce it; sections cannot opt out:
 
 ```python
 class QualitativeBlock(BaseModel):
-    verdict: str              # 1 sentence, plain French, <=30 words
-    detail: str               # reasoning, plain French prose, <=200 words
-    sources: list[str] = []   # resolved URLs/titles, not [3] markers
+    verdict: str  # 1 sentence, plain French, <=30 words
+    detail: str  # reasoning, plain French prose, <=200 words
+    sources: list[str] = []  # resolved URLs/titles, not [3] markers
 ```
 
 Validators make the essay structurally impossible rather than cleaned up after the fact:

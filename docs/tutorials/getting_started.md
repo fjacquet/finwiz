@@ -213,7 +213,7 @@ grep -i "warning\|error" logs/finwiz.log | tail -n 20
 from finwiz.infrastructure.caching.manager import get_cache_manager
 
 cache = get_cache_manager()
-stats = cache.get_stats()          # returns a plain dict, not an object
+stats = cache.get_stats()  # returns a plain dict, not an object
 print(f"Cache hit rate: {stats['hit_rate']:.2%}")
 print(f"Hits: {stats['hits']}, misses: {stats['misses']}")
 ```

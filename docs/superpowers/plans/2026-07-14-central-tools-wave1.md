@@ -582,9 +582,7 @@ def test_run_returns_answer_envelope(pplx_key, mocker):
 def test_recency_maps_to_search_recency_filter(pplx_key, mocker):
     post = mocker.patch(
         "crewai_custom_tools.tools.web.perplexity.requests.post",
-        return_value=_mock_response(
-            mocker, {"choices": [{"message": {"content": "x"}}], "citations": []}
-        ),
+        return_value=_mock_response(mocker, {"choices": [{"message": {"content": "x"}}], "citations": []}),
     )
     PerplexitySearchTool()._run(query="q", search_recency="week", search_domain_filter=["reddit.com"])
     payload = post.call_args.kwargs["json"]
@@ -634,22 +632,15 @@ class PerplexitySearchInput(BaseModel):
     query: str = Field(..., description="Natural language query to research with Perplexity Sonar.")
     model: str = Field("sonar-pro", description="Perplexity model to use (e.g., sonar-pro).")
     top_k: int | None = Field(5, description="Maximum number of web results to retrieve (1-10 typical).")
-    search_recency: str | None = Field(
-        None, description="Recency filter: 'hour', 'day', 'week', 'month', or 'year'. Empty for default."
-    )
-    search_domain_filter: list[str] | None = Field(
-        None, description="Restrict the search to these domains, e.g. ['reddit.com']."
-    )
+    search_recency: str | None = Field(None, description="Recency filter: 'hour', 'day', 'week', 'month', or 'year'. Empty for default.")
+    search_domain_filter: list[str] | None = Field(None, description="Restrict the search to these domains, e.g. ['reddit.com'].")
 
 
 class PerplexitySearchTool(BaseTool):
     """AI-powered web search with synthesis and citations."""
 
     name: str = "perplexity_search"
-    description: str = (
-        "AI-powered web search using Perplexity API. Returns synthesized answers "
-        "with citations. Requires PERPLEXITY_API_KEY (or legacy PPLX_API_KEY)."
-    )
+    description: str = "AI-powered web search using Perplexity API. Returns synthesized answers with citations. Requires PERPLEXITY_API_KEY (or legacy PPLX_API_KEY)."
     args_schema: type[BaseModel] = PerplexitySearchInput
 
     def model_post_init(self, __context: Any) -> None:
@@ -815,9 +806,7 @@ Expected: FAIL — `ImportError: cannot import name 'perplexity_structured'`
 ```python
 T = TypeVar("T", bound=BaseModel)
 
-_DEFAULT_STRUCTURED_SYSTEM = (
-    "You are a research assistant. Provide concise, evidence-grounded answers with citations."
-)
+_DEFAULT_STRUCTURED_SYSTEM = "You are a research assistant. Provide concise, evidence-grounded answers with citations."
 
 
 async def perplexity_structured(
@@ -1081,9 +1070,7 @@ def test_history_live_result_has_timestamps(mocker):
         {"Open": [1.0, 2.0], "High": [1.5, 2.5], "Low": [0.5, 1.5], "Close": [1.2, 2.2], "Volume": [100, 200]},
         index=pd.to_datetime(["2026-07-01", "2026-07-02"]),
     )
-    mocker.patch.object(
-        history_holdings.yf, "Ticker", return_value=mocker.Mock(history=mocker.Mock(return_value=frame))
-    )
+    mocker.patch.object(history_holdings.yf, "Ticker", return_value=mocker.Mock(history=mocker.Mock(return_value=frame)))
     data = parse_tool_result(history_holdings.YahooFinanceHistoryTool()._run(ticker="AAPL"))
     assert data["data_source"] == "live_api"
     assert "timestamp" in data
@@ -1114,20 +1101,18 @@ Expected: FAIL (`TypeError: unexpected keyword argument 'prefetched_data'`)
 and at the end of the method (replacing `return ok({"summary": summary, "history": history_list[-10:]})`):
 
 ```python
-        payload: dict[str, Any] = {
-            "summary": summary,
-            "history": history_list[-10:],
-            "timestamp": datetime.now(UTC).isoformat(),
-            "data_source": "live_api",
-        }
-        if history_list:
-            try:
-                payload["data_time"] = (
-                    datetime.strptime(history_list[-1]["date"], "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
-                )
-            except ValueError:
-                logger.warning(f"Could not parse latest bar date for {ticker}")
-        return ok(payload)
+payload: dict[str, Any] = {
+    "summary": summary,
+    "history": history_list[-10:],
+    "timestamp": datetime.now(UTC).isoformat(),
+    "data_source": "live_api",
+}
+if history_list:
+    try:
+        payload["data_time"] = datetime.strptime(history_list[-1]["date"], "%Y-%m-%d").replace(tzinfo=UTC).isoformat()
+    except ValueError:
+        logger.warning(f"Could not parse latest bar date for {ticker}")
+return ok(payload)
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -1170,9 +1155,7 @@ def _company_info_mock(mocker, info, financials):
 def test_company_info_calculates_revenue_growth_from_financials(mocker):
     import pandas as pd
 
-    financials = pd.DataFrame(
-        {"2026": [200.0], "2025": [100.0]}, index=["Total Revenue"]
-    )
+    financials = pd.DataFrame({"2026": [200.0], "2025": [100.0]}, index=["Total Revenue"])
     tool = _company_info_mock(
         mocker,
         info={"longName": "Apple", "debtToEquity": 152.41, "revenueGrowth": 0.99},

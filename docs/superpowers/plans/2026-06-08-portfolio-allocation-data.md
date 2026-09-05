@@ -916,11 +916,7 @@ class TestAllocationWiring:
         from finwiz.orchestrators.portfolio_review_orchestrator import build_portfolio_review
 
         stock_csv = tmp_path / "stock.csv"
-        stock_csv.write_text(
-            "Name,Ticker,Currency,Active,Quantity\n"
-            "Apple,AAPL,USD,true,10\n"
-            "Microsoft,MSFT,USD,true,10\n"
-        )
+        stock_csv.write_text("Name,Ticker,Currency,Active,Quantity\nApple,AAPL,USD,true,10\nMicrosoft,MSFT,USD,true,10\n")
 
         mock_validator = mocker.patch("finwiz.orchestrators.portfolio_holdings_processor.TickerExistenceValidationTool")
         mock_validator.return_value._run.return_value = {"valid": True, "meta": {"source": "yahoo"}}
@@ -1119,11 +1115,7 @@ def _rows(path):
 
 def test_rewrites_currency_from_resolver(tmp_path):
     csv_path = tmp_path / "etf.csv"
-    csv_path.write_text(
-        "Name,Ticker,Currency,Active\n"
-        "Amundi EM,Yahoo:AEEM.PA,USD,true\n"
-        "UBS Gold,Yahoo:AUUSI.SW,USD,true\n"
-    )
+    csv_path.write_text("Name,Ticker,Currency,Active\nAmundi EM,Yahoo:AEEM.PA,USD,true\nUBS Gold,Yahoo:AUUSI.SW,USD,true\n")
 
     def resolver(ticker):
         return {"AEEM.PA": "EUR", "AUUSI.SW": "CHF"}.get(ticker)
@@ -1138,11 +1130,7 @@ def test_rewrites_currency_from_resolver(tmp_path):
 
 def test_preserves_other_columns_and_order(tmp_path):
     csv_path = tmp_path / "stock.csv"
-    csv_path.write_text(
-        "Name,Ticker,Currency,Active\n"
-        "Apple,Yahoo:AAPL,USD,true\n"
-        "Nestle,Yahoo:NESN.SW,USD,true\n"
-    )
+    csv_path.write_text("Name,Ticker,Currency,Active\nApple,Yahoo:AAPL,USD,true\nNestle,Yahoo:NESN.SW,USD,true\n")
 
     def resolver(ticker):
         return {"AAPL": "USD", "NESN.SW": "CHF"}.get(ticker)
@@ -1171,11 +1159,7 @@ def test_adds_currency_column_to_crypto(tmp_path):
 
 def test_per_ticker_failure_leaves_row_unchanged(tmp_path):
     csv_path = tmp_path / "stock.csv"
-    csv_path.write_text(
-        "Name,Ticker,Currency,Active\n"
-        "Apple,Yahoo:AAPL,USD,true\n"
-        "Broken,Yahoo:BAD,EUR,true\n"
-    )
+    csv_path.write_text("Name,Ticker,Currency,Active\nApple,Yahoo:AAPL,USD,true\nBroken,Yahoo:BAD,EUR,true\n")
 
     def resolver(ticker):
         return "CHF" if ticker == "AAPL" else None  # BAD unresolved
