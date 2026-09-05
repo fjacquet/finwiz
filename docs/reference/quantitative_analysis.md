@@ -248,37 +248,6 @@ print(f"Duration: {bond_result.duration:.2f}")
 print(f"Convexity: {bond_result.convexity:.2f}")
 ```
 
-## Portfolio Optimization
-
-### Modern Portfolio Theory
-
-```python
-from finwiz.quantitative.optimization import PortfolioOptimizer, PortfolioInputs, ObjectiveFunction, OptimizationMethod
-
-optimizer = PortfolioOptimizer()
-
-# Define portfolio inputs
-inputs = PortfolioInputs(symbols=["AAPL", "MSFT", "GOOGL", "AMZN"], expected_returns=[0.12, 0.10, 0.15, 0.14], covariance_matrix=covariance_matrix, risk_free_rate=0.03)
-
-# Optimize for maximum Sharpe ratio
-result = optimizer.optimize_portfolio(inputs=inputs, objective=ObjectiveFunction.MAX_SHARPE, method=OptimizationMethod.MEAN_VARIANCE)
-
-print("Optimal Portfolio:")
-for symbol, weight in zip(inputs.symbols, result.optimal_weights):
-    print(f"  {symbol}: {weight:.2%}")
-```
-
-### Efficient Frontier
-
-```python
-# Generate efficient frontier
-frontier = optimizer.generate_efficient_frontier(inputs, num_points=50)
-
-print(f"Number of efficient portfolios: {len(frontier.points)}")
-print(f"Max Sharpe portfolio return: {frontier.max_sharpe_portfolio.expected_return:.2%}")
-print(f"Min volatility portfolio risk: {frontier.min_volatility_portfolio.volatility:.2%}")
-```
-
 ## Configuration
 
 ### Environment Variables
