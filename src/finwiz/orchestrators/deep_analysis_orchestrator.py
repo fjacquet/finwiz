@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+from finwiz.analysis.fact_pack_freshness import summarize_fact_pack_freshness
 from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.infrastructure.resilience.crew_execution import CREW_TIMEOUT
@@ -549,6 +550,12 @@ class DeepAnalysisOrchestrator:
                 self.logger.info(f"Analysis complete: {ticker} grade={result.grade}")
 
         self.logger.info(f"Concurrent analysis completed: {len(results)}/{len(holdings)} holdings")
+
+        # One line on fact-pack freshness for the whole run. Per-holding freshness is
+        # already in the report; the aggregate is what a reader of the log — and the
+        # run gate — needs. WARNING when anything is stale or missing, so it is found.
+        freshness = summarize_fact_pack_freshness(self._enriched_analyses)
+        (self.logger.warning if freshness.stale or freshness.missing else self.logger.info)(freshness.line())
         return results
 
     def _ensure_macro_snapshot_on_state(self) -> None:
