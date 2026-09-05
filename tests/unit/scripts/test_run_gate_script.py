@@ -3,16 +3,12 @@
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "scripts"))
-
-from run_gate import main
-
 from finwiz.config.settings import reset_settings
+from scripts.run_gate import main
 
 REPO_SCRIPT = Path(__file__).parent.parent.parent.parent / "scripts" / "run_gate.py"
 
