@@ -24,6 +24,7 @@ from finwiz.integration.accessor import CrewDataAccessor
 from finwiz.integration.availability import DataAvailabilityTracker
 from finwiz.integration.manager import CrewDataIntegrationManager
 from finwiz.orchestrators.error_handling.core_analysis_error_handler import CoreAnalysisErrorHandler
+from finwiz.schemas.run_summary import Verdict
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -302,7 +303,7 @@ class FinwizFlow(Flow[FinwizState]):
             RunGateOrchestrator(self.state).run()
         except Exception:
             logger.exception("run gate could not start; verdict ERROR")
-            self.state.gate_verdict = "ERROR"
+            self.state.gate_verdict = Verdict.ERROR.value
 
         logger.info("Sequential workflow completed")
         return {"status": "completed"}

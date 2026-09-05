@@ -37,7 +37,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"run gate: could not read {path}: {exc}", file=sys.stderr)
         return exit_code_for(Verdict.ERROR)
 
-    thresholds = get_settings().gate
+    try:
+        thresholds = get_settings().gate
+    except ValueError as exc:
+        # A threshold outside [0, 1], or one that is not a number at all. The
+        # script exists to make a threshold change visible; the typo it invites
+        # must read as "could not evaluate", never as the run's own FAIL.
+        print(f"run gate: could not load thresholds -- check FINWIZ_GATE__*: {exc}", file=sys.stderr)
+        return exit_code_for(Verdict.ERROR)
+
     checks = evaluate(summary.coverage, summary.valuation, summary.fact_pack, summary.phases, summary.cost, thresholds)
     v = verdict(checks)
     for line in format_block(checks, v, str(path)):

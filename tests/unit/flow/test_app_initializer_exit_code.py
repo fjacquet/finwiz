@@ -10,6 +10,8 @@ the exit code came to be read from the one nothing ever writes.
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 from crewai.flow.flow import Flow
 
@@ -65,3 +67,41 @@ class TestTheFlowCopiesItsState:
         flow.kickoff()
         assert flow.state.gate_verdict == "PASS"
         assert outer.gate_verdict is None, "the caller's object is never written to; the exit code must not be read from it"
+
+
+def _exploding_flow(exc: BaseException) -> type[Flow[FinwizState]]:
+    """A flow that dies inside kickoff(), before the run gate ever runs."""
+
+    class _Boom(Flow[FinwizState]):
+        def kickoff(self, *args, **kwargs) -> None:
+            raise exc
+
+    return _Boom
+
+
+class TestAnUnjudgedRunIsExitTwo:
+    """Exit 1 is the gate's FAIL. A run the gate never judged must not borrow it."""
+
+    def test_a_crash_before_the_gate_exits_2_not_1(self, mocker, quiet_startup) -> None:
+        mocker.patch.object(app_initializer, "FinwizFlow", _exploding_flow(RuntimeError("phase 3 exploded")))
+
+        app_initializer.kickoff()
+
+        quiet_startup.assert_called_once_with(2)
+
+    def test_the_crash_keeps_its_traceback(self, mocker, quiet_startup, caplog) -> None:
+        mocker.patch.object(app_initializer, "FinwizFlow", _exploding_flow(RuntimeError("phase 3 exploded")))
+
+        with caplog.at_level(logging.CRITICAL):
+            app_initializer.kickoff()
+
+        assert any(r.exc_info is not None for r in caplog.records if r.levelno >= logging.CRITICAL)
+
+    def test_system_exit_still_propagates(self, mocker, quiet_startup) -> None:
+        """`sys.exit()` from inside the flow is a deliberate termination, not a verdict."""
+        mocker.patch.object(app_initializer, "FinwizFlow", _exploding_flow(SystemExit(3)))
+
+        with pytest.raises(SystemExit):
+            app_initializer.kickoff()
+
+        quiet_startup.assert_not_called()
