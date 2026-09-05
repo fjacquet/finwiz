@@ -93,7 +93,10 @@ def perform_comprehensive_analysis(
         if backtest_result is not None:
             quant_backtest = _create_backtest_result(input_data.symbol, backtest_result)
     except Exception as e:
-        logger.error(f"Backtest failed for {input_data.symbol}: {e}")
+        # exception(), not error(): this boundary swallows the raise so the
+        # other two analyses survive, so it is the last place the traceback
+        # can still be recorded.
+        logger.exception(f"Backtest failed for {input_data.symbol}: {e}")
 
     metrics = None
     quant_perf = None
