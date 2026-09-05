@@ -28,11 +28,11 @@ class EnrichedAnalysisReportGenerator:
     EnrichedAnalysis data. Provides fast, deterministic, and testable
     report generation combining quantitative and qualitative insights.
 
-    Validates:
-        - Word count ≥2000 words (Requirement 9.2)
-        - Insights count ≥5 insights (Requirement 9.2)
-        - Executive summary ≥200 words (Requirement 9.2)
-        - Investment rationale ≥500 words (Requirement 9.3)
+    Logs the rendered report's word and insight counts; it does not enforce a
+    minimum. The 2000/200/500-word thresholds this class once warned about
+    came from a 2025-11 prose-heavy design whose requirements document no
+    longer exists, were violated by every holding of every run (128 warnings
+    per run, 64 x 2), and were acted upon by nothing.
     """
 
     def __init__(self, template_dir: str | Path | None = None):
@@ -87,9 +87,6 @@ class EnrichedAnalysisReportGenerator:
             else:
                 result_data = enriched_analysis
 
-            # Validate quality thresholds
-            self._validate_quality_thresholds(result_data)
-
             # Prepare template variables
             template_vars = self._prepare_template_variables(result_data)
 
@@ -113,57 +110,6 @@ class EnrichedAnalysisReportGenerator:
             ticker = result_data.get("ticker", "unknown") if "result_data" in locals() else "unknown"
             self.logger.error(f"❌ Report generation failed after {execution_time * 1000:.1f}ms for {ticker}: {e}")
             raise RuntimeError(f"Failed to generate report: {e}") from e
-
-    def _validate_quality_thresholds(self, data: dict[str, Any]) -> None:
-        """
-        Validate quality thresholds for the report.
-
-        Validates:
-            - Word count ≥2000 words (Requirement 9.2)
-            - Insights count ≥5 insights (Requirement 9.2)
-            - Executive summary ≥200 words (Requirement 9.2)
-            - Investment rationale ≥500 words (Requirement 9.3)
-
-        Args:
-            data: EnrichedAnalysis data dictionary
-
-        Raises:
-            ValueError: If quality thresholds are not met
-
-        """
-        ticker = data.get("ticker", "unknown")
-        errors = []
-
-        # Validate word count (≥2000 words)
-        word_count = data.get("report_word_count", 0)
-        if word_count < 2000:
-            errors.append(f"Word count {word_count} < 2000 (Requirement 9.2)")
-
-        # Validate insights count (≥5 insights)
-        insights_count = data.get("unique_insights_count", 0)
-        if insights_count < 5:
-            errors.append(f"Insights count {insights_count} < 5 (Requirement 9.2)")
-
-        # Validate executive summary length (≥200 words)
-        executive_summary = data.get("executive_summary", "")
-        exec_word_count = len(executive_summary.split())
-        if exec_word_count < 200:
-            errors.append(f"Executive summary {exec_word_count} words < 200 (Requirement 9.2)")
-
-        # Validate investment rationale length (≥500 words)
-        investment_rationale = data.get("investment_rationale", "")
-        rationale_word_count = len(investment_rationale.split())
-        if rationale_word_count < 500:
-            errors.append(f"Investment rationale {rationale_word_count} words < 500 (Requirement 9.3)")
-
-        if errors:
-            # Log as warning instead of raising error - allow HTML generation to proceed
-            warning_msg = f"Quality validation warnings for {ticker}: " + "; ".join(errors)
-            self.logger.warning(f"⚠️ {warning_msg}")
-        else:
-            self.logger.info(
-                f"✅ Quality validation passed for {ticker}: {word_count} words, {insights_count} insights, {exec_word_count} exec words, {rationale_word_count} rationale words"
-            )
 
     def _prepare_template_variables(self, data: dict[str, Any]) -> dict[str, Any]:
         """

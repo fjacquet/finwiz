@@ -205,57 +205,34 @@ class TestRendererToleratesSkippedAnalysis:
 class TestEnrichedAnalysisReportProperties:
     """Property-based tests for EnrichedAnalysisReportGenerator."""
 
-    # Property 15: Executive Summary Length
     @given(enriched_data=enriched_analysis_strategy())
     @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_executive_summary_meets_minimum_length(self, enriched_data):
+    def test_report_renders_summary_and_thesis_sections(self, enriched_data):
+        """The executive summary and investment thesis sections render for any valid input.
+
+        Replaces Properties 15 and 16, which asserted that the *fixture* produced
+        >=200 / >=500 words -- a test of the strategy, not of the generator -- in
+        the name of a requirements document that no longer exists.
         """
-        **Feature: python-ai-hybrid-analysis, Property 15: Executive Summary Length**
-        **Validates: Requirements 9.2**
+        html_content = EnrichedAnalysisReportGenerator().generate_report(enriched_data)
 
-        Property: Executive summary has at least 200 words.
-
-        For any EnrichedAnalysis with an executive_summary, the word count
-        of that summary should be ≥200 words.
-        """
-        # Arrange
-        generator = EnrichedAnalysisReportGenerator()
-
-        # Act - Generate report (this validates the data)
-        html_content = generator.generate_report(enriched_data)
-
-        # Assert - Executive summary length
-        exec_summary = enriched_data["executive_summary"]
-        word_count = len(exec_summary.split())
-
-        assert word_count >= 200, f"Executive summary has {word_count} words, expected ≥200"
         assert "résumé exécutif" in html_content.lower() or "executive" in html_content.lower(), "Report must contain executive summary section"
-
-    # Property 16: Investment Rationale Length
-    @given(enriched_data=enriched_analysis_strategy())
-    @settings(max_examples=50, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_investment_rationale_meets_minimum_length(self, enriched_data):
-        """
-        **Feature: python-ai-hybrid-analysis, Property 16: Investment Rationale Length**
-        **Validates: Requirements 9.3**
-
-        Property: Investment rationale has at least 500 words.
-
-        For any EnrichedAnalysis with an investment_rationale, the word count
-        should be ≥500 words.
-        """
-        # Arrange
-        generator = EnrichedAnalysisReportGenerator()
-
-        # Act - Generate report (this validates the data)
-        html_content = generator.generate_report(enriched_data)
-
-        # Assert - Investment rationale length
-        investment_rationale = enriched_data["investment_rationale"]
-        word_count = len(investment_rationale.split())
-
-        assert word_count >= 500, f"Investment rationale has {word_count} words, expected ≥500"
         assert "investissement" in html_content.lower(), "Report must contain investment thesis section"
+
+    @given(enriched_data=enriched_analysis_strategy())
+    @settings(max_examples=25, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
+    def test_report_generation_emits_no_quality_validation_warning(self, enriched_data, caplog):
+        """Generating a report must not log the retired 'Quality validation warnings'.
+
+        The 2026-09-05 run logged it 128 times -- 64 holdings x 2 -- for
+        thresholds nothing enforced. Noise at that volume hides real warnings.
+        """
+        import logging
+
+        with caplog.at_level(logging.WARNING):
+            EnrichedAnalysisReportGenerator().generate_report(enriched_data)
+
+        assert not [r for r in caplog.records if "Quality validation" in r.message]
 
     # Property 17: Action Plan Completeness
     @given(enriched_data=enriched_analysis_strategy())
@@ -392,102 +369,3 @@ class TestRendererShowsPriceTargets:
         assert "</html>" in html_content, "Report must close html tag"
         assert enriched_data["ticker"] in html_content, "Report must contain ticker"
         assert enriched_data["final_recommendation"] in html_content, "Report must contain recommendation"
-
-    # Additional property: Quality validation logs warnings for insufficient data
-    @given(
-        word_count=st.integers(min_value=0, max_value=1999),
-        insights_count=st.integers(min_value=0, max_value=4),
-    )
-    @settings(max_examples=20, deadline=500, suppress_health_check=[HealthCheck.function_scoped_fixture])
-    def test_quality_validation_warns_for_insufficient_data(self, word_count, insights_count, caplog):
-        """
-        Property: Quality validation logs warnings for data below thresholds.
-
-        For any EnrichedAnalysis data with word_count < 2000 or insights_count < 5,
-        quality validation should log appropriate warnings (but not block generation).
-
-        Note: The generator uses non-blocking validation - it logs warnings but
-        allows HTML generation to proceed. This test verifies warnings are logged.
-        """
-        import logging
-
-        # Arrange
-        generator = EnrichedAnalysisReportGenerator()
-
-        # Create data that violates quality thresholds but has all required template fields
-        insufficient_data = {
-            "ticker": "TEST",
-            "company_name": "Test Company",
-            "asset_class": "stock",
-            "analysis_date": datetime.now(),
-            "report_word_count": word_count,
-            "unique_insights_count": insights_count,
-            "executive_summary": " ".join(["word"] * 50),  # Too short
-            "investment_rationale": " ".join(["word"] * 100),  # Too short
-            "final_grade": "C",
-            "final_score": 0.5,
-            "final_recommendation": "HOLD",
-            "recommendation_confidence": "LOW",
-            "processing_time_seconds": 1.0,
-            "llm_cost_dollars": 0.01,
-            "quantitative": {
-                "composite_score": 0.5,
-                "fundamental_score": 0.5,
-                "technical_score": 0.5,
-                "risk_score": 2.5,
-                "grade": "C",
-                "preliminary_recommendation": "HOLD",
-                "fundamental_metrics": {},
-                "technical_indicators": {},
-                "risk_metrics": {},
-                "calculation_timestamp": datetime.now(),
-                "data_quality": {
-                    "completeness_score": 0.5,
-                    "freshness_score": 0.5,
-                    "accuracy_confidence": 0.5,
-                    "source_reliability": 0.5,
-                    "missing_fields": [],
-                },
-                "data_lineage": {
-                    "primary_sources": [],
-                    "collection_timestamp": datetime.now(),
-                    "transformation_steps": [],
-                    "cache_status": "unknown",
-                },
-                "confidence_level": 0.5,
-                "python_rationale": "",
-            },
-            "qualitative": {
-                "sec_insights": {"business_model": "", "competitive_advantages": [], "risk_factors": [], "strategic_initiatives": []},
-                "fundamental_context": {"industry_analysis": "", "growth_drivers": [], "competitive_positioning": "", "management_assessment": ""},
-                "technical_strategy": {"chart_patterns": [], "support_resistance": "", "entry_exit_strategy": "", "timing_assessment": ""},
-                "contextual_risks": {"regulatory_risks": [], "geopolitical_risks": [], "competitive_risks": [], "operational_risks": [], "stress_scenarios": []},
-                "investment_synthesis": {
-                    "investment_thesis": "",
-                    "bull_case": "",
-                    "base_case": "",
-                    "bear_case": "",
-                    "scenario_probabilities": {"bull": 0.33, "base": 0.34, "bear": 0.33},
-                    "final_recommendation": "HOLD",
-                    "recommendation_confidence": "LOW",
-                    "action_plan": {"immediate_actions": [], "monitoring_points": [], "exit_triggers": []},
-                },
-                "analysis_timestamp": datetime.now(),
-                "ai_confidence": 0.5,
-            },
-        }
-
-        # Act - capture log output
-        with caplog.at_level(logging.WARNING):
-            try:
-                generator.generate_report(insufficient_data)
-            except RuntimeError:
-                # Template rendering may fail for other reasons, that's OK
-                pass
-
-        # Assert - quality validation should have logged warnings
-        warning_logs = [record.message for record in caplog.records if record.levelno == logging.WARNING]
-        quality_warnings = [msg for msg in warning_logs if "Quality validation" in msg or "Word count" in msg or "words <" in msg]
-
-        # At least one quality warning should be logged
-        assert len(quality_warnings) > 0, f"Expected quality validation warnings, got: {warning_logs}"
