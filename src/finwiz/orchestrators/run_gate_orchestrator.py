@@ -5,8 +5,11 @@ through ``analysis/run_gate.py``, writes ``output/run_summary.json`` and a
 dated copy beside the ledger, logs one line per check, and leaves the verdict
 on state for ``core/app_initializer.py`` to turn into an exit code.
 
-Never raises. The report was written before this ran; a failure here is
-recorded as verdict ERROR (exit 2), with its traceback, and the run ends.
+Never raises. The report was written before this ran; a failure to *evaluate*
+is recorded as verdict ERROR (exit 2), with its traceback, and the run ends. A
+failure to *write* is not: the run was judged either way, so the verdict is
+logged and stored first and the file is attempted after. A full disk degrades
+the artifact, never the verdict.
 """
 
 from __future__ import annotations
@@ -133,18 +136,28 @@ class RunGateOrchestrator:
     def run(self) -> RunSummary | None:
         try:
             summary = self._evaluate()
-            self._write(summary)
-            for line in format_block(summary.checks, summary.verdict, str(self.output_dir / "run_summary.json")):
-                logger.info(line)
-            self.state.run_summary = summary.model_dump(mode="json")
-            self.state.gate_verdict = summary.verdict.value
-            return summary
         except Exception:
             # The report is already written. Record that we could not judge it --
             # with the traceback, or the next person cannot either.
             logger.exception("run gate could not evaluate this run; verdict ERROR")
             self.state.gate_verdict = Verdict.ERROR.value
             return None
+
+        # The verdict exists now. Publish it before persisting it: a read-only or
+        # full output/ used to turn a PASS into exit 2 and swallow all eight
+        # per-check lines, which is the gate reporting on its own disk rather
+        # than on the run.
+        self.state.gate_verdict = summary.verdict.value
+        for line in format_block(summary.checks, summary.verdict, str(self.output_dir / "run_summary.json")):
+            logger.info(line)
+
+        try:
+            self._write(summary)
+        except Exception:
+            # Broad on purpose: "never raises" is this module's headline contract,
+            # and no failure to persist is worth losing a verdict that already exists.
+            logger.exception("run gate could not write the run summary; the verdict above stands")
+        return summary
 
     def _evaluate(self) -> RunSummary:
         thresholds = self.thresholds or get_settings().gate

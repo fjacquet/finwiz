@@ -217,6 +217,12 @@ class FinwizState(BaseModel):
     # and mark unanalyzed holdings as "Analyse en attente".
     deep_analysis_coverage: tuple[int, int] | None = None
 
+    # Every asset class's opportunities, consolidated by DiscoveryOrchestrator and
+    # read by the run gate. Declared rather than left to extra="allow": this is the
+    # field whose name the gate first got wrong, and an undeclared field makes that
+    # mistake silent and invisible to mypy.
+    all_discovery_opportunities: list[dict[str, Any]] = Field(default_factory=list)
+
     # Portfolio-Aware Opportunity Cascade
     # Gap profile built after deep analysis (Phase 3.6); consumed by discovery
     # and alternatives ranking. Stored as a dict (PortfolioGapProfile.model_dump()).
@@ -287,9 +293,10 @@ class FinwizState(BaseModel):
     # persisted so the run gate can read it. Plain dict: FactPackFreshnessSummary as asdict().
     fact_pack_freshness: dict[str, Any] | None = None
 
-    # Run gate (last act of the flow). run_summary is RunSummary.model_dump();
-    # gate_verdict drives the process exit code in core/app_initializer.py.
-    run_summary: dict[str, Any] | None = None
+    # Run gate (last act of the flow). gate_verdict drives the process exit code
+    # in core/app_initializer.py. The summary itself is not mirrored here: it is
+    # written to output/run_summary.json, nothing under src/ read the copy, and a
+    # duplicate on a state crewai re-serializes is a second thing to keep in step.
     gate_verdict: str | None = None
 
     # Macro snapshot for report-time access (Phase 16)

@@ -233,6 +233,14 @@ places. The rulings below supersede §3–§5 where they conflict.
   `unpriced_crews`, so the two agree; `make gate` re-judges stored files, where
   a summary saying `cost_known: false` with an empty crew list passed as
   "$0.00 over 5 calls".
+- **A write failure degrades the artifact, not the verdict.** §6 says the
+  orchestrator never raises, which was implemented by wrapping the write in the
+  same `try` as the evaluation: a read-only or full `output/` turned a PASS into
+  exit 2 and swallowed the eight per-check log lines. The verdict is stored and
+  logged first; persistence is attempted after and its failure only costs the
+  file. `state.run_summary` is dropped with it — nothing under `src/` read the
+  copy, and duplicating the artifact onto a state crewai re-serializes is a
+  second thing to keep in step.
 - **An un-judged run exits 2.** §5 gives exit 1 to FAIL. A crash before the gate
   ran used to exit 1 too, through Python's default handler, so a reader of the
   contract concluded "the gate failed this run" about a run nobody evaluated.

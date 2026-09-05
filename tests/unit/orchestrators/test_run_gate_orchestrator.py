@@ -279,7 +279,6 @@ class TestRun:
 
         assert summary is not None and summary.verdict is Verdict.FAIL  # 1/3 stale = 33% > 25%
         assert state.gate_verdict == "FAIL"
-        assert state.run_summary == summary.model_dump(mode="json")
 
         written = RunSummary.model_validate_json((output / "run_summary.json").read_text())
         assert written == summary
@@ -411,3 +410,41 @@ class TestDegradedAndMissingInputsAreToldApart:
         alternatives = next(c for c in summary.checks if c.name == "alternatives")
         assert alternatives.passed is False
         assert alternatives.detail == "not measured"
+
+
+class TestAWriteFailureDegradesTheArtifactNotTheVerdict:
+    def test_an_unwritable_output_dir_keeps_the_verdict_and_the_block(self, tmp_path, monkeypatch, caplog) -> None:
+        """`_write` ran before the verdict was logged or stored, so a read-only or full
+        `output/` turned a PASS into exit 2 and the eight per-check lines were never emitted.
+        The run was judged; only its file is missing.
+        """
+        state = _healthy(tmp_path, monkeypatch)
+        blocked = tmp_path / "gate_out"
+        blocked.write_text("a file where the gate wants a directory")
+
+        with caplog.at_level(logging.INFO):
+            summary = RunGateOrchestrator(state, output_dir=blocked, thresholds=RunGateSettings()).run()
+
+        assert summary is not None and summary.verdict is Verdict.PASS
+        assert state.gate_verdict == "PASS"
+        assert exit_code_for(state.gate_verdict) == 0
+        assert len([r.message for r in caplog.records if r.message.startswith("run gate: ")]) == 9
+        assert any(r.exc_info is not None for r in caplog.records if r.levelno >= logging.ERROR), "the write failure keeps its traceback"
+
+    def test_the_summary_is_not_duplicated_onto_state(self, tmp_path, monkeypatch) -> None:
+        """`state.run_summary` was written and read by nothing under src/; the file is the artifact."""
+        state = _healthy(tmp_path, monkeypatch)
+
+        RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+
+        assert "run_summary" not in type(state).model_fields
+        assert (tmp_path / "output" / "run_summary.json").exists()
+
+    def test_no_kind_of_write_failure_raises(self, tmp_path, monkeypatch, mocker) -> None:
+        """Never raises is this module's headline contract, and serialising is not only I/O."""
+        mocker.patch.object(RunGateOrchestrator, "_write", side_effect=RuntimeError("serialisation exploded"))
+        state = _healthy(tmp_path, monkeypatch)
+
+        summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+
+        assert summary is not None and state.gate_verdict == "PASS"

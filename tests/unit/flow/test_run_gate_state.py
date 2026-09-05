@@ -12,8 +12,15 @@ class TestRunGateStateFields:
     def test_fields_exist_and_default_to_none(self) -> None:
         s = FinwizState()
         assert s.fact_pack_freshness is None
-        assert s.run_summary is None
         assert s.gate_verdict is None
+
+    def test_the_discovery_field_the_gate_reads_is_declared(self) -> None:
+        """It survived on ``extra="allow"`` alone -- the field whose absence caused the discovery bug.
+
+        Undeclared, the next typo in the name is silent again and mypy cannot help.
+        """
+        assert "all_discovery_opportunities" in FinwizState.model_fields
+        assert FinwizState().all_discovery_opportunities == []
 
 
 class TestFreshnessIsPersistedNotJustLogged:
