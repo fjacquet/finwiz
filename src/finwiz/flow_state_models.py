@@ -283,6 +283,15 @@ class FinwizState(BaseModel):
     stress_test_count: int = Field(default=0)
     stress_test_error: str | None = None
 
+    # Fact-pack freshness summary from Phase 3 (analysis/fact_pack_freshness.py),
+    # persisted so the run gate can read it. Plain dict: FactPackFreshnessSummary as asdict().
+    fact_pack_freshness: dict[str, Any] | None = None
+
+    # Run gate (last act of the flow). run_summary is RunSummary.model_dump();
+    # gate_verdict drives the process exit code in core/app_initializer.py.
+    run_summary: dict[str, Any] | None = None
+    gate_verdict: str | None = None
+
     # Macro snapshot for report-time access (Phase 16)
     macro_snapshot: dict[str, Any] | None = Field(default=None, description="Session-level MacroSnapshot dict for report generation")
 

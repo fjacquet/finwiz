@@ -551,12 +551,21 @@ class DeepAnalysisOrchestrator:
 
         self.logger.info(f"Concurrent analysis completed: {len(results)}/{len(holdings)} holdings")
 
-        # One line on fact-pack freshness for the whole run. Per-holding freshness is
-        # already in the report; the aggregate is what a reader of the log — and the
-        # run gate — needs. WARNING when anything is stale or missing, so it is found.
+        self._record_fact_pack_freshness()
+        return results
+
+    def _record_fact_pack_freshness(self) -> None:
+        """Log the per-run freshness line and persist the same numbers for the run gate.
+
+        Logged at WARNING when anything is stale or missing so it is found by
+        anyone scanning for warnings; stored as a plain dict so state stays
+        serialisable.
+        """
+        from dataclasses import asdict
+
         freshness = summarize_fact_pack_freshness(self._enriched_analyses)
         (self.logger.warning if freshness.stale or freshness.missing else self.logger.info)(freshness.line())
-        return results
+        self.state.fact_pack_freshness = asdict(freshness)
 
     def _ensure_macro_snapshot_on_state(self) -> None:
         """Set macro_snapshot on FinwizState if not already set.
