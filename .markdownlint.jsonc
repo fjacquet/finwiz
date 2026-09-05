@@ -1,4 +1,7 @@
 {
+  // Hard tabs stay legal inside code blocks: Makefile recipes require them, and a
+  // plan that showed spaces would hand the implementer a broken Makefile.
+  "MD010": { "code_blocks": false },
   // Markdown linting configuration for FinWiz documentation
 
   // Disable rules that conflict with our style
