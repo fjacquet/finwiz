@@ -69,15 +69,17 @@ All data transfers use strict Pydantic v2 models:
 ```python
 from pydantic import BaseModel, Field
 
+
 class HoldingDecision(BaseModel):
     """Strict validation for holding decisions."""
-    ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    grade: str = Field(..., pattern=r'^(A\+|A|B|C|D|F)$')
+
+    ticker: str = Field(..., pattern=r"^[A-Z]{1,5}$")
+    grade: str = Field(..., pattern=r"^(A\+|A|B|C|D|F)$")
     composite_score: float = Field(..., ge=0.0, le=1.0)
 
     model_config = {
         "extra": "forbid",  # Reject unknown fields
-        "str_strip_whitespace": True
+        "str_strip_whitespace": True,
     }
 ```
 
@@ -109,22 +111,9 @@ flowchart TD
     "ticker": "AAPL",
     "grade": "A+",
     "composite_score": 0.95,
-    "risk": {
-        "score": 2.5,
-        "factors": ["Market volatility", "Sector competition"]
-    },
-    "rationale_bullets": [
-        "Strong fundamentals with 25% revenue growth",
-        "Excellent profit margins above 25%",
-        "Low debt-to-equity ratio of 0.15"
-    ],
-    "citations": [
-        {
-            "source": "SEC 10-K Filing",
-            "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193",
-            "date": "2024-10-31"
-        }
-    ]
+    "risk": {"score": 2.5, "factors": ["Market volatility", "Sector competition"]},
+    "rationale_bullets": ["Strong fundamentals with 25% revenue growth", "Excellent profit margins above 25%", "Low debt-to-equity ratio of 0.15"],
+    "citations": [{"source": "SEC 10-K Filing", "url": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000320193", "date": "2024-10-31"}],
 }
 ```
 
@@ -159,7 +148,7 @@ validator = DataConsolidationValidator(registry_manager)  # RegistryManager is r
 
 try:
     # Validate all expected crew data exists
-    crew_data = validator.validate_crew_data_retrieval(['stock', 'etf', 'crypto'])
+    crew_data = validator.validate_crew_data_retrieval(["stock", "etf", "crypto"])
 
     # Data successfully retrieved
     for crew_name, data in crew_data.items():
@@ -210,7 +199,7 @@ Users must be able to trust that if they receive a report, it contains accurate 
 
 ```python
 # Fails if crew data missing or corrupted
-validator.validate_crew_data_retrieval(['stock', 'etf', 'crypto'])
+validator.validate_crew_data_retrieval(["stock", "etf", "crypto"])
 # Raises: DataRetrievalError with detailed diagnostics
 ```
 
@@ -226,7 +215,7 @@ merger.merge_deep_analysis_into_holdings(holdings, deep_analysis)
 
 ```python
 # Fails if required fields are missing or contain placeholders
-validator.validate_qualitative_insights(insights)   # -> QualitativeInsights
+validator.validate_qualitative_insights(insights)  # -> QualitativeInsights
 # Raises: ReportValidationError with field-level details
 ```
 
@@ -556,8 +545,8 @@ cat output/stock/stock_output_*.json | jq '.ticker'
 
 ```python
 # Verify ticker matching
-holdings_tickers = set(['AAPL', 'GOOGL', 'MSFT'])
-analysis_tickers = set(['AAPL', 'GOOGL', 'MSFT'])
+holdings_tickers = set(["AAPL", "GOOGL", "MSFT"])
+analysis_tickers = set(["AAPL", "GOOGL", "MSFT"])
 
 missing = holdings_tickers - analysis_tickers
 print(f"Missing analysis for: {missing}")
@@ -591,7 +580,7 @@ required_fields = [
     "discovery_status",
     "backtesting_status",
     "data_availability_summary",
-    "data_availability_summary_formatted"
+    "data_availability_summary_formatted",
 ]
 
 # Check which fields are missing
@@ -782,7 +771,7 @@ for field in required_fields:
    # In crew configuration
    agent = Agent(
        reasoning=True,
-       max_reasoning_attempts=3  # Prevent infinite loops
+       max_reasoning_attempts=3,  # Prevent infinite loops
    )
    ```
 
@@ -849,17 +838,15 @@ Follow the [Manual Verification Steps](#manual-verification-steps) above after e
 metrics_history = []
 for run in runs:
     metrics = DataQualityMetrics.model_validate_json(Path(f"run_{run}_metrics.json").read_text())
-    metrics_history.append({
-        "run": run,
-        "score": metrics.calculate_quality_score(),
-        "fallback_grades": metrics.fallback_grades_count,
-        "placeholder_urls": metrics.placeholder_urls_count
-    })
+    metrics_history.append(
+        {"run": run, "score": metrics.calculate_quality_score(), "fallback_grades": metrics.fallback_grades_count, "placeholder_urls": metrics.placeholder_urls_count}
+    )
 
 # Plot trends
 import matplotlib.pyplot as plt
+
 plt.plot([m["score"] for m in metrics_history])
-plt.axhline(y=0.90, color='r', linestyle='--', label='Threshold')
+plt.axhline(y=0.90, color="r", linestyle="--", label="Threshold")
 plt.title("Data Quality Score Over Time")
 plt.show()
 ```

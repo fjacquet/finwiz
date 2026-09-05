@@ -18,8 +18,10 @@ All public functions and methods MUST have complete type annotations:
 def analyze_stock(ticker: str, period: int = 365) -> StockAnalysis:
     return StockAnalysis(ticker=ticker, period=period)
 
+
 def log_analysis(ticker: str) -> None:
     logger.info(f"Analyzing {ticker}")
+
 
 # ❌ WRONG - Missing return type
 def analyze_stock(ticker: str):
@@ -90,22 +92,23 @@ logger.info(f"API key: {api_key}")
 ```python
 from pydantic import BaseModel, Field, field_validator
 
+
 class TickerInput(BaseModel):
     """Validate ticker input with strict security."""
 
     model_config = {
         "str_strip_whitespace": True,
         "str_upper": True,
-        "extra": "forbid"  # Reject unknown fields
+        "extra": "forbid",  # Reject unknown fields
     }
 
-    symbol: str = Field(..., pattern=r'^[A-Z]{1,5}$')
+    symbol: str = Field(..., pattern=r"^[A-Z]{1,5}$")
 
-    @field_validator('symbol')
+    @field_validator("symbol")
     @classmethod
     def validate_ticker(cls, v: str) -> str:
         if not v.isalpha():
-            raise ValueError('Ticker must contain only letters')
+            raise ValueError("Ticker must contain only letters")
         return v.upper()
 ```
 
@@ -155,6 +158,7 @@ from finwiz.utils.rate_limiter import RateLimiter
 
 limiter = RateLimiter(max_calls=20, period=60)
 
+
 @limiter.limit
 async def fetch_stock_data(ticker: str) -> dict:
     return await api_client.get(f"/stock/{ticker}")
@@ -180,10 +184,7 @@ async with httpx.AsyncClient() as client:
 
 ```python
 # ✅ CORRECT - Parameterized queries
-cursor.execute(
-    "SELECT * FROM stocks WHERE ticker = %s",
-    (ticker,)
-)
+cursor.execute("SELECT * FROM stocks WHERE ticker = %s", (ticker,))
 
 # ❌ WRONG - SQL injection risk
 cursor.execute(f"SELECT * FROM stocks WHERE ticker = '{ticker}'")
@@ -194,10 +195,11 @@ cursor.execute(f"SELECT * FROM stocks WHERE ticker = '{ticker}'")
 ```python
 from pathlib import Path
 
+
 # ✅ CORRECT - Validate paths
 def read_report(filename: str) -> str:
     # Validate filename
-    if not filename.replace('-', '').replace('_', '').isalnum():
+    if not filename.replace("-", "").replace("_", "").isalnum():
         raise ValueError("Invalid filename")
 
     # Resolve path safely
@@ -209,6 +211,7 @@ def read_report(filename: str) -> str:
         raise ValueError("Path traversal attempt")
 
     return file_path.read_text()
+
 
 # ❌ WRONG - Path traversal risk
 def read_report(filename: str) -> str:
@@ -222,6 +225,7 @@ def read_report(filename: str) -> str:
 import subprocess
 import shlex
 
+
 # ✅ CORRECT - Safe command execution
 def run_analysis(ticker: str) -> str:
     # Validate input
@@ -229,13 +233,9 @@ def run_analysis(ticker: str) -> str:
         raise ValueError("Invalid ticker")
 
     # Use list form (safer)
-    result = subprocess.run(
-        ["python", "analyze.py", ticker],
-        capture_output=True,
-        text=True,
-        timeout=30
-    )
+    result = subprocess.run(["python", "analyze.py", ticker], capture_output=True, text=True, timeout=30)
     return result.stdout
+
 
 # ❌ WRONG - Command injection risk
 def run_analysis(ticker: str) -> str:
@@ -273,7 +273,7 @@ import httpx
 
 client = httpx.AsyncClient(
     verify=True,  # Verify SSL certificates
-    timeout=30.0
+    timeout=30.0,
 )
 
 # ❌ WRONG - Insecure connection
@@ -284,12 +284,7 @@ client = httpx.AsyncClient(verify=False)
 
 ```python
 # Add security headers
-headers = {
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "X-XSS-Protection": "1; mode=block",
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
-}
+headers = {"X-Content-Type-Options": "nosniff", "X-Frame-Options": "DENY", "X-XSS-Protection": "1; mode=block", "Strict-Transport-Security": "max-age=31536000; includeSubDomains"}
 ```
 
 ## Security Checklist

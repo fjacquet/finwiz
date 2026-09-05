@@ -103,10 +103,7 @@ _FRAMEWORK_COLUMNS = (
 Replace the legend so it describes only what the table shows:
 
 ```python
-    legend = (
-        '<p class="muted small">SWOT évalue les forces et faiblesses internes, '
-        "et Porter la solidité de l'avantage concurrentiel.</p>"
-    )
+legend = '<p class="muted small">SWOT évalue les forces et faiblesses internes, et Porter la solidité de l\'avantage concurrentiel.</p>'
 ```
 
 In `portfolio_summary.py`, delete the macro bullet at line 138 (`<li>{render_markdown_inline(posture.get("macro_verdict"))}</li>`), leaving the competitive and SWOT bullets.
@@ -520,17 +517,18 @@ Expected: FAIL — `model_fields` still contains `pestel`, and the legacy compos
 Delete the whole `PestelAnalysis` class and the `pestel` field from `StrategicAnalysis`, then update both composite properties:
 
 ```python
-    @property
-    def composite_strategic_score(self) -> float | None:
-        """Average of the framework scores. None if both are missing."""
-        scores = [f.strategic_score for f in (self.swot, self.five_forces) if f is not None]
-        return sum(scores) / len(scores) if scores else None
+@property
+def composite_strategic_score(self) -> float | None:
+    """Average of the framework scores. None if both are missing."""
+    scores = [f.strategic_score for f in (self.swot, self.five_forces) if f is not None]
+    return sum(scores) / len(scores) if scores else None
 
-    @property
-    def composite_confidence(self) -> float | None:
-        """Average of the framework confidences. None if both are missing."""
-        confs = [f.confidence for f in (self.swot, self.five_forces) if f is not None]
-        return sum(confs) / len(confs) if confs else None
+
+@property
+def composite_confidence(self) -> float | None:
+    """Average of the framework confidences. None if both are missing."""
+    confs = [f.confidence for f in (self.swot, self.five_forces) if f is not None]
+    return sum(confs) / len(confs) if confs else None
 ```
 
 Update the remaining references, all comments or descriptions:

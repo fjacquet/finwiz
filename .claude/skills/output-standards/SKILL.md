@@ -190,10 +190,10 @@ All user-facing content must be in French with:
 @agent
 def investment_reporter(self) -> Agent:
     return Agent(
-        config=self.agents_config['investment_reporter'],
+        config=self.agents_config["investment_reporter"],
         tools=[],  # MUST be empty - no external API calls
         reasoning=False,  # Fast consolidation, no complex reasoning
-        verbose=True
+        verbose=True,
     )
 ```
 
@@ -215,7 +215,7 @@ def generate_final_report(self) -> Task:
         """,
         expected_output="Complete HTML report in French with professional formatting",
         agent=self.investment_reporter(),
-        async_execution=False  # Final task must be synchronous
+        async_execution=False,  # Final task must be synchronous
     )
 ```
 

@@ -75,6 +75,7 @@ from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
 from finwiz.infrastructure.decorators.agent_validators import final_reporter
 
+
 @CrewBase
 class StockCrew:
     agents_config = "config/agents.yaml"
@@ -82,13 +83,7 @@ class StockCrew:
 
     @agent
     def analyst(self) -> Agent:
-        return Agent(
-            config=self.agents_config["analyst"],
-            tools=get_stock_crew_tools(),
-            reasoning=True,
-            max_reasoning_attempts=3,
-            verbose=True
-        )
+        return Agent(config=self.agents_config["analyst"], tools=get_stock_crew_tools(), reasoning=True, max_reasoning_attempts=3, verbose=True)
 
     @final_reporter  # Enforces NO tools
     @agent
@@ -96,24 +91,16 @@ class StockCrew:
         return Agent(
             config=self.agents_config["reporter"],
             tools=[],  # MUST be empty
-            verbose=True
+            verbose=True,
         )
 
     @task
     def analysis_task(self) -> Task:
-        return Task(
-            config=self.tasks_config["analysis"],
-            agent=self.analyst()
-        )
+        return Task(config=self.tasks_config["analysis"], agent=self.analyst())
 
     @crew
     def crew(self) -> Crew:
-        return Crew(
-            agents=self.agents,
-            tasks=self.tasks,
-            process=Process.sequential,
-            verbose=True
-        )
+        return Crew(agents=self.agents, tasks=self.tasks, process=Process.sequential, verbose=True)
 ```
 
 ## Critical Rules

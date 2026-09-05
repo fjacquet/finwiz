@@ -175,7 +175,7 @@ Comprehensive quantitative analysis including risk metrics and technical indicat
 ```python
 {
     "ticker": "AAPL",
-    "asset_class": "stock"  # "stock", "etf", or "crypto"
+    "asset_class": "stock",  # "stock", "etf", or "crypto"
 }
 ```
 
@@ -234,11 +234,7 @@ Comprehensive risk analysis for investments (central `crewai_custom_tools` packa
 from crewai_custom_tools import StandardizedRiskScoringTool
 
 tool = StandardizedRiskScoringTool()
-risk = tool.run({
-    "ticker": "AAPL",
-    "asset_class": "stock",
-    "market_data": market_data
-})
+risk = tool.run({"ticker": "AAPL", "asset_class": "stock", "market_data": market_data})
 
 print(f"Risk Score: {risk['risk_score']}")
 print(f"Risk Factors: {risk['risk_factors']}")
@@ -372,12 +368,7 @@ Most tools can be initialized with custom parameters:
 tool = QuantitativeAnalysisTool(asset_class="stock")
 
 # Custom configuration
-tool = QuantitativeAnalysisTool(
-    asset_class="stock",
-    lookback_days=252,
-    confidence_level=0.95,
-    enable_caching=True
-)
+tool = QuantitativeAnalysisTool(asset_class="stock", lookback_days=252, confidence_level=0.95, enable_caching=True)
 ```
 
 ### Tool Factories
@@ -410,34 +401,13 @@ Tools use standardized error handling:
 
 ```python
 # API timeout error
-{
-    "error": "TimeoutError",
-    "message": "API request timed out",
-    "details": {
-        "timeout_seconds": 30,
-        "retry_suggested": True
-    }
-}
+{"error": "TimeoutError", "message": "API request timed out", "details": {"timeout_seconds": 30, "retry_suggested": True}}
 
 # Data validation error
-{
-    "error": "ValidationError",
-    "message": "Invalid ticker format",
-    "details": {
-        "ticker": "INVALID",
-        "expected_format": "1-5 uppercase letters"
-    }
-}
+{"error": "ValidationError", "message": "Invalid ticker format", "details": {"ticker": "INVALID", "expected_format": "1-5 uppercase letters"}}
 
 # Rate limit error
-{
-    "error": "RateLimitError",
-    "message": "API rate limit exceeded",
-    "details": {
-        "retry_after_seconds": 60,
-        "current_limit": "5 requests/minute"
-    }
-}
+{"error": "RateLimitError", "message": "API rate limit exceeded", "details": {"retry_after_seconds": 60, "current_limit": "5 requests/minute"}}
 ```
 
 ### Retry Logic
@@ -477,7 +447,7 @@ Enable caching for expensive operations:
 # Enable caching with TTL
 tool = QuantitativeAnalysisTool(
     enable_caching=True,
-    cache_ttl=3600  # 1 hour
+    cache_ttl=3600,  # 1 hour
 )
 ```
 
@@ -497,6 +467,7 @@ Use async versions for better performance:
 
 ```python
 import asyncio
+
 
 # Async tool execution
 async def analyze_multiple_tickers(tickers):
@@ -526,11 +497,11 @@ Always validate inputs before tool execution:
 
 ```python
 # Validate ticker format
-if not re.match(r'^[A-Z]{1,5}$', ticker):
+if not re.match(r"^[A-Z]{1,5}$", ticker):
     raise ValueError(f"Invalid ticker format: {ticker}")
 
 # Validate asset class
-if asset_class not in ['stock', 'etf', 'crypto']:
+if asset_class not in ["stock", "etf", "crypto"]:
     raise ValueError(f"Invalid asset class: {asset_class}")
 ```
 
@@ -540,12 +511,12 @@ Process tool outputs consistently:
 
 ```python
 # Check for errors
-if 'error' in result:
+if "error" in result:
     logger.error(f"Tool execution failed: {result['error']}")
     return None
 
 # Validate required fields
-required_fields = ['price', 'volume', 'market_cap']
+required_fields = ["price", "volume", "market_cap"]
 missing_fields = [f for f in required_fields if f not in result]
 if missing_fields:
     logger.warning(f"Missing fields: {missing_fields}")
@@ -578,16 +549,10 @@ Use tools within CrewAI crews:
 ```python
 from crewai import Agent, Task, Crew
 
+
 @agent
 def analyst(self) -> Agent:
-    return Agent(
-        config=self.agents_config["analyst"],
-        tools=[
-            YahooFinanceTickerInfoTool(),
-            QuantitativeAnalysisTool(asset_class="stock"),
-            StandardizedRiskScoringTool()
-        ]
-    )
+    return Agent(config=self.agents_config["analyst"], tools=[YahooFinanceTickerInfoTool(), QuantitativeAnalysisTool(asset_class="stock"), StandardizedRiskScoringTool()])
 ```
 
 ### Custom Tool Development
@@ -612,6 +577,7 @@ tool = YahooFinanceTickerInfoTool(timeout=60)
 ```python
 # Solution: Add delays or reduce request frequency
 import time
+
 time.sleep(1)  # Add delay between requests
 ```
 
@@ -620,7 +586,7 @@ time.sleep(1)  # Add delay between requests
 ```python
 # Solution: Validate ticker before tool execution
 validation_tool = TickerExistenceValidationTool()
-if validation_tool.run(ticker)['is_valid']:
+if validation_tool.run(ticker)["is_valid"]:
     result = analysis_tool.run(ticker)
 ```
 

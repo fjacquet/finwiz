@@ -31,11 +31,7 @@ class BaseAnalysis(BaseModel):
     confidence_level: float = Field(..., ge=0.0, le=1.0)
     data_sources: List[str] = Field(default_factory=list)
 
-    model_config = {
-        "extra": "forbid",
-        "str_strip_whitespace": True,
-        "validate_assignment": True
-    }
+    model_config = {"extra": "forbid", "str_strip_whitespace": True, "validate_assignment": True}
 ```
 
 ### Standardized Risk Assessment
@@ -72,10 +68,10 @@ All schemas use Pydantic v2 strict mode:
 
 ```python
 model_config = {
-    "extra": "forbid",           # Reject unknown fields
-    "str_strip_whitespace": True, # Clean string inputs
+    "extra": "forbid",  # Reject unknown fields
+    "str_strip_whitespace": True,  # Clean string inputs
     "validate_assignment": True,  # Validate on assignment
-    "use_enum_values": True      # Use enum values in output
+    "use_enum_values": True,  # Use enum values in output
 }
 ```
 
@@ -85,7 +81,7 @@ Common validation patterns:
 
 ```python
 # Ticker symbols
-ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
+ticker: str = Field(..., pattern=r"^[A-Z]{1,5}$")
 
 # Percentages
 percentage: float = Field(..., ge=0.0, le=1.0)
@@ -103,18 +99,19 @@ rationale: str = Field(..., min_length=50)
 ### Custom Validators
 
 ```python
-@field_validator('ticker')
+@field_validator("ticker")
 @classmethod
 def validate_ticker_format(cls, v: str) -> str:
     if not v.isalpha():
-        raise ValueError('Ticker must contain only letters')
+        raise ValueError("Ticker must contain only letters")
     return v.upper()
 
-@field_validator('price_target')
+
+@field_validator("price_target")
 @classmethod
 def validate_price_target(cls, v: Optional[float]) -> Optional[float]:
     if v is not None and v <= 0:
-        raise ValueError('Price target must be positive')
+        raise ValueError("Price target must be positive")
     return v
 ```
 
@@ -310,7 +307,8 @@ def test_ten_k_insight_validation():
 ```python
 from hypothesis import given, strategies as st
 
-@given(st.text(min_size=1, max_size=5, alphabet=st.characters(whitelist_categories=('Lu',))))
+
+@given(st.text(min_size=1, max_size=5, alphabet=st.characters(whitelist_categories=("Lu",))))
 def test_ticker_validation(ticker):
     try:
         validated = ValidatedTicker(symbol=ticker)

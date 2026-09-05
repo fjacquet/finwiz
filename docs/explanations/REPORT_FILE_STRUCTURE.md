@@ -159,6 +159,7 @@ Directories are created automatically before file writes:
 ```python
 from pathlib import Path
 
+
 def ensure_directory(file_path: str) -> None:
     """Ensure parent directory exists for file path."""
     Path(file_path).parent.mkdir(parents=True, exist_ok=True)
@@ -179,6 +180,7 @@ anything (see "Consolidated Files" above).
 def get_export_path(session_id: str, crew_name: str, ticker: str) -> str:
     """Get path for crew export JSON. No timestamp — see File Naming Conventions above."""
     return f"output/reports/{session_id}/{crew_name}/{ticker}_export.json"
+
 
 def get_html_path(session_id: str, crew_name: str, ticker: str) -> str:
     """Get path for crew HTML report. No timestamp — see File Naming Conventions above."""

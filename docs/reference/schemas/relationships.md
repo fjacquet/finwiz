@@ -49,7 +49,7 @@ src/` finds no matches — `TenKInsight`, `ETFFactsheet`, and `CryptoThesis`
 all subclass `BaseModel` directly, and their shapes differ considerably:
 
 ```python
-class TenKInsight(BaseModel):      # src/finwiz/schemas/stock.py
+class TenKInsight(BaseModel):  # src/finwiz/schemas/stock.py
     schema_version: int = 1
     ticker: str
     filing_url: str
@@ -59,7 +59,8 @@ class TenKInsight(BaseModel):      # src/finwiz/schemas/stock.py
     sec_citation: str
     # no recommendation, no risk field
 
-class ETFFactsheet(BaseModel):     # src/finwiz/schemas/etf.py
+
+class ETFFactsheet(BaseModel):  # src/finwiz/schemas/etf.py
     schema_version: int = 1
     ticker: str
     issuer: str
@@ -70,7 +71,8 @@ class ETFFactsheet(BaseModel):     # src/finwiz/schemas/etf.py
     top_holdings: list[ETFTopHolding]
     risk: RiskAssessmentStandardized | None = None  # the only one of the three with a risk field
 
-class CryptoThesis(BaseModel):     # src/finwiz/schemas/crypto.py
+
+class CryptoThesis(BaseModel):  # src/finwiz/schemas/crypto.py
     schema_version: int = 1
     symbol: str  # NOT "ticker" — field name differs from the other two
     thesis_bullets: list[str]
@@ -188,9 +190,11 @@ class TenKInsight(BaseModel):
     # ... other fields
     risk_assessment: RiskAssessmentStandardized
 
+
 class ETFFactsheet(BaseModel):
     # ... other fields
     risk_assessment: RiskAssessmentStandardized
+
 
 class CryptoThesis(BaseModel):
     # ... other fields
@@ -246,7 +250,7 @@ Grading system provides consistency across schemas:
 
 ```python
 # Consistent grading scale
-grade_pattern = r'^[A-F][+-]?$'
+grade_pattern = r"^[A-F][+-]?$"
 
 # Used in multiple schemas
 TenKInsight.grade: str = Field(..., pattern=grade_pattern)
@@ -266,7 +270,7 @@ TenKInsight.confidence_level: float
 PortfolioReview.confidence_level: float  # Weighted average
 
 # Discovery inherits from analysis
-InvestmentCandidate.confidence: float    # From underlying analysis
+InvestmentCandidate.confidence: float  # From underlying analysis
 ```
 
 ## Schema Evolution Patterns
@@ -283,7 +287,7 @@ class TenKInsight(BaseModel):
     recommendation: str
 
     # New optional fields (backward compatible)
-    esg_score: Optional[float] = None      # Added in v1.1
+    esg_score: Optional[float] = None  # Added in v1.1
     analyst_coverage: Optional[int] = None  # Added in v1.2
 ```
 
@@ -295,10 +299,7 @@ Schema versions are tracked:
 class BaseSchema(BaseModel):
     schema_version: str = Field(default="1.0")
 
-    model_config = {
-        "extra": "forbid",
-        "validate_assignment": True
-    }
+    model_config = {"extra": "forbid", "validate_assignment": True}
 ```
 
 ### Migration Support
@@ -323,11 +324,7 @@ Create appropriate schema based on asset class:
 ```python
 def create_analysis_schema(asset_class: str, data: dict):
     """Factory function to create appropriate analysis schema"""
-    schema_map = {
-        "stock": TenKInsight,
-        "etf": ETFFactsheet,
-        "crypto": CryptoThesis
-    }
+    schema_map = {"stock": TenKInsight, "etf": ETFFactsheet, "crypto": CryptoThesis}
 
     schema_class = schema_map.get(asset_class)
     if not schema_class:

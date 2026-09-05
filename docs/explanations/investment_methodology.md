@@ -149,17 +149,13 @@ Quality companies receive **50/25/25** weighting (fundamental/technical/risk) in
 
 ```python
 # Standard companies
-composite_score = (
-    0.40 * fundamental_score +
-    0.30 * technical_score +
-    0.30 * risk_score
-)
+composite_score = 0.40 * fundamental_score + 0.30 * technical_score + 0.30 * risk_score
 
 # Quality companies (2+ quality criteria met)
 composite_score = (
-    0.50 * fundamental_score +  # +10% emphasis on fundamentals
-    0.25 * technical_score +    # -5% less weight on technicals
-    0.25 * risk_score           # -5% less weight on short-term risk
+    0.50 * fundamental_score  # +10% emphasis on fundamentals
+    + 0.25 * technical_score  # -5% less weight on technicals
+    + 0.25 * risk_score  # -5% less weight on short-term risk
 )
 ```
 

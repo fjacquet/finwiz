@@ -53,17 +53,22 @@ Each component has a single, well-defined responsibility:
 # ✅ Good: Single responsibility
 class TickerExistenceValidationTool:
     """Validates ticker symbols only."""
+
     def validate(self, ticker: str) -> ValidationResult:
         pass
 
+
 class StandardizedRiskScoringTool:
     """Calculates risk metrics only."""
+
     def assess_risk(self, data: dict) -> RiskAssessment:
         pass
+
 
 # ❌ Bad: Multiple responsibilities
 class AnalysisTool:
     """Does everything - validation, analysis, risk, reporting."""
+
     def do_everything(self, ticker: str) -> CompleteReport:
         pass
 ```
@@ -75,13 +80,11 @@ Make dependencies clear and manageable:
 ```python
 # ✅ Good: Explicit dependencies
 class StockAnalyzer:
-    def __init__(self,
-                 validator: TickerExistenceValidationTool,
-                 data_source: YahooFinanceTool,
-                 risk_assessor: StandardizedRiskScoringTool):
+    def __init__(self, validator: TickerExistenceValidationTool, data_source: YahooFinanceTool, risk_assessor: StandardizedRiskScoringTool):
         self.validator = validator
         self.data_source = data_source
         self.risk_assessor = risk_assessor
+
 
 # ❌ Bad: Hidden dependencies
 class StockAnalyzer:
@@ -102,8 +105,11 @@ def analyze_stock(ticker: str) -> StockAnalysis:
     analysis = perform_analysis(validated_data)
     return analysis
 
+
 # ❌ Bad: Mutable shared state
 global_data = {}
+
+
 def analyze_stock(ticker: str):
     global_data[ticker] = fetch_data(ticker)
     modify_global_data(ticker)  # Mutation
@@ -120,6 +126,7 @@ class AnalysisTool(Protocol):
         """Analyze a ticker and return structured results."""
         ...
 
+
 # Implementation follows contract
 class StockAnalysisTool:
     def analyze(self, ticker: str) -> AnalysisResult:
@@ -135,14 +142,14 @@ All data structures use Pydantic models with strict validation:
 
 ```python
 class StockAnalysis(BaseModel):
-    ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
-    grade: str = Field(..., pattern=r'^(A\+|A|B|C|D|F)$')
+    ticker: str = Field(..., pattern=r"^[A-Z]{1,5}$")
+    grade: str = Field(..., pattern=r"^(A\+|A|B|C|D|F)$")
     composite_score: float = Field(..., ge=0.0, le=1.0)
 
     model_config = ConfigDict(
-        extra='forbid',           # Reject unknown fields
-        str_strip_whitespace=True, # Clean input data
-        validate_assignment=True   # Validate on assignment
+        extra="forbid",  # Reject unknown fields
+        str_strip_whitespace=True,  # Clean input data
+        validate_assignment=True,  # Validate on assignment
     )
 ```
 
@@ -169,8 +176,8 @@ class AnalysisResult(BaseModel):
     data_freshness: Dict[str, datetime]
     stale_data_warning: bool = False
 
-    @model_validator(mode='after')
-    def check_data_freshness(self) -> 'AnalysisResult':
+    @model_validator(mode="after")
+    def check_data_freshness(self) -> "AnalysisResult":
         now = datetime.now()
         for source, timestamp in self.data_freshness.items():
             age_hours = (now - timestamp).total_seconds() / 3600
@@ -185,21 +192,14 @@ Handle missing data transparently:
 
 ```python
 # ✅ Good: Explicit handling of missing data
-def calculate_score(fundamental: Optional[float],
-                   technical: Optional[float]) -> ScoreResult:
+def calculate_score(fundamental: Optional[float], technical: Optional[float]) -> ScoreResult:
     if fundamental is None and technical is None:
-        return ScoreResult(
-            score=None,
-            confidence=0.0,
-            warning="Insufficient data for scoring"
-        )
+        return ScoreResult(score=None, confidence=0.0, warning="Insufficient data for scoring")
 
     # Calculate with available data
     available_scores = [s for s in [fundamental, technical] if s is not None]
     return ScoreResult(
-        score=sum(available_scores) / len(available_scores),
-        confidence=len(available_scores) / 2.0,
-        warning=None if len(available_scores) == 2 else "Partial data used"
+        score=sum(available_scores) / len(available_scores), confidence=len(available_scores) / 2.0, warning=None if len(available_scores) == 2 else "Partial data used"
     )
 ```
 
@@ -213,9 +213,11 @@ Use AI only where human-like reasoning is required:
 # ✅ Good: AI for reasoning tasks
 class InvestmentAnalyst(Agent):
     """Uses AI to interpret complex financial data and market conditions."""
+
     def analyze_investment_thesis(self, data: dict) -> InvestmentThesis:
         # AI reasoning about qualitative factors
         pass
+
 
 # ✅ Good: Python for deterministic tasks
 def calculate_sharpe_ratio(returns: List[float], risk_free_rate: float) -> float:
@@ -232,7 +234,7 @@ Make AI reasoning visible and auditable:
 class AnalysisResult(BaseModel):
     recommendation: str
     reasoning_steps: List[str]  # Show how AI reached conclusion
-    data_sources: List[str]     # Show what data was used
+    data_sources: List[str]  # Show what data was used
     confidence_factors: Dict[str, float]  # Show confidence breakdown
 ```
 
@@ -244,15 +246,18 @@ Limit AI agent scope to prevent hallucinations:
 # ✅ Good: Bounded scope
 class RiskAssessmentAgent(Agent):
     """Focused on risk assessment only."""
+
     tools = [RiskCalculationTool, VolatilityTool]  # Limited tool set
 
     def assess_risk(self, ticker: str) -> RiskAssessment:
         # Focused task with clear boundaries
         pass
 
+
 # ❌ Bad: Unbounded scope
 class GeneralAnalysisAgent(Agent):
     """Does everything - prone to hallucinations."""
+
     tools = [AllTools]  # Too many tools, unclear boundaries
 ```
 
@@ -268,6 +273,7 @@ def analyze_ticker(ticker: str) -> AnalysisResult:
     # Fast path for single ticker
     pass
 
+
 def analyze_portfolio(tickers: List[str]) -> List[AnalysisResult]:
     # Batch processing for multiple tickers
     return [analyze_ticker(t) for t in tickers]
@@ -282,6 +288,7 @@ Cache expensive operations with appropriate TTL:
 def fetch_market_data(ticker: str) -> MarketData:
     # Expensive API call
     pass
+
 
 @cache(ttl=86400)  # 24 hour cache
 def fetch_fundamental_data(ticker: str) -> FundamentalData:
@@ -300,6 +307,7 @@ async def fetch_multiple_tickers(tickers: List[str]) -> Dict[str, MarketData]:
     results = await asyncio.gather(*tasks)
     return dict(zip(tickers, results))
 
+
 # ✅ Good: Sync for CPU-bound
 def calculate_technical_indicators(prices: List[float]) -> TechnicalIndicators:
     # CPU-bound calculation - no need for async
@@ -315,11 +323,12 @@ Detect errors early and communicate clearly:
 ```python
 # ✅ Good: Fail fast with clear error
 def analyze_ticker(ticker: str) -> AnalysisResult:
-    if not re.match(r'^[A-Z]{1,5}$', ticker):
+    if not re.match(r"^[A-Z]{1,5}$", ticker):
         raise ValueError(f"Invalid ticker format: {ticker}. Must be 1-5 uppercase letters.")
 
     # Continue with valid ticker
     pass
+
 
 # ❌ Bad: Silent failure or unclear error
 def analyze_ticker(ticker: str) -> Optional[AnalysisResult]:
@@ -339,12 +348,9 @@ class AnalysisError(Exception):
         self.remediation = remediation
         super().__init__(f"Analysis failed for {ticker}: {reason}. {remediation}")
 
+
 # Usage
-raise AnalysisError(
-    ticker="INVALID",
-    reason="Ticker not found in market data",
-    remediation="Check ticker spelling or try a different symbol"
-)
+raise AnalysisError(ticker="INVALID", reason="Ticker not found in market data", remediation="Check ticker spelling or try a different symbol")
 ```
 
 ### 3. Graceful Recovery
@@ -374,9 +380,9 @@ Validate all external inputs:
 
 ```python
 class TickerInput(BaseModel):
-    ticker: str = Field(..., pattern=r'^[A-Z]{1,5}$')
+    ticker: str = Field(..., pattern=r"^[A-Z]{1,5}$")
 
-    @field_validator('ticker')
+    @field_validator("ticker")
     @classmethod
     def validate_ticker(cls, v: str) -> str:
         # Additional validation logic
@@ -439,6 +445,7 @@ def test_should_return_buy_recommendation_for_strong_stock():
     assert result.recommendation == "BUY"
     assert result.confidence > 0.8
 
+
 # ❌ Bad: Test implementation details
 def test_should_call_risk_calculator_with_correct_parameters():
     # Testing internal method calls instead of behavior
@@ -452,7 +459,7 @@ Mock all external systems and APIs:
 ```python
 def test_should_handle_api_failure_gracefully(mocker):
     # Mock external API to simulate failure
-    mock_api = mocker.patch('finwiz.tools.yahoo_finance_tool.get_data')
+    mock_api = mocker.patch("finwiz.tools.yahoo_finance_tool.get_data")
     mock_api.side_effect = APIError("Service unavailable")
 
     # Test graceful handling
@@ -470,6 +477,7 @@ def test_should_handle_invalid_ticker_format():
     with pytest.raises(ValueError, match="Invalid ticker format"):
         analyze_stock("invalid_ticker")
 
+
 def test_should_handle_missing_data():
     result = analyze_stock_with_missing_data("AAPL")
     assert result.confidence < 0.5
@@ -484,11 +492,11 @@ Write self-documenting code:
 
 ```python
 # ✅ Good: Self-documenting
-def calculate_risk_adjusted_return(returns: List[float],
-                                 risk_free_rate: float) -> float:
+def calculate_risk_adjusted_return(returns: List[float], risk_free_rate: float) -> float:
     """Calculate Sharpe ratio (risk-adjusted return)."""
     excess_returns = [r - risk_free_rate for r in returns]
     return statistics.mean(excess_returns) / statistics.stdev(excess_returns)
+
 
 # ❌ Bad: Unclear purpose
 def calc(data: List[float], rate: float) -> float:
@@ -539,15 +547,17 @@ Maintain compatibility when possible:
 
 ```python
 # ✅ Good: Backward compatible change
-def analyze_stock(ticker: str,
-                 deep_analysis: bool = False,  # New optional parameter
-                 **kwargs) -> AnalysisResult:
+def analyze_stock(
+    ticker: str,
+    deep_analysis: bool = False,  # New optional parameter
+    **kwargs,
+) -> AnalysisResult:
     # Old calls still work, new functionality available
     pass
 
+
 # ❌ Bad: Breaking change
-def analyze_stock(ticker: str,
-                 analysis_type: str) -> AnalysisResult:  # Required new parameter
+def analyze_stock(ticker: str, analysis_type: str) -> AnalysisResult:  # Required new parameter
     # Breaks existing code
     pass
 ```
@@ -562,9 +572,11 @@ Provide migration paths for breaking changes:
 def analyze_stock(ticker: str) -> AnalysisResult:
     return analyze_stock_v2(ticker, legacy_mode=True)
 
+
 # Phase 2: New method with improved interface
 def analyze_stock_v2(ticker: str, options: AnalysisOptions) -> AnalysisResult:
     pass
+
 
 # Phase 3: Remove deprecated method in next major version
 ```

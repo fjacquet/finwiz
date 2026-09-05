@@ -35,9 +35,9 @@ The composite score is calculated using a weighted average of three components:
 
 ```python
 composite_score = (
-    0.40 * fundamental_score +  # 40% weight
-    0.30 * technical_score +    # 30% weight
-    0.30 * risk_score          # 30% weight
+    0.40 * fundamental_score  # 40% weight
+    + 0.30 * technical_score  # 30% weight
+    + 0.30 * risk_score  # 30% weight
 )
 ```
 
@@ -88,11 +88,16 @@ composite_score = (
 
 ```python
 # ROE Scoring
-if roe >= 0.20:     score = 1.0  # 20%+
-elif roe >= 0.15:   score = 0.8  # 15-20%
-elif roe >= 0.10:   score = 0.6  # 10-15%
-elif roe >= 0.05:   score = 0.4  # 5-10%
-else:               score = 0.2  # <5%
+if roe >= 0.20:
+    score = 1.0  # 20%+
+elif roe >= 0.15:
+    score = 0.8  # 15-20%
+elif roe >= 0.10:
+    score = 0.6  # 10-15%
+elif roe >= 0.05:
+    score = 0.4  # 5-10%
+else:
+    score = 0.2  # <5%
 ```
 
 ### ETF Scoring (40% Fundamental Weight)
@@ -256,38 +261,29 @@ scorer = DeepAnalysisScorer()
 # Prepare data (from data collection task)
 data = {
     "current_price": 150.0,
-    "roe": 0.25,              # 25% ROE
-    "debt_to_equity": 0.3,    # Low debt
-    "revenue_growth": 0.15,   # 15% growth
-    "rsi": 55.0,              # Neutral RSI
-    "volatility": 0.18,       # 18% volatility
-    "beta": 1.1,              # Slightly aggressive
+    "roe": 0.25,  # 25% ROE
+    "debt_to_equity": 0.3,  # Low debt
+    "revenue_growth": 0.15,  # 15% growth
+    "rsi": 55.0,  # Neutral RSI
+    "volatility": 0.18,  # 18% volatility
+    "beta": 1.1,  # Slightly aggressive
     # ... additional metrics
 }
 
 # Calculate composite score
-result = scorer.calculate_composite_score(
-    ticker="AAPL",
-    asset_class="stock",
-    data=data
-)
+result = scorer.calculate_composite_score(ticker="AAPL", asset_class="stock", data=data)
 
-print(f"Grade: {result.grade}")                    # A
-print(f"Score: {result.composite_score:.2f}")      # 0.78
-print(f"Recommendation: {result.recommendation}")   # BUY
-print(f"Confidence: {result.confidence:.1%}")      # 85%
+print(f"Grade: {result.grade}")  # A
+print(f"Score: {result.composite_score:.2f}")  # 0.78
+print(f"Recommendation: {result.recommendation}")  # BUY
+print(f"Confidence: {result.confidence:.1%}")  # 85%
 ```
 
 ### Complete Analysis Pipeline
 
 ```python
 # Complete analysis with export generation
-result, crew_export = scorer.analyze_and_export(
-    ticker="AAPL",
-    asset_class="stock",
-    collected_data=data,
-    session_id="analysis_2025_01_25"
-)
+result, crew_export = scorer.analyze_and_export(ticker="AAPL", asset_class="stock", collected_data=data, session_id="analysis_2025_01_25")
 
 # Access detailed analysis
 detailed = crew_export["detailed_analysis"]
@@ -311,10 +307,10 @@ from finwiz.scoring.thresholds import get_thresholds
 
 custom = replace(
     get_thresholds(),
-    grade_a_plus=0.97,        # stricter A+
-    grade_a=0.90,             # stricter A
-    buy_threshold=0.90,       # stricter buy
-    sell_threshold=0.55,      # more aggressive sell
+    grade_a_plus=0.97,  # stricter A+
+    grade_a=0.90,  # stricter A
+    buy_threshold=0.90,  # stricter buy
+    sell_threshold=0.55,  # more aggressive sell
 )
 
 scorer = DeepAnalysisScorer(thresholds=custom)
@@ -338,7 +334,6 @@ detailed_analysis = {
         "macd": 0.05,
         # ... all original metrics
     },
-
     # Sentiment data (Requirement 18.22)
     "sentiment_data": {
         "sentiment_score": 0.65,
@@ -346,7 +341,6 @@ detailed_analysis = {
         "article_count": 25,
         "news_sources": ["Reuters", "Bloomberg"],
     },
-
     # Technical indicators (Requirement 18.23)
     "technical_indicators": {
         "support_levels": [145.0, 140.0],
@@ -354,7 +348,6 @@ detailed_analysis = {
         "trend_direction": "uptrend",
         "momentum_indicators": {...},
     },
-
     # Fundamental data (Requirement 18.24)
     "fundamental_data": {
         "revenue": 365000000000,
@@ -362,7 +355,6 @@ detailed_analysis = {
         "sec_filings": {...},
         "financial_statements": {...},
     },
-
     # Calculation results (Requirement 18.25)
     "calculation_results": {
         "composite_score": 0.78,
@@ -371,7 +363,7 @@ detailed_analysis = {
         "risk_score": 0.77,
         "grade": "A",
         "recommendation": "BUY",
-    }
+    },
 }
 ```
 
@@ -409,7 +401,7 @@ def _create_error_result(self, ticker: str, asset_class: str, error_msg: str) ->
         grade="D",
         recommendation="SELL",
         confidence=0.1,
-        rationale=f"Analysis failed: {error_msg}. Default low scores assigned."
+        rationale=f"Analysis failed: {error_msg}. Default low scores assigned.",
     )
 ```
 
@@ -424,10 +416,10 @@ The Python scoring engine has comprehensive unit test coverage:
 def test_should_calculate_stock_fundamental_score_with_excellent_metrics():
     scorer = FundamentalScorer()
     data = {
-        "roe": 0.25,              # 25% ROE -> 1.0 score
-        "debt_to_equity": 0.2,    # Low debt -> 1.0 score
-        "revenue_growth": 0.30,   # 30% growth -> 1.0 score
-        "profit_margin": 0.25     # 25% margin -> 1.0 score
+        "roe": 0.25,  # 25% ROE -> 1.0 score
+        "debt_to_equity": 0.2,  # Low debt -> 1.0 score
+        "revenue_growth": 0.30,  # 30% growth -> 1.0 score
+        "profit_margin": 0.25,  # 25% margin -> 1.0 score
     }
 
     # Public entry point; delegates to the per-asset analyzers.
@@ -497,7 +489,7 @@ def python_scoring_task(self) -> Task:
         agent=self.python_scorer(),
         expected_output="DeepAnalysisResult with scores, grade, recommendation",
         output_pydantic=DeepAnalysisResult,
-        async_execution=False  # Final task must be synchronous
+        async_execution=False,  # Final task must be synchronous
     )
 ```
 
@@ -574,8 +566,8 @@ def validate_scoring_accuracy(python_result, ai_result):
            agents=self.agents,
            tasks=self.tasks,
            reasoning=False,  # Disable for Python scoring
-           planning=False,   # Disable for performance
-           verbose=True
+           planning=False,  # Disable for performance
+           verbose=True,
        )
    ```
 
@@ -623,6 +615,7 @@ assert all(r.grade == results[0].grade for r in results), "Non-deterministic res
 ```python
 # Solution: Check optimization mode
 from finwiz.config.performance.performance_config import OptimizationMode, get_performance_config_manager
+
 config_manager = get_performance_config_manager()
 mode = config_manager.get_mode()
 logger.info(f"Current mode: {mode.value}")
@@ -636,6 +629,7 @@ assert mode == OptimizationMode.MAXIMUM_SPEED
 ```python
 # Enable detailed logging
 import logging
+
 logging.getLogger("finwiz.scoring").setLevel(logging.DEBUG)
 
 # View calculation details

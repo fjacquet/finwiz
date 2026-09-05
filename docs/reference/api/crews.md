@@ -190,8 +190,8 @@ Unified crew for comprehensive analysis of any asset class with detailed grading
 
 ```python
 {
-    "ticker": "AAPL",        # Required: Asset ticker
-    "asset_class": "stock"   # Required: "stock", "etf", or "crypto"
+    "ticker": "AAPL",  # Required: Asset ticker
+    "asset_class": "stock",  # Required: "stock", "etf", or "crypto"
 }
 ```
 
@@ -203,10 +203,7 @@ Unified crew for comprehensive analysis of any asset class with detailed grading
 from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
 crew = DeepAnalysisCrew()
-result = crew.crew().kickoff(inputs={
-    "ticker": "AAPL",
-    "asset_class": "stock"
-})
+result = crew.crew().kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
 
 print(f"Grade: {result.grade}")
 print(f"Composite Score: {result.composite_score}")
@@ -240,7 +237,7 @@ Consolidates analysis results from multiple crews into comprehensive reports.
 ```python
 {
     "analysis_results": [...],  # Results from other crews
-    "report_type": "portfolio"  # Type of report to generate
+    "report_type": "portfolio",  # Type of report to generate
 }
 ```
 
@@ -259,10 +256,7 @@ each output their own schema:
 from finwiz.crews.report_crew.report_crew import ReportCrew
 
 crew = ReportCrew()
-result = crew.crew().kickoff(inputs={
-    "analysis_results": analysis_data,
-    "report_type": "portfolio"
-})
+result = crew.crew().kickoff(inputs={"analysis_results": analysis_data, "report_type": "portfolio"})
 ```
 
 **Agents** (4, not 2 — `report_crew/config/agents.yaml`):
@@ -321,7 +315,7 @@ def crew(self) -> Crew:
         process=Process.sequential,
         verbose=True,
         respect_context_window=True,
-        max_rpm=20  # Rate limiting
+        max_rpm=20,  # Rate limiting
     )
 ```
 
@@ -341,7 +335,7 @@ task_name:
 Configure rate limits to prevent API throttling:
 
 ```python
-max_rpm=20  # Maximum 20 requests per minute
+max_rpm = 20  # Maximum 20 requests per minute
 ```
 
 ### Tool Optimization
@@ -350,11 +344,7 @@ Use minimal tool sets for specific use cases:
 
 ```python
 # Minimal tools for risk assessment
-tools = [
-    QuantitativeAnalysisTool(asset_class=asset_class),
-    TickerExistenceValidationTool(),
-    asset_specific_tool
-]
+tools = [QuantitativeAnalysisTool(asset_class=asset_class), TickerExistenceValidationTool(), asset_specific_tool]
 ```
 
 ## Error Handling
@@ -407,11 +397,11 @@ Always validate inputs before crew execution:
 
 ```python
 # Validate ticker format
-if not re.match(r'^[A-Z]{1,5}$', ticker):
+if not re.match(r"^[A-Z]{1,5}$", ticker):
     raise ValueError(f"Invalid ticker format: {ticker}")
 
 # Validate asset class
-if asset_class not in ['stock', 'etf', 'crypto']:
+if asset_class not in ["stock", "etf", "crypto"]:
     raise ValueError(f"Invalid asset class: {asset_class}")
 ```
 
@@ -421,7 +411,7 @@ Process crew outputs consistently:
 
 ```python
 # Check for successful execution
-if hasattr(result, 'error'):
+if hasattr(result, "error"):
     logger.error(f"Crew execution failed: {result.error}")
     return None
 
@@ -443,7 +433,7 @@ Enable verbose logging for debugging:
 crew = Crew(
     agents=self.agents,
     tasks=self.tasks,
-    verbose=True  # Enable detailed logging
+    verbose=True,  # Enable detailed logging
 )
 ```
 
@@ -485,6 +475,7 @@ Use crews within CrewAI Flows:
 ```python
 from crewai.flow import Flow, start, listen
 
+
 class AnalysisFlow(Flow):
     @start()
     def analyze_stock(self):
@@ -495,10 +486,7 @@ class AnalysisFlow(Flow):
     @listen("analyze_stock")
     def generate_report(self, stock_data):
         crew = ReportCrew()
-        result = crew.crew().kickoff(inputs={
-            "analysis_results": [stock_data["stock_analysis"]],
-            "report_type": "single_asset"
-        })
+        result = crew.crew().kickoff(inputs={"analysis_results": [stock_data["stock_analysis"]], "report_type": "single_asset"})
         return {"report": result}
 ```
 
@@ -509,14 +497,12 @@ Process multiple assets efficiently:
 ```python
 import asyncio
 
+
 async def analyze_portfolio(tickers):
     crews = [StockCrew() for _ in tickers]
 
     # Execute crews in parallel
-    tasks = [
-        crew.crew().kickoff(inputs={"ticker": ticker})
-        for crew, ticker in zip(crews, tickers)
-    ]
+    tasks = [crew.crew().kickoff(inputs={"ticker": ticker}) for crew, ticker in zip(crews, tickers)]
 
     results = await asyncio.gather(*tasks)
     return dict(zip(tickers, results))

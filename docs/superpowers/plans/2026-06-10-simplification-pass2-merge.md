@@ -159,17 +159,13 @@ def test_collect_sentiment_uses_standardized_tool(mocker):
         "top_pos": [],
         "top_neg": [],
     }
-    mock_tool = mocker.patch(
-        "finwiz.orchestrators.deep_analysis_data_collector.StandardizedSentimentAnalysisTool"
-    )
+    mock_tool = mocker.patch("finwiz.orchestrators.deep_analysis_data_collector.StandardizedSentimentAnalysisTool")
     mock_tool.return_value._run.return_value = fake_result
 
     collector = DeepAnalysisDataCollector()
     data = collector._collect_sentiment_data("AAPL", "stock")
 
-    mock_tool.return_value._run.assert_called_once_with(
-        symbol="AAPL", asset_class="stock", max_articles=20, days_back=30
-    )
+    mock_tool.return_value._run.assert_called_once_with(symbol="AAPL", asset_class="stock", max_articles=20, days_back=30)
     assert data["sentiment_score"] == 0.42
     assert data["overall_sentiment"] in {"positive", "bullish"}  # match the file's existing label convention
     assert 0.0 <= data["sentiment_confidence"] <= 1.0
@@ -189,9 +185,7 @@ In `_collect_sentiment_data`, replace the enhanced-tool call:
 ```python
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool  # move to module-level imports
 
-result = StandardizedSentimentAnalysisTool()._run(
-    symbol=ticker, asset_class=asset_class, max_articles=20, days_back=30
-)
+result = StandardizedSentimentAnalysisTool()._run(symbol=ticker, asset_class=asset_class, max_articles=20, days_back=30)
 score = float(result.get("weighted_score") or result.get("mean_score") or 0.0)
 counts = result.get("counts") or {}
 total = max(1, sum(counts.values()))

@@ -11,31 +11,23 @@ Score uniqueness validation ensures that each holding receives a unique score ba
 ### Implementation
 
 ```python
-def _validate_score_uniqueness(
-    self,
-    analysis_results: dict[str, DeepAnalysisResult]
-) -> None:
+def _validate_score_uniqueness(self, analysis_results: dict[str, DeepAnalysisResult]) -> None:
     """Validate that scores are unique across holdings."""
     if len(analysis_results) < 2:
         # Need at least 2 holdings to check uniqueness
         return
 
     # Extract composite scores
-    composite_scores = [
-        result.composite_score
-        for result in analysis_results.values()
-    ]
+    composite_scores = [result.composite_score for result in analysis_results.values()]
 
     # Calculate standard deviation
     import statistics
+
     composite_std = statistics.stdev(composite_scores)
 
     # Check for identical scores (std dev < 0.03 indicates hardcoded values)
     if composite_std < 0.03:
-        raise ValueError(
-            f"Score validation failed: All holdings have identical scores "
-            f"(std={composite_std:.4f}). Expected unique scores per ticker."
-        )
+        raise ValueError(f"Score validation failed: All holdings have identical scores (std={composite_std:.4f}). Expected unique scores per ticker.")
 ```
 
 ### Best Practices
@@ -54,21 +46,14 @@ Fetching real market data ensures analysis is based on actual market conditions,
 ### Implementation
 
 ```python
-def _extract_holding_data(
-    self,
-    holding: HoldingDecision
-) -> dict[str, Any] | None:
+def _extract_holding_data(self, holding: HoldingDecision) -> dict[str, Any] | None:
     """Extract real market data from holding for scoring."""
     from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 
     try:
         # Fetch real quantitative data
         quant_tool = QuantitativeAnalysisTool()
-        quant_data = quant_tool._run(
-            symbol=holding.ticker,
-            asset_class=holding.asset_class,
-            analysis_type="performance"
-        )
+        quant_data = quant_tool._run(symbol=holding.ticker, asset_class=holding.asset_class, analysis_type="performance")
 
         # Extract real values
         return {
@@ -100,11 +85,7 @@ Standardized export structure ensures downstream systems can reliably consume an
 ### Implementation
 
 ```python
-def _export_json_files(
-    self,
-    json_exports: dict[str, Any],
-    session_id: str
-) -> dict[str, Any]:
+def _export_json_files(self, json_exports: dict[str, Any], session_id: str) -> dict[str, Any]:
     """Export JSON files to proper output directories."""
     # Create asset class directories
     stock_dir = self.output_dir / "stock"
@@ -156,17 +137,9 @@ Graceful error handling ensures the pipeline continues processing even when indi
 ### Implementation
 
 ```python
-def analyze_portfolio_holdings(
-    self,
-    holdings: list[HoldingDecision],
-    session_id: str
-) -> dict[str, Any]:
+def analyze_portfolio_holdings(self, holdings: list[HoldingDecision], session_id: str) -> dict[str, Any]:
     """Analyze all portfolio holdings with error handling."""
-    results = {
-        "successful_analyses": 0,
-        "failed_analyses": 0,
-        "deep_analysis_results": {}
-    }
+    results = {"successful_analyses": 0, "failed_analyses": 0, "deep_analysis_results": {}}
 
     for holding in holdings:
         try:
@@ -180,11 +153,7 @@ def analyze_portfolio_holdings(
                 continue
 
             # Run analysis
-            analysis_result = self.scorer.calculate_composite_score(
-                ticker=holding.ticker,
-                asset_class=holding.asset_class,
-                data=data
-            )
+            analysis_result = self.scorer.calculate_composite_score(ticker=holding.ticker, asset_class=holding.asset_class, data=data)
 
             # Store result
             results["deep_analysis_results"][holding.ticker] = analysis_result
@@ -248,6 +217,7 @@ While the current implementation processes holdings sequentially, consider these
 # Future: Parallel processing with asyncio
 import asyncio
 
+
 async def analyze_holding_async(holding, session_id):
     """Async analysis for parallel processing."""
     # Fetch data asynchronously
@@ -258,17 +228,16 @@ async def analyze_holding_async(holding, session_id):
 
     return result
 
+
 # Process multiple holdings in parallel
-results = await asyncio.gather(*[
-    analyze_holding_async(h, session_id)
-    for h in holdings
-])
+results = await asyncio.gather(*[analyze_holding_async(h, session_id) for h in holdings])
 ```
 
 ### Caching Strategy
 
 ```python
 from functools import lru_cache
+
 
 @lru_cache(maxsize=1000)
 def get_market_data(ticker: str, date: str) -> dict:
@@ -283,7 +252,7 @@ def get_market_data(ticker: str, date: str) -> dict:
 BATCH_SIZE = 10
 
 for i in range(0, len(holdings), BATCH_SIZE):
-    batch = holdings[i:i + BATCH_SIZE]
+    batch = holdings[i : i + BATCH_SIZE]
     batch_results = analyze_batch(batch, session_id)
 
     # Write results immediately
@@ -301,14 +270,10 @@ for i in range(0, len(holdings), BATCH_SIZE):
 def test_should_calculate_unique_scores_per_ticker(mocker):
     """Test that each ticker gets unique score."""
     # Arrange
-    holdings = [
-        create_holding("AAPL"),
-        create_holding("MSFT"),
-        create_holding("GOOGL")
-    ]
+    holdings = [create_holding("AAPL"), create_holding("MSFT"), create_holding("GOOGL")]
 
     # Mock data fetching to return different values
-    mocker.patch('finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run')
+    mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
 
     # Act
     results = analyze_portfolio_with_python(holdings, "test_session")
@@ -344,10 +309,7 @@ def test_should_complete_full_pipeline():
 ### Code Documentation
 
 ```python
-def analyze_portfolio_with_python(
-    holdings: list[HoldingDecision],
-    session_id: str
-) -> dict[str, Any]:
+def analyze_portfolio_with_python(holdings: list[HoldingDecision], session_id: str) -> dict[str, Any]:
     """
     Analyze portfolio holdings using pure Python.
 

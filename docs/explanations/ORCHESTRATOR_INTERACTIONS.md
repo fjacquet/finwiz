@@ -394,9 +394,7 @@ Most orchestrator interactions are synchronous:
 result = self.deep_analysis_orch.run_deep_analysis_on_holdings(holdings)
 
 # Orchestrator calls another orchestrator
-wrapped_result = self.error_handler_orch.execute_crew_with_error_handling(
-    crew_func, "crew_name"
-)
+wrapped_result = self.error_handler_orch.execute_crew_with_error_handling(crew_func, "crew_name")
 ```
 
 ### 2. State-Based Communication
@@ -420,6 +418,7 @@ Flow methods return data for downstream listeners:
 def analyze_holdings(self) -> dict[str, Any]:
     results = self.deep_analysis_orch.run_deep_analysis_on_holdings(holdings)
     return {"analysis": results}  # Passed to next listener
+
 
 @listen("analyze_holdings")
 def match_alternatives(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
@@ -453,9 +452,7 @@ async def run_discovery():
     stock_task = asyncio.create_task(check_stock())
     etf_task = asyncio.create_task(check_etf())
 
-    results = await asyncio.gather(
-        crypto_task, stock_task, etf_task
-    )
+    results = await asyncio.gather(crypto_task, stock_task, etf_task)
     return consolidate_results(results)
 ```
 

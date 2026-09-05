@@ -121,11 +121,7 @@ Replace AI-based calculations with deterministic Python for maximum performance:
 from finwiz.scoring.deep_analysis_scorer import DeepAnalysisScorer
 
 scorer = DeepAnalysisScorer()
-result = scorer.calculate_composite_score(
-    ticker="AAPL",
-    asset_class="stock",
-    data={"roe": 0.25, "debt_to_equity": 0.3, "revenue_growth": 0.15}
-)
+result = scorer.calculate_composite_score(ticker="AAPL", asset_class="stock", data={"roe": 0.25, "debt_to_equity": 0.3, "revenue_growth": 0.15})
 
 # Results: Grade: A, Score: 0.78, Recommendation: BUY
 ```

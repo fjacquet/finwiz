@@ -69,10 +69,7 @@ def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
 
     for batch_num, batch_tickers in enumerate(batches):
         # Execute batch concurrently
-        batch_results = await asyncio.gather(*[
-            execute_deep_analysis_crew(ticker, prefetched_data[ticker])
-            for ticker in batch_tickers
-        ])
+        batch_results = await asyncio.gather(*[execute_deep_analysis_crew(ticker, prefetched_data[ticker]) for ticker in batch_tickers])
 
         # Process batch results
         for ticker, result in zip(batch_tickers, batch_results):
@@ -260,6 +257,7 @@ The system monitors memory usage and adjusts batch sizes:
 import psutil
 from finwiz.infrastructure.monitoring.memory_manager import MemoryManager
 
+
 def adjust_batch_size_for_memory(base_batch_size: int) -> int:
     """Adjust batch size based on available memory."""
     memory_manager = MemoryManager()
@@ -297,10 +295,7 @@ async def _fetch_yahoo_finance_batch(self, tickers: list[str]) -> dict[str, Any]
             try:
                 # Process individual ticker data
                 ticker_data = self._process_yahoo_data(ticker, data)
-                results[ticker] = {
-                    "yahoo_finance": ticker_data,
-                    "failed": False
-                }
+                results[ticker] = {"yahoo_finance": ticker_data, "failed": False}
             except Exception as e:
                 # Individual ticker failed - continue with others
                 logger.error(f"Failed to process Yahoo Finance data for {ticker}: {e}")
@@ -406,20 +401,11 @@ state is serialized, not in a standalone report.
    def optimize_for_portfolio_size(portfolio_size: int) -> dict[str, str]:
        """Optimize configuration based on portfolio size."""
        if portfolio_size <= 10:
-           return {
-               "DEEP_ANALYSIS_BATCH_SIZE": "3",
-               "BATCH_PREFETCH_MIN_HOLDINGS": "5"
-           }
+           return {"DEEP_ANALYSIS_BATCH_SIZE": "3", "BATCH_PREFETCH_MIN_HOLDINGS": "5"}
        elif portfolio_size <= 50:
-           return {
-               "DEEP_ANALYSIS_BATCH_SIZE": "5",
-               "BATCH_PREFETCH_MIN_HOLDINGS": "10"
-           }
+           return {"DEEP_ANALYSIS_BATCH_SIZE": "5", "BATCH_PREFETCH_MIN_HOLDINGS": "10"}
        else:
-           return {
-               "DEEP_ANALYSIS_BATCH_SIZE": "8",
-               "BATCH_PREFETCH_MIN_HOLDINGS": "15"
-           }
+           return {"DEEP_ANALYSIS_BATCH_SIZE": "8", "BATCH_PREFETCH_MIN_HOLDINGS": "15"}
    ```
 
 2. **Memory-Based Configuration**:
@@ -441,15 +427,9 @@ state is serialized, not in a standalone report.
    def optimize_for_api_tier(has_premium_alpha_vantage: bool) -> dict[str, str]:
        """Optimize configuration based on API tier."""
        if has_premium_alpha_vantage:
-           return {
-               "ENABLE_ALPHA_VANTAGE": "true",
-               "DEEP_ANALYSIS_BATCH_SIZE": "8"
-           }
+           return {"ENABLE_ALPHA_VANTAGE": "true", "DEEP_ANALYSIS_BATCH_SIZE": "8"}
        else:
-           return {
-               "ENABLE_ALPHA_VANTAGE": "false",
-               "DEEP_ANALYSIS_BATCH_SIZE": "5"
-           }
+           return {"ENABLE_ALPHA_VANTAGE": "false", "DEEP_ANALYSIS_BATCH_SIZE": "5"}
    ```
 
 ## Troubleshooting

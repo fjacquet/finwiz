@@ -95,10 +95,10 @@ and reads its inputs from that state — nothing is passed per-call.
 from finwiz.orchestrators import DeepAnalysisOrchestrator, DiscoveryOrchestrator
 
 deep_orch = DeepAnalysisOrchestrator(state)
-results = await deep_orch.analyze_and_update_portfolio()   # async
+results = await deep_orch.analyze_and_update_portfolio()  # async
 
 discovery_orch = DiscoveryOrchestrator(state)
-opportunities = discovery_orch.check_investment_discovery()   # no arguments
+opportunities = discovery_orch.check_investment_discovery()  # no arguments
 ```
 
 ## Related Modules

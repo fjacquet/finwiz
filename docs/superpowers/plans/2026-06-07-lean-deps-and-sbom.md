@@ -405,11 +405,11 @@ git commit -m "chore(api): remove unused FastAPI module (drops fastapi/starlette
 Delete these lines from the `dependencies = [ ... ]` array:
 
 ```python
-    "unstructured>=0.18.11",
-    "langchain-community>=0.3.29",
-    "langchain-text-splitters>=0.3.0",
-    "sec-api>=1.0.32",
-    "fastapi>=0.136.1",
+("unstructured>=0.18.11",)
+("langchain-community>=0.3.29",)
+("langchain-text-splitters>=0.3.0",)
+("sec-api>=1.0.32",)
+("fastapi>=0.136.1",)
 ```
 
 - [ ] **Step 2: Remove the now-moot starlette constraint**
@@ -417,7 +417,7 @@ Delete these lines from the `dependencies = [ ... ]` array:
 In the `[tool.uv] constraint-dependencies` array, delete:
 
 ```python
-    "starlette>=1.0.1",
+("starlette>=1.0.1",)
 ```
 
 (Leave urllib3/idna/gitpython/langchain-classic/uv — they are pulled by other deps. Task 5 Step 4 re-checks langchain-classic.)
@@ -427,8 +427,8 @@ In the `[tool.uv] constraint-dependencies` array, delete:
 In `[dependency-groups] dev = [ ... ]`, add:
 
 ```python
-    "cyclonedx-bom>=4.0.0",
-    "pip-audit>=2.7.0",
+("cyclonedx-bom>=4.0.0",)
+("pip-audit>=2.7.0",)
 ```
 
 - [ ] **Step 3: Re-lock and sync**

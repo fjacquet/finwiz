@@ -123,10 +123,7 @@ def test_should_fetch_data_from_api(mocker):
     """Test API data fetching."""
     # Mock the external API call
     mock_response = {"ticker": "AAPL", "price": 150.0}
-    mock_fetch = mocker.patch(
-        "finwiz.data.adapters.yahoo_adapter.fetch_quote",
-        return_value=mock_response
-    )
+    mock_fetch = mocker.patch("finwiz.data.adapters.yahoo_adapter.fetch_quote", return_value=mock_response)
 
     # Execute
     result = get_stock_data("AAPL")
@@ -139,10 +136,7 @@ def test_should_fetch_data_from_api(mocker):
 def test_should_handle_api_failure(mocker):
     """Test error handling when API fails."""
     # Mock API to raise exception
-    mocker.patch(
-        "finwiz.data.adapters.yahoo_adapter.fetch_quote",
-        side_effect=ConnectionError("API unavailable")
-    )
+    mocker.patch("finwiz.data.adapters.yahoo_adapter.fetch_quote", side_effect=ConnectionError("API unavailable"))
 
     # Execute and assert exception
     with pytest.raises(ConnectionError):
@@ -206,6 +200,7 @@ def fake_stock_data(fake: Faker) -> dict[str, Any]:
 def stock_data():
     """Fixture providing sample stock data."""
     from tests.fixtures import create_stock_data
+
     return create_stock_data()
 ```
 
@@ -350,10 +345,10 @@ def test_should_raise_error_for_invalid_price():
 @pytest.mark.parametrize(
     "rsi,expected_score",
     [
-        (50, 1.0),   # Neutral
-        (30, 0.8),   # Oversold (bullish)
-        (70, 0.8),   # Overbought (bearish)
-        (95, 0.2),   # Extreme overbought
+        (50, 1.0),  # Neutral
+        (30, 0.8),  # Oversold (bullish)
+        (70, 0.8),  # Overbought (bearish)
+        (95, 0.2),  # Extreme overbought
     ],
 )
 def test_should_score_rsi_correctly(rsi, expected_score):
@@ -377,6 +372,7 @@ def test_should_score_rsi_correctly(rsi, expected_score):
 
 ```python
 from pytest import approx
+
 
 def test_should_calculate_composite_score():
     """Test composite score calculation."""
@@ -481,11 +477,12 @@ addopts = [
     "--cov-report=term-missing",
     "--cov-report=html:htmlcov",
     "--cov-fail-under=65",
-    "--strict-markers",     # Fail on unknown markers
-    "--strict-config",      # Fail on config errors
-    "-ra",                  # Show extra test summary info
-    "--tb=short",           # Shorter traceback format
-    "-m", "not integration" # Skip integration by default
+    "--strict-markers",  # Fail on unknown markers
+    "--strict-config",  # Fail on config errors
+    "-ra",  # Show extra test summary info
+    "--tb=short",  # Shorter traceback format
+    "-m",
+    "not integration",  # Skip integration by default
 ]
 
 filterwarnings = [
@@ -510,12 +507,7 @@ class UnittestMockBlocker:
 
     def load_module(self, fullname: str):
         raise ImportError(
-            "\n\n"
-            "❌ unittest.mock is BANNED in this project!\n"
-            "\n"
-            "✅ Use pytest-mock instead:\n"
-            "   def test_example(mocker):\n"
-            "       mock_obj = mocker.patch('module.function')\n"
+            "\n\n❌ unittest.mock is BANNED in this project!\n\n✅ Use pytest-mock instead:\n   def test_example(mocker):\n       mock_obj = mocker.patch('module.function')\n"
         )
 
 
@@ -526,7 +518,7 @@ sys.meta_path.insert(0, UnittestMockBlocker())
 
 ```python
 # pyproject.toml
-[tool.ruff.lint.flake8-tidy-imports.banned-api]
+[tool.ruff.lint.flake8 - tidy - imports.banned - api]
 "unittest.mock".msg = "Use pytest-mock instead. Import 'mocker' fixture."
 ```
 
@@ -562,6 +554,7 @@ make check-unittest-mock   # Check for unittest.mock violations
 from faker import Faker
 
 fake = Faker()
+
 
 def test_with_faker(fake: Faker):
     """Test with generated data."""

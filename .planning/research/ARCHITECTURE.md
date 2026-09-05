@@ -107,9 +107,11 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 
+
 @dataclass
 class NewsArticle:
     """Standardized news article structure."""
+
     ticker: str
     title: str
     summary: str
@@ -117,6 +119,7 @@ class NewsArticle:
     source: str
     published_at: datetime
     sentiment_score: float | None = None  # Filled by sentiment engine
+
 
 class BaseNewsAdapter(ABC):
     """Base class for news source adapters."""
@@ -130,9 +133,7 @@ class BaseNewsAdapter(ABC):
         pass
 
     @abstractmethod
-    async def get_company_news(
-        self, ticker: str, days_back: int = 7, max_articles: int = 20
-    ) -> list[NewsArticle]:
+    async def get_company_news(self, ticker: str, days_back: int = 7, max_articles: int = 20) -> list[NewsArticle]:
         pass
 
     @abstractmethod
@@ -177,9 +178,11 @@ class NewsOrchestrator:
 # In DeepAnalysisOrchestrator or FinwizFlow
 class SessionData:
     """Data collected once per analysis session."""
+
     macro_snapshot: MacroSnapshot | None = None
     fear_greed_index: int | None = None
     economic_calendar: list[EconomicEvent] = []
+
 
 # Collected once at session start
 session_data = SessionData()
@@ -208,16 +211,18 @@ for holding in portfolio:
 **Example:**
 ```python
 # config/features/definitions.py -- add to create_default_flags()
-FeatureFlagConfig(
-    name="news_sentiment",
-    enabled=get_env_bool("FF_NEWS_SENTIMENT_ENABLED", True),
-    strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
-    fallback_strategy=FallbackStrategy.CACHED_ONLY,
-    circuit_breaker_threshold=3,
-    circuit_breaker_timeout=600,
-    description="Enable Finnhub/gnews/RSS news collection and VADER sentiment scoring",
-    tags={"data", "sentiment"},
-),
+(
+    FeatureFlagConfig(
+        name="news_sentiment",
+        enabled=get_env_bool("FF_NEWS_SENTIMENT_ENABLED", True),
+        strategy=FeatureFlagStrategy.CIRCUIT_BREAKER,
+        fallback_strategy=FallbackStrategy.CACHED_ONLY,
+        circuit_breaker_threshold=3,
+        circuit_breaker_timeout=600,
+        description="Enable Finnhub/gnews/RSS news collection and VADER sentiment scoring",
+        tags={"data", "sentiment"},
+    ),
+)
 ```
 
 ### Pattern 4: VADER Scoring as Pure Function
@@ -231,6 +236,7 @@ FeatureFlagConfig(
 # data/sentiment/sentiment_scorer.py
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+
 class VaderSentimentScorer:
     """Deterministic sentiment scoring using VADER lexicon."""
 
@@ -242,9 +248,7 @@ class VaderSentimentScorer:
         scores = self._analyzer.polarity_scores(text)
         return scores["compound"]
 
-    def score_articles(
-        self, articles: list[NewsArticle], source_weights: dict[str, float] | None = None
-    ) -> SentimentResult:
+    def score_articles(self, articles: list[NewsArticle], source_weights: dict[str, float] | None = None) -> SentimentResult:
         """Score and aggregate multiple articles."""
         if not articles:
             return SentimentResult(score=0.0, confidence=0.0, article_count=0)
@@ -256,9 +260,7 @@ class VaderSentimentScorer:
             weighted_scores.append(score * weight)
             article.sentiment_score = score
 
-        avg_score = sum(weighted_scores) / sum(
-            (source_weights or {}).get(a.source, 0.5) for a in articles
-        )
+        avg_score = sum(weighted_scores) / sum((source_weights or {}).get(a.source, 0.5) for a in articles)
         confidence = min(1.0, len(articles) / 10)  # Full confidence at 10+ articles
 
         return SentimentResult(
@@ -328,6 +330,7 @@ class NewsArticle(BaseModel):
     sentiment_score: float | None = None
     source_reliability: float = Field(ge=0.0, le=1.0, default=0.5)
 
+
 class NewsSentimentResult(BaseModel):
     ticker: str
     overall_score: float = Field(ge=-1.0, le=1.0)
@@ -340,18 +343,20 @@ class NewsSentimentResult(BaseModel):
     sources_used: list[str] = Field(default_factory=list)
     analysis_timestamp: datetime
 
+
 # schemas/macro.py
 class MacroSnapshot(BaseModel):
     """Point-in-time macroeconomic data from FRED."""
-    gdp_growth_rate: float | None = None      # FRED: A191RL1Q225SBEA
-    unemployment_rate: float | None = None     # FRED: UNRATE
-    cpi_yoy_change: float | None = None        # FRED: CPIAUCSL
-    fed_funds_rate: float | None = None        # FRED: FEDFUNDS
-    treasury_10y_yield: float | None = None    # FRED: GS10
-    treasury_2y_yield: float | None = None     # FRED: GS2
-    yield_curve_spread: float | None = None    # 10Y - 2Y
-    vix_level: float | None = None             # FRED: VIXCLS
-    fear_greed_index: int | None = None        # CNN Fear & Greed
+
+    gdp_growth_rate: float | None = None  # FRED: A191RL1Q225SBEA
+    unemployment_rate: float | None = None  # FRED: UNRATE
+    cpi_yoy_change: float | None = None  # FRED: CPIAUCSL
+    fed_funds_rate: float | None = None  # FRED: FEDFUNDS
+    treasury_10y_yield: float | None = None  # FRED: GS10
+    treasury_2y_yield: float | None = None  # FRED: GS2
+    yield_curve_spread: float | None = None  # 10Y - 2Y
+    vix_level: float | None = None  # FRED: VIXCLS
+    fear_greed_index: int | None = None  # CNN Fear & Greed
     snapshot_timestamp: datetime
     data_source: str = "FRED"
     confidence: float = Field(ge=0.0, le=1.0, default=0.9)

@@ -154,6 +154,7 @@ Data provenance for a fetch is carried by `DataLineage`, a dataclass in
 from pydantic import BaseModel, Field
 from typing import Literal
 
+
 class CrewExportBase(BaseModel):
     """Base schema for all crew exports."""
 
@@ -184,7 +185,7 @@ export = StockCrewExport(
 
 # Save to JSON
 export_path = f"output/reports/{session_id}/stock/{ticker}_export.json"
-with open(export_path, 'w') as f:
+with open(export_path, "w") as f:
     f.write(export.model_dump_json(indent=2))
 ```
 
@@ -219,6 +220,7 @@ json_str = model.model_dump_json(indent=2)
 
 # Manual (fallback)
 import json
+
 json_str = json.dumps(data, default=str, indent=2)
 ```
 

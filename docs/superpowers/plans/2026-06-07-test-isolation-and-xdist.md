@@ -296,7 +296,7 @@ Expected: ALL pass — the autouse reset makes the singleton's starting state in
 In `pyproject.toml`, in `[dependency-groups]` `dev = [ ... ]`, add after `"pytest-timeout>=2.4.0",`:
 
 ```python
-    "pytest-xdist>=3.6.0",
+("pytest-xdist>=3.6.0",)
 ```
 
 - [ ] **Step 2: Lock + sync**

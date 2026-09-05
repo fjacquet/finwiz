@@ -98,14 +98,14 @@ Prevent this specific bug from recurring:
 
 ```python
 # 1. Unit tests for field tracking (NEW)
-tests/unit/scoring/test_asset_analyzer_field_tracking.py
+tests / unit / scoring / test_asset_analyzer_field_tracking.py
 
 # 2. Integration tests (NEW)
-tests/unit/scoring/test_scorer_metrics_integration.py
+tests / unit / scoring / test_scorer_metrics_integration.py
 
 # 3. Update existing tests (MODIFY)
-tests/unit/scoring/test_deep_analysis_scorer.py  # Add data quality assertions
-tests/unit/scoring/test_fundamental_scorer.py    # Test metrics passing
-tests/unit/scoring/test_technical_scorer.py      # Test metrics passing
-tests/unit/scoring/test_risk_scorer.py           # Test metrics passing
+tests / unit / scoring / test_deep_analysis_scorer.py  # Add data quality assertions
+tests / unit / scoring / test_fundamental_scorer.py  # Test metrics passing
+tests / unit / scoring / test_technical_scorer.py  # Test metrics passing
+tests / unit / scoring / test_risk_scorer.py  # Test metrics passing
 ```

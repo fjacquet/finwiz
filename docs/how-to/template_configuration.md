@@ -87,20 +87,18 @@ template_data = {
     "asset_class": "stock",
     "analysis_date": datetime.now(),
     "session_id": "analysis_2025_01_25",
-
     # Scores and Grades
-    "composite_score": 0.78,        # 0.0-1.0
-    "fundamental_score": 0.82,      # 0.0-1.0
-    "technical_score": 0.75,        # 0.0-1.0
-    "risk_score": 0.77,            # 0.0-1.0 (1.0 = low risk)
-    "grade": "A",                  # A+, A, B, C, D, F
-    "recommendation": "BUY",        # BUY, HOLD, SELL
-    "confidence": 0.85,            # 0.0-1.0
+    "composite_score": 0.78,  # 0.0-1.0
+    "fundamental_score": 0.82,  # 0.0-1.0
+    "technical_score": 0.75,  # 0.0-1.0
+    "risk_score": 0.77,  # 0.0-1.0 (1.0 = low risk)
+    "grade": "A",  # A+, A, B, C, D, F
+    "recommendation": "BUY",  # BUY, HOLD, SELL
+    "confidence": 0.85,  # 0.0-1.0
     "rationale": "Strong fundamentals...",
-
     # Component Details
     "fundamental_details": {
-        "roe": 0.25,               # Stock-specific
+        "roe": 0.25,  # Stock-specific
         "debt_to_equity": 0.3,
         "revenue_growth": 0.15,
         "profit_margin": 0.22,
@@ -111,29 +109,14 @@ template_data = {
         # Crypto-specific
         "market_cap": 100000000000,
         "volume_24h": 2000000000,
-        "age_years": 5.2
+        "age_years": 5.2,
     },
-
-    "technical_details": {
-        "rsi": 55.0,
-        "trend_direction": "uptrend",
-        "current_price": 150.0,
-        "moving_avg_50": 145.0,
-        "moving_avg_200": 140.0,
-        "macd_diff": 0.5
-    },
-
-    "risk_details": {
-        "volatility": 0.18,
-        "max_drawdown": -0.15,
-        "beta": 1.1,
-        "beta_deviation": 0.1
-    },
-
+    "technical_details": {"rsi": 55.0, "trend_direction": "uptrend", "current_price": 150.0, "moving_avg_50": 145.0, "moving_avg_200": 140.0, "macd_diff": 0.5},
+    "risk_details": {"volatility": 0.18, "max_drawdown": -0.15, "beta": 1.1, "beta_deviation": 0.1},
     # Metadata
     "data_sources": ["Yahoo Finance", "SEC EDGAR", "Alpha Vantage"],
     "report_html_path": "output/reports/.../report.html",
-    "report_json_path": "output/reports/.../export.json"
+    "report_json_path": "output/reports/.../export.json",
 }
 ```
 
@@ -348,12 +331,7 @@ To add a new section to the template:
 1. **Update data structure**:
 
 ```python
-template_data["performance_data"] = {
-    "sharpe_ratio": 1.25,
-    "sortino_ratio": 1.45,
-    "max_drawdown": -0.15,
-    "calmar_ratio": 0.85
-}
+template_data["performance_data"] = {"sharpe_ratio": 1.25, "sortino_ratio": 1.45, "max_drawdown": -0.15, "calmar_ratio": 0.85}
 ```
 
 ### Custom Filters
@@ -369,9 +347,11 @@ def format_currency(value, currency="USD"):
         return f"€{value:,.2f}"
     return f"{value:,.2f} {currency}"
 
+
 def format_percentage(value, decimals=1):
     """Format percentage values."""
     return f"{value * 100:.{decimals}f}%"
+
 
 def risk_level_text(risk_score):
     """Convert risk score to text."""
@@ -382,10 +362,11 @@ def risk_level_text(risk_score):
     else:
         return "Élevé"
 
+
 # Register filters
-jinja_env.filters['currency'] = format_currency
-jinja_env.filters['percentage'] = format_percentage
-jinja_env.filters['risk_level'] = risk_level_text
+jinja_env.filters["currency"] = format_currency
+jinja_env.filters["percentage"] = format_percentage
+jinja_env.filters["risk_level"] = risk_level_text
 ```
 
 **Usage in templates**:
@@ -456,6 +437,7 @@ arguments and does **not** write a file itself:
 ```python
 from finwiz.reporting.deep_analysis_report_generator import DeepAnalysisReportGenerator
 
+
 class DeepAnalysisReportGenerator:
     """Generate HTML reports from DeepAnalysisResult using Jinja2 templates."""
 
@@ -523,7 +505,7 @@ def test_should_render_deep_analysis_template_with_stock_data():
         risk_score=0.77,
         fundamental_details={"roe": 0.25, "debt_to_equity": 0.3},
         technical_details={"rsi": 55.0, "trend_direction": "uptrend"},
-        risk_details={"volatility": 0.18, "max_drawdown": -0.15}
+        risk_details={"volatility": 0.18, "max_drawdown": -0.15},
     )
 
     # Extra fields merged into the single result_data dict generate_report() expects
@@ -582,21 +564,21 @@ def test_template_accessibility():
     html_content = generate_sample_report()
 
     # Parse HTML
-    soup = BeautifulSoup(html_content, 'html.parser')
+    soup = BeautifulSoup(html_content, "html.parser")
 
     # Check for required accessibility features
-    assert soup.find('html').get('lang') == 'fr'  # Language specified
-    assert soup.find('title') is not None         # Title present
+    assert soup.find("html").get("lang") == "fr"  # Language specified
+    assert soup.find("title") is not None  # Title present
 
     # Check heading hierarchy
-    headings = soup.find_all(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])
+    headings = soup.find_all(["h1", "h2", "h3", "h4", "h5", "h6"])
     assert len(headings) > 0
-    assert headings[0].name == 'h1'  # Starts with h1
+    assert headings[0].name == "h1"  # Starts with h1
 
     # Check alt text for images (if any)
-    images = soup.find_all('img')
+    images = soup.find_all("img")
     for img in images:
-        assert img.get('alt') is not None
+        assert img.get("alt") is not None
 
     # Check color contrast (would need additional tools)
     # Check keyboard navigation (would need browser testing)
@@ -636,6 +618,7 @@ directly instead:
 
 ```python
 import time
+
 
 def monitor_template_performance():
     """Monitor template rendering performance."""
@@ -706,7 +689,7 @@ template_data = {
     "recommendation": result.recommendation,
     # Provide defaults for optional fields
     "data_sources": template_data.get("data_sources", ["Internal Analysis"]),
-    "analysis_date": template_data.get("analysis_date", datetime.now())
+    "analysis_date": template_data.get("analysis_date", datetime.now()),
 }
 ```
 
@@ -736,16 +719,12 @@ Enable template debugging for development:
 # Enable debug mode
 jinja_env = Environment(
     loader=FileSystemLoader(template_dir),
-    autoescape=select_autoescape(['html', 'xml']),
-    undefined=StrictUndefined  # Raise errors for undefined variables
+    autoescape=select_autoescape(["html", "xml"]),
+    undefined=StrictUndefined,  # Raise errors for undefined variables
 )
 
 # Add debug information to templates
-template_data["debug_info"] = {
-    "render_time": datetime.now(),
-    "template_version": "1.0",
-    "data_keys": list(template_data.keys())
-}
+template_data["debug_info"] = {"render_time": datetime.now(), "template_version": "1.0", "data_keys": list(template_data.keys())}
 ```
 
 ## Conclusion
