@@ -1,6 +1,6 @@
 # FinWiz Development Makefile
 
-.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit lint-complexity deadcode check-duplication
+.PHONY: help install test test-verbose test-all test-integration lint lint-check format clean setup dev check check-unittest-mock check-file-size check-stage-contract gate cleanup fix-currencies mypy coverage coverage-report coverage-check docs-build docs-build-strict docs-serve docs-deploy docs-lint docs-validate docs-clean all ci sbom audit lint-complexity deadcode check-duplication
 
 # Default target
 help:
@@ -41,6 +41,7 @@ help:
 	@echo "  make deadcode    - Dead-code scan (vulture, min confidence 80)"
 	@echo "  make check-duplication - Duplicate-code gate (pylint R0801, 37-line clean baseline)"
 	@echo "  make check-unittest-mock - Check for banned unittest.mock"
+	@echo "  make gate        - Re-evaluate output/run_summary.json against current gate thresholds"
 	@echo "  make coverage    - Run tests with coverage report (65% minimum)"
 	@echo "  make coverage-report - Open coverage report in browser"
 	@echo "  make coverage-check - Validate coverage meets threshold"
@@ -166,6 +167,12 @@ check-file-size:
 .PHONY: check-stage-contract
 check-stage-contract:
 	uv run python -m scripts.check_stage_contract src/finwiz/analysis/stages
+
+# Run gate — re-evaluate the last run's summary with the thresholds currently in settings.
+# Exit 0 PASS/WARN, 1 FAIL, 2 could not evaluate. See docs/superpowers/specs/2026-09-05-run-gate-design.md.
+.PHONY: gate
+gate:
+	uv run python scripts/run_gate.py output/run_summary.json
 
 # Cleanup
 clean:
