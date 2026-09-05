@@ -18,26 +18,13 @@ from typing import Any
 
 from finwiz.analysis.run_gate import evaluate, format_block, verdict
 from finwiz.config.settings import RunGateSettings, get_settings
+from finwiz.infrastructure.time.datetime_utils import assume_local_aware
 from finwiz.schemas.run_summary import CostInput, CoverageInput, FactPackInput, PhasesInput, RunSummary, ValuationInput, Verdict
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
 _STATE_TIMESTAMP_FORMAT = "%Y-%m-%d %H:%M:%S"  # FinwizState.timestamp
-
-
-def _instant(value: datetime) -> datetime:
-    """Put a datetime on the one clock the gate measures with.
-
-    ``state.timestamp`` is naive local wall-clock and ``finished`` is aware UTC.
-    Subtracting them as if both were naive UTC yields a negative duration
-    anywhere east of UTC -- a full run judged ERROR for being two hours long in
-    the wrong direction. A naive value is therefore read as local time (the only
-    thing a naive stamp from ``datetime.now()`` can mean) and given the offset
-    that was in force at that moment, so the subtraction is in absolute time and
-    survives DST.
-    """
-    return value.astimezone() if value.tzinfo is None else value
 
 
 def coverage_from(ledger: Any) -> CoverageInput:
@@ -160,7 +147,7 @@ class RunGateOrchestrator:
         cost = cost_from(getattr(self.state, "llm_cost_summary", None))
         checks = evaluate(coverage, valuation, fact_pack, phases, cost, thresholds)
 
-        finished = _instant(self._now())
+        finished = assume_local_aware(self._now())
         started = self._started_at()
         ledger = getattr(self.state, "run_ledger", None)
         return RunSummary(
@@ -181,7 +168,7 @@ class RunGateOrchestrator:
         """``state.timestamp`` is naive LOCAL wall-clock (``flow_state_models.py`` stamps it with ``datetime.now()``)."""
         raw = getattr(self.state, "timestamp", None)
         try:
-            return _instant(datetime.strptime(raw, _STATE_TIMESTAMP_FORMAT)) if raw else None
+            return assume_local_aware(datetime.strptime(raw, _STATE_TIMESTAMP_FORMAT)) if raw else None
         except ValueError:
             return None
 
