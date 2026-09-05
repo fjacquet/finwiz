@@ -27,6 +27,8 @@ This document indexes workstreams. It does not design them. Each row of the tabl
 
 Evidence: `grep -c 'using stale cache' logs/finwiz.log` → 18; `analysis/stages/fact_pack.py:68-69` (fallback); `infrastructure/resilience/perplexity_retry.py` (133 warnings).
 
+*Workstream C, same day.* The empty message is not finwiz's to fix: the central tool swallows the exception and returns `None`, and its log line writes `{exc}` — empty for every httpx transport exception. Fixed upstream as crewai-custom-tools PR #37 (`{exc!r}`). finwiz pins `v0.6.0` while upstream is at `v0.31.1`, so the fix reaches finwiz only through a pin migration — workstream H below. On the finwiz side, Phase 3 now ends with one line — `fact_pack freshness: 40 fresh, 6 recent, 18 stale (oldest 2026-08-17, 19 days ago), 0 missing — 64 holdings` — at WARNING when anything is stale (PR #164). No retry or backoff was tuned: without the exception types, that would be guessing.
+
 ### F2. Three phases run and deliver nothing
 
 | Phase | What happened | What the reader got |
@@ -63,6 +65,8 @@ Consequences: the real deep-analysis spend is ≈ 65–70 requests and ≈ 0.5 M
 
 Evidence: `reporting/enriched_analysis_report_generator.py` (128 WARNING lines).
 
+*Workstream F, same day (PR #163).* Removed, not recalibrated. The requirements document it cited no longer exists; the validator hard-coded 2000/200/500 words and ignored the four `min_*` settings that existed for them; nothing read those settings either; nothing acted on the warning. Two property tests asserted their own fixture produced enough words. A new property test asserts the warning is never emitted.
+
 ### F5. Safety comes from the test suite, not from the product
 
 - **5 134 tests, all network-mocked** under the pytest-socket guard. Strong on logic, blind on integrations: yfinance 1.7.0 shipped in 5.14.1 with zero real API calls exercised. There is no scheduled integration tier.
@@ -85,36 +89,42 @@ Grades, decisions, current allocation, posture, stress tests — yes. Not receiv
 | #157 | Release 5.14.1 |
 | #158 | `BRK.B → BRK-B` at the ticker-hygiene seam; backtest failures keep their traceback |
 | #159 | Delete the dead scipy optimiser stack (1 578 lines) |
-| — | Spec + plan for optimal allocation, on branch `docs/optimal-allocation-spec` |
+| #160 / #161 | This roadmap; optimal-allocation spec + plan (workstream G) |
+| #162 | **B** — LLM cache deleted; usage was overstated 32×; OpenRouter ids priced through the vendor twin |
+| #163 | **F** — Requirement 9.2 thresholds retired |
+| #164 | **C** (finwiz half) — per-run fact-pack freshness line |
+| crewai-custom-tools #37 | **C** (upstream half) — transport errors logged with `repr` |
 
 ## Workstreams
 
 | # | Workstream | Nature | Size | Depends on | Addresses |
 |---|---|---|---|---|---|
 | A | **Run gate** — after `kickoff`, verify coverage, freshness ratio, active phases, known cost; fail otherwise | new tooling | medium | better with B | F5 |
-| B | **Cost** — spike: where do 62 calls per crypto come from with `max_iter=2`? then add `gemini-3.7-flash` to the pricing table | spike → bounded | small | — | F3 |
-| C | **Perplexity reliability** — log the full exception; characterise the 128 transport errors; review backoff | infrastructure | small | — | F1 |
+| B | ~~**Cost**~~ — **done, #162.** The count aggregated across a shared LLM object; deleted the cache. | spike → bounded | small | — | F3 |
+| C | ~~**Perplexity reliability**~~ — **done, #164 + upstream #37.** Backoff deliberately untouched until the types are visible, which needs H. | infrastructure | small | — | F1 |
 | D | **Dead phases** — decide per phase: finish or remove discovery, alternatives, rebalancing | product + flow | **large** | B (real cost of phases) | F2, F6 |
 | E | **CI** — nightly `integration` smoke tier; "imported from `src/`" dead-code check; markdownlint in a workflow | CI | medium | — | F5 |
-| F | **Requirement 9.2** — recalibrate or remove | bounded | very small | — | F4 |
+| F | ~~**Requirement 9.2**~~ — **done, #163.** Removed. | bounded | very small | — | F4 |
 | G | **Optimal allocation** | spec + plan ready | — | — | F6 |
+| H | **Central-tools pin migration** — finwiz pins `crewai-custom-tools @ v0.6.0`; upstream is at `v0.31.1`, 36 tags on. Every upstream fix, including C's, is invisible until this moves. | migration | **large** | — | F1, F5 |
 
 ### Dependencies
 
 - **B before D.** Deciding to keep or kill a phase without knowing what it costs is deciding blind. B is an hour.
 - **B improves A.** A run gate that checks "cost is known" needs the pricing table first.
 - C, E, F, G are independent of everything else and of each other.
+- **H unblocks C's effect.** The `repr` fix is merged upstream but finwiz runs v0.6.0; until the pin moves, the transport errors stay blank in finwiz logs.
 
 ### Suggested order
 
-B → C, F → A → E → D → G at any point.
+~~B → C, F~~ → **A** → E → D → G at any point; H when the appetite for a 36-tag migration exists — it is large and it gates nothing else on this list except C's visibility.
 
-Small and independent first, the gate before the big decision, the big decision last and informed. This is a suggestion; the order is the open decision this document exists to support.
+B, C and F shipped on 2026-09-05. Next is A, the run gate — with B done the cost is measurable and with C done the freshness ratio is one line, so the gate has clean inputs to check.
 
 ## Open unknowns
 
-1. What the 62 calls per crypto are (B, spike).
-2. What the 128 empty-message Perplexity errors actually were (C — unrecoverable for this run; the fix is to log them next time).
+1. ~~What the 62 calls per crypto are~~ — resolved: a shared LLM object's cumulative counter (B, #162).
+2. What the 128 empty-message Perplexity errors actually were — unrecoverable for this run. The upstream fix logs the type next time, **once finwiz's pin reaches it (H)**.
 3. Root cause of the backtest off-by-one (instrumented; wait for the next occurrence and read the traceback).
 
 ## How to use this document
