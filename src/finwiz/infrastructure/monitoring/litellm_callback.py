@@ -29,6 +29,23 @@ def clear_crew_context() -> None:
     _current_crew_name.set("unknown")
 
 
+# OpenRouter model ids are not in litellm's price table, but the vendor-native
+# id usually is (`openrouter/google/gemini-3.7-flash` → `gemini/gemini-3.7-flash`).
+# Pricing through the twin is a proxy — OpenRouter's rate is not necessarily the
+# vendor's — so a hit through this map is logged as an estimate, once per model.
+# Only vendors listed here are tried; an unknown vendor stays honestly unpriced.
+_OPENROUTER_NATIVE_PREFIX: dict[str, str] = {"google": "gemini"}
+
+
+def _price_candidates(model: str) -> list[str]:
+    """Return the model ids to try for pricing, most faithful first."""
+    candidates = [model]
+    parts = model.split("/", 2)
+    if len(parts) == 3 and parts[0] == "openrouter" and parts[1] in _OPENROUTER_NATIVE_PREFIX:
+        candidates.append(f"{_OPENROUTER_NATIVE_PREFIX[parts[1]]}/{parts[2]}")
+    return candidates
+
+
 class TokenMonitorCallback(CustomLogger):
     """
     LiteLLM callback to monitor token usage and prompt sizes.
@@ -47,6 +64,8 @@ class TokenMonitorCallback(CustomLogger):
         # not price (unknown/unpriced model). Lets the summary show "cost n/a"
         # instead of implying $0 — honesty over a false zero.
         self.crew_cost_known: dict[str, bool] = {}
+        # Proxy model ids already announced in the log — one line per model, not per kickoff.
+        self._priced_via_proxy: set[str] = set()
 
     def log_success_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
         """Called after successful LLM call. Tracks cost and crew attribution."""
@@ -102,15 +121,22 @@ class TokenMonitorCallback(CustomLogger):
 
         cost: float | None = None
         if model:
-            try:
-                prompt_cost, completion_cost = litellm.cost_per_token(
-                    model=model,
-                    prompt_tokens=prompt_tokens,
-                    completion_tokens=completion_tokens,
-                )
+            for candidate in _price_candidates(model):
+                try:
+                    prompt_cost, completion_cost = litellm.cost_per_token(
+                        model=candidate,
+                        prompt_tokens=prompt_tokens,
+                        completion_tokens=completion_tokens,
+                    )
+                except Exception as exc:
+                    # Expected for an unpriced id: try the next candidate, or stay honestly unknown.
+                    logger.debug(f"No litellm price for {candidate}: {exc}")
+                    continue
                 cost = float(prompt_cost) + float(completion_cost)
-            except Exception:
-                cost = None  # unpriced model: tokens stay honest, cost unknown
+                if candidate != model and candidate not in self._priced_via_proxy:
+                    self._priced_via_proxy.add(candidate)
+                    logger.info(f"Pricing {model} via {candidate}: OpenRouter's rate may differ from the vendor's, so this cost is an estimate")
+                break
 
         self.call_count += calls
         self.crew_calls[crew_name] = self.crew_calls.get(crew_name, 0) + calls

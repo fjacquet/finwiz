@@ -15,7 +15,6 @@ def _capture_llm_kwargs(mocker):
     """Patch the LLM ctor + API-key validation; return a Mock capturing LLM() kwargs."""
     mock_llm = mocker.patch.object(llm_config, "LLM")
     mocker.patch.object(llm_config, "_validate_api_key_for_model")
-    llm_config._llm_cache.clear()
     return mock_llm
 
 

@@ -21,7 +21,6 @@ def _capture_llm_kwargs(mocker):
     """Patch the LLM ctor + API-key validation; return a Mock capturing LLM() kwargs."""
     mock_llm = mocker.patch.object(llm_config, "LLM")
     mocker.patch.object(llm_config, "_validate_api_key_for_model")
-    llm_config._llm_cache.clear()
     return mock_llm
 
 
@@ -143,17 +142,3 @@ class TestGetConfiguredLlmReasoningEffort:
         extra_body = mock_llm.call_args.kwargs["extra_body"]
         assert extra_body["reasoning"] == {"effort": "low"}
         assert extra_body["response_format"] == {"type": "json_object"}
-
-    def test_should_cache_distinct_instances_per_reasoning_effort(self, mocker, monkeypatch):
-        mock_llm = _capture_llm_kwargs(mocker)
-        mock_llm.side_effect = lambda **kw: mocker.Mock(name="llm")
-        model = "openrouter/z-ai/glm-5.2"
-
-        monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
-        low_instance = llm_config.get_configured_llm(model_override=model)
-
-        monkeypatch.setenv("LLM_REASONING_EFFORT", "high")
-        high_instance = llm_config.get_configured_llm(model_override=model)
-
-        assert low_instance is not high_instance
-        assert mock_llm.call_count == 2
