@@ -1144,7 +1144,7 @@ wheels = [
 
 [[package]]
 name = "finwiz"
-version = "5.14.0"
+version = "5.14.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
