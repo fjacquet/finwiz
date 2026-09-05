@@ -76,35 +76,6 @@ class HybridAnalysisSettings(BaseModel):
         description="Maximum LLM cost per holding in dollars (default: $0.10)",
     )
 
-    # Quality Thresholds (Requirements 7.3, 7.4)
-    min_report_word_count: int = Field(
-        default=2000,
-        ge=500,
-        le=10000,
-        description="Minimum report word count (default: 2000 words)",
-    )
-
-    min_unique_insights_count: int = Field(
-        default=5,
-        ge=1,
-        le=50,
-        description="Minimum number of unique qualitative insights (default: 5)",
-    )
-
-    min_executive_summary_words: int = Field(
-        default=200,
-        ge=50,
-        le=1000,
-        description="Minimum executive summary word count (default: 200 words)",
-    )
-
-    min_investment_rationale_words: int = Field(
-        default=500,
-        ge=100,
-        le=2000,
-        description="Minimum investment rationale word count (default: 500 words)",
-    )
-
     # Batch Processing Thresholds (Requirements 10.1, 10.2)
     max_batch_processing_time_seconds: float = Field(
         default=1800.0,
@@ -142,11 +113,6 @@ class HybridAnalysisSettings(BaseModel):
     log_performance_warnings: bool = Field(
         default=True,
         description="Log warnings when performance thresholds are exceeded (default: True)",
-    )
-
-    log_quality_warnings: bool = Field(
-        default=True,
-        description="Log warnings when quality thresholds are not met (default: True)",
     )
 
 
