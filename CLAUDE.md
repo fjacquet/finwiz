@@ -138,6 +138,13 @@ SERPER_API_KEY=...              # Required
 `crewai flow kickoff` is the sole production entry point. Flow parameters are
 passed via CrewAI-native mechanisms — not via argparse.
 
+**Reading the exit code:** use `uv run kickoff`, not `crewai flow kickoff`. The
+run gate sets the process exit code (0 pass/warn, 1 fail, 2 could-not-evaluate),
+but the vendored CLI catches the child's `CalledProcessError` and returns 0
+regardless, so `crewai flow kickoff` reports success for every run. Anything
+that inspects `$?` — cron, CI, a shell `&&` — must call `uv run kickoff`.
+`make gate` re-judges a saved `output/run_summary.json` and its code is truthful.
+
 - **Programmatic:** call `FinwizFlow(state=FinwizState()).kickoff(inputs={...})`.
   Inputs populate the structured `FinwizState` Pydantic fields before any
   `@start()` method runs. The `discovery_enabled` field is preserved for API

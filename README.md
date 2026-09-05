@@ -23,6 +23,10 @@ cp .env.example .env   # add OPENAI_API_KEY and SERPER_API_KEY at minimum
 
 # Run a full portfolio analysis
 crewai flow kickoff
+
+# Same run, but the shell sees the run gate's exit code (0 pass, 1 fail, 2 could-not-evaluate).
+# `crewai flow kickoff` always exits 0, so use this in cron/CI or anywhere you check $?.
+uv run kickoff
 ```
 
 Reports are written to `output/` as styled HTML files, one per phase.
