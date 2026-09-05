@@ -13,11 +13,20 @@ from finwiz.discovery.ticker_utils import to_yfinance_symbol
 
 
 class TestStockAndETFPassThrough:
-    """Stock and ETF tickers should be returned unchanged (beyond upper-casing)."""
+    """Stock and ETF tickers are returned unchanged, apart from known renames.
 
-    @pytest.mark.parametrize("ticker", ["AAPL", "MSFT", "GOOG", "BRK.B"])
+    ``BRK.B`` used to be listed here as a pass-through example. It is not one:
+    Yahoo quotes that share class as ``BRK-B`` and returns "No data found" for
+    the dot form, so ``canonical_symbol`` rewrites it. See
+    ``TestShareClassRenames`` in ``test_ticker_hygiene.py``.
+    """
+
+    @pytest.mark.parametrize("ticker", ["AAPL", "MSFT", "GOOG", "NESN.SW", "IDPE.L"])
     def test_stock_pass_through(self, ticker: str) -> None:
         assert to_yfinance_symbol(ticker, "stock") == ticker.upper()
+
+    def test_dotted_share_class_is_rewritten_for_yahoo(self) -> None:
+        assert to_yfinance_symbol("BRK.B", "stock") == "BRK-B"
 
     @pytest.mark.parametrize("ticker", ["QQQ", "SPY", "VOO", "IEMG"])
     def test_etf_pass_through(self, ticker: str) -> None:

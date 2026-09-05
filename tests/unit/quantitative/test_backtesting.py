@@ -1228,3 +1228,53 @@ class TestStrategyExecution:
         assert len(result.portfolio_values) > 0
         # Portfolio values should be tracked daily
         assert len(result.portfolio_values) >= 100  # At least 100 days of data
+
+
+class TestBacktestFailureLeavesATrace:
+    """A cerebro failure must record the traceback, not just the message.
+
+    The 2026-09-05 run lost CVLT, GOOGL and HPE to `index 252 is out of bounds
+    for axis 0 with size 252`, raised inside cerebro.run(). The bare message
+    named neither the frame nor the array, and the failure did not reproduce
+    afterwards — the evidence needed to fix it had already been discarded.
+    """
+
+    def test_cerebro_failure_logs_the_traceback(self, mocker, caplog) -> None:
+        import logging
+
+        from finwiz.quantitative.backtesting import (
+            BacktestingEngine,
+            SimpleMovingAverageStrategy,
+        )
+
+        engine = BacktestingEngine()
+        bars = 300
+        frame = pd.DataFrame(
+            {
+                "Open": [100.0] * bars,
+                "High": [101.0] * bars,
+                "Low": [99.0] * bars,
+                "Close": [100.5] * bars,
+                "Volume": [1_000] * bars,
+            },
+            index=pd.date_range("2025-01-01", periods=bars, freq="D"),
+        )
+        mocker.patch.object(engine.data_manager, "fetch_historical_data", return_value=frame)
+        mocker.patch.object(
+            bt.Cerebro,
+            "run",
+            side_effect=IndexError("index 252 is out of bounds for axis 0 with size 252"),
+        )
+
+        with caplog.at_level(logging.ERROR), pytest.raises(IndexError):
+            engine.run_strategy_backtest(
+                SimpleMovingAverageStrategy,
+                "GOOGL",
+                datetime(2025, 1, 1),
+                datetime(2025, 12, 31),
+                strategy_params={"short_period": 20, "long_period": 50},
+            )
+
+        failures = [r for r in caplog.records if "Error during backtest execution" in r.message]
+        assert failures, "the cerebro failure was not logged at all"
+        assert failures[0].exc_info is not None, "logged without a traceback — the evidence is gone"

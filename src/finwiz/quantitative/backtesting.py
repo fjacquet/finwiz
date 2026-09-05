@@ -172,7 +172,13 @@ class BacktestingEngine:
         except Exception as e:
             # Cerebro itself failed (data feed, analyzer setup, etc.). Bubble
             # up — the caller still wants visibility into "no backtest at all".
-            self.logger.error(f"Error during backtest execution: {e}")
+            #
+            # Log the traceback, not just the message. The 2026-09-05 run lost
+            # three holdings to `index 252 is out of bounds for axis 0 with
+            # size 252` raised somewhere inside cerebro.run(), and the bare
+            # message names neither the frame nor the array — the failure could
+            # not be reproduced afterwards from the log alone.
+            self.logger.exception(f"Error during backtest execution: {e}")
             raise
 
         # Calculate performance metrics with a safe-default fallback. The
