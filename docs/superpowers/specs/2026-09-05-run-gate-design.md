@@ -170,6 +170,17 @@ Deterministic Python end to end; fully inside the coverage gate.
 
 **Anything that calls `crewai flow kickoff` and expects 0 will now see 1 or 2.** Nothing does today — no cron, no CI. Whoever wires one later (workstream E) is the intended consumer.
 
+> **Correction, 2026-09-05 (verified during implementation).** As written this is
+> false, and the difference matters to whoever wires workstream E. The vendored
+> `crewai` CLI catches `CalledProcessError` in `crewai_cli/run_crew.py:771-776`,
+> prints it, and returns — so `crewai flow kickoff` exits **0 regardless of the
+> verdict**. The gate's exit code is only observable via `uv run kickoff`, which
+> is what Task 8 and any cron or CI wrapper must call. Nothing in this repo
+> consumes the CLI's status today (`make gate` invokes `scripts/run_gate.py`
+> directly), so nothing is broken by this — but a consumer wired to
+> `crewai flow kickoff` would silently see every run as a pass, which is the
+> exact failure this gate exists to prevent.
+
 **Thresholds are guesses until measured.** 0.95 / 0.95 / 0.25 are set from one run. `make gate` exists precisely so they can be revisited against the JSON of several runs without relaunching any of them.
 
 ## Implementation order
