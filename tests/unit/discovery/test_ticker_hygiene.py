@@ -29,6 +29,46 @@ class TestCanonicalSymbol:
         assert canonical_symbol(canonical_symbol("MATIC")) == "POL"
 
 
+class TestShareClassRenames:
+    """Yahoo writes share classes with a dash; the screening universe uses a dot."""
+
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            ("BRK.B", "BRK-B"),
+            ("brk.b", "BRK-B"),
+            ("  BRK.B  ", "BRK-B"),
+        ],
+    )
+    def test_dotted_share_class_becomes_dashed(self, raw: str, expected: str) -> None:
+        assert canonical_symbol(raw) == expected
+
+    def test_idempotent(self) -> None:
+        assert canonical_symbol(canonical_symbol("BRK.B")) == "BRK-B"
+
+    @pytest.mark.parametrize(
+        "ticker",
+        [
+            "IDPE.L",  # London — a one-letter suffix, same shape as a share class
+            "HYLD.L",
+            "IJPA.L",
+            "SUAS.L",
+            "NESN.SW",
+            "EL.PA",
+            "VOW.DE",
+            "SCL.F",
+            "IESE.AS",
+            "QDV5.DU",
+        ],
+    )
+    def test_exchange_suffixes_are_left_alone(self, ticker: str) -> None:
+        """A dot is also an exchange suffix. Only known share classes may move."""
+        assert canonical_symbol(ticker) == ticker
+
+    def test_sanitize_applies_share_class_rename(self) -> None:
+        assert sanitize_symbols(["BRK.B", "AAPL", "IDPE.L"]) == ["AAPL", "BRK-B", "IDPE.L"]
+
+
 class TestIsTradable:
     def test_non_tradable_excluded(self) -> None:
         assert is_tradable("XTSLA") is False
