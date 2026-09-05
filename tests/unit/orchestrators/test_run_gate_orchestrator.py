@@ -135,18 +135,19 @@ def _gap_profile(underperformers: int) -> dict[str, Any]:
     return profile.model_dump()
 
 
-def _discover(state: FinwizState, tmp_path: Path, count: int) -> None:
-    """Put discovery on state through the orchestrator that puts it there in a run."""
+def _discover(state: FinwizState, tmp_path: Path, count: int, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Put discovery on state through the orchestrator that puts it there in a run.
+
+    ``check_investment_discovery`` writes under the working directory, so the
+    test moves there; ``monkeypatch.chdir`` restores it at teardown even if the
+    orchestrator raises.
+    """
     state.stock_opportunities = [{"ticker": f"OPP{i}", "composite_score": 0.9} for i in range(count)]
-    previous = Path.cwd()
-    os.chdir(tmp_path)
-    try:
-        DiscoveryOrchestrator(state).check_investment_discovery()
-    finally:
-        os.chdir(previous)
+    monkeypatch.chdir(tmp_path)
+    DiscoveryOrchestrator(state).check_investment_discovery()
 
 
-def _state(tmp_path: Path, *, discovered: int = 2, **overrides: Any) -> FinwizState:
+def _state(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, *, discovered: int = 2, **overrides: Any) -> FinwizState:
     """A real ``FinwizState`` carrying what a real run leaves on it. Nominal case: 1/3 stale."""
     state = FinwizState()
     state.run_ledger = _ledger(tmp_path)
@@ -156,20 +157,20 @@ def _state(tmp_path: Path, *, discovered: int = 2, **overrides: Any) -> FinwizSt
     state.portfolio_gap_profile = _gap_profile(underperformers=3)
     state.stress_test_count = 6
     state.llm_cost_summary = _cost()
-    _discover(state, tmp_path, discovered)
+    _discover(state, tmp_path, discovered, monkeypatch)
     for key, value in overrides.items():
         setattr(state, key, value)
     return state
 
 
-def _healthy(tmp_path: Path, **overrides: Any) -> FinwizState:
+def _healthy(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, **overrides: Any) -> FinwizState:
     """A run with nothing wrong with it: every check green, verdict PASS."""
     healthy: dict[str, Any] = {
         "fact_pack_freshness": _freshness(fresh=3),
         "alternatives_count": 2,
         "portfolio_gap_profile": _gap_profile(underperformers=1),
     }
-    return _state(tmp_path, **(healthy | overrides))
+    return _state(tmp_path, monkeypatch, **(healthy | overrides))
 
 
 @contextmanager
@@ -196,7 +197,7 @@ def _local_timezone(name: str) -> Iterator[None]:
 class TestCollectors:
     def test_coverage_from_ledger(self, tmp_path) -> None:
         c = coverage_from(_ledger(tmp_path, analyzed=2, total=3))
-        assert (c.available, c.analyzed, c.failed, c.total) == (True, 2, 1, 3)
+        assert (c.available, c.analyzed, c.degraded, c.total) == (True, 2, 0, 3)
 
     def test_coverage_from_none_is_unavailable(self) -> None:
         assert coverage_from(None).available is False
@@ -227,13 +228,14 @@ class TestCollectors:
     def test_fact_pack_from_none_is_unavailable(self) -> None:
         assert fact_pack_from(None).available is False
 
-    def test_phases_read_the_field_discovery_actually_writes(self, tmp_path) -> None:
+    def test_phases_read_the_field_discovery_actually_writes(self, tmp_path, monkeypatch) -> None:
         """Discovery consolidates onto `all_discovery_opportunities`; nothing writes `investment_discovery_result`."""
-        p = phases_from(_state(tmp_path, discovered=2))
-        assert (p.discovery_candidates, p.alternatives_found, p.underperformers, p.stress_scenarios, p.optimal_allocation) == (2, 0, 3, 6, False)
+        p = phases_from(_state(tmp_path, monkeypatch, discovered=2))
+        assert (p.discovery_candidates, p.alternatives_found, p.underperformers, p.stress_scenarios) == (2, 0, 3, 6)
+        assert p.underperformers_available is True
 
-    def test_phases_treat_a_discovery_that_never_ran_as_zero(self, tmp_path) -> None:
-        state = _state(tmp_path, discovered=0)
+    def test_phases_treat_a_discovery_that_never_ran_as_zero(self, tmp_path, monkeypatch) -> None:
+        state = _state(tmp_path, monkeypatch, discovered=0)
         assert phases_from(state).discovery_candidates == 0
         assert phases_from(FinwizState()).discovery_candidates == 0
 
@@ -269,8 +271,8 @@ class TestCollectors:
 
 
 class TestRun:
-    def test_writes_json_logs_block_and_sets_state(self, tmp_path, caplog) -> None:
-        state = _state(tmp_path)
+    def test_writes_json_logs_block_and_sets_state(self, tmp_path, monkeypatch, caplog) -> None:
+        state = _state(tmp_path, monkeypatch)
         output = tmp_path / "output"
         with caplog.at_level(logging.INFO):
             summary = RunGateOrchestrator(state, output_dir=output, thresholds=RunGateSettings()).run()
@@ -287,9 +289,9 @@ class TestRun:
         assert len(lines) == 9
         assert lines[-1].startswith("run gate: verdict FAIL")
 
-    def test_a_healthy_run_passes(self, tmp_path, caplog) -> None:
+    def test_a_healthy_run_passes(self, tmp_path, monkeypatch, caplog) -> None:
         """The case the branch never had: every check green, verdict PASS, exit 0."""
-        state = _healthy(tmp_path)
+        state = _healthy(tmp_path, monkeypatch)
         with caplog.at_level(logging.INFO):
             summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
 
@@ -301,17 +303,17 @@ class TestRun:
         assert RunSummary.model_validate_json((tmp_path / "output" / "run_summary.json").read_text()) == summary
         assert [r.message for r in caplog.records if r.message.startswith("run gate: verdict")] == [f"run gate: verdict PASS — {tmp_path / 'output' / 'run_summary.json'}"]
 
-    def test_a_known_gap_warns_and_still_exits_zero(self, tmp_path) -> None:
+    def test_a_known_gap_warns_and_still_exits_zero(self, tmp_path, monkeypatch) -> None:
         """One failed WARN-severity check, every FAIL-severity check green."""
-        summary = RunGateOrchestrator(_healthy(tmp_path, stress_test_count=0), output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+        summary = RunGateOrchestrator(_healthy(tmp_path, monkeypatch, stress_test_count=0), output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
 
         assert summary is not None
         assert [c.name for c in summary.checks if not c.passed] == ["stress_tests"]
         assert summary.verdict is Verdict.WARN
         assert exit_code_for(summary.verdict) == 0
 
-    def test_an_unpriced_crew_fails_the_otherwise_healthy_run(self, tmp_path) -> None:
-        summary = RunGateOrchestrator(_healthy(tmp_path, llm_cost_summary=_cost(priced=False)), output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+    def test_an_unpriced_crew_fails_the_otherwise_healthy_run(self, tmp_path, monkeypatch) -> None:
+        summary = RunGateOrchestrator(_healthy(tmp_path, monkeypatch, llm_cost_summary=_cost(priced=False)), output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
 
         assert summary is not None
         assert [c.name for c in summary.checks if not c.passed] == ["cost_known"]
@@ -319,14 +321,14 @@ class TestRun:
         assert exit_code_for(summary.verdict) == 1
 
     @pytest.mark.parametrize("tz", ["Europe/Paris", "UTC", "America/New_York", "Asia/Tokyo"])
-    def test_duration_is_measured_on_one_clock(self, tmp_path, tz) -> None:
+    def test_duration_is_measured_on_one_clock(self, tmp_path, monkeypatch, tz) -> None:
         """`state.timestamp` is naive local; `finished` is UTC. Subtracting them raw is negative east of UTC.
 
         A negative duration violates `RunSummary.duration_seconds` (ge=0.0), which
         means no summary file at all -- the gate destroyed by its own arithmetic.
         """
         with _local_timezone(tz):
-            state = _healthy(tmp_path)  # FinwizState() stamps its timestamp in local time, like a real run
+            state = _healthy(tmp_path, monkeypatch)  # FinwizState() stamps its timestamp in local time, like a real run
             summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
 
         assert summary is not None, f"the gate must produce a summary under TZ={tz}"
@@ -334,9 +336,9 @@ class TestRun:
         assert 0 <= summary.duration_seconds < 600
         assert (tmp_path / "output" / "run_summary.json").exists()
 
-    def test_an_impossible_duration_does_not_destroy_the_summary(self, tmp_path, caplog) -> None:
+    def test_an_impossible_duration_does_not_destroy_the_summary(self, tmp_path, monkeypatch, caplog) -> None:
         """A clock that moved backwards makes duration unknown -- it does not cost us the verdict."""
-        state = _healthy(tmp_path)
+        state = _healthy(tmp_path, monkeypatch)
         with caplog.at_level(logging.WARNING):
             summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings(), now=lambda: MOMENT - timedelta(days=365)).run()
 
@@ -344,9 +346,9 @@ class TestRun:
         assert summary.duration_seconds is None
         assert any("duration" in r.message for r in caplog.records if r.levelno >= logging.WARNING)
 
-    def test_a_collector_raising_yields_error_not_an_exception(self, tmp_path, caplog, mocker) -> None:
+    def test_a_collector_raising_yields_error_not_an_exception(self, tmp_path, monkeypatch, caplog, mocker) -> None:
         mocker.patch("finwiz.orchestrators.run_gate_orchestrator.coverage_from", side_effect=RuntimeError("ledger exploded"))
-        state = _state(tmp_path)
+        state = _state(tmp_path, monkeypatch)
 
         with caplog.at_level(logging.ERROR):
             result = RunGateOrchestrator(state, output_dir=tmp_path / "output").run()
@@ -356,8 +358,56 @@ class TestRun:
         failures = [r for r in caplog.records if "run gate" in r.message.lower() and r.levelno >= logging.ERROR]
         assert failures and failures[0].exc_info is not None, "the gate's own failure must keep its traceback"
 
-    def test_unavailable_inputs_still_produce_a_summary(self, tmp_path) -> None:
-        state = _state(tmp_path, run_ledger=None, llm_cost_summary=None, fact_pack_freshness=None, portfolio_review=None)
+    def test_unavailable_inputs_still_produce_a_summary(self, tmp_path, monkeypatch) -> None:
+        state = _state(tmp_path, monkeypatch, run_ledger=None, llm_cost_summary=None, fact_pack_freshness=None, portfolio_review=None)
         summary = RunGateOrchestrator(state, output_dir=tmp_path / "output").run()
         assert summary is not None and summary.verdict is Verdict.FAIL
         assert [c.name for c in summary.checks if c.detail == "not measured"] == ["coverage", "valuation", "cost_known", "fact_pack_stale", "fact_pack_missing"]
+
+
+class TestDegradedAndMissingInputsAreToldApart:
+    """Two shapes production actually produces, each of which used to read as "fine"."""
+
+    def test_a_degraded_holding_is_covered_not_failed(self, tmp_path, monkeypatch) -> None:
+        """A ticker whose qualify was DEGRADED but whose emit was OK produced a verdict.
+
+        The ledger subtracts it from `analyzed`, so a run with four of them and
+        nothing failed used to FAIL coverage at "60/64 analysed" while
+        `TrustBanner` called the same run amber and the summary said `failed: 0`.
+        """
+        ledger = _ledger(tmp_path, analyzed=3, total=3)
+        for stage, outcome in (("qualify", StageOutcome.DEGRADED), ("emit", StageOutcome.OK)):
+            ledger.record(RunLedgerEntry(run_id="run-abc", ticker="T0", started_at=MOMENT, finished_at=MOMENT, stage=stage, outcome=outcome))
+
+        c = coverage_from(ledger)
+        assert (c.analyzed, c.degraded, c.total) == (2, 1, 3)
+        assert ledger.to_banner().state == "amber", "the banner already treats this run as usable"
+
+        state = _healthy(tmp_path, monkeypatch, run_ledger=ledger)
+        summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+
+        assert summary is not None
+        coverage = next(check for check in summary.checks if check.name == "coverage")
+        assert coverage.passed is True, "every holding produced a verdict; 2/3 was the ledger's own subtraction counted twice"
+        assert "1 degraded" in coverage.observed
+
+    def test_a_fail_softed_gap_profile_is_not_zero_underperformers(self, tmp_path, monkeypatch) -> None:
+        """`GapProfileOrchestrator` writes PortfolioGapProfile(is_empty=True) when it cannot build one.
+
+        That dict carries an empty `underperformer_slots`, so the `alternatives`
+        check read it as "nobody needs replacing" and passed regardless of
+        whether matching ran.
+        """
+        fail_softed = PortfolioGapProfile(session_id="s", is_empty=True).model_dump()
+        state = _state(tmp_path, monkeypatch, portfolio_gap_profile=fail_softed, alternatives_count=0)
+
+        p = phases_from(state)
+
+        assert p.underperformers == 0
+        assert p.underperformers_available is False
+
+        summary = RunGateOrchestrator(state, output_dir=tmp_path / "output", thresholds=RunGateSettings()).run()
+        assert summary is not None
+        alternatives = next(c for c in summary.checks if c.name == "alternatives")
+        assert alternatives.passed is False
+        assert alternatives.detail == "not measured"

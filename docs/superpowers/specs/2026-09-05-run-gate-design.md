@@ -204,3 +204,38 @@ Each step leaves the suite green. Steps 1–5 change no production behaviour; st
 - Forcing an exception inside a collector yields verdict ERROR, exit 2, a traceback in the log, and a report that was still written.
 - `make gate` on the produced JSON reproduces the verdict, and a changed threshold changes it.
 - `make check` green.
+
+## Amendments after code review (2026-09-05)
+
+The review of the implementation branch found the design under-specified in five
+places. The rulings below supersede §3–§5 where they conflict.
+
+- **`coverage` counts every holding that produced a verdict.** §4 says
+  `analyzed / total`, but `RunLedger.coverage()` computes `analyzed` as
+  `analyzed - degraded`, so degraded holdings were subtracted from the numerator
+  and never added back: a run in which all 64 holdings produced a verdict, four
+  of them degraded, FAILed at "60/64 analysed" while `TrustBanner` called the
+  same run amber. A degraded holding is amber, not absent. The check is
+  `(analyzed + degraded) / total`, and its observed string shows the
+  composition, not a bare ratio.
+- **`CoverageInput.failed` is dropped.** It is `total - analyzed - degraded` by
+  construction; the coverage check shows it derived. Nothing read it.
+- **`phases.optimal_allocation` is dropped.** §3 called it informational until
+  workstream G, but nothing under `src/` ever writes `state.optimal_allocation`,
+  so every summary recorded `false` — which reads as a measured fact and is not
+  one. Workstream G reintroduces it together with its writer.
+- **`PhasesInput` carries `underperformers_available`.** Phase 3.6 fail-softs to
+  `PortfolioGapProfile(is_empty=True)`, whose `underperformer_slots` is an empty
+  list — so "nobody needs replacing" and "the profile was never built" both
+  arrived as `underperformers == 0`, and zero underperformers is exactly what
+  passes the `alternatives` check. `is_empty` is the flag that tells them apart.
+- **`cost_known` is read, not inferred.** Live runs derive the flag from
+  `unpriced_crews`, so the two agree; `make gate` re-judges stored files, where
+  a summary saying `cost_known: false` with an empty crew list passed as
+  "$0.00 over 5 calls".
+- **An un-judged run exits 2.** §5 gives exit 1 to FAIL. A crash before the gate
+  ran used to exit 1 too, through Python's default handler, so a reader of the
+  contract concluded "the gate failed this run" about a run nobody evaluated.
+  `core/app_initializer.py` defaults its exit code to ERROR before the phases
+  run; only a verdict lowers it. A bad `FINWIZ_GATE__*` threshold in
+  `scripts/run_gate.py` is the same class of collision and gets the same answer.

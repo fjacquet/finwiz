@@ -30,10 +30,10 @@ def _summary_json(stale: int = 18) -> dict:
         "started_at": "2026-09-05T09:04:46",
         "finished_at": "2026-09-05T09:28:09",
         "duration_seconds": 1403.0,
-        "coverage": {"available": True, "analyzed": 64, "degraded": 0, "failed": 0, "total": 64},
+        "coverage": {"available": True, "analyzed": 64, "degraded": 0, "total": 64},
         "valuation": {"available": True, "priced": 63, "total": 64},
         "fact_pack": {"available": True, "fresh": 64 - stale, "recent": 0, "stale": stale, "missing": 0, "total": 64, "oldest_stale_fetched_at": None},
-        "phases": {"discovery_candidates": 3, "alternatives_found": 2, "underperformers": 17, "stress_scenarios": 6, "optimal_allocation": False},
+        "phases": {"discovery_candidates": 3, "alternatives_found": 2, "underperformers": 17, "underperformers_available": True, "stress_scenarios": 6},
         "cost": {"available": True, "total_usd": 0.51, "call_count": 68, "cost_known": True, "unpriced_crews": []},
         "checks": [],
         "verdict": "PASS",  # deliberately wrong: the script must re-evaluate, not trust this

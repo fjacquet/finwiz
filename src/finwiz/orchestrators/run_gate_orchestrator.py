@@ -32,7 +32,9 @@ def coverage_from(ledger: Any) -> CoverageInput:
     if ledger is None:
         return CoverageInput()
     c = ledger.coverage()
-    return CoverageInput(available=True, analyzed=c.analyzed, degraded=c.degraded, failed=c.failed, total=c.total)
+    # `c.failed` is not carried: the ledger computes it as total - analyzed - degraded,
+    # and the coverage check shows it derived rather than storing a second spelling.
+    return CoverageInput(available=True, analyzed=c.analyzed, degraded=c.degraded, total=c.total)
 
 
 def valuation_from(portfolio_review: Any) -> ValuationInput:
@@ -71,13 +73,19 @@ def phases_from(state: Any) -> PhasesInput:
     # the state model but has no writer anywhere under src/, so reading it counted
     # a healthy discovery as zero and WARNed on it forever.
     opportunities = getattr(state, "all_discovery_opportunities", None)
+    # `GapProfileOrchestrator` fail-softs to PortfolioGapProfile(is_empty=True) --
+    # a real dict with an empty `underperformer_slots`. Presence of the key alone
+    # therefore cannot tell "nobody needs replacing" from "the profile could not
+    # be built"; `is_empty` is the flag that can, and it is what the profile's
+    # own field description means.
     gap_profile = getattr(state, "portfolio_gap_profile", None) or {}
+    slots = gap_profile.get("underperformer_slots")
     return PhasesInput(
         discovery_candidates=len(opportunities) if isinstance(opportunities, list) else 0,
         alternatives_found=int(getattr(state, "alternatives_count", 0) or 0),
-        underperformers=len(gap_profile.get("underperformer_slots") or []),
+        underperformers=len(slots or []),
+        underperformers_available=isinstance(slots, list) and not gap_profile.get("is_empty", True),
         stress_scenarios=int(getattr(state, "stress_test_count", 0) or 0),
-        optimal_allocation=getattr(state, "optimal_allocation", None) is not None,
     )
 
 

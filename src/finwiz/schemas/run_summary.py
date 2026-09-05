@@ -2,8 +2,14 @@
 
 Every measured input carries ``available``. "We could not measure this" is a
 value here, not an absence -- a check whose input is unavailable FAILs as
-"not measured" rather than being skipped. Phase counts have no flag because
-an absent phase result is honestly a zero.
+"not measured" rather than being skipped. A phase count is mostly its own
+answer -- zero candidates is zero candidates -- except where zero is also what
+a missing input looks like, which is why ``PhasesInput`` carries one flag and
+not five.
+
+No field here is a second spelling of another. A count that can be derived is
+derived at the point it is shown, because two spellings of one fact are two
+things that can disagree, and the gate is the thing that notices disagreement.
 """
 
 from __future__ import annotations
@@ -31,12 +37,17 @@ class Severity(StrEnum):
 
 
 class CoverageInput(BaseModel):
-    """From ``RunLedger.coverage()``."""
+    """From ``RunLedger.coverage()``.
+
+    ``analyzed`` is the ledger's ``analyzed_clean`` -- degraded holdings are
+    already subtracted from it -- so the holdings that produced a verdict are
+    ``analyzed + degraded``. The ledger's ``failed`` is not carried: it is
+    ``total - analyzed - degraded``, and the coverage check shows it derived.
+    """
 
     available: bool = False
     analyzed: int = Field(default=0, ge=0)
     degraded: int = Field(default=0, ge=0)
-    failed: int = Field(default=0, ge=0)
     total: int = Field(default=0, ge=0)
 
 
@@ -61,17 +72,30 @@ class FactPackInput(BaseModel):
 
 
 class PhasesInput(BaseModel):
-    """Outcomes of the phases the roadmap tracks as known gaps."""
+    """Outcomes of the phases the roadmap tracks as known gaps.
+
+    ``underperformers_available`` is the one flag here. Phase 3.6 fail-softs to
+    an empty gap profile, so "nobody needs replacing" and "the profile was never
+    built" both arrive as ``underperformers == 0`` -- and zero underperformers
+    is exactly what passes the ``alternatives`` check. The other counts have no
+    flag because their absent value is honestly a zero.
+    """
 
     discovery_candidates: int = Field(default=0, ge=0)
     alternatives_found: int = Field(default=0, ge=0)
     underperformers: int = Field(default=0, ge=0)
+    underperformers_available: bool = False
     stress_scenarios: int = Field(default=0, ge=0)
-    optimal_allocation: bool = False
 
 
 class CostInput(BaseModel):
-    """From the cost monitor's summary. ``cost_known`` is False if any crew was unpriced."""
+    """From the cost monitor's summary.
+
+    ``cost_known`` is False if any crew was unpriced. It is kept rather than
+    derived from ``unpriced_crews`` because ``make gate`` re-judges stored
+    files, where the two can disagree -- and the check reads the flag, so a
+    summary that says its total is untrusted cannot pass by naming no crew.
+    """
 
     available: bool = False
     total_usd: float = Field(default=0.0, ge=0.0)

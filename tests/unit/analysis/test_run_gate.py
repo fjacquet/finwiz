@@ -17,7 +17,7 @@ def _run_2026_09_05() -> dict:
         "coverage": CoverageInput(available=True, analyzed=64, degraded=0, failed=0, total=64),
         "valuation": ValuationInput(available=True, priced=63, total=64),
         "fact_pack": FactPackInput(available=True, fresh=40, recent=6, stale=18, missing=0, total=64),
-        "phases": PhasesInput(discovery_candidates=0, alternatives_found=0, underperformers=17, stress_scenarios=6),
+        "phases": PhasesInput(discovery_candidates=0, alternatives_found=0, underperformers=17, underperformers_available=True, stress_scenarios=6),
         "cost": CostInput(available=True, total_usd=0.0, call_count=2080, cost_known=False, unpriced_crews=["deep_analysis_crypto", "deep_analysis_etf", "deep_analysis_stock"]),
     }
 
@@ -63,7 +63,7 @@ class TestThresholdsBothSides:
         assert _by_name(evaluate(**_run_2026_09_05(), thresholds=loose))["fact_pack_stale"].passed is True
 
     def test_alternatives_pass_when_there_is_nobody_to_replace(self) -> None:
-        d = _run_2026_09_05() | {"phases": PhasesInput(alternatives_found=0, underperformers=0, stress_scenarios=6)}
+        d = _run_2026_09_05() | {"phases": PhasesInput(alternatives_found=0, underperformers=0, underperformers_available=True, stress_scenarios=6)}
         assert _by_name(evaluate(**d, thresholds=T))["alternatives"].passed is True
 
     def test_cost_known_passes_only_with_no_unpriced_crew(self) -> None:
@@ -119,5 +119,73 @@ class TestFormatBlock:
         lines = format_block(checks, verdict(checks), "output/run_summary.json")
         assert len(lines) == len(checks) + 1
         assert all(line.startswith("run gate: ") for line in lines)
-        assert "run gate: fact_pack_stale   FAIL  18/64 stale = 28% (max 25%)" in lines  # name padded to the longest check name, fact_pack_missing
+        assert "run gate: fact_pack_stale   FAIL  18/64 stale = 28.1% (max 25.0%)" in lines  # name padded to the longest check name, fact_pack_missing
         assert lines[-1] == "run gate: verdict FAIL — output/run_summary.json"
+
+
+class TestCoverageCountsEveryHoldingThatProducedAVerdict:
+    """``CoverageInput.analyzed`` is the ledger's ``analyzed_clean``: degraded holdings are already subtracted from it."""
+
+    def test_a_degraded_holding_counts_toward_coverage(self) -> None:
+        """60 clean + 4 degraded out of 64 is 64 verdicts. TrustBanner calls that run amber, not failed."""
+        d = _run_2026_09_05() | {"coverage": CoverageInput(available=True, analyzed=60, degraded=4, failed=0, total=64)}
+        c = _by_name(evaluate(**d, thresholds=T))["coverage"]
+        assert c.passed is True
+
+    def test_the_composition_is_visible_not_a_bare_ratio(self) -> None:
+        d = _run_2026_09_05() | {"coverage": CoverageInput(available=True, analyzed=58, degraded=2, total=64)}
+        c = _by_name(evaluate(**d, thresholds=T))["coverage"]
+        assert c.observed == "60/64 analysed = 93.8% (58 clean + 2 degraded, 4 failed)"
+        assert c.passed is False
+
+    def test_degraded_holdings_cannot_carry_a_run_that_analysed_nothing(self) -> None:
+        d = _run_2026_09_05() | {"coverage": CoverageInput(available=True, analyzed=0, degraded=0, total=64)}
+        assert _by_name(evaluate(**d, thresholds=T))["coverage"].passed is False
+
+
+class TestAMissingInputNeverPassesACheck:
+    def test_both_fact_pack_checks_agree_when_nothing_was_measured(self) -> None:
+        """With total == 0 the stale check FAILed "not measured" while the missing check PASSed "0 missing"."""
+        d = _run_2026_09_05() | {"fact_pack": FactPackInput(available=True, total=0)}
+        by = _by_name(evaluate(**d, thresholds=T))
+        assert by["fact_pack_stale"].passed is False
+        assert by["fact_pack_missing"].passed is False
+        assert by["fact_pack_missing"].observed == NOT_MEASURED
+        assert by["fact_pack_missing"].detail == NOT_MEASURED
+
+    def test_alternatives_is_not_passed_by_the_absence_of_a_gap_profile(self) -> None:
+        """Phase 3.6 fail-softs to an empty profile; zero underperformers must not satisfy the check by itself."""
+        d = _run_2026_09_05() | {"phases": PhasesInput(alternatives_found=0, underperformers=0, stress_scenarios=6)}
+        c = _by_name(evaluate(**d, thresholds=T))["alternatives"]
+        assert c.passed is False
+        assert c.detail == NOT_MEASURED
+        assert c.severity is Severity.WARN
+
+    def test_a_stored_summary_that_says_cost_is_unknown_does_not_pass(self) -> None:
+        """`make gate` re-judges stored files, where `cost_known` and `unpriced_crews` can disagree."""
+        d = _run_2026_09_05() | {"cost": CostInput(available=True, total_usd=0.0, call_count=5, cost_known=False, unpriced_crews=[])}
+        c = _by_name(evaluate(**d, thresholds=T))["cost_known"]
+        assert c.passed is False
+        assert "$0.00 over 5 calls" not in c.observed
+
+
+class TestObservedRatiosAreLegible:
+    def test_a_ratio_over_the_limit_never_renders_as_the_limit(self) -> None:
+        """25.2 % logged as "= 25% (max 25%) FAIL" -- a value equal to the limit beside a failure."""
+        d = _run_2026_09_05() | {"fact_pack": FactPackInput(available=True, fresh=187, stale=63, total=250)}
+        c = _by_name(evaluate(**d, thresholds=T))["fact_pack_stale"]
+        assert c.passed is False
+        assert c.observed == "63/250 stale = 25.2%"
+        assert c.threshold == "max 25.0%"
+
+    def test_the_at_least_helper_prints_its_percentage_too(self) -> None:
+        c = _by_name(evaluate(**_run_2026_09_05(), thresholds=T))["valuation"]
+        assert c.observed == "63/64 priced = 98.4%"
+        assert c.threshold == "min 95.0%"
+
+
+class TestTheSummaryCarriesNoUnreadField:
+    def test_derivable_and_unwritten_fields_are_gone(self) -> None:
+        """`failed` is `total - analyzed - degraded`; nothing under src/ ever writes `state.optimal_allocation`."""
+        assert "failed" not in CoverageInput.model_fields
+        assert "optimal_allocation" not in PhasesInput.model_fields

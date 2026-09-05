@@ -35,8 +35,11 @@ def evaluate(
     thresholds: RunGateSettings,
 ) -> list[GateCheck]:
     """Return the eight checks, always all of them, always in this order."""
+    # Both fact-pack checks read one denominator, so they cannot disagree about
+    # whether there were any fact packs to look at.
+    fact_pack_measured = fact_pack.available and fact_pack.total > 0
     return [
-        _ratio_at_least("coverage", coverage.available, coverage.analyzed, coverage.total, thresholds.min_coverage_ratio, "analysed"),
+        _coverage(coverage, thresholds.min_coverage_ratio),
         _ratio_at_least("valuation", valuation.available, valuation.priced, valuation.total, thresholds.min_priced_ratio, "priced"),
         _cost_known(cost),
         _ratio_at_most("fact_pack_stale", fact_pack.available, fact_pack.stale, fact_pack.total, thresholds.max_stale_ratio, "stale"),
@@ -47,13 +50,7 @@ def evaluate(
             observed=f"{phases.discovery_candidates} candidates",
             threshold="> 0",
         ),
-        GateCheck(
-            name="alternatives",
-            severity=Severity.WARN,
-            passed=phases.alternatives_found > 0 or phases.underperformers == 0,
-            observed=f"{phases.alternatives_found} found for {phases.underperformers} underperformers",
-            threshold="> 0 when there are underperformers",
-        ),
+        _alternatives(phases),
         GateCheck(
             name="stress_tests",
             severity=Severity.WARN,
@@ -64,10 +61,10 @@ def evaluate(
         GateCheck(
             name="fact_pack_missing",
             severity=Severity.WARN,
-            passed=fact_pack.available and fact_pack.missing == 0,
-            observed=f"{fact_pack.missing} missing" if fact_pack.available else NOT_MEASURED,
+            passed=fact_pack_measured and fact_pack.missing == 0,
+            observed=f"{fact_pack.missing} missing" if fact_pack_measured else NOT_MEASURED,
             threshold="= 0",
-            detail="" if fact_pack.available else NOT_MEASURED,
+            detail="" if fact_pack_measured else NOT_MEASURED,
         ),
     ]
 
@@ -102,21 +99,77 @@ def format_block(checks: list[GateCheck], v: Verdict, summary_path: str) -> list
     return lines
 
 
+def _coverage(coverage: CoverageInput, minimum: float) -> GateCheck:
+    """Every holding that produced a verdict counts, degraded ones included.
+
+    ``CoverageInput.analyzed`` is the ledger's ``analyzed_clean``: degraded
+    holdings are subtracted from it by construction (``stages/_ledger.py``).
+    Dividing by it alone FAILed runs in which every holding produced a verdict
+    -- the always-red gate the design forbids -- and reported ``failed: 0``
+    beside the failure. A degraded holding is amber, not absent; it counts.
+
+    ``failed`` is shown derived rather than read, so the summary cannot carry
+    two spellings of one fact.
+    """
+    threshold = f"min {minimum:.1%}"
+    if not coverage.available or coverage.total == 0:
+        return GateCheck(name="coverage", severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=threshold, detail=NOT_MEASURED)
+    with_verdict = coverage.analyzed + coverage.degraded
+    composition = f"{coverage.analyzed} clean + {coverage.degraded} degraded, {coverage.total - with_verdict} failed"
+    return GateCheck(
+        name="coverage",
+        severity=Severity.FAIL,
+        passed=with_verdict / coverage.total >= minimum,
+        observed=f"{with_verdict}/{coverage.total} analysed = {with_verdict / coverage.total:.1%} ({composition})",
+        threshold=threshold,
+    )
+
+
+def _alternatives(phases: PhasesInput) -> GateCheck:
+    """Two different facts: nobody needs replacing, and the gap profile was never built.
+
+    Phase 3.6 fail-softs to an empty profile, which reads as zero
+    underperformers -- and zero underperformers satisfies this check whether or
+    not matching ran. A gate that skips a check when the data is missing is a
+    gate that is passed by breaking the data.
+    """
+    threshold = "> 0 when there are underperformers"
+    if not phases.underperformers_available:
+        return GateCheck(name="alternatives", severity=Severity.WARN, passed=False, observed=NOT_MEASURED, threshold=threshold, detail=NOT_MEASURED)
+    return GateCheck(
+        name="alternatives",
+        severity=Severity.WARN,
+        passed=phases.alternatives_found > 0 or phases.underperformers == 0,
+        observed=f"{phases.alternatives_found} found for {phases.underperformers} underperformers",
+        threshold=threshold,
+    )
+
+
 def _ratio_at_least(name: str, available: bool, part: int, total: int, minimum: float, noun: str) -> GateCheck:
+    threshold = f"min {minimum:.1%}"
     if not available or total == 0:
-        return GateCheck(name=name, severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=f"min {minimum:.0%}", detail=NOT_MEASURED)
-    return GateCheck(name=name, severity=Severity.FAIL, passed=part / total >= minimum, observed=f"{part}/{total} {noun}", threshold=f"min {minimum:.0%}")
+        return GateCheck(name=name, severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=threshold, detail=NOT_MEASURED)
+    return GateCheck(name=name, severity=Severity.FAIL, passed=part / total >= minimum, observed=f"{part}/{total} {noun} = {part / total:.1%}", threshold=threshold)
 
 
 def _ratio_at_most(name: str, available: bool, part: int, total: int, maximum: float, noun: str) -> GateCheck:
+    """One decimal, both directions: at ``:.0%`` a failing 25.2 % logged as "= 25% (max 25%)"."""
+    threshold = f"max {maximum:.1%}"
     if not available or total == 0:
-        return GateCheck(name=name, severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=f"max {maximum:.0%}", detail=NOT_MEASURED)
-    return GateCheck(name=name, severity=Severity.FAIL, passed=part / total <= maximum, observed=f"{part}/{total} {noun} = {part / total:.0%}", threshold=f"max {maximum:.0%}")
+        return GateCheck(name=name, severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=threshold, detail=NOT_MEASURED)
+    return GateCheck(name=name, severity=Severity.FAIL, passed=part / total <= maximum, observed=f"{part}/{total} {noun} = {part / total:.1%}", threshold=threshold)
 
 
 def _cost_known(cost: CostInput) -> GateCheck:
+    """``cost_known`` is read, not inferred from ``unpriced_crews``.
+
+    Live runs derive one from the other, so they agree. ``make gate`` re-judges
+    stored files, where they need not: a summary carrying ``cost_known: false``
+    with an empty crew list used to pass as "$0.00 over 5 calls".
+    """
+    threshold = "every crew priced"
     if not cost.available:
-        return GateCheck(name="cost_known", severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold="every crew priced", detail=NOT_MEASURED)
+        return GateCheck(name="cost_known", severity=Severity.FAIL, passed=False, observed=NOT_MEASURED, threshold=threshold, detail=NOT_MEASURED)
     if cost.unpriced_crews:
         n = len(cost.unpriced_crews)
         return GateCheck(
@@ -124,6 +177,15 @@ def _cost_known(cost: CostInput) -> GateCheck:
             severity=Severity.FAIL,
             passed=False,
             observed=f"{n} crew{'s' if n > 1 else ''} unpriced: {', '.join(cost.unpriced_crews)}",
-            threshold="every crew priced",
+            threshold=threshold,
         )
-    return GateCheck(name="cost_known", severity=Severity.FAIL, passed=True, observed=f"${cost.total_usd:.2f} over {cost.call_count} calls", threshold="every crew priced")
+    if not cost.cost_known:
+        return GateCheck(
+            name="cost_known",
+            severity=Severity.FAIL,
+            passed=False,
+            observed=f"total untrusted over {cost.call_count} calls, no crew named",
+            threshold=threshold,
+            detail="the summary reports its own total as unknown",
+        )
+    return GateCheck(name="cost_known", severity=Severity.FAIL, passed=True, observed=f"${cost.total_usd:.2f} over {cost.call_count} calls", threshold=threshold)
