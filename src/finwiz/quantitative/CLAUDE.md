@@ -10,7 +10,6 @@ quantitative/
 │
 ├── # Core engines
 ├── backtesting.py                   # BacktestingEngine, get_backtesting_engine()
-├── optimization.py                  # PortfolioOptimizer, EfficientFrontier
 ├── risk_manager.py                  # RiskManager (14 methods)
 ├── cost_analyzer.py                 # CostAnalyzer (19 methods)
 ├── performance.py                   # PerformanceAnalyzer, get_performance_analyzer()
@@ -66,7 +65,6 @@ quantitative/
 | File | Class/Function | Purpose |
 |------|---------------|---------|
 | `backtesting.py` | `BacktestingEngine` | Run strategy backtests |
-| `optimization.py` | `PortfolioOptimizer` | Portfolio optimization (mean-variance, etc.) |
 | `risk_manager.py` | `RiskManager` | Risk assessment and limits |
 | `cost_analyzer.py` | `CostAnalyzer` | Trading cost analysis |
 | `performance.py` | `PerformanceAnalyzer` | Performance attribution |
@@ -76,13 +74,10 @@ quantitative/
 
 ## Usage
 
-Backtesting is per-symbol and date-bounded; optimization takes a
-`PortfolioInputs` object, not a ticker list.
+Backtesting is per-symbol and date-bounded.
 
 ```python
-from finwiz.quantitative import BacktestingEngine, PortfolioOptimizer, RiskManager
-from finwiz.quantitative.objective_functions import ObjectiveFunction
-from finwiz.quantitative.config import OptimizationMethod
+from finwiz.quantitative import BacktestingEngine, RiskManager
 
 engine = BacktestingEngine()
 result = engine.run_strategy_backtest(
@@ -101,13 +96,6 @@ results = engine.run_multi_strategy_backtest(
     start_date=start,
     end_date=end,
 )
-
-optimizer = PortfolioOptimizer()
-result = optimizer.optimize_portfolio(
-    inputs=portfolio_inputs,
-    objective=ObjectiveFunction.MAX_SHARPE,
-    method=OptimizationMethod.MEAN_VARIANCE,
-)  # -> OptimizationResult
 ```
 
 ## Related Modules
