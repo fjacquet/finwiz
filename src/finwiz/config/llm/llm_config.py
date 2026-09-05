@@ -199,9 +199,6 @@ def _apply_reasoning_effort(extra_body: dict[str, Any], model: str, reasoning_ef
 # LLM Instance Cache
 # =============================================================================
 
-# Cache for LLM instances to avoid repeated initialization
-_llm_cache: dict[str, LLM] = {}
-
 
 def _get_model_from_env(env_var: str, fallback: str = "openai/gpt-4o-mini") -> str:
     """
@@ -326,19 +323,8 @@ def get_configured_llm(
         fallback = "openai/gpt-4o" if model_type == "baseline" else "openai/gpt-4o-mini"
         model = _get_model_from_env(env_var, fallback)
 
-    # Reasoning effort is resolved up front (env-driven) because it affects
-    # extra_body, which must be part of the cache key below — otherwise a
-    # changed LLM_REASONING_EFFORT would silently return a stale cached
-    # instance built with the old effort.
     reasoning_effort = _resolve_reasoning_effort()
     reasoning_params = _get_reasoning_params(model, reasoning_effort)
-
-    # Check cache first (include max_tokens + json mode + reasoning effort so callers
-    # with different needs get distinct instances)
-    cache_key = f"{model}:{model_type}:{max_tokens}:json={force_json_object}:reasoning={reasoning_effort}"
-    if cache_key in _llm_cache:
-        logger.debug(f"Returning cached LLM instance for {cache_key}")
-        return _llm_cache[cache_key]
 
     # Validate API key for the model's provider
     _validate_api_key_for_model(model)
@@ -416,9 +402,6 @@ def get_configured_llm(
             # Extra params for provider-specific features
             extra_body=extra_body if extra_body else None,
         )
-
-        # Cache the instance
-        _llm_cache[cache_key] = llm
 
         parallel_status = "disabled" if disable_parallel else "enabled"
         reasoning_status = reasoning_effort if reasoning_params else "none"

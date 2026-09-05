@@ -53,6 +53,10 @@ Per-holding call counts by asset class:
 
 *Open unknown.* The `deep_analysis` crew has **1 agent, 1 task, `max_iter=2`, `reasoning=False`** (`crews/deep_analysis/deep_analysis.py:294-353`). That configuration cannot account for 62 calls per holding — nor for 18. Either the counter aggregates something else (retries, tool-internal LLM calls, several crews per holding) or there is a loop. This must be measured, not guessed. It is a spike, and it gates any decision about F2's phases, whose real cost is currently unknown.
 
+*Resolved by the workstream B spike, same day.* The counter aggregates. CrewAI keeps token usage on the **LLM object** (`BaseLLM._token_usage`, `+=` per request, never reset by `kickoff`) and `Crew.calculate_usage_metrics` reads it as the crew's own usage. finwiz's `config/llm/llm_config.py` cached LLM instances by `(model, type, max_tokens, json, reasoning)`, so all 64 holdings shared one object and each kickoff reported the running total of every holding before it. The summary then summed running totals. Signature: 35 stocks at one request each, cumulative, is 1+2+…+35 = 630; measured 633.
+
+Consequences: the real deep-analysis spend is ≈ 65–70 requests and ≈ 0.5 M tokens — a **32× overstatement**. The per-class asymmetry above is an artifact of record ordering; **crypto is not more expensive than stocks. Retracted.** The cache saved 13.5 ms per crew (1.1 s per 23-minute run) and had already forced a second bug-class into its own key (`LLM_REASONING_EFFORT` staleness). Deleted rather than bypassed. The pricing half stands: `openrouter/google/gemini-3.7-flash` is unpriced in litellm while `gemini/gemini-3.7-flash` is ($0.75 / $3.75 per M); a fallback lookup now prices through the vendor-native id and says so.
+
 ### F4. A requirement that 100 % of outputs violate
 
 128 warnings `Quality validation warnings for <ticker>: Word count N < M (Requirement 9.2); Executive summary N words < M` — exactly 64 × 2. Every holding fails, twice. A requirement violated by every output is either wrong or ignored; either way it hides real signal under constant noise.

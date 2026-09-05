@@ -192,3 +192,50 @@ class TestHonestSummary:
         msgs = " ".join(r.message for r in caplog.records)
         assert "cost n/a" in msgs
         assert "estimated" in msgs
+
+
+class TestOpenRouterPricingFallback:
+    """OpenRouter ids are unpriced in litellm; the vendor-native id usually is not.
+
+    `openrouter/google/gemini-3.7-flash` has no litellm price while
+    `gemini/gemini-3.7-flash` does. Pricing through the native id is a proxy —
+    OpenRouter's rate is not necessarily the vendor's — so it must be logged as
+    one, and it must never be tried for vendors without a known native twin.
+    """
+
+    @staticmethod
+    def _gemini_only(model: str, prompt_tokens: int, completion_tokens: int):
+        if model.startswith("openrouter/"):
+            raise Exception("no pricing for model")
+        assert model == "gemini/gemini-3.7-flash"
+        return (0.001, 0.002)
+
+    def test_openrouter_google_model_is_priced_through_the_gemini_id(self, mocker):
+        spy = mocker.patch("litellm.cost_per_token", side_effect=self._gemini_only)
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("deep_analysis_stock", _usage(100, 50), model="openrouter/google/gemini-3.7-flash")
+
+        assert cb.crew_cost_known["deep_analysis_stock"] is True
+        assert cb.total_cost == pytest.approx(0.003)
+        assert [c.kwargs["model"] for c in spy.call_args_list] == ["openrouter/google/gemini-3.7-flash", "gemini/gemini-3.7-flash"]
+
+    def test_proxy_pricing_is_logged_once_per_model(self, mocker, caplog):
+        mocker.patch("litellm.cost_per_token", side_effect=self._gemini_only)
+        cb = TokenMonitorCallback()
+
+        with caplog.at_level(logging.INFO):
+            cb.record_usage("a", _usage(), model="openrouter/google/gemini-3.7-flash")
+            cb.record_usage("b", _usage(), model="openrouter/google/gemini-3.7-flash")
+
+        proxy_lines = [r for r in caplog.records if "gemini/gemini-3.7-flash" in r.message and "estimate" in r.message]
+        assert len(proxy_lines) == 1
+
+    def test_no_fallback_for_vendors_without_a_native_twin(self, mocker):
+        spy = mocker.patch("litellm.cost_per_token", side_effect=Exception("no pricing for model"))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("x", _usage(), model="openrouter/z-ai/glm-5.2")
+
+        assert cb.crew_cost_known["x"] is False
+        assert spy.call_count == 1
