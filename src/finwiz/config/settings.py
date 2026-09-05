@@ -116,6 +116,34 @@ class HybridAnalysisSettings(BaseModel):
     )
 
 
+class RunGateSettings(BaseModel):
+    """Thresholds for the post-run gate (``analysis/run_gate.py``).
+
+    Only thresholds live here. Which checks FAIL and which WARN is decided in
+    code and reviewed -- a gate whose severities can be turned down from the
+    environment is a gate that gets turned down.
+    """
+
+    min_coverage_ratio: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Minimum analyzed/total from the run ledger before the run FAILs (default: 0.95)",
+    )
+    min_priced_ratio: float = Field(
+        default=0.95,
+        ge=0.0,
+        le=1.0,
+        description="Minimum priced/total holdings before the run FAILs (default: 0.95)",
+    )
+    max_stale_ratio: float = Field(
+        default=0.25,
+        ge=0.0,
+        le=1.0,
+        description="Maximum stale/total fact packs before the run FAILs (default: 0.25)",
+    )
+
+
 class FinWizSettings(BaseSettings):
     """
     Main FinWiz configuration settings.
@@ -147,6 +175,11 @@ class FinWizSettings(BaseSettings):
     hybrid_analysis: HybridAnalysisSettings = Field(
         default_factory=HybridAnalysisSettings,
         description="Hybrid analysis configuration",
+    )
+
+    gate: RunGateSettings = Field(
+        default_factory=RunGateSettings,
+        description="Post-run gate thresholds; override with FINWIZ_GATE__<NAME>",
     )
 
     # Environment
