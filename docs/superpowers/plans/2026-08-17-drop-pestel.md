@@ -29,11 +29,13 @@
 **Why:** Consumers go first so no commit leaves the suite red.
 
 **Files:**
+
 - Modify: `src/finwiz/reporting/sections/posture_page.py:26-31` (`_THEMES`), `:41-46` (`_FRAMEWORK_COLUMNS`), `:151-153` (legend)
 - Modify: `src/finwiz/reporting/sections/portfolio_summary.py:138`
 - Test: `tests/unit/reporting/test_posture_page.py`
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `generate_posture_page` renders two theme sections (competitive, SWOT) and a per-holding table with two score columns. `generate_strategic_posture_section` renders two verdict bullets.
 
@@ -125,11 +127,13 @@ git commit -m "feat(reporting): drop the macro block and the PESTEL column"
 ### Task 2: The posture schema and synthesis prompt drop the macro fields
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/strategic.py:274` (field), `:289` (verdict field), `:296-299` (prose validator list), `:301` (verdict validator list)
 - Modify: `src/finwiz/analysis/strategic_research.py:208-224` (`_portfolio_prompt`)
 - Test: `tests/unit/schemas/test_strategic_caps.py`
 
 **Interfaces:**
+
 - Consumes: Task 1 — nothing renders these fields any more.
 - Produces: `PortfolioPostureNarrative` without `macro_environment_summary` / `macro_verdict`. `competitive_verdict` and `swot_verdict` stay required (`Field(...)`).
 
@@ -225,10 +229,12 @@ git commit -m "feat(schemas): drop macro_environment_summary and macro_verdict f
 **Why:** 39,001 chars of per-holding digest buys ~2,000 chars of verdict, of which 869 reach the family artifact — and it grows linearly with holdings.
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/strategic_research.py` — delete `_SERIALIZE_RUNGS`, `_digest_all`, `_digest_one`; rewrite `_serialize_holdings`
 - Test: `tests/unit/analysis/test_strategic_synthesis_seam.py`
 
 **Interfaces:**
+
 - Consumes: `StrategicAnalysis` with `swot` and `five_forces` (PESTEL may still be present at this point; ignore it).
 - Produces: `_serialize_holdings(holdings_strategic: dict[str, StrategicAnalysis]) -> str` returning a JSON string of the shape below. Signature unchanged, so `synthesize_portfolio_posture` needs no edit.
 
@@ -386,10 +392,12 @@ git commit -m "perf(strategic): send portfolio aggregates and extremes, not 64 d
 ### Task 4: Strategic research stops running PESTEL
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/strategic_research.py` — `_pestel_prompt`, the PESTEL call in `gather_strategic_analysis`, the `MAX_BULLETS_PESTEL` import
 - Test: `tests/unit/analysis/test_strategic_research_retry.py`, `tests/unit/analysis/test_strategic_empty_result.py`
 
 **Interfaces:**
+
 - Consumes: `perplexity_with_retry` (unchanged).
 - Produces: `gather_strategic_analysis` issues **two** calls and returns `None` when both fail.
 
@@ -461,11 +469,13 @@ git commit -m "feat(strategic): research SWOT and Five Forces only"
 ### Task 5: Delete the PESTEL type and clean up residual references
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/strategic.py` — delete `PestelAnalysis` (and its `_clamp_dimension` / `_clamp_key_lists` validators), `StrategicAnalysis.pestel`, and `MAX_BULLETS_PESTEL` at line 99, whose last users go with the class
 - Modify: `src/finwiz/schemas/hybrid_analysis/qualitative.py:224-225`, `src/finwiz/scoring/thresholds.py:216`, `src/finwiz/validation/ai_output.py`, `src/finwiz/reporting/deep_analysis_report_generator.py`, `src/finwiz/templates/crew_reports/deep_analysis_report.html.j2`
 - Test: `tests/unit/schemas/test_strategic_caps.py`
 
 **Interfaces:**
+
 - Consumes: Tasks 1-4 — nothing produces or reads PESTEL any more.
 - Produces: `StrategicAnalysis` with two optional framework fields; `composite_strategic_score` averages those two.
 
