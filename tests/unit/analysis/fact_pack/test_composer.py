@@ -1,15 +1,5 @@
 """Routing, merge order and FactPack construction."""
 
-import os
-
-# litellm's own __init__ eagerly fetches a remote model-cost map on first
-# import (triggered transitively by importing `composer` below, since crewai
-# is on that chain somewhere) and pytest-socket blocks it -- a real, if
-# harmless, network attempt that litellm swallows into a WARNING log rather
-# than raising. Set before the `composer` import below so litellm never
-# tries: this is litellm's own documented opt-out, not a widened allow-list.
-os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
-
 import pytest
 
 from finwiz.analysis.fact_pack import composer
