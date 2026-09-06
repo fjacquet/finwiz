@@ -46,6 +46,13 @@ class TestResolvability:
         mocker.patch.object(src, "_ticker", side_effect=RuntimeError("network is down"))
         assert src.resolve("AAPL") == {}
 
+    def test_resolve_returns_populated_dict_on_success(self, mocker, equity_info):
+        mocker.patch.object(src, "_ticker")
+        mocker.patch.object(src._ticker.return_value, "info", equity_info)
+        result = src.resolve("AAPL")
+        assert result == equity_info
+        assert result.get("quoteType") == "EQUITY"
+
 
 class TestEquityFragment:
     def test_business_summary_becomes_corporate_structure(self, equity_info):
@@ -65,6 +72,18 @@ class TestEquityFragment:
 
     def test_the_source_is_labelled(self, equity_info):
         assert src.equity_fragment(equity_info).sources == ("yfinance.info",)
+
+    def test_more_than_six_officers_are_capped(self):
+        """More than _MAX_OFFICERS should only return the first 6."""
+        officers = [{"name": f"Officer {i}", "title": f"Title {i}"} for i in range(10)]
+        info = {"quoteType": "EQUITY", "longBusinessSummary": "Test", "companyOfficers": officers}
+        leadership = src.equity_fragment(info).leadership
+        # Should have exactly 6 officers listed
+        officer_count = leadership.count(" (Title ")
+        assert officer_count == 6
+        assert "Officer 0" in leadership
+        assert "Officer 5" in leadership
+        assert "Officer 6" not in leadership
 
 
 class TestEtfFragment:

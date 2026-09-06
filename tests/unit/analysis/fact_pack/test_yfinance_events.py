@@ -106,3 +106,66 @@ class TestNewsEvents:
         news = [self._item("x" * 400, "Reuters", "https://example.com/r/long")]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
         assert all(len(e) <= 200 for e in src.news_events("AAPL", now=NOW).recent_events)
+
+    def test_news_raising_exception_degrades_the_field_and_does_not_raise(self, mocker):
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=RuntimeError("HTTP Error 404")))
+        assert src.news_events("AMZN", now=NOW) == FactPackFragment()
+
+
+class TestEventCaps:
+    @staticmethod
+    def _filing(date, type_, title):
+        return {"date": date, "type": type_, "title": title, "edgarUrl": "https://example.com/edgar/1"}
+
+    @staticmethod
+    def _news_item(title, provider):
+        return {"content": {"title": title, "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": provider}, "canonicalUrl": {"url": "https://example.com/news"}}}
+
+    def test_filing_events_cap_at_ten_items(self, mocker):
+        filings = [self._filing("2026-09-01", "8-K", f"Event {i}") for i in range(15)]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=filings))
+        assert len(src.filing_events("AAPL", now=NOW).recent_events) == 10
+
+    def test_news_events_cap_at_ten_items(self, mocker):
+        news = [self._news_item(f"News {i}", "Reuters") for i in range(15)]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+        assert len(src.news_events("AAPL", now=NOW).recent_events) == 10
+
+
+class TestMalformedData:
+    def test_filing_events_skips_non_dict_entries(self, mocker):
+        filings = [
+            {"date": "2026-09-01", "type": "8-K", "title": "Good", "edgarUrl": "https://example.com/edgar/1"},
+            None,
+            "not a dict",
+            {"date": "2026-09-02", "type": "8-K", "title": "Also good", "edgarUrl": "https://example.com/edgar/2"},
+        ]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=filings))
+        fragment = src.filing_events("AAPL", now=NOW)
+        assert len(fragment.recent_events) == 2
+        assert "Good" in fragment.recent_events[0]
+        assert "Also good" in fragment.recent_events[1]
+
+    def test_filing_events_skips_non_string_dates(self, mocker):
+        filings = [
+            {"date": "2026-09-01", "type": "8-K", "title": "Good", "edgarUrl": "https://example.com/edgar/1"},
+            {"date": 12345, "type": "8-K", "title": "Bad date", "edgarUrl": "https://example.com/edgar/2"},
+            {"date": None, "type": "8-K", "title": "Null date", "edgarUrl": "https://example.com/edgar/3"},
+        ]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=filings))
+        fragment = src.filing_events("AAPL", now=NOW)
+        assert len(fragment.recent_events) == 1
+        assert "Good" in fragment.recent_events[0]
+
+    def test_news_events_skips_non_dict_entries(self, mocker):
+        news = [
+            {"content": {"title": "Good", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/1"}}},
+            None,
+            "not a dict",
+            {"content": {"title": "Also good", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/2"}}},
+        ]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+        fragment = src.news_events("AAPL", now=NOW)
+        assert len(fragment.recent_events) == 2
+        assert "Good" in fragment.recent_events[0]
+        assert "Also good" in fragment.recent_events[1]

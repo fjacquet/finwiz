@@ -141,6 +141,29 @@ def _within_window(when: datetime, now: datetime) -> bool:
     return 0 <= (now - when).days <= _EVENT_WINDOW_DAYS
 
 
+def _extract_news_event(item: Any, now: datetime) -> tuple[str | None, str | None]:
+    """Extract a news event and URL from a raw item, or return (None, None)."""
+    if not isinstance(item, dict):
+        return None, None
+    content = item.get("content") or {}
+    provider = ((content.get("provider") or {}).get("displayName") or "").strip()
+    if provider not in _NEWS_PROVIDER_ALLOWLIST:
+        return None, None
+    raw_date = (content.get("pubDate") or "").replace("Z", "+00:00")
+    try:
+        published = datetime.fromisoformat(raw_date)
+    except (ValueError, TypeError):
+        return None, None
+    if not _within_window(published, now):
+        return None, None
+    title = (content.get("title") or "").strip()
+    if not title:
+        return None, None
+    event = f"{published.date().isoformat()} {title}"[:_EVENT_MAX_CHARS]
+    url = (content.get("canonicalUrl") or {}).get("url")
+    return event, url
+
+
 def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
     """Material SEC filings in the last 12 months, with EDGAR links.
 
@@ -151,38 +174,39 @@ def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
     now = now or datetime.now(UTC)
     try:
         filings = _ticker(ticker).sec_filings or []
+        events: list[str] = []
+        citations: list[str] = []
+        for filing in filings:
+            if not isinstance(filing, dict):
+                continue
+            if filing.get("type") not in _MATERIAL_FILING_TYPES:
+                continue
+            raw_date = filing.get("date") or ""
+            try:
+                filed = datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=UTC)
+            except (ValueError, TypeError):
+                continue
+            if not _within_window(filed, now):
+                continue
+            title = (filing.get("title") or "").strip()
+            events.append(f"{raw_date} {filing['type']}: {title}"[:_EVENT_MAX_CHARS])
+            url = filing.get("edgarUrl")
+            if url:
+                citations.append(url)
+            if len(events) >= _MAX_EVENTS:
+                break
+
+        if not events:
+            return FactPackFragment()
+        return FactPackFragment(
+            recent_events=tuple(events),
+            citations=tuple(citations),
+            sources=("yfinance.sec_filings",),
+            events_from_filings=True,
+        )
     except Exception as e:
-        logger.debug(f"sec_filings unavailable for {ticker}: {e}")
+        logger.debug(f"sec_filings processing failed for {ticker}: {e}")
         return FactPackFragment()
-
-    events: list[str] = []
-    citations: list[str] = []
-    for filing in filings:
-        if filing.get("type") not in _MATERIAL_FILING_TYPES:
-            continue
-        raw_date = filing.get("date") or ""
-        try:
-            filed = datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=UTC)
-        except ValueError:
-            continue
-        if not _within_window(filed, now):
-            continue
-        title = (filing.get("title") or "").strip()
-        events.append(f"{raw_date} {filing['type']}: {title}"[:_EVENT_MAX_CHARS])
-        url = filing.get("edgarUrl")
-        if url:
-            citations.append(url)
-        if len(events) >= _MAX_EVENTS:
-            break
-
-    if not events:
-        return FactPackFragment()
-    return FactPackFragment(
-        recent_events=tuple(events),
-        citations=tuple(citations),
-        sources=("yfinance.sec_filings",),
-        events_from_filings=True,
-    )
 
 
 def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
@@ -190,34 +214,20 @@ def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
     now = now or datetime.now(UTC)
     try:
         items = _ticker(ticker).news or []
+        events: list[str] = []
+        citations: list[str] = []
+        for item in items:
+            if len(events) >= _MAX_EVENTS:
+                break
+            event, url = _extract_news_event(item, now)
+            if event:
+                events.append(event)
+                if url:
+                    citations.append(url)
+
+        if not events:
+            return FactPackFragment()
+        return FactPackFragment(recent_events=tuple(events), citations=tuple(citations), sources=("yfinance.news",))
     except Exception as e:
-        logger.debug(f"news unavailable for {ticker}: {e}")
+        logger.debug(f"news processing failed for {ticker}: {e}")
         return FactPackFragment()
-
-    events: list[str] = []
-    citations: list[str] = []
-    for item in items:
-        content = item.get("content") or {}
-        provider = ((content.get("provider") or {}).get("displayName") or "").strip()
-        if provider not in _NEWS_PROVIDER_ALLOWLIST:
-            continue
-        raw_date = (content.get("pubDate") or "").replace("Z", "+00:00")
-        try:
-            published = datetime.fromisoformat(raw_date)
-        except ValueError:
-            continue
-        if not _within_window(published, now):
-            continue
-        title = (content.get("title") or "").strip()
-        if not title:
-            continue
-        events.append(f"{published.date().isoformat()} {title}"[:_EVENT_MAX_CHARS])
-        url = (content.get("canonicalUrl") or {}).get("url")
-        if url:
-            citations.append(url)
-        if len(events) >= _MAX_EVENTS:
-            break
-
-    if not events:
-        return FactPackFragment()
-    return FactPackFragment(recent_events=tuple(events), citations=tuple(citations), sources=("yfinance.news",))
