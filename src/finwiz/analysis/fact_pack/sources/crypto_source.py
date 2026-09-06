@@ -20,26 +20,48 @@ logger = get_logger(__name__)
 _DESCRIPTION_MAX_CHARS = 2000
 
 
-def _number(value: Any) -> float | None:
-    """Floats only. A string where a number belongs is a missing field, not a crash."""
+def _number(value: Any, field_name: str = "") -> float | None:
+    """Floats only. A string where a number belongs is a missing field, not a crash.
+
+    Negative values are also treated as missing — all numeric fields here are
+    non-negative by nature, so a negative is bad data. Log at debug for diagnostics.
+    """
     if isinstance(value, bool) or not isinstance(value, int | float):
         return None
-    return float(value)
+    fval = float(value)
+    if fval < 0:
+        if field_name:
+            logger.debug(f"fact_pack: {field_name} is negative ({fval}); treating as unknown")
+        return None
+    return fval
 
 
 def _year(value: Any) -> int | None:
-    epoch = _number(value)
+    """Convert Unix timestamp to year, returning None if out of bounds or malformed.
+
+    Valid range is 1900-2200 (schema constraint on launched_year).
+    """
+    epoch = _number(value, field_name="startDate")
     if epoch is None:
         return None
     try:
-        return datetime.fromtimestamp(epoch, tz=UTC).year
+        year = datetime.fromtimestamp(epoch, tz=UTC).year
+        if not (1900 <= year <= 2200):
+            logger.debug(f"fact_pack: startDate yields year {year}; out of bounds [1900, 2200]")
+            return None
+        return year
     except (OSError, OverflowError, ValueError):
         return None
 
 
 def crypto_facts(query_symbol: str, info: dict[str, Any]) -> tuple[CryptoFacts | None, tuple[str, ...]]:
     """Build crypto facts, or ``None`` when there is no description to anchor them."""
-    description = (info.get("description") or "").strip()
+    # Read description defensively — if not a string, treat as absent.
+    raw_desc = info.get("description")
+    if not isinstance(raw_desc, str):
+        logger.warning(f"fact_pack: {query_symbol} description is not a string; cannot build crypto facts")
+        return None, ()
+    description = raw_desc.strip()
     if not description:
         logger.warning(f"fact_pack: {query_symbol} has no description; cannot build crypto facts")
         return None, ()
@@ -47,15 +69,19 @@ def crypto_facts(query_symbol: str, info: dict[str, Any]) -> tuple[CryptoFacts |
     raw_max = _number(info.get("maxSupply"))
     # 0 is yfinance's encoding for "no maximum", not a cap of zero coins.
     capped = raw_max is not None and raw_max > 0
-    facts = CryptoFacts(
-        description=description[:_DESCRIPTION_MAX_CHARS],
-        launched_year=_year(info.get("startDate")),
-        circulating_supply=_number(info.get("circulatingSupply")),
-        max_supply=raw_max if capped else None,
-        supply_is_capped=capped,
-        market_cap=_number(info.get("marketCap")),
-        volume_24h_market_cap_pct=_number(info.get("volume24HrMarketCapPercent")),
-    )
+    try:
+        facts = CryptoFacts(
+            description=description[:_DESCRIPTION_MAX_CHARS],
+            launched_year=_year(info.get("startDate")),
+            circulating_supply=_number(info.get("circulatingSupply"), field_name="circulatingSupply"),
+            max_supply=raw_max if capped else None,
+            supply_is_capped=capped,
+            market_cap=_number(info.get("marketCap"), field_name="marketCap"),
+            volume_24h_market_cap_pct=_number(info.get("volume24HrMarketCapPercent"), field_name="volume24HrMarketCapPercent"),
+        )
+    except Exception as e:
+        logger.error(f"fact_pack: {query_symbol} construction failed: {type(e).__name__}: {e}")
+        return None, ()
 
     link = str(info.get("coinMarketCapLink") or "")
     citations = (link,) if link.startswith(("http://", "https://")) else ()
