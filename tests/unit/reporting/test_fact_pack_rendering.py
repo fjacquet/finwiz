@@ -5,15 +5,14 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 
 from finwiz.reporting.section_generators import _fact_pack_provenance_footer
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 
 def _build_fp(days_old: float = 0, citations: list[str] | None = None) -> FactPack:
     fetched = datetime.now(UTC) - timedelta(days=days_old)
     return FactPack(
-        corporate_structure="x",
-        recent_events=[],
-        leadership="x",
+        asset_class="stock",
+        details=EquityFacts(business_summary="x", leadership="x"),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.85,

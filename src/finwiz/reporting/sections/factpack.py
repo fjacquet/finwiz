@@ -6,7 +6,10 @@ from datetime import datetime
 from html import escape
 from urllib.parse import urlparse
 
+from finwiz.analysis.fact_pack.render import to_rows
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+
+_MAX_BODY_VALUE_CHARS = 160
 
 
 def _is_safe_url(url: str) -> bool:
@@ -41,8 +44,32 @@ def _format_fetched_at_french(fetched_at: datetime) -> str:
     return f"{fetched_at.day} {months[fetched_at.month]} {fetched_at.year}"
 
 
+def _fact_pack_body(fact_pack: FactPack) -> str:
+    """Render the class-appropriate facts compactly, via the shared renderer.
+
+    Uses :func:`finwiz.analysis.fact_pack.render.to_rows` — the same labels the
+    qualitative prompt sees (spec decision D5) — so this table cell can never
+    show a label the prompt doesn't. Best-effort: an unrenderable pack (e.g. a
+    schema-drifted cache) omits the body rather than raising.
+    """
+    try:
+        rows = to_rows(fact_pack)
+    except Exception:
+        return ""
+    parts: list[str] = []
+    for label, value in rows:
+        text = str(value).replace("\n", " ").strip()
+        if len(text) > _MAX_BODY_VALUE_CHARS:
+            text = text[: _MAX_BODY_VALUE_CHARS - 1].rstrip() + "…"
+        if text:
+            parts.append(f"<strong>{escape(label)}</strong> : {escape(text)}")
+    if not parts:
+        return ""
+    return f'<div class="small muted fact-pack-body">{" · ".join(parts)}</div>'
+
+
 def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
-    """Render fact pack provenance pill + citations footnote.
+    """Render the fact-pack body plus a provenance pill + citations footnote.
 
     Maps freshness to a colored pill:
       - fresh → green
@@ -53,6 +80,7 @@ def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
     if fact_pack is None:
         return '<small class="muted">Faits non vérifiés pour cette analyse.</small>'
 
+    body = _fact_pack_body(fact_pack)
     fetched_french = _format_fetched_at_french(fact_pack.fetched_at)
 
     if fact_pack.freshness == "fresh":
@@ -72,4 +100,4 @@ def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
         citations = " ".join(f'<a href="{escape(url, quote=True)}" rel="noopener" target="_blank">[{i + 1}]</a>' for i, url in enumerate(safe_citations[:5]))
         pill += f' <small class="muted">Sources: {citations}</small>'
 
-    return f'<div class="fact-pack-footer">{pill}</div>'
+    return f'<div class="fact-pack-footer">{body}{pill}</div>'

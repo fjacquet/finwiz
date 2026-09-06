@@ -36,9 +36,10 @@ def _full_insight() -> dict:
         "key_risks": ["Antitrust scrutiny", "Pricing pressure"],
         "price_target_rationale": "Accumulate below $150; trim above $220.",
         "fact_pack": {
-            "corporate_structure": "Single operating entity, no recent divestitures.",
-            "recent_events": ["Q4 beat", "New CFO appointed"],
-            "leadership": "CEO Jane Doe since 2019.",
+            "rows": [
+                ["Structure", "Single operating entity, no recent divestitures."],
+                ["Direction", "CEO Jane Doe since 2019."],
+            ],
             "freshness": "fresh",
             "source_citations": ["https://example.com/a", "javascript:alert(1)"],
         },
