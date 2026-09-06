@@ -12,7 +12,7 @@ from finwiz.analysis.stages.qualify import (
     qualify,
 )
 from finwiz.schemas.hybrid_analysis import QualitativeInsights, QuantitativeAnalysis
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 from finwiz.schemas.stage_contract import StageOutcome
 
 
@@ -138,9 +138,8 @@ class TestPromoteToQualitative:
         raw = _QualitativeInsightsRaw(ai_confidence=0.7)
         fetched_at = datetime.now(UTC)
         fp = FactPack(
-            corporate_structure="Independent",
-            recent_events=[],
-            leadership="CEO: Jane Doe",
+            asset_class="stock",
+            details=EquityFacts(business_summary="Independent", leadership="CEO: Jane Doe"),
             fetched_at=fetched_at,
             freshness=FactPack.derive_freshness(fetched_at),
             confidence=0.8,
@@ -149,7 +148,7 @@ class TestPromoteToQualitative:
         promoted = _promote_to_qualitative(raw, fact_pack=fp)
         assert isinstance(promoted, QualitativeInsights)
         assert promoted.fact_pack is not None
-        assert promoted.fact_pack.leadership == "CEO: Jane Doe"
+        assert promoted.fact_pack.details.leadership == "CEO: Jane Doe"
         assert promoted.analysis_timestamp is not None
         assert promoted.ai_confidence == 0.7
 

@@ -12,16 +12,15 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.analysis.stages._resilience import StageContext, TransientStageError
 from finwiz.analysis.stages.fact_pack import _fact_pack_inner, fact_pack
 from finwiz.cache.fact_pack_cache import FactPackCache
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 from finwiz.schemas.stage_contract import StageOutcome
 
 
 def _build_fp(days_old: float = 0) -> FactPack:
     fetched = datetime.now(UTC) - timedelta(days=days_old)
     return FactPack(
-        corporate_structure="Independent — divested VMware Nov 2021",
-        recent_events=[],
-        leadership="Michael Dell (CEO)",
+        asset_class="stock",
+        details=EquityFacts(business_summary="Independent — divested VMware Nov 2021", leadership="Michael Dell (CEO)"),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.9,
