@@ -86,3 +86,65 @@ class TestCryptoFragment:
         fragment = src.crypto_fragment({"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
         assert fragment.corporate_structure is None
         assert fragment.leadership is None
+
+
+class TestExceptionHandling:
+    """Verify all builders degrade gracefully without raising."""
+
+    def test_equity_fragment_handles_non_dict_officer(self):
+        """Officer entry that is not a dict should return empty fragment, not raise."""
+        info = {
+            "quoteType": "EQUITY",
+            "longBusinessSummary": "Apple Inc.",
+            "companyOfficers": [
+                {"name": "Good Officer", "title": "CEO"},
+                "not a dict",  # This will cause AttributeError if not handled
+            ],
+        }
+        fragment = src.equity_fragment(info)
+        # Should return a fragment, not raise - exception caught and logged
+        assert isinstance(fragment, src.FactPackFragment)
+
+    def test_equity_fragment_handles_non_string_summary(self):
+        """Non-string longBusinessSummary should return empty fragment, not raise."""
+        info = {
+            "quoteType": "EQUITY",
+            "longBusinessSummary": 12345,  # Not a string
+            "companyOfficers": [],
+        }
+        fragment = src.equity_fragment(info)
+        # Should return a fragment, not raise
+        assert isinstance(fragment, src.FactPackFragment)
+
+    def test_etf_fragment_handles_non_string_fundFamily(self):
+        """Non-string fundFamily should return empty fragment, not raise."""
+        info = {
+            "quoteType": "ETF",
+            "longName": "Test Fund",
+            "fundFamily": 12345,  # Not a string, calling .strip() will raise AttributeError
+            "legalType": "ETF",
+            "fundInceptionDate": 1602460800,
+        }
+        fragment = src.etf_fragment("TEST", info)
+        # Should return a fragment, not raise
+        assert isinstance(fragment, src.FactPackFragment)
+
+    def test_etf_fragment_handles_out_of_range_inception_date(self):
+        """Out-of-range fundInceptionDate should return empty fragment, not raise."""
+        info = {
+            "quoteType": "ETF",
+            "longName": "Test Fund",
+            "fundFamily": "Test Manager",
+            "legalType": "ETF",
+            "fundInceptionDate": 9999999999999,  # Way out of range, will raise OSError/OverflowError
+        }
+        fragment = src.etf_fragment("TEST", info)
+        # Should return a fragment, not raise
+        assert isinstance(fragment, src.FactPackFragment)
+
+    def test_crypto_fragment_handles_exception(self):
+        """Exceptions in crypto_fragment should return empty fragment, not raise."""
+        info = None  # Will cause exceptions in is_resolvable
+        fragment = src.crypto_fragment(info)
+        # Should return a fragment, not raise
+        assert isinstance(fragment, src.FactPackFragment)
