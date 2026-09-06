@@ -19,7 +19,7 @@
 - All Pydantic models live in `schemas/`, never in domain folders.
 - Line length 180 (ruff). `[tool.ruff.lint.mccabe] max-complexity = 10` is enforced.
 - `json.dumps` always takes `default=str`.
-- **yfinance returns `numpy.float64`, not `float`.** Every numeric taken from a DataFrame must be cast with `float(...)` before it reaches a Pydantic model, or the cache's JSON serialisation breaks.
+- **Cast numerics taken from a DataFrame with `float(...)`.** Correction to an earlier version of this constraint, which claimed `numpy.float64` breaks `json.dumps`: it does not — `numpy.float64` subclasses Python `float`, so it serialises fine. `numpy.int64` does NOT subclass `int` and *does* raise `Object of type int64 is not JSON serializable`. No current field takes an integer straight from a DataFrame, so the cast is defence rather than a live fix — keep it, but do not expect a mutation check to kill it, and do not justify it with the JSON claim.
 - **No source exception may reach the composer.** Every accessor wraps its body and returns an empty result rather than raising. This is why the branch exists: on 2026-09-06 one provider raising failed all 64 holdings.
 - **`compose_fact_pack` returns `None` only when the ticker resolves to nothing.**
 - **`maxSupply == 0` means "no cap", not "unknown".** Carried in data as `supply_is_capped`, never re-inferred from a magic zero.
