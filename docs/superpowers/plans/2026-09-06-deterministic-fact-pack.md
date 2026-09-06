@@ -1392,6 +1392,11 @@ git commit -m "feat(fact-pack): Perplexity fills only the fields structured data
 
 ---
 
+> **SUPERSEDED (2026-09-06).** Tasks 1-4 of this plan are complete and merged
+> (`7bcfd04..f8d36a1`). Tasks 5, 6 and 7 below are superseded by
+> `docs/superpowers/plans/2026-09-06-per-asset-class-fact-pack.md`, which changes the
+> fact pack's shape per asset class. Do not execute them from here.
+
 ### Task 6: Documentation
 
 **Files:**
