@@ -1049,14 +1049,36 @@ __all__ = ["compose_fact_pack"]
 Run: `uv run pytest tests/unit/analysis/fact_pack/ -v`
 Expected: PASS
 
-- [ ] **Step 5: Mutation check**
+- [ ] **Step 5: Give the identity builders a ticker to log with**
+
+Carried from the Task 2 review: `equity_fragment` and `crypto_fragment` log their degrade
+exceptions without naming the holding, while `resolve` and `etf_fragment` do include one. "Which
+ticker failed" is the datum that makes a production log actionable — its absence is what made two
+separate failures on 2026-09-06 hard to attribute — and this task is the one that holds the ticker
+at the call site.
+
+Change both signatures to take the ticker first, matching `etf_fragment(ticker, info)`:
+
+```python
+def equity_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
+def crypto_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
+```
+
+Include the ticker in each function's `except` log line, the way `etf_fragment` already does.
+Update `_identity_fragment` in `composer.py` to pass it, and update the existing Task 2 tests in
+`tests/unit/analysis/fact_pack/test_yfinance_source.py` that call these two builders — they pass
+`info` positionally today and will need the ticker argument added. Run the whole
+`tests/unit/analysis/fact_pack/` directory afterwards: this signature change touches tests written
+by two earlier tasks.
+
+- [ ] **Step 6: Mutation check**
 
 Swap the `filing_events` and `news_events` arguments in the `merge_fragments` call and re-run `test_filings_outrank_news_for_recent_events`. It must FAIL. Restore by editing back.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add src/finwiz/analysis/fact_pack/ tests/unit/analysis/fact_pack/test_composer.py
+git add src/finwiz/analysis/fact_pack/ tests/unit/analysis/fact_pack/
 git commit -m "feat(fact-pack): composer routes by declared asset class and builds the pack"
 ```
 
