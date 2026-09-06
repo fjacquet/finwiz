@@ -105,9 +105,12 @@ _STALE_HORIZON_DAYS = 90
 class FactPack(BaseModel):
     """Verified facts for one holding, typed per asset class.
 
-    Lifecycle: fetched once per holding via Perplexity, cached 7 days. The
-    `freshness` field is Python-derived from `fetched_at` — AI cannot lie
-    about it (cross-checked by model_validator).
+    Lifecycle: built once per holding from structured sources (yfinance,
+    plus a curated expense-ratio table for funds) and cached. Perplexity is
+    an optional gap-filler for equities that have neither SEC filings nor
+    allowlisted wire-news coverage, and may never run. The `freshness` field
+    is Python-derived from `fetched_at` — AI cannot lie about it
+    (cross-checked by model_validator).
     """
 
     asset_class: Literal["stock", "etf", "crypto"]
