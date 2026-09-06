@@ -22,18 +22,6 @@ def equity_info():
     }
 
 
-@pytest.fixture
-def etf_info():
-    return {
-        "quoteType": "ETF",
-        "longName": "iShares MSCI World SRI UCITS ETF EUR (Acc)",
-        "fundFamily": "BlackRock Asset Management Ireland - ETF",
-        "legalType": "Exchange Traded Fund",
-        "fundInceptionDate": 1602460800,
-        "category": None,
-    }
-
-
 class TestResolvability:
     def test_a_real_instrument_is_resolvable(self, equity_info):
         assert src.is_resolvable(equity_info) is True
@@ -86,27 +74,6 @@ class TestEquityFragment:
         assert "Officer 6" not in leadership
 
 
-class TestEtfFragment:
-    def test_structure_names_issuer_legal_type_and_inception(self, etf_info):
-        structure = src.etf_fragment("2B7K.DE", etf_info).corporate_structure
-        assert "BlackRock Asset Management Ireland - ETF" in structure
-        assert "Exchange Traded Fund" in structure
-        assert "2020" in structure
-
-    def test_the_manager_is_the_honest_answer_for_leadership(self, etf_info):
-        assert src.etf_fragment("2B7K.DE", etf_info).leadership == "BlackRock Asset Management Ireland - ETF"
-
-    def test_the_quote_page_is_the_citation(self, etf_info):
-        assert src.etf_fragment("2B7K.DE", etf_info).citations == ("https://finance.yahoo.com/quote/2B7K.DE",)
-
-
-class TestCryptoFragment:
-    def test_crypto_has_no_structure_or_leadership_to_report(self):
-        fragment = src.crypto_fragment("BTC-USD", {"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
-        assert fragment.corporate_structure is None
-        assert fragment.leadership is None
-
-
 class TestExceptionHandling:
     """Verify all builders degrade gracefully without raising."""
 
@@ -132,38 +99,5 @@ class TestExceptionHandling:
             "companyOfficers": [],
         }
         fragment = src.equity_fragment("AAPL", info)
-        # Should return a fragment, not raise
-        assert isinstance(fragment, src.FactPackFragment)
-
-    def test_etf_fragment_handles_non_string_fundFamily(self):
-        """Non-string fundFamily should return empty fragment, not raise."""
-        info = {
-            "quoteType": "ETF",
-            "longName": "Test Fund",
-            "fundFamily": 12345,  # Not a string, calling .strip() will raise AttributeError
-            "legalType": "ETF",
-            "fundInceptionDate": 1602460800,
-        }
-        fragment = src.etf_fragment("TEST", info)
-        # Should return a fragment, not raise
-        assert isinstance(fragment, src.FactPackFragment)
-
-    def test_etf_fragment_handles_out_of_range_inception_date(self):
-        """Out-of-range fundInceptionDate should return empty fragment, not raise."""
-        info = {
-            "quoteType": "ETF",
-            "longName": "Test Fund",
-            "fundFamily": "Test Manager",
-            "legalType": "ETF",
-            "fundInceptionDate": 9999999999999,  # Way out of range, will raise OSError/OverflowError
-        }
-        fragment = src.etf_fragment("TEST", info)
-        # Should return a fragment, not raise
-        assert isinstance(fragment, src.FactPackFragment)
-
-    def test_crypto_fragment_handles_exception(self):
-        """Exceptions in crypto_fragment should return empty fragment, not raise."""
-        info = None  # Will cause exceptions in is_resolvable
-        fragment = src.crypto_fragment("BTC-USD", info)
         # Should return a fragment, not raise
         assert isinstance(fragment, src.FactPackFragment)

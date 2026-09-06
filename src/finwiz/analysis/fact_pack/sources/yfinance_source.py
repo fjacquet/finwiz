@@ -19,7 +19,6 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 _MAX_OFFICERS = 6
-_QUOTE_URL = "https://finance.yahoo.com/quote/{ticker}"
 _SOURCES = ("yfinance.info",)
 
 
@@ -63,50 +62,6 @@ def equity_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
         )
     except Exception as e:
         logger.warning(f"equity_fragment extraction failed for {ticker}: {e}")
-        return FactPackFragment()
-
-
-def etf_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
-    """For a fund, the issuer IS the corporate structure and the manager IS the leadership.
-
-    Stating that plainly beats asking an LLM to write prose about a CEO the fund
-    does not have.
-    """
-    try:
-        issuer = (info.get("fundFamily") or "").strip()
-        legal_type = (info.get("legalType") or "").strip()
-        long_name = (info.get("longName") or ticker).strip()
-
-        parts = [long_name]
-        if legal_type:
-            parts.append(legal_type)
-        if issuer:
-            parts.append(f"issued by {issuer}")
-        inception = info.get("fundInceptionDate")
-        if isinstance(inception, int | float):
-            parts.append(f"inception {datetime.fromtimestamp(inception, tz=UTC).year}")
-
-        return FactPackFragment(
-            corporate_structure=", ".join(parts) + ".",
-            leadership=issuer or None,
-            citations=(_QUOTE_URL.format(ticker=ticker),),
-            sources=_SOURCES,
-        )
-    except Exception as e:
-        logger.warning(f"etf_fragment extraction failed for {ticker}: {e}")
-        return FactPackFragment()
-
-
-def crypto_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
-    """Crypto has no issuer and no officers; say nothing rather than invent one.
-
-    Both fields stay None so the composer writes the placeholder and confidence
-    scores this holding as the thin pack it genuinely is.
-    """
-    try:
-        return FactPackFragment(sources=_SOURCES) if is_resolvable(info) else FactPackFragment()
-    except Exception as e:
-        logger.warning(f"crypto_fragment extraction failed for {ticker}: {e}")
         return FactPackFragment()
 
 

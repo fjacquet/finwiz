@@ -1,4 +1,4 @@
-"""Fragment merge and confidence derivation."""
+"""Fragment merge order and precedence."""
 
 from finwiz.analysis.fact_pack.fragment import FactPackFragment, merge_fragments
 
