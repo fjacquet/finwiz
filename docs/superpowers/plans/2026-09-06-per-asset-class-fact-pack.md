@@ -917,6 +917,7 @@ git commit -m "feat(fact-pack): crypto facts with explicit supply-cap semantics"
 - Test: `tests/unit/analysis/fact_pack/test_composer.py`
 
 **Interfaces:**
+- **Interface change agreed during Task 3:** `fund_facts(query_symbol, info)` returns a THREE-tuple `(facts, citations, sources)`, not a two-tuple. `sources` mirrors `FactPackFragment`'s existing `(citations, sources)` convention and is always `("yfinance.info", "yfinance.funds_data")`, plus `"etf_expense_ratios.yaml"` exactly when a false-zero expense ratio was substituted from the curated table. Use that tuple's `sources` for the fund branch instead of the hardcoded `("yfinance.funds_data",)` shown later in this task, so a substitution is visible in the pack's provenance. `crypto_facts` remains a two-tuple.
 - Consumes: `fund_facts`, `crypto_facts`, `score`, the three facts models, and the existing equity machinery (`yfinance_source.equity_fragment/filing_events/news_events`, `merge_fragments`).
 - Produces: `compose_fact_pack(ticker, company_name, sector, industry, asset_class) -> FactPack | None`, unchanged in signature.
 
