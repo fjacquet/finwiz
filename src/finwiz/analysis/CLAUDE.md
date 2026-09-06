@@ -11,6 +11,19 @@ analysis/
 ├── _helpers.py                   # Shared helpers
 ├── fact_pack_research.py         # Perplexity gap-fill support (see analysis/fact_pack/)
 ├── strategic_research.py         # Strategic framework research
+├── fact_pack/                    # Deterministic fact pack, one shape per asset class
+│   ├── __init__.py               # compose_fact_pack() — the only entry point
+│   ├── composer.py               # Routes stock/etf/crypto; builds the FactPack envelope
+│   ├── confidence.py             # score(details) — per-class, exhaustive dispatch
+│   ├── fragment.py               # FactPackFragment + merge_fragments (equity path only)
+│   ├── render.py                 # to_rows()/to_prompt_block() — the only place labels live
+│   └── sources/
+│       ├── _numeric.py           # _finite() — rejects NaN/inf before a schema bound sees it
+│       ├── _text.py              # _safe_str() — a scraped field that isn't a string
+│       ├── yfinance_source.py    # Equity: summary, officers, SEC filings, news
+│       ├── fund_source.py        # Fund: issuer, legal form, TER, asset mix, top holdings
+│       ├── crypto_source.py      # Crypto: description, supply policy (maxSupply==0 is uncapped)
+│       └── perplexity_source.py  # Equity gap-fill only, behind FF_PERPLEXITY_RESEARCH
 └── stages/                       # WHERE THE PIPELINE ACTUALLY LIVES
     ├── __init__.py               # run_pipeline() — the real orchestrator
     ├── collect.py                # 1. collect
@@ -41,7 +54,7 @@ The analysis pipeline follows functional programming principles with pure functi
 │  │  Six stages, in finwiz.analysis.stages:                       │
 │  │  ├── collect     -> RawData                   [Python tools]  │
 │  │  ├── quantify    -> Quant                        [$0 Python]  │
-│  │  ├── fact_pack   -> FactPack       [yfinance + Perplexity gap-fill]  │
+│  │  ├── fact_pack   -> FactPack           [yfinance + gap-fill]  │
 │  │  ├── qualify     -> Qual                          [AI crew]   │
 │  │  ├── synthesize  -> Enriched                       [Python]   │
 │  │  └── emit        -> artifacts + RunLedger          [Python]   │

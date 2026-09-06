@@ -120,8 +120,12 @@ class FactPack(BaseModel):
     details: EquityFacts | FundFacts | CryptoFacts = Field(discriminator="kind")
     fetched_at: datetime
     freshness: Freshness
-    confidence: float = Field(ge=0.0, le=1.0, description="Python-derived completeness score 0.0-1.0 (see analysis/fact_pack/fragment.py)")
-    source_citations: list[str] = Field(default_factory=list, max_length=20, description="Perplexity citation URLs")
+    confidence: float = Field(ge=0.0, le=1.0, description="Python-derived completeness score 0.0-1.0, weighted per asset class (see analysis/fact_pack/confidence.py)")
+    source_citations: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description="Source URLs for the facts above: EDGAR filings, wire news, CoinMarketCap, and Perplexity when gap-fill ran",
+    )
     sources_used: list[str] = Field(
         default_factory=list,
         description="Which sources produced this pack, e.g. ['yfinance.info', 'yfinance.sec_filings']",

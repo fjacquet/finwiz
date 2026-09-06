@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   after invalidation reports `fact_pack_stale` at 0% because every pack is
   new — expected and self-correcting, but it means the run gate's staleness
   signal carries no information on that one run.
+- **List-shaped facts render as lists.** A fund's top holdings, a holding's
+  recent events and a fund's allocation buckets are now nested under their own
+  label in both the report and the qualitative prompt. Previously they were
+  flattened onto the same level as the labels themselves, so inside the block
+  the prompt calls authoritative, a fund's six holdings read as six more facts
+  *about* the fund.
 - **The per-holding report's fact-pack "Événements récents" block no longer
   truncates to 3 items** — it now shows every event the fact pack carries
   (bounded by the schema's `max_length=10`), consistent with the same values

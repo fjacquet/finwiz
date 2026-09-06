@@ -147,8 +147,13 @@ Expected: 2B7K.DE 1.00, AEEM.PA 0.75 (no top holdings), BTC/ETH/SOL 1.00, equiti
 
 ### 3. Rendering and the prompt
 
-`analysis/fact_pack/render.py` exposes `to_rows(pack) -> list[tuple[str, str]]` and
-`to_prompt_block(pack) -> str`. Labels are defined once, per class:
+`analysis/fact_pack/render.py` exposes `to_rows(pack) -> list[tuple[str, str | list[str]]]` and
+`to_prompt_block(pack) -> str`. A row whose fact is a list — top holdings, recent events,
+allocation buckets — carries that list, and each consumer formats it in its own idiom: the prompt
+block indents the items beneath their label, `insights.py` emits a `<ul>`, `factpack.py` joins them
+into one cell. Joining in `render.py` would have forced all three to parse the join back out, and
+the prompt block's flat `- ` prefix made a fund's holdings read as sibling facts about the fund.
+Labels are defined once, per class:
 
 - equity — Structure / Direction / Événements récents
 - fund — Émetteur / Forme / Frais courants / Principales lignes / Allocation
