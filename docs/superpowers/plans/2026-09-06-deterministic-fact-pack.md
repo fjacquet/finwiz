@@ -1449,7 +1449,22 @@ implies that fact packs come from Perplexity, correct it to name the structured
 sources with Perplexity as gap-filler. Change only those sentences; leave the
 rest of the PRD alone.
 
-- [ ] **Step 5: Verify nothing still claims the old behaviour**
+- [ ] **Step 5: Fix the two stale docstrings the Task 1 review found**
+
+Docstrings rot the same way prose docs do, and these two now contradict the code beside them.
+
+In `src/finwiz/schemas/hybrid_analysis/fact_pack.py`, the `FactPack` class docstring still reads "fetched once per holding via Perplexity, cached 7 days". Replace that clause with:
+
+```
+    Lifecycle: built once per holding from structured sources (see
+    analysis/fact_pack/composer.py), gap-filled by Perplexity only where those
+    sources are empty, and cached 7 days. The `freshness` field is Python-derived
+    from `fetched_at` -- AI cannot lie about it (cross-checked by model_validator).
+```
+
+In `src/finwiz/analysis/fact_pack/fragment.py`, `merge_fragments`'s docstring claims "the first non-empty value for a field wins", which is true of `corporate_structure`, `leadership` and `recent_events` but not of `citations` and `sources`, which accumulate across every fragment. Add that clause so a reader who skims only the docstring is not misled.
+
+- [ ] **Step 6: Verify nothing still claims the old behaviour**
 
 Run:
 
@@ -1461,10 +1476,10 @@ Expected: every remaining hit is either inside the ADR's own historical record
 (the decision as it was taken) or explicitly describes gap-fill. Any line that
 presents Perplexity as *the* fact-pack source is a miss — fix it.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add docs/adr/ADR-010-fact-pack-grounded-qualitative.md CHANGELOG.md CLAUDE.md docs/PRD.md
+git add docs/adr/ADR-010-fact-pack-grounded-qualitative.md CHANGELOG.md CLAUDE.md docs/PRD.md src/finwiz/schemas/hybrid_analysis/fact_pack.py src/finwiz/analysis/fact_pack/fragment.py
 git commit -m "docs(fact-pack): supersede ADR-010's source decision; record the new provider chain"
 ```
 
