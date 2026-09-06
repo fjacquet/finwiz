@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Literal, cast
 
@@ -45,6 +46,16 @@ _SCHEMA_FALLBACK_SOURCE = "composer.schema_fallback"
 # A fund with no identifiable issuer is thin, not fatal -- only an unresolvable
 # ticker halts a holding outright.
 _PLACEHOLDER_FUND = FundFacts(issuer=PLACEHOLDER)
+
+# The exception-fallback pack must carry a details shape that matches the
+# declared asset_class (FactPack validates the pairing) -- a hardcoded
+# EquityFacts() fallback labelled asset_class="etf" would build a pack that
+# contradicts itself and would raise on construction instead of degrading.
+_FALLBACK_DETAILS: dict[str, Callable[[], EquityFacts | FundFacts | CryptoFacts]] = {
+    "stock": lambda: EquityFacts(business_summary=PLACEHOLDER, leadership=PLACEHOLDER),
+    "etf": lambda: FundFacts(issuer=PLACEHOLDER),
+    "crypto": lambda: CryptoFacts(description=PLACEHOLDER),
+}
 
 
 def _gap_fill(ticker: str, company_name: str, sector: str | None, industry: str | None, missing: tuple[str, ...]) -> FactPackFragment:
@@ -174,7 +185,7 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
         # whatever real sources were already gathered, not instead of them.
         return FactPack(
             asset_class=cast(Literal["stock", "etf", "crypto"], asset_class),
-            details=EquityFacts(business_summary=PLACEHOLDER, leadership=PLACEHOLDER),
+            details=_FALLBACK_DETAILS[asset_class](),
             fetched_at=fetched_at,
             freshness=FactPack.derive_freshness(fetched_at),
             confidence=0.0,

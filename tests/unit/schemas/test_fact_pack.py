@@ -301,3 +301,50 @@ class TestPerClassDetails:
                 supply_is_capped=False,
                 max_supply=21000000.0,
             )
+
+
+class TestDetailsMatchAssetClass:
+    """asset_class and details.kind are one fact, stated twice -- they must agree.
+
+    Without this, the composer's exception-fallback path (or any future caller)
+    could build a pack labelled asset_class="etf" carrying EquityFacts, which
+    passes every field-level check yet contradicts itself: confidence.score()
+    would then dispatch on the details type and score a fund with equity
+    weights, and the renderer would show it with equity's section labels.
+    """
+
+    @staticmethod
+    def _envelope(**overrides):
+        fetched_at = datetime.now(UTC)
+        base = {
+            "asset_class": "stock",
+            "fetched_at": fetched_at,
+            "freshness": FactPack.derive_freshness(fetched_at),
+            "confidence": 1.0,
+            "details": EquityFacts(business_summary="Designs phones.", leadership="Tim Cook (CEO)"),
+        }
+        return {**base, **overrides}
+
+    def test_stock_with_equity_details_constructs(self):
+        pack = FactPack(**self._envelope())
+        assert pack.details.kind == "equity"
+
+    def test_etf_with_fund_details_constructs(self):
+        pack = FactPack(**self._envelope(asset_class="etf", details=FundFacts(issuer="iShares")))
+        assert pack.details.kind == "fund"
+
+    def test_crypto_with_crypto_details_constructs(self):
+        pack = FactPack(**self._envelope(asset_class="crypto", details=CryptoFacts(description="Bitcoin is...")))
+        assert pack.details.kind == "crypto"
+
+    @pytest.mark.parametrize(
+        ("asset_class", "details"),
+        [
+            pytest.param("etf", EquityFacts(business_summary="Designs phones.", leadership="Tim Cook (CEO)"), id="etf-with-equity-details"),
+            pytest.param("crypto", FundFacts(issuer="iShares"), id="crypto-with-fund-details"),
+            pytest.param("stock", CryptoFacts(description="Bitcoin is..."), id="stock-with-crypto-details"),
+        ],
+    )
+    def test_a_mismatched_pair_raises(self, asset_class, details):
+        with pytest.raises(ValidationError, match="requires details.kind"):
+            FactPack(**self._envelope(asset_class=asset_class, details=details))

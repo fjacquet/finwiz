@@ -152,3 +152,11 @@ class FactPack(BaseModel):
         if self.freshness != expected:
             raise ValueError(f"freshness={self.freshness!r} contradicts fetched_at={self.fetched_at} (Python derived: {expected!r})")
         return self
+
+    @model_validator(mode="after")
+    def _check_details_match_asset_class(self) -> FactPack:
+        """The envelope's class and the payload's tag are one fact, stated twice."""
+        expected = {"stock": "equity", "etf": "fund", "crypto": "crypto"}[self.asset_class]
+        if self.details.kind != expected:
+            raise ValueError(f"asset_class={self.asset_class!r} requires details.kind={expected!r}, got {self.details.kind!r}")
+        return self
