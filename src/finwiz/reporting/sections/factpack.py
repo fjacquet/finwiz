@@ -68,6 +68,20 @@ def _fact_pack_body(fact_pack: FactPack) -> str:
     return f'<div class="small muted fact-pack-body">{" · ".join(parts)}</div>'
 
 
+def _sources_label(fact_pack: FactPack) -> str:
+    """Truthful, short label for the pill's provenance claim.
+
+    Names the pack's real ``sources_used`` (e.g. "yfinance.info") when known;
+    falls back to a generic phrase rather than naming a source that may not
+    have run. Packs are built from yfinance and a curated table, with
+    Perplexity demoted to an optional gap-filler that may never fire — the
+    pill must not claim Perplexity verification unconditionally.
+    """
+    if fact_pack.sources_used:
+        return ", ".join(fact_pack.sources_used)
+    return "sources structurées"
+
+
 def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
     """Render the fact-pack body plus a provenance pill + citations footnote.
 
@@ -82,11 +96,12 @@ def _fact_pack_provenance_footer(fact_pack: FactPack | None) -> str:
 
     body = _fact_pack_body(fact_pack)
     fetched_french = _format_fetched_at_french(fact_pack.fetched_at)
+    sources_label = _sources_label(fact_pack)
 
     if fact_pack.freshness == "fresh":
-        pill = f'<span class="pill pill-green" title="Sources Perplexity vérifiées">✓ Faits actuels: vérifiés via Perplexity le {escape(fetched_french)}</span>'
+        pill = f'<span class="pill pill-green" title="Vérifié via {escape(sources_label)}">✓ Faits actuels — vérifiés le {escape(fetched_french)}</span>'
     elif fact_pack.freshness == "recent":
-        pill = f'<span class="pill pill-neutral">Faits vérifiés via Perplexity le {escape(fetched_french)}</span>'
+        pill = f'<span class="pill pill-neutral" title="Vérifié via {escape(sources_label)}">Faits vérifiés le {escape(fetched_french)}</span>'
     else:  # stale
         pill = (
             f'<span class="pill pill-amber" '
