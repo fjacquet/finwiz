@@ -21,10 +21,10 @@ _DESCRIPTION_MAX_CHARS = 2000
 
 
 def _number(value: Any, field_name: str = "") -> float | None:
-    """Floats only. A string where a number belongs is a missing field, not a crash.
+    """Coerce to float. A wrong type or out-of-domain value is a missing field, not a crash.
 
-    Negative values are also treated as missing — all numeric fields here are
-    non-negative by nature, so a negative is bad data. Log at debug for diagnostics.
+    A string where a number belongs, or a negative number where only non-negatives belong,
+    is treated as unknown. Logs mismatches at debug level with field name and value.
     """
     if isinstance(value, bool) or not isinstance(value, int | float):
         return None
