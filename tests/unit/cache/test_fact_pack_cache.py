@@ -5,17 +5,19 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from typing import Literal
+
+import pytest
 
 from finwiz.cache.fact_pack_cache import FactPackCache
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts, FundHolding
 
 
 def _build_fp(days_old: float = 0) -> FactPack:
     fetched = datetime.now(UTC) - timedelta(days=days_old)
     return FactPack(
-        corporate_structure="x",
-        recent_events=[],
-        leadership="x",
+        asset_class="stock",
+        details=EquityFacts(business_summary="x", leadership="x", recent_events=[], events_from_filings=False),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.5,
@@ -30,7 +32,8 @@ class TestFactPackCache:
         cache.put("DELL", fp)
         loaded = cache.get("DELL")
         assert loaded is not None
-        assert loaded.corporate_structure == "x"
+        assert loaded.details.kind == "equity"
+        assert loaded.details.business_summary == "x"
         assert loaded.freshness == "fresh"
 
     def test_get_returns_none_when_missing(self, tmp_path: Path) -> None:
@@ -114,8 +117,6 @@ class TestFactPackCache:
 
     def test_get_rejects_path_traversal_ticker(self, tmp_path: Path) -> None:
         """Path-traversal attempts must raise, not write outside the cache dir."""
-        import pytest
-
         cache = FactPackCache(cache_dir=tmp_path)
         for evil in ["../../etc/passwd", "..", "/", "../foo", "a/b", "a\\b"]:
             with pytest.raises(ValueError, match="invalid ticker"):
@@ -131,3 +132,74 @@ class TestFactPackCache:
         for ok in ["AAPL", "BRK.B", "BTC-USD", "^GSPC", "DELL"]:
             cache.put(ok, _build_fp())
             assert cache.get(ok) is not None
+
+
+class TestRoundTripPerAssetClass:
+    """A discriminated union serialised to disk and re-validated is exactly
+    where a tag mismatch would appear — this is the only place in the system
+    that round-trips FactPack through JSON, so each class gets a dedicated
+    write/read/assert-kind test.
+    """
+
+    @staticmethod
+    def _envelope(asset_class: Literal["stock", "etf", "crypto"], details: EquityFacts | FundFacts | CryptoFacts) -> FactPack:
+        fetched_at = datetime.now(UTC)
+        return FactPack(
+            asset_class=asset_class,
+            details=details,
+            fetched_at=fetched_at,
+            freshness=FactPack.derive_freshness(fetched_at),
+            confidence=0.8,
+            source_citations=[],
+        )
+
+    def test_equity_pack_round_trips_with_kind_intact(self, tmp_path: Path) -> None:
+        cache = FactPackCache(cache_dir=tmp_path)
+        fp = self._envelope(
+            "stock",
+            EquityFacts(business_summary="Designs phones.", leadership="Tim Cook (CEO)", recent_events=[], events_from_filings=False),
+        )
+        cache.put("AAPL", fp)
+        loaded = cache.get("AAPL")
+        assert loaded is not None
+        assert loaded.details.kind == "equity"
+        assert loaded.details.leadership == "Tim Cook (CEO)"
+
+    def test_fund_pack_round_trips_with_kind_intact(self, tmp_path: Path) -> None:
+        cache = FactPackCache(cache_dir=tmp_path)
+        fp = self._envelope(
+            "etf",
+            FundFacts(
+                issuer="BlackRock Asset Management Ireland - ETF",
+                legal_type="Exchange Traded Fund",
+                inception_year=2020,
+                expense_ratio=0.002,
+                top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.077756)],
+                asset_mix={"stockPosition": 0.9942},
+            ),
+        )
+        cache.put("2B7K.DE", fp)
+        loaded = cache.get("2B7K.DE")
+        assert loaded is not None
+        assert loaded.details.kind == "fund"
+        assert loaded.details.top_holdings[0].symbol == "NVDA"
+
+    def test_crypto_pack_round_trips_with_kind_intact(self, tmp_path: Path) -> None:
+        cache = FactPackCache(cache_dir=tmp_path)
+        fp = self._envelope(
+            "crypto",
+            CryptoFacts(
+                description="Bitcoin is a peer-to-peer electronic cash system.",
+                launched_year=2009,
+                circulating_supply=20080456.0,
+                max_supply=21000000.0,
+                supply_is_capped=True,
+                market_cap=1.6e12,
+            ),
+        )
+        cache.put("BTC-USD", fp)
+        loaded = cache.get("BTC-USD")
+        assert loaded is not None
+        assert loaded.details.kind == "crypto"
+        assert loaded.details.supply_is_capped is True
+        assert loaded.details.max_supply == 21000000.0
