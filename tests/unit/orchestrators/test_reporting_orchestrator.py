@@ -551,7 +551,10 @@ class TestHoldingsInsightsExtraction:
         rows = dict(card["fact_pack"]["rows"])
         assert rows["Structure"] == "Single entity."
         assert rows["Direction"] == "CEO X."
-        assert "E1" in rows["Événements récents (presse)"]
+        # All 4 fixture events must survive uncapped -- proves the old
+        # report-side cap-at-3 truncation is gone (to_rows has no cap of its
+        # own; only the schema's max_length=10 bounds this).
+        assert rows["Événements récents (presse)"] == "- E1\n- E2\n- E3\n- E4"
         assert card["fact_pack"]["freshness"] == "fresh"
         assert card["fact_pack"]["source_citations"] == ["https://a.com"]
         assert card["report_link"] == "stock/AAPL_report.html"
