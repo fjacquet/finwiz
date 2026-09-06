@@ -1083,7 +1083,16 @@ git commit -m "feat(fact-pack): compose per-class details behind the shared enve
 
 **Files:**
 - Create: `src/finwiz/analysis/fact_pack/render.py`
-- Modify: `src/finwiz/analysis/_helpers.py`, `src/finwiz/crews/deep_analysis/config/tasks.yaml`, `src/finwiz/reporting/sections/insights.py`, `src/finwiz/reporting/sections/factpack.py`
+- Modify: `src/finwiz/analysis/_helpers.py`, `src/finwiz/crews/deep_analysis/config/tasks.yaml`, `src/finwiz/reporting/sections/insights.py`, `src/finwiz/reporting/sections/factpack.py`, `src/finwiz/orchestrators/reporting/enrichment.py`
+- Also migrate to the envelope (controller ruling 2026-09-06 — the plan named no owner for these, and
+  they fail today because their fixtures still build `FactPack` with `corporate_structure` /
+  `leadership` / `recent_events` and no `asset_class` / `details`):
+  `tests/unit/analysis/test_helpers.py`, `tests/unit/analysis/stages/test_fact_pack.py`,
+  `tests/unit/analysis/stages/test_pipeline.py`, `tests/unit/analysis/stages/test_qualify.py`,
+  `tests/unit/analysis/test_deep_analysis_pipeline.py`,
+  `tests/unit/crews/test_deep_analysis_prompt.py`,
+  `tests/unit/orchestrators/test_reporting_orchestrator.py`, `tests/unit/reporting/test_insights.py`,
+  `tests/unit/reporting/test_fact_pack_rendering.py`
 - Test: `tests/unit/analysis/fact_pack/test_render.py`
 
 **Interfaces:**
@@ -1270,7 +1279,29 @@ Expected: prints OK. If it reports an unknown or unused variable, the YAML and `
 
 - [ ] **Step 7: Rewire the report sections**
 
-In `src/finwiz/reporting/sections/insights.py`, replace the three hardcoded blocks (`fact_pack.get("corporate_structure")`, `"leadership"`, `"recent_events"`) with an iteration over `to_rows`. That section receives a dict, so build a `FactPack` via `FactPack.model_validate(fact_pack)` inside a `try/except ValidationError` and skip the block when validation fails — a report must never crash on a malformed cached pack.
+**Corrected 2026-09-06 (controller ruling — the original instruction here mandated a silent failure).**
+The original text said to build a `FactPack` in `insights.py` via `FactPack.model_validate(fact_pack)`
+inside a `try/except ValidationError`. `insights.py` never receives a `FactPack`:
+`orchestrators/reporting/enrichment.py:329-335` distils the pack into a five-key flat dict
+(`corporate_structure`, `recent_events`, `leadership`, `freshness`, `source_citations`) and that is
+what reaches `_fact_pack_block()`. `model_validate` would therefore fail for *every* holding and the
+prescribed `except` would swallow it — the fact-pack block would vanish from every report with no
+test failing.
+
+Do this instead. `render.py` is the single seam:
+
+- In `src/finwiz/orchestrators/reporting/enrichment.py`, replace the five flat keys with
+  `"rows": [list(r) for r in to_rows(pack)]` plus `"freshness"` and `"source_citations"`. The rows
+  are already (label, value) pairs, rendered once, per class.
+- In `src/finwiz/reporting/sections/insights.py`, `_fact_pack_block` iterates `fact_pack.get("rows")`
+  and renders each pair generically. It reconstructs no `FactPack` and imports no schema.
+- Delete the hardcoded `"Faits vérifiés (Perplexity)"` attribution at `insights.py:100`. The spec
+  requires that claim dropped, and it lives in the block being rewritten.
+
+This satisfies design decision D5 (labels defined once, consumed by both the prompt and the report)
+and removes a round-trip that cannot work by construction. Cached `*_enriched.json` from earlier runs
+carries the old five keys and renders no fact-pack block until re-analysed; Task 7 invalidates the
+cache anyway.
 
 In `src/finwiz/reporting/sections/factpack.py`, keep the freshness and confidence chrome exactly as it is and render the body from `to_rows`.
 
