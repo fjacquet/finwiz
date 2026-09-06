@@ -17,18 +17,24 @@ class TestRouting:
     def test_asset_class_comes_from_the_caller_never_from_the_symbol(self, mocker):
         """ASML.AS is 7 characters; a symbol-shape heuristic once called that crypto.
 
-        Routing reads the declared class and nothing else.
+        Routing reads the declared class and nothing else. Asserts against the
+        seams routing actually uses (fund_source/crypto_source) rather than the
+        now-uncalled yfinance_source.crypto_fragment -- a stock must never
+        reach the fund or crypto builder.
         """
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Chip lithography."})
         equity = mocker.patch.object(composer.yfinance_source, "equity_fragment", return_value=FactPackFragment(corporate_structure="Chip lithography."))
-        crypto = mocker.patch.object(composer.yfinance_source, "crypto_fragment", return_value=FactPackFragment())
+        fund_facts = mocker.patch.object(composer.fund_source, "fund_facts")
+        crypto_facts = mocker.patch.object(composer.crypto_source, "crypto_facts")
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
 
-        composer.compose_fact_pack("ASML.AS", "ASML Holding", None, None, "stock")
+        pack = composer.compose_fact_pack("ASML.AS", "ASML Holding", None, None, "stock")
 
         equity.assert_called_once()
-        crypto.assert_not_called()
+        fund_facts.assert_not_called()
+        crypto_facts.assert_not_called()
+        assert pack.details.kind == "equity"
 
     def test_a_declared_class_that_contradicts_quote_type_is_warned_about(self, mocker, caplog):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
@@ -256,3 +262,27 @@ class TestPerClassComposition:
     def test_an_unresolvable_ticker_still_returns_none(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"trailingPegRatio": None})
         assert composer.compose_fact_pack("ZZZZNOTREAL", "Nothing", None, None, "stock") is None
+
+    def test_a_substituted_expense_ratio_is_visible_in_provenance(self, mocker):
+        """fund_source's third tuple element names the curated-table substitution.
+
+        The composer must propagate whatever `sources` fund_facts returns
+        rather than hardcoding it -- a hardcoded tuple here would silently
+        launder a curated data/etf_expense_ratios.yaml value as a live
+        yfinance reading, which is exactly what fund_facts's real 3-tuple
+        return exists to make visible.
+        """
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
+        mocker.patch.object(
+            composer.fund_source,
+            "fund_facts",
+            return_value=(
+                FundFacts(issuer="iShares", expense_ratio=0.0019),
+                ("https://finance.yahoo.com/quote/2B7K.DE",),
+                ("yfinance.info", "yfinance.funds_data", "etf_expense_ratios.yaml"),
+            ),
+        )
+
+        pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
+
+        assert "etf_expense_ratios.yaml" in pack.sources_used
