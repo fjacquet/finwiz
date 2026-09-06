@@ -108,3 +108,116 @@ def crypto_fragment(info: dict[str, Any]) -> FactPackFragment:
     except Exception as e:
         logger.warning(f"crypto_fragment extraction failed: {e}")
         return FactPackFragment()
+
+
+_EVENT_MAX_CHARS = 200
+_EVENT_WINDOW_DAYS = 365
+_MAX_EVENTS = 10
+
+# Filing types that describe something material. CORRESP, S-8, 25-NSE and the
+# rest are administrative traffic and would crowd out the events that matter.
+_MATERIAL_FILING_TYPES = frozenset({"8-K", "8-K/A", "10-K", "10-Q", "20-F", "6-K", "6-K/A", "DEF 14A", "SC 13D", "SC 13G"})
+
+# Wire services and regulatory-filing distributors only. Yahoo's feed also
+# carries opinion sites whose headlines are predictions, not events; per the
+# project rule those are excluded outright rather than emitted at low grade.
+_NEWS_PROVIDER_ALLOWLIST = frozenset(
+    {
+        "Reuters",
+        "Bloomberg",
+        "Associated Press",
+        "AP Finance",
+        "Financial Times",
+        "Business Wire",
+        "PR Newswire",
+        "GlobeNewswire",
+        "Dow Jones Newswires",
+        "The Wall Street Journal",
+    },
+)
+
+
+def _within_window(when: datetime, now: datetime) -> bool:
+    return 0 <= (now - when).days <= _EVENT_WINDOW_DAYS
+
+
+def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
+    """Material SEC filings in the last 12 months, with EDGAR links.
+
+    This is the strongest evidence available for `recent_events`: dated, filed,
+    and citable. It covers US listings and foreign issuers with ADRs (ASML files
+    20-F / 6-K); a European-only listing returns nothing and falls back to news.
+    """
+    now = now or datetime.now(UTC)
+    try:
+        filings = _ticker(ticker).sec_filings or []
+    except Exception as e:
+        logger.debug(f"sec_filings unavailable for {ticker}: {e}")
+        return FactPackFragment()
+
+    events: list[str] = []
+    citations: list[str] = []
+    for filing in filings:
+        if filing.get("type") not in _MATERIAL_FILING_TYPES:
+            continue
+        raw_date = filing.get("date") or ""
+        try:
+            filed = datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=UTC)
+        except ValueError:
+            continue
+        if not _within_window(filed, now):
+            continue
+        title = (filing.get("title") or "").strip()
+        events.append(f"{raw_date} {filing['type']}: {title}"[:_EVENT_MAX_CHARS])
+        url = filing.get("edgarUrl")
+        if url:
+            citations.append(url)
+        if len(events) >= _MAX_EVENTS:
+            break
+
+    if not events:
+        return FactPackFragment()
+    return FactPackFragment(
+        recent_events=tuple(events),
+        citations=tuple(citations),
+        sources=("yfinance.sec_filings",),
+        events_from_filings=True,
+    )
+
+
+def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
+    """Wire-service headlines in the last 12 months. Weaker than filings, still cited."""
+    now = now or datetime.now(UTC)
+    try:
+        items = _ticker(ticker).news or []
+    except Exception as e:
+        logger.debug(f"news unavailable for {ticker}: {e}")
+        return FactPackFragment()
+
+    events: list[str] = []
+    citations: list[str] = []
+    for item in items:
+        content = item.get("content") or {}
+        provider = ((content.get("provider") or {}).get("displayName") or "").strip()
+        if provider not in _NEWS_PROVIDER_ALLOWLIST:
+            continue
+        raw_date = (content.get("pubDate") or "").replace("Z", "+00:00")
+        try:
+            published = datetime.fromisoformat(raw_date)
+        except ValueError:
+            continue
+        if not _within_window(published, now):
+            continue
+        title = (content.get("title") or "").strip()
+        if not title:
+            continue
+        events.append(f"{published.date().isoformat()} {title}"[:_EVENT_MAX_CHARS])
+        url = (content.get("canonicalUrl") or {}).get("url")
+        if url:
+            citations.append(url)
+        if len(events) >= _MAX_EVENTS:
+            break
+
+    if not events:
+        return FactPackFragment()
+    return FactPackFragment(recent_events=tuple(events), citations=tuple(citations), sources=("yfinance.news",))
