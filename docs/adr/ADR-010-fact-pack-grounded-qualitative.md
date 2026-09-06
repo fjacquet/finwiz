@@ -137,6 +137,9 @@ structural, not advisory.
   with confidence ratings. Kept separate in v5.2 (different lifecycles:
   per-run vs cached 7d, different consumers: report-only vs every
   qualitative prompt). Unification candidate for v5.3+.
+  **↳ Superseded 2026-09-06: fact packs are no longer Perplexity-fetched
+  (structured sources now); strategic_analysis still is. See "Superseded
+  in part" below.**
 
 ### Risks
 
@@ -158,3 +161,23 @@ structural, not advisory.
 - [ADR-009: Trust Spine](ADR-009-trust-spine.md) -- v5.1 stage contract
 - [ADR-003: AI Minimalism](ADR-003-ai-minimalism.md) -- Python wins over AI for deterministic data
 - [ADR-002: Perplexity Research Integration](ADR-002-perplexity-research-integration.md) -- baseline Perplexity pattern
+
+## Superseded in part (2026-09-06)
+
+The grounding decision stands: qualitative analysis is fed verified facts rather
+than trusting the model's recall. Two things this ADR assumed no longer hold.
+
+**The source.** It specified Perplexity as the fact pack's provider. On
+2026-09-06 a quota error (`insufficient_quota`, served as HTTP 401) made that
+single provider fail all 64 holdings in one run — `fact_pack failed ×64`, zero
+holdings analysed. Facts now come from free structured sources, with Perplexity
+called only for fields those sources leave empty.
+
+**The shape.** It specified one fact pack for every holding, with
+`corporate_structure`, `leadership` and `recent_events`. Those are a company's
+attributes. A fund has no CEO and a protocol has no head office, so two of the
+three asset classes were being asked questions that did not apply: funds scored
+0.70 with the issuer's name standing in as `leadership`, and crypto returned two
+placeholders. `FactPack` now carries a payload typed per class.
+
+See `docs/superpowers/specs/2026-09-06-per-asset-class-fact-pack-design.md`.

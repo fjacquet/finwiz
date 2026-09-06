@@ -85,19 +85,44 @@ def _list_block(label: str, items: list[Any] | None, limit: int) -> str:
 
 
 def _fact_pack_block(fact_pack: dict[str, Any] | None) -> str:
-    """Render distilled fact-pack facts (structure, events, leadership, citations)."""
+    """Render distilled fact-pack rows generically: this reconstructs no schema.
+
+    ``fact_pack["rows"]`` is the ``to_rows()`` output for the holding's asset
+    class (equity/fund/crypto), already labeled by
+    :mod:`finwiz.analysis.fact_pack.render` — the single place labels are
+    defined (spec decision D5). This block only escapes and lays them out; it
+    never imports a schema or knows what "Structure" vs. "Émetteur" means.
+    """
     if not isinstance(fact_pack, dict):
         return ""
-    rows: list[str] = []
-    rows.append(_prose_block("Structure", fact_pack.get("corporate_structure", ""), 400))
-    rows.append(_prose_block("Direction", fact_pack.get("leadership", ""), 300))
-    rows.append(_list_block("Événements récents", (fact_pack.get("recent_events") or [])[:3], 240))
-    body = "".join(r for r in rows if r)
+    rows = fact_pack.get("rows")
+    if not isinstance(rows, list) or not rows:
+        return ""
+    parts: list[str] = []
+    for row in rows:
+        if not isinstance(row, (list, tuple)) or len(row) != 2:
+            continue
+        label, value = row
+        # to_rows() (current shape) returns a real list for a genuinely
+        # list-shaped value (holdings, recent events, allocation buckets)
+        # and a plain string for prose. A cached *_enriched.json written
+        # before this contract still carries the old shape -- a single
+        # newline-joined string with a "- " marker per item -- which lands
+        # here as a str and renders as one prose paragraph rather than a
+        # <ul>: not the ideal rendering for old data, but the block still
+        # renders (no crash, nothing lost), which is the whole point of
+        # dispatching on the real type instead of sniffing for "\n".
+        if isinstance(value, list):
+            items = [str(v) for v in value]
+            parts.append(_list_block(str(label), items, 240))
+        else:
+            parts.append(_prose_block(str(label), str(value), 400))
+    body = "".join(p for p in parts if p)
     if not body:
         return ""
 
     freshness = str(fact_pack.get("freshness", "")).strip()
-    fresh_note = f'<div class="small muted">Faits vérifiés (Perplexity) — fraîcheur : {escape(freshness)}.</div>' if freshness else ""
+    fresh_note = f'<div class="small muted">Faits structurés — fraîcheur : {escape(freshness)}.</div>' if freshness else ""
 
     safe = [u for u in (fact_pack.get("source_citations") or []) if _is_safe_url(str(u))][:5]
     citations = ""

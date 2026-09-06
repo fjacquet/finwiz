@@ -1,7 +1,20 @@
-"""Fact pack fetcher (v5.2) — verified corporate facts via Perplexity.
+"""Perplexity gap-fill support (v5.2) — demoted from primary fetcher.
 
-Calls Perplexity via ``perplexity_with_retry`` (retry + backoff wrapper
-around ``perplexity_structured``), with a sync wrapper for non-async callers.
+Until Task 8, this module was the sole source of a fact pack: ``fetch_fact_pack``
+built a flat ``FactPack`` from a single Perplexity call. `compose_fact_pack`
+(``analysis/fact_pack/composer.py``) replaced that: facts now come from free
+structured sources (yfinance, a curated expense-ratio table), and Perplexity is
+consulted only as ``analysis.fact_pack.sources.perplexity_source.fetch_missing_events``
+— a narrow gap-filler for equities with neither SEC filings nor allowlisted wire
+news. `fetch_fact_pack`/`fetch_fact_pack_sync` are gone: they built a shape
+(top-level `corporate_structure`/`leadership`/... kwargs) the current
+discriminated-union `FactPack` schema rejects outright (`extra="forbid"`).
+
+What remains here is what `perplexity_source` still needs: the retry-wrapped
+request schema (`_FactPackRaw`), the system prompt (`_SYSTEM_FR`), the legacy
+full-fact prompt builder (`_build_prompt`, still covered by its own tests), and
+the sync/async bridge (`_run_coroutine_sync`) extracted from the old
+`fetch_fact_pack_sync` body.
 """
 
 from __future__ import annotations
@@ -9,17 +22,12 @@ from __future__ import annotations
 import asyncio
 import concurrent.futures
 import logging
-from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from collections.abc import Coroutine
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from finwiz.analysis._helpers import _today_french
-from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
-
-if TYPE_CHECKING:
-    pass
 
 logger = logging.getLogger(__name__)
 
@@ -166,55 +174,13 @@ def _build_prompt(ticker: str, company_name: str, sector: str | None, industry: 
     )
 
 
-async def fetch_fact_pack(
-    ticker: str,
-    company_name: str,
-    sector: str | None = None,
-    industry: str | None = None,
-    *,
-    timeout: float = 15.0,
-) -> FactPack | None:
-    """Fetch verified corporate facts via Perplexity.
+def _run_coroutine_sync[T](coro: Coroutine[Any, Any, T], *, timeout: float) -> T | None:
+    """Run a coroutine from sync code. Inside a running loop, use a worker thread.
 
-    Returns None on Perplexity failure (caller decides FAILED vs cache fallback).
+    Extracted from the old `fetch_fact_pack_sync` body (Task 8) so
+    `perplexity_source.fetch_missing_events` can share the same event-loop
+    juggling without depending on the fetcher it replaced.
     """
-    prompt = _build_prompt(ticker, company_name, sector, industry)
-    try:
-        raw = await perplexity_with_retry(
-            prompt=prompt,
-            schema=_FactPackRaw,
-            system=_SYSTEM_FR,
-            search_recency_filter="month",
-            timeout=timeout,
-        )
-    except Exception as e:
-        logger.warning(f"fact_pack fetch failed for {ticker}: {e}")
-        return None
-    if raw is None:
-        logger.warning(f"fact_pack fetch returned None for {ticker}")
-        return None
-    fetched_at = datetime.now(UTC)
-    return FactPack(
-        corporate_structure=raw.corporate_structure,
-        recent_events=raw.recent_events,
-        leadership=raw.leadership,
-        fetched_at=fetched_at,
-        freshness=FactPack.derive_freshness(fetched_at),
-        confidence=raw.confidence,
-        source_citations=raw.source_citations,
-    )
-
-
-def fetch_fact_pack_sync(
-    ticker: str,
-    company_name: str,
-    sector: str | None = None,
-    industry: str | None = None,
-    *,
-    timeout: float = 15.0,
-) -> FactPack | None:
-    """Sync wrapper. Inside a running event loop, runs the coroutine via thread executor."""
-    coro = fetch_fact_pack(ticker, company_name, sector, industry, timeout=timeout)
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:

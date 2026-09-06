@@ -463,13 +463,12 @@ class TestAnalyzeHolding:
             python_rationale="Strong fundamentals.",
         )
 
-        from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+        from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
         _now = datetime.now(UTC)
         _fake_fp = FactPack(
-            corporate_structure="Apple Inc. — independent public company",
-            recent_events=[],
-            leadership="Tim Cook (CEO)",
+            asset_class="stock",
+            details=EquityFacts(business_summary="Apple Inc. — independent public company", leadership="Tim Cook (CEO)"),
             fetched_at=_now,
             freshness=FactPack.derive_freshness(_now),
             confidence=0.9,
@@ -512,19 +511,18 @@ class TestAnalyzeHolding:
         assert result.recommendation == mock_deep_analysis_result.recommendation
         # fact_pack must propagate end-to-end (qualify attaches → emit copies)
         assert result.fact_pack is not None
-        assert result.fact_pack.corporate_structure == _fake_fp.corporate_structure
+        assert result.fact_pack.details.business_summary == _fake_fp.details.business_summary
         assert enriched.ticker == "AAPL"
         assert enriched.final_grade == "A"
 
     def test_analyze_holding_returns_both_outputs(self, mocker, mock_qualitative_insights):
         """Test that analyze_holding returns both DeepAnalysisResult and EnrichedAnalysis."""
-        from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+        from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
         _now = datetime.now(UTC)
         _fake_fp = FactPack(
-            corporate_structure="Microsoft Corporation — independent public company",
-            recent_events=[],
-            leadership="Satya Nadella (CEO)",
+            asset_class="stock",
+            details=EquityFacts(business_summary="Microsoft Corporation — independent public company", leadership="Satya Nadella (CEO)"),
             fetched_at=_now,
             freshness=FactPack.derive_freshness(_now),
             confidence=0.9,

@@ -10,7 +10,7 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.flow_state_models import DeepAnalysisResult
 from finwiz.schemas.hybrid_analysis import EnrichedAnalysis, QualitativeInsights, QuantitativeAnalysis
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 
 def _make_analysis_context(ticker: str, ledger: RunLedger) -> Any:
@@ -112,9 +112,8 @@ def test_three_holding_pipeline_ok_degraded_failed(tmp_path: Path, mocker: Any) 
     from datetime import UTC, datetime
 
     fake_fact_pack = FactPack(
-        corporate_structure="Test Corp — independent.",
-        recent_events=[],
-        leadership="CEO Test",
+        asset_class="stock",
+        details=EquityFacts(business_summary="Test Corp — independent.", leadership="CEO Test"),
         fetched_at=datetime.now(UTC),
         freshness="fresh",
         confidence=0.9,
@@ -183,13 +182,13 @@ def test_pipeline_short_circuits_when_fact_pack_fails(tmp_path: Path, mocker: An
         return_value=(fake_partial, fake_quant),
     )
 
-    # Mock fact_pack to fail (no cache + Perplexity returns None)
+    # Mock fact_pack to fail (no cache + compose_fact_pack returns None)
     mocker.patch(
         "finwiz.analysis.stages.fact_pack._get_cache",
         return_value=_empty_cache(tmp_path, mocker),
     )
     mocker.patch(
-        "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+        "finwiz.analysis.stages.fact_pack.compose_fact_pack",
         return_value=None,
     )
     # fact_pack fails first, so strategic research is never reached here — mocked
@@ -228,9 +227,8 @@ def test_strategic_research_runs_for_every_asset_class(tmp_path: Path, mocker: A
     from datetime import UTC, datetime
 
     fake_fact_pack = FactPack(
-        corporate_structure="Test Corp — independent.",
-        recent_events=[],
-        leadership="CEO Test",
+        asset_class="stock",
+        details=EquityFacts(business_summary="Test Corp — independent.", leadership="CEO Test"),
         fetched_at=datetime.now(UTC),
         freshness="fresh",
         confidence=0.9,

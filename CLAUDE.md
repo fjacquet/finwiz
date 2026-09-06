@@ -125,6 +125,16 @@ SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
 # Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
 #   (full registry: config/features/definitions.py)
+# FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: they are
+#   built entirely from structured sources (yfinance, curated expense-ratio
+#   table), with no Perplexity call at all. stages/fact_pack.py calls
+#   analysis/fact_pack/composer.py's compose_fact_pack(), which consults this
+#   flag itself, narrowly, in the equity path only (analysis/fact_pack/
+#   sources/perplexity_source.py) — funds and crypto never call Perplexity
+#   regardless of the flag. Fact packs never fail a holding for want of
+#   Perplexity either way — it is a gap-filler for equity recent_events when
+#   neither SEC filings nor allowlisted wire news covered the company
+#   (measured at 6 of 67 holdings), not a dependency.
 # Investment Discovery (Phase 4) runs unconditionally; the
 # INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
 # DEEP_PORTFOLIO_ANALYSIS is NOT a feature flag and gates nothing — deep
@@ -137,6 +147,18 @@ SERPER_API_KEY=...              # Required
 
 `crewai flow kickoff` is the sole production entry point. Flow parameters are
 passed via CrewAI-native mechanisms — not via argparse.
+
+**Reading the exit code:** use `uv run kickoff`, not `crewai flow kickoff`. The
+run gate sets the process exit code (0 pass/warn, 1 fail, 2 could-not-evaluate),
+but the vendored CLI catches the child's `CalledProcessError` and returns 0
+regardless, so `crewai flow kickoff` reports success for every run. Anything
+that inspects `$?` — cron, CI, a shell `&&` — must call `uv run kickoff`.
+`make gate` re-judges a saved `output/run_summary.json`, but read its verdict
+from the printed block, not from `$?`: GNU make exits 2 whenever a recipe
+fails, so it reports 2 for FAIL and 2 for ERROR alike — collapsing the one
+distinction the exit codes exist to draw. Anything inspecting `$?` must call
+`uv run python scripts/run_gate.py output/run_summary.json` directly; that
+does return 0/1/2 truthfully.
 
 - **Programmatic:** call `FinwizFlow(state=FinwizState()).kickoff(inputs={...})`.
   Inputs populate the structured `FinwizState` Pydantic fields before any

@@ -12,6 +12,12 @@ import os
 
 os.environ.setdefault("FINWIZ_TEST_LOGS", "1")
 os.environ.setdefault("CREWAI_TOOLS_RATE_LIMIT_DISABLED", "1")
+# litellm's __init__ fetches a remote model-cost map on first import, which
+# pytest-socket blocks and litellm swallows into a WARNING rather than raising.
+# Any test that transitively imports crewai triggers it, so it is set here
+# rather than per-file. This is litellm's documented opt-out, not a widened
+# socket allow-list.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 from datetime import datetime
 from typing import Any

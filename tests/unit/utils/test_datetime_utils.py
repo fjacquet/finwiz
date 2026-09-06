@@ -129,3 +129,74 @@ class TestEnsureUtcAware:
         # 13:00 CET = 12:00 UTC
         assert result.hour == 12
         assert result.day == 15
+
+
+class TestAssumeLocalAware:
+    """The sibling of ensure_utc_aware, and the reason it exists.
+
+    Everything else in this module reads a naive datetime as UTC.
+    ``FinwizState.timestamp`` is naive *local* wall clock, so passing it to
+    ``ensure_utc_aware`` mislabels it and the resulting duration is wrong by the
+    local offset -- negative east of UTC. That is how a 23-minute run was once
+    measured as -5819 seconds and judged un-gradeable.
+    """
+
+    def test_a_naive_value_is_read_as_local_not_utc(self) -> None:
+        import os
+        import time
+        from datetime import datetime
+
+        from finwiz.infrastructure.time.datetime_utils import assume_local_aware, ensure_utc_aware
+
+        previous = os.environ.get("TZ")
+        os.environ["TZ"] = "Europe/Paris"
+        time.tzset()
+        try:
+            naive = datetime(2026, 1, 15, 12, 0, 0)  # winter: Paris is UTC+1
+
+            local = assume_local_aware(naive)
+            utc = ensure_utc_aware(naive)
+
+            assert local.utcoffset().total_seconds() == 3600
+            assert utc.utcoffset().total_seconds() == 0
+            # The whole point: the two helpers disagree by the local offset.
+            assert local != utc
+        finally:
+            if previous is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = previous
+            time.tzset()
+
+    def test_it_uses_the_offset_in_force_then_not_today(self) -> None:
+        """A span crossing a DST boundary must stay correct in absolute time."""
+        import os
+        import time
+        from datetime import datetime
+
+        from finwiz.infrastructure.time.datetime_utils import assume_local_aware
+
+        previous = os.environ.get("TZ")
+        os.environ["TZ"] = "Europe/Paris"
+        time.tzset()
+        try:
+            winter = assume_local_aware(datetime(2026, 1, 15, 12, 0, 0))
+            summer = assume_local_aware(datetime(2026, 7, 15, 12, 0, 0))
+
+            assert winter.utcoffset().total_seconds() == 3600  # CET
+            assert summer.utcoffset().total_seconds() == 7200  # CEST
+        finally:
+            if previous is None:
+                os.environ.pop("TZ", None)
+            else:
+                os.environ["TZ"] = previous
+            time.tzset()
+
+    def test_an_aware_value_is_returned_unchanged(self) -> None:
+        from datetime import UTC, datetime
+
+        from finwiz.infrastructure.time.datetime_utils import assume_local_aware
+
+        aware = datetime(2026, 1, 15, 12, 0, 0, tzinfo=UTC)
+
+        assert assume_local_aware(aware) is aware

@@ -68,7 +68,7 @@ def get_perplexity_semaphore() -> threading.BoundedSemaphore:
 
     Deliberately a ``threading`` primitive, not an ``asyncio`` one. Production
     runs one holding per ThreadPoolExecutor worker, and a worker has no running
-    loop, so ``fetch_fact_pack_sync`` calls ``asyncio.run`` -- a *fresh event
+    loop, so ``_run_coroutine_sync`` calls ``asyncio.run`` -- a *fresh event
     loop per holding, per thread*. An ``asyncio.Semaphore`` binds to the first
     loop that contends on it and raises ``RuntimeError`` on every other one, so
     it throttled nothing and instead failed most of the fleet (and could park a

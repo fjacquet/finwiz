@@ -7,18 +7,18 @@ from pathlib import Path
 from typing import Any
 
 from finwiz.cache.fact_pack_cache import FactPackCache
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 from scripts.invalidate_fact_pack import main
 
 
 def _seed(tmp_path: Path) -> FactPackCache:
     cache = FactPackCache(cache_dir=tmp_path)
+    fetched_at = datetime.now(UTC)
     fp = FactPack(
-        corporate_structure="x",
-        recent_events=[],
-        leadership="x",
-        fetched_at=datetime.now(UTC),
-        freshness="fresh",
+        asset_class="stock",
+        details=EquityFacts(business_summary="x", leadership="x", recent_events=[], events_from_filings=False),
+        fetched_at=fetched_at,
+        freshness=FactPack.derive_freshness(fetched_at),
         confidence=0.5,
         source_citations=[],
     )

@@ -11,6 +11,7 @@ Tests cover:
 """
 
 import tempfile
+import threading
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -473,8 +474,10 @@ class TestBacktestingEngine:
         assert backtesting_engine.config is not None
         assert backtesting_engine.data_manager is not None
         assert backtesting_engine.logger is not None
-        assert backtesting_engine.cerebro is None  # Not initialized until backtest runs
-        assert backtesting_engine.results == []
+        # The engine holds no per-run state: a backtest's cerebro is local to the
+        # call so concurrent backtests on the shared singleton cannot collide.
+        assert not hasattr(backtesting_engine, "cerebro")
+        assert not hasattr(backtesting_engine, "results")
 
     def test_should_run_strategy_backtest_successfully(self, sample_ohlcv_data, mocker):
         """Test successful strategy backtesting."""
@@ -768,7 +771,76 @@ class TestBacktestingEngine:
     def test_should_handle_plot_results_without_backtest(self, backtesting_engine):
         """Test plotting results when no backtest has been run."""
         # Act & Assert - should not raise exception
-        backtesting_engine.plot_results()  # Should log warning but not raise exception
+        backtesting_engine.plot_results(None)  # Should log warning but not raise exception
+
+
+class TestConcurrentBacktestsOnOneEngine:
+    """The engine is a process-wide singleton and holdings are analysed concurrently.
+
+    Before the fix, ``run_strategy_backtest`` stored its cerebro on ``self``, so one
+    symbol's ``self.cerebro = setup_cerebro(...)`` could land between another
+    symbol's ``adddata()`` and ``run()``. The second run then executed a cerebro
+    carrying both feeds and died with ``IndexError: index N is out of bounds for
+    axis 0 with size N`` — a silently lost backtest for that holding.
+    """
+
+    @staticmethod
+    def _ohlcv(bars: int) -> pd.DataFrame:
+        """Deterministic OHLCV long enough to clear the strategy's warm-up."""
+        dates = pd.date_range(start="2023-01-01", periods=bars, freq="D")
+        closes = [100.0 + (i % 7) for i in range(bars)]
+        return pd.DataFrame(
+            {
+                "Open": closes,
+                "High": [c + 1.0 for c in closes],
+                "Low": [c - 1.0 for c in closes],
+                "Close": closes,
+                "Volume": [1_000_000] * bars,
+            },
+            index=dates,
+        )
+
+    def test_concurrent_backtests_do_not_collide(self, mocker):
+        """Eight threads sharing one engine must each get their own result."""
+        engine = BacktestingEngine(BacktestConfig(initial_capital=100000.0, commission_pct=0.001))
+
+        # Each caller gets its own frame: backtrader wraps `dataname` without copying,
+        # so sharing one DataFrame would confound a real collision with a pandas one.
+        mock_data_manager = mocker.MagicMock()
+        mock_data_manager.fetch_historical_data.side_effect = lambda *a, **kw: self._ohlcv(120)
+        engine.data_manager = mock_data_manager
+
+        threads_count = 8
+        params = {"short_period": 5, "long_period": 20}
+        start_date, end_date = datetime(2023, 1, 1), datetime(2023, 4, 30)
+
+        # Release every thread at once so the window between adddata() and run()
+        # actually overlaps; staggered starts hide the defect (a cold cache used to).
+        barrier = threading.Barrier(threads_count)
+        outcomes: list[object] = [None] * threads_count
+
+        def run_one(slot: int) -> None:
+            barrier.wait()
+            try:
+                outcomes[slot] = engine.run_strategy_backtest(
+                    SimpleMovingAverageStrategy,
+                    f"SYM{slot}",
+                    start_date,
+                    end_date,
+                    params,
+                )
+            except Exception as exc:  # recorded rather than raised; asserted on below
+                outcomes[slot] = exc
+
+        threads = [threading.Thread(target=run_one, args=(i,)) for i in range(threads_count)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        failures = [outcome for outcome in outcomes if not isinstance(outcome, BacktestResult)]
+        assert failures == [], f"concurrent backtests lost {len(failures)} of {threads_count}: {failures}"
+        assert {outcome.symbol for outcome in outcomes} == {f"SYM{i}" for i in range(threads_count)}
 
 
 class TestGlobalBacktestingEngine:

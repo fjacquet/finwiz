@@ -106,7 +106,7 @@ agentops.log
 # =============================================================================
 output/
 output.old/
-/data/
+/data
 /cache/
 db/
 search/indexed/

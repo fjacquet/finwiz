@@ -86,9 +86,14 @@ class BacktestingEngine:
 
         self.performance_analyzer = BacktestingPerformanceAnalyzer(self.data_manager, self.config)
 
-        # Initialize Backtrader cerebro
-        self.cerebro = None
-        self.results: list[Any] = []
+        # No per-run state lives on the engine. `get_backtesting_engine()` hands the
+        # SAME instance to every caller, and holdings are analysed concurrently, so
+        # anything a backtest stored on `self` would be read by another symbol's run.
+        # That is exactly what `self.cerebro` used to do: thread A's
+        # `self.cerebro = setup_cerebro(...)` landed between thread B's `adddata()`
+        # and `run()`, so B ran a cerebro carrying A's feed and analysers and died on
+        # `IndexError: index 251 is out of bounds for axis 0 with size 251` — silently
+        # losing B's backtest. Keep every run's mutable state local to the call.
 
     def run_strategy_backtest(
         self,
@@ -121,12 +126,13 @@ class BacktestingEngine:
         """
         self.logger.info(f"Starting backtest for {strategy_class.__name__} on {symbol}")
 
-        # Initialize Cerebro
-        self.cerebro = setup_cerebro(self.config)
+        # Initialize Cerebro. Local by design -- see __init__ on why this must not
+        # be stored on the shared engine instance.
+        cerebro = setup_cerebro(self.config)
 
         # Add strategy with parameters
         strategy_params = strategy_params or {}
-        self.cerebro.addstrategy(strategy_class, **strategy_params)
+        cerebro.addstrategy(strategy_class, **strategy_params)
 
         # Fetch and add data
         try:
@@ -150,22 +156,22 @@ class BacktestingEngine:
 
             # Convert to Backtrader data feed
             bt_data = create_backtrader_datafeed(data, symbol)
-            self.cerebro.adddata(bt_data)
+            cerebro.adddata(bt_data)
 
         except Exception as e:
             self.logger.error(f"Error loading data for {symbol}: {e}")
             raise
 
         # Add analyzers for performance metrics
-        self.performance_analyzer.add_analyzers(self.cerebro)
+        self.performance_analyzer.add_analyzers(cerebro)
 
         # Run backtest
         self.logger.info(f"Running backtest from {start_date} to {end_date}")
-        initial_value = self.cerebro.broker.getvalue()
+        initial_value = cerebro.broker.getvalue()
 
         try:
-            results = self.cerebro.run()
-            final_value = self.cerebro.broker.getvalue()
+            results = cerebro.run()
+            final_value = cerebro.broker.getvalue()
 
             # Extract strategy instance
             strategy_instance = results[0]
@@ -175,9 +181,10 @@ class BacktestingEngine:
             #
             # Log the traceback, not just the message. The 2026-09-05 run lost
             # three holdings to `index 252 is out of bounds for axis 0 with
-            # size 252` raised somewhere inside cerebro.run(), and the bare
-            # message names neither the frame nor the array — the failure could
-            # not be reproduced afterwards from the log alone.
+            # size 252` raised somewhere inside cerebro.run(); the bare message
+            # names neither the frame nor the array. That traceback is what
+            # identified the shared-cerebro race (see __init__), so keep it —
+            # the same class of failure would otherwise be invisible again.
             self.logger.exception(f"Error during backtest execution: {e}")
             raise
 
@@ -263,15 +270,19 @@ class BacktestingEngine:
 
         return results
 
-    def plot_results(self, save_path: str | None = None) -> None:
+    def plot_results(self, cerebro: Any, save_path: str | None = None) -> None:
         """
         Plot backtesting results.
 
         Args:
+            cerebro: The Cerebro instance to plot, as returned by the caller's own
+                backtest. Passed in rather than read off ``self`` so that plotting
+                one symbol can never render another symbol's concurrent run.
+                ``None`` logs a warning and returns.
             save_path: Optional path to save the plot
 
         """
-        self.performance_analyzer.plot_results(self.cerebro, save_path)
+        self.performance_analyzer.plot_results(cerebro, save_path)
 
 
 # Global backtesting engine instance

@@ -81,3 +81,24 @@ def ensure_utc_aware(dt: datetime) -> datetime:
     else:
         # Aware datetime - convert to UTC
         return dt.astimezone(UTC)
+
+
+def assume_local_aware(dt: datetime) -> datetime:
+    """Make a datetime aware by reading a naive value as **local** wall clock.
+
+    This is the sibling of :func:`ensure_utc_aware`, and the difference between
+    them is the whole point of it existing. Everything else in this module
+    follows the convention "naive means UTC". One value in the codebase does
+    not: ``FinwizState.timestamp`` is written by ``datetime.now().strftime(...)``
+    (``flow_state_models.py``), so its naive value means *local* time.
+
+    Passing that stamp to :func:`ensure_utc_aware` silently mislabels it as UTC.
+    Subtracting the result from a real UTC instant then yields a duration wrong
+    by the local offset -- negative anywhere east of UTC, which is how a 23
+    minute run was once measured as -5819 seconds and judged un-gradeable.
+
+    A naive value is given the offset that was in force *at that moment*, not
+    today's, so a span crossing a DST boundary is still correct in absolute
+    time. An aware value is returned unchanged.
+    """
+    return dt.astimezone() if dt.tzinfo is None else dt

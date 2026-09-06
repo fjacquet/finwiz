@@ -11,12 +11,20 @@ TASKS_YAML = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
 
 def test_tasks_yaml_includes_fact_pack_section() -> None:
     raw = TASKS_YAML.read_text(encoding="utf-8")
-    # The FACT PACK block must mention the 5 placeholders we render
-    assert "{corporate_structure}" in raw
-    assert "{recent_events}" in raw
-    assert "{leadership}" in raw
-    assert "{fact_pack_freshness}" in raw
-    assert "{fact_pack_confidence}" in raw
+    # The FACT PACK block is rendered by finwiz.analysis.fact_pack.render as one
+    # pre-labeled block, so the prompt template carries a single placeholder for it.
+    assert "{fact_pack_block}" in raw
+    assert "FACT PACK" in raw
+
+
+def test_tasks_yaml_does_not_claim_perplexity_verification() -> None:
+    """The v5.2 fact pack is sourced from yfinance/SEC/news, not Perplexity.
+
+    Claiming "vérifié via Perplexity" in the prompt was false under the
+    per-asset-class design and must not reappear.
+    """
+    raw = TASKS_YAML.read_text(encoding="utf-8")
+    assert "vérifié via Perplexity" not in raw
 
 
 def test_tasks_yaml_contains_anti_hallucination_rule() -> None:

@@ -175,7 +175,7 @@ def test_throttle_is_a_loop_agnostic_process_singleton():
     # an asyncio primitive binds to the first event loop that contends on it and
     # raises RuntimeError for every other one. Production runs one holding per
     # worker thread, each on its own fresh loop (deep_analysis_orchestrator ->
-    # run_in_executor -> fetch_fact_pack_sync -> asyncio.run), so the throttle must
+    # run_in_executor -> _run_coroutine_sync -> asyncio.run), so the throttle must
     # be a plain threading primitive that belongs to no loop at all.
     assert get_perplexity_semaphore() is get_perplexity_semaphore()
     assert isinstance(get_perplexity_semaphore(), threading.BoundedSemaphore)
@@ -186,7 +186,7 @@ def test_throttle_caps_concurrent_calls_across_independent_event_loops(mocker, m
 
     This is the production topology at production numbers: the deep-analysis
     orchestrator hands each holding to a ThreadPoolExecutor worker, the worker has
-    no running loop, so ``fetch_fact_pack_sync`` takes its bare ``asyncio.run``
+    no running loop, so ``_run_coroutine_sync`` takes its bare ``asyncio.run``
     branch -- a fresh event loop per holding, per thread. A loop-bound throttle
     fails every thread but the first with a swallowed ``RuntimeError`` (which the
     wrapper logs as an attempt failure and turns into a ``None`` result) and can

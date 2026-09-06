@@ -5,6 +5,7 @@ Tests report consolidation, HTML generation, and export path management.
 """
 
 import json
+from datetime import UTC, datetime
 
 import pytest
 from pytest import approx
@@ -516,11 +517,19 @@ class TestHoldingsInsightsExtraction:
             "fundamental_context": {"growth_drivers": ["Driver 1", "Driver 2", "Driver 3"], "competitive_positioning": "Leader"},
             "contextual_risks": {"regulatory_risks": ["Reg risk"], "competitive_risks": ["Comp risk"], "operational_risks": []},
             "fact_pack": {
-                "corporate_structure": "Single entity.",
-                "recent_events": ["E1", "E2", "E3", "E4"],
-                "leadership": "CEO X.",
+                "asset_class": "stock",
+                "details": {
+                    "kind": "equity",
+                    "business_summary": "Single entity.",
+                    "leadership": "CEO X.",
+                    "recent_events": ["E1", "E2", "E3", "E4"],
+                    "events_from_filings": False,
+                },
+                "fetched_at": datetime.now(UTC).isoformat(),
                 "freshness": "fresh",
+                "confidence": 0.9,
                 "source_citations": ["https://a.com"],
+                "sources_used": [],
             },
         }
         self._write_enriched(tmp_path / "output" / "enriched" / "default" / "stock", "AAPL", qualitative)
@@ -537,7 +546,19 @@ class TestHoldingsInsightsExtraction:
         assert card["growth_drivers"] == ["Driver 1", "Driver 2"]  # capped at 2
         assert card["immediate_actions"] == ["Buy now", "Watch earnings"]  # capped at 2
         assert card["key_risks"] == ["Reg risk", "Comp risk"]  # operational empty → omitted
-        assert card["fact_pack"]["recent_events"] == ["E1", "E2", "E3"]  # capped at 3
+        # fact_pack is now rendered once via finwiz.analysis.fact_pack.render.to_rows,
+        # not re-distilled here with its own truncation rules.
+        rows = dict(card["fact_pack"]["rows"])
+        assert rows["Structure"] == "Single entity."
+        assert rows["Direction"] == "CEO X."
+        # All 4 fixture events must survive uncapped -- proves the old
+        # report-side cap-at-3 truncation is gone (to_rows has no cap of its
+        # own; only the schema's max_length=10 bounds this). A list-shaped
+        # value, not a newline-joined string with a "- " marker per line --
+        # see the render.py value-contract fix.
+        assert rows["Événements récents (presse)"] == ["E1", "E2", "E3", "E4"]
+        assert card["fact_pack"]["freshness"] == "fresh"
+        assert card["fact_pack"]["source_citations"] == ["https://a.com"]
         assert card["report_link"] == "stock/AAPL_report.html"
         assert card["grade"] == "A"
 

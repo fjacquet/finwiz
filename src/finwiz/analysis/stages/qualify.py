@@ -47,7 +47,7 @@ class _QualitativeInsightsRaw(BaseModel):
     that produced the 2026-04-28 LLM/Pydantic thrash:
 
     * ``fact_pack`` is dropped — Python fetches verified facts via
-      :mod:`finwiz.analysis.fact_pack_research` and overlays them on
+      :mod:`finwiz.analysis.fact_pack` and overlays them on
       promotion. The LLM never has to satisfy ``FactPack``'s freshness
       ``model_validator`` or its 200/1000-char string caps.
     * ``analysis_timestamp`` is dropped — Python sets it on promotion.

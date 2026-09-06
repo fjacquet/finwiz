@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from finwiz.analysis.fact_pack_research import fetch_fact_pack_sync
+from finwiz.analysis.fact_pack import compose_fact_pack
 from finwiz.analysis.stages._resilience import StageContext, TransientStageError, stage
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
@@ -37,6 +37,7 @@ def _fact_pack_inner(
     company_name: str,
     sector: str | None,
     industry: str | None,
+    asset_class: str,
 ) -> FactPack:
     """Fact pack lookup with cache + live-fetch fallback.
 
@@ -46,7 +47,9 @@ def _fact_pack_inner(
            live fetch succeeds → cache.put(new); return new (freshness=fresh)
            live fetch fails    → return cached (freshness=stale)
       3. Cache miss:
-           live fetch succeeds → cache.put(new); return new
+           live fetch succeeds (structured sources, plus Perplexity gap-fill
+             for equities with neither filings nor allowlisted news) →
+             cache.put(new); return new
            live fetch fails    → raise TransientStageError → @stage retries once, then records FAILED
 
     The freshness label on the returned payload is the only signal — the stage
@@ -59,7 +62,7 @@ def _fact_pack_inner(
         return cached
 
     # Try live fetch (cache stale or miss)
-    fetched = fetch_fact_pack_sync(ticker, company_name, sector, industry)
+    fetched = compose_fact_pack(ticker, company_name, sector, industry, asset_class)
     if fetched is not None:
         cache.put(ticker, fetched)
         logger.info(f"fact_pack fetched for {ticker} (freshness={fetched.freshness})")
@@ -73,7 +76,7 @@ def _fact_pack_inner(
     # No cache and no live data — TransientStageError (not plain RuntimeError) so the
     # @stage decorator's declared retry can actually reach this failure; see
     # _resilience._is_transient. Still recorded as FAILED once retries are exhausted.
-    raise TransientStageError(f"fact_pack unavailable for {ticker}: no cache and Perplexity fetch failed")
+    raise TransientStageError(f"fact_pack unavailable for {ticker}: no cache and live fetch failed")
 
 
 @stage(name="fact_pack", timeout_s=60, retries=1)
@@ -87,4 +90,5 @@ def fact_pack(ctx: StageContext, raw_data: dict) -> FactPack:
     company_name = analysis_ctx.company_name
     sector = getattr(analysis_ctx, "sector", None) or raw_data.get("sector")
     industry = getattr(analysis_ctx, "industry", None) or raw_data.get("industry")
-    return _fact_pack_inner(ticker, company_name, sector, industry)
+    asset_class = analysis_ctx.asset_class
+    return _fact_pack_inner(ticker, company_name, sector, industry, asset_class)

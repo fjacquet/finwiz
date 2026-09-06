@@ -3,14 +3,19 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections.abc import Iterator
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+from finwiz.analysis.fact_pack.render import to_rows
+from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 if TYPE_CHECKING:
     from finwiz.flow_state import FinwizState
+
+logger = logging.getLogger(__name__)
 
 
 class ReportEnrichmentMixin:
@@ -326,13 +331,24 @@ class ReportEnrichmentMixin:
         }
 
         if fact:
-            distilled["fact_pack"] = {
-                "corporate_structure": fact.get("corporate_structure", ""),
-                "recent_events": (fact.get("recent_events") or [])[:3],
-                "leadership": fact.get("leadership", ""),
-                "freshness": fact.get("freshness", ""),
-                "source_citations": (fact.get("source_citations") or [])[:5],
-            }
+            # `fact` is the raw serialized FactPack from the qualitative payload
+            # (asset_class/details, not the old flat corporate_structure/leadership/
+            # recent_events shape). Re-validate and render through the same
+            # to_rows() the prompt uses, so the report never invents its own
+            # labels. A malformed cached pack degrades to no fact-pack block,
+            # never a traceback (Task 6/7: cached *_enriched.json can predate
+            # this schema).
+            try:
+                rows = [list(r) for r in to_rows(FactPack.model_validate(fact))]
+            except Exception as e:
+                logger.warning(f"Skipping fact_pack card block: could not render cached pack: {e}")
+                rows = []
+            if rows:
+                distilled["fact_pack"] = {
+                    "rows": rows,
+                    "freshness": fact.get("freshness", ""),
+                    "source_citations": (fact.get("source_citations") or [])[:5],
+                }
 
         # Drop a card that distilled to nothing meaningful (no thesis, no facts, no recommendation signal).
         has_signal = any(distilled.get(k) for k in ("thesis", "bull_case", "bear_case", "moat", "top_sec_risk", "competitive_positioning")) or "fact_pack" in distilled

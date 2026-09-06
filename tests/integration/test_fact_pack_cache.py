@@ -1,4 +1,13 @@
-"""Cost regression: verify cold/warm/stale Perplexity call counts."""
+"""Cost regression: verify cold/warm/stale live-fetch call counts.
+
+Note the cost model this pins: `compose_fact_pack` (Task 8) builds a pack from
+free structured sources (yfinance, a curated expense-ratio table) and calls
+Perplexity only as a narrow gap-fill for equities with neither SEC filings nor
+allowlisted wire news -- most holdings cost nothing regardless of cache state.
+What this file actually regression-tests is unchanged by that: the 7-day cache
+must still amortize the live-fetch call itself (whatever it costs) across
+kickoffs -- cold run calls it once per holding, warm run calls it zero times.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +18,7 @@ from typing import Any
 import pytest
 
 from finwiz.cache.fact_pack_cache import FactPackCache
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 pytestmark = pytest.mark.integration
 
@@ -17,9 +26,8 @@ pytestmark = pytest.mark.integration
 def _build_fp(days_old: float = 0) -> FactPack:
     fetched = datetime.now(UTC) - timedelta(days=days_old)
     return FactPack(
-        corporate_structure="x",
-        recent_events=[],
-        leadership="x",
+        asset_class="stock",
+        details=EquityFacts(business_summary="x", leadership="x", recent_events=[]),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.5,
@@ -28,27 +36,27 @@ def _build_fp(days_old: float = 0) -> FactPack:
 
 
 class TestFactPackCacheCostRegression:
-    """The 7-day cache should amortize Perplexity costs across kickoffs."""
+    """The 7-day cache should amortize the live-fetch call across kickoffs."""
 
-    def test_cold_kickoff_calls_perplexity_per_holding(self, tmp_path: Path, mocker: Any) -> None:
-        """First run (empty cache) calls Perplexity once per holding."""
+    def test_cold_kickoff_calls_compose_fact_pack_per_holding(self, tmp_path: Path, mocker: Any) -> None:
+        """First run (empty cache) calls compose_fact_pack once per holding."""
         from finwiz.analysis.stages.fact_pack import _fact_pack_inner
 
         cache = FactPackCache(cache_dir=tmp_path / "fact_packs")
         mocker.patch("finwiz.analysis.stages.fact_pack._get_cache", return_value=cache)
 
         spy = mocker.patch(
-            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            "finwiz.analysis.stages.fact_pack.compose_fact_pack",
             return_value=_build_fp(days_old=0),
         )
 
         for ticker in ("AAPL", "MSFT", "GOOG"):
-            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software")
+            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software", "stock")
 
         assert spy.call_count == 3
 
-    def test_warm_kickoff_skips_perplexity(self, tmp_path: Path, mocker: Any) -> None:
-        """Second run within 7d hits cache — zero Perplexity calls."""
+    def test_warm_kickoff_skips_compose_fact_pack(self, tmp_path: Path, mocker: Any) -> None:
+        """Second run within 7d hits cache — zero live-fetch calls."""
         from finwiz.analysis.stages.fact_pack import _fact_pack_inner
 
         cache = FactPackCache(cache_dir=tmp_path / "fact_packs")
@@ -58,12 +66,12 @@ class TestFactPackCacheCostRegression:
 
         mocker.patch("finwiz.analysis.stages.fact_pack._get_cache", return_value=cache)
         spy = mocker.patch(
-            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            "finwiz.analysis.stages.fact_pack.compose_fact_pack",
             return_value=_build_fp(days_old=0),
         )
 
         for ticker in ("AAPL", "MSFT", "GOOG"):
-            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software")
+            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software", "stock")
 
         assert spy.call_count == 0  # All from cache
 
@@ -78,11 +86,11 @@ class TestFactPackCacheCostRegression:
 
         mocker.patch("finwiz.analysis.stages.fact_pack._get_cache", return_value=cache)
         spy = mocker.patch(
-            "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+            "finwiz.analysis.stages.fact_pack.compose_fact_pack",
             return_value=_build_fp(days_old=0),
         )
 
         for ticker in ("AAPL", "MSFT", "GOOG"):
-            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software")
+            _fact_pack_inner(ticker, f"{ticker} Inc.", "Tech", "Software", "stock")
 
         assert spy.call_count == 3  # Stale → refresh attempted

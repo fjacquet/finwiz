@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Fact packs are built from structured data, not an LLM.** For equities:
+  business summaries, officer lists, and for US listings and ADRs the SEC filing
+  index with EDGAR links. Perplexity is called only for fields those sources
+  leave empty, so a quota outage costs a few event lists instead of every
+  holding in the run.
+- **Each asset class now has its own fact pack shape.** A fund reports its
+  issuer, legal form, ongoing charges and top holdings; a crypto asset reports
+  its supply and whether that supply is capped. Neither is asked who its chief
+  executive is.
+- **`FactPack.confidence` is Python-derived and scored per class**, so a
+  complete fund reaches 1.00 rather than being capped by a field it cannot have.
+- **The fact-pack cache is invalidated once** by this change. Rebuilding it is
+  free, which it was not when Perplexity was the only source. The first run
+  after invalidation reports `fact_pack_stale` at 0% because every pack is
+  new — expected and self-correcting, but it means the run gate's staleness
+  signal carries no information on that one run.
+- **List-shaped facts render as lists.** A fund's top holdings, a holding's
+  recent events and a fund's allocation buckets are now nested under their own
+  label in both the report and the qualitative prompt. Previously they were
+  flattened onto the same level as the labels themselves, so inside the block
+  the prompt calls authoritative, a fund's six holdings read as six more facts
+  *about* the fund.
+- **The per-holding report's fact-pack "Événements récents" block no longer
+  truncates to 3 items** — it now shows every event the fact pack carries
+  (bounded by the schema's `max_length=10`), consistent with the same values
+  the qualitative prompt sees.
+
 ## [5.14.1] - 2026-09-05
 
 A reporting correctness fix, a CI hardening, and a dependency sweep that moves

@@ -20,7 +20,7 @@ from typing import Any
 import pytest
 
 from finwiz.analysis._helpers import _build_crew_inputs
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 pytestmark = pytest.mark.regression
 
@@ -52,15 +52,23 @@ EXPECTED_DELL_DIVESTITURE_PHRASES = (
 
 
 def _build_dell_fact_pack() -> FactPack:
-    """Canonical DELL fact pack with the November 2021 divestiture as ground truth."""
+    """Canonical DELL fact pack with the November 2021 divestiture as ground truth.
+
+    Migrated to the per-asset-class envelope (v5.2, Task 1): the divestiture
+    fact lives in `details.business_summary`, not a top-level
+    `corporate_structure` field the current schema no longer has.
+    """
     fetched = datetime.now(UTC)
     return FactPack(
-        corporate_structure="Dell Technologies — Independent. Divested VMware in November 2021. No remaining VMware ownership.",
-        recent_events=[
-            "Q4 FY2024 earnings",
-            "Continued AI server demand",
-        ],
-        leadership="Michael Dell (Chairman & CEO since 1984), Yvonne McGill (CFO since 2023)",
+        asset_class="stock",
+        details=EquityFacts(
+            business_summary="Dell Technologies — Independent. Divested VMware in November 2021. No remaining VMware ownership.",
+            leadership="Michael Dell (Chairman & CEO since 1984), Yvonne McGill (CFO since 2023)",
+            recent_events=[
+                "Q4 FY2024 earnings",
+                "Continued AI server demand",
+            ],
+        ),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.95,
@@ -139,9 +147,15 @@ class TestDellVmwareRegression:
         for phrase in FORBIDDEN_DELL_VMWARE_PHRASES:
             assert phrase not in haystack, f"Forbidden phrase '{phrase}' leaked"
 
-        # Explicit absence indicators present
-        assert "Données non disponibles" in haystack
-        assert "unknown" in haystack
+        # Explicit absence indicator present. This is the literal
+        # `_helpers.py::_build_crew_inputs` emits for `inputs["fact_pack_block"]`
+        # when `fact_pack is None` — pinned here so a future change to that
+        # string is caught rather than silently drifting this guard's teeth out.
+        assert "Fact pack non disponible." in haystack
+        # `raw={}` is falsy, so `_build_crew_inputs` takes its `else` branch and
+        # defaults sector/industry to "Unknown" (capital U) — the second
+        # absence signal this test pins, alongside the fact-pack one above.
+        assert "Unknown" in haystack
 
     def test_phrase_library_self_check(self) -> None:
         """Sanity: the phrase library is non-empty and has >=8 entries."""

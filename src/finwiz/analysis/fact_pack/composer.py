@@ -1,0 +1,218 @@
+"""Route by declared asset class, merge fragments, build the FactPack."""
+
+from __future__ import annotations
+
+from collections.abc import Callable
+from datetime import UTC, datetime
+from typing import Literal, cast
+
+from finwiz.analysis.fact_pack.confidence import score
+from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, merge_fragments
+from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, perplexity_source, yfinance_source
+from finwiz.config.features.flags import is_feature_enabled
+from finwiz.discovery.ticker_utils import to_yfinance_symbol
+from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts
+from finwiz.tools.logger import get_logger
+
+logger = get_logger(__name__)
+
+# quoteType values that corroborate a declared asset class. A mismatch does not
+# change routing -- the declared value is authoritative -- it only warns. This
+# repo once classified 33 European tickers as crypto from symbol length alone
+# and nothing said a word; this is the cheap detector for that class of bug.
+_EXPECTED_QUOTE_TYPES: dict[str, frozenset[str]] = {
+    "stock": frozenset({"EQUITY"}),
+    "etf": frozenset({"ETF", "MUTUALFUND"}),
+    "crypto": frozenset({"CRYPTOCURRENCY"}),
+}
+
+# Mirrors FactPack's own Field(max_length=...) caps (schemas/hybrid_analysis/fact_pack.py).
+# Deliberately duplicated here rather than imported from fact_pack_research.py --
+# this package carries no dependency on the LLM path. A live-portfolio measurement
+# on 2026-09-06 found 19 of 36 stock summaries within 200 chars of the 2000-char
+# cap and one (NTNX, 2212 chars) already over it -- yfinance's longBusinessSummary
+# is unbounded prose, and FactPack's Field constraints raise ValidationError on
+# the first holding that crosses them. Clamping here keeps the composer's own
+# promise: every non-None outcome is a valid FactPack, however thin.
+_CORPORATE_STRUCTURE_MAX_CHARS = 2000
+_LEADERSHIP_MAX_CHARS = 1000
+_MAX_CITATIONS = 20
+
+# Marks a pack the try/except backstop below built, not a legitimately thin one.
+# Packs are cached to disk and read back weeks later; by then the ERROR log line
+# that flagged the original failure is long gone, and a fallback pack is
+# byte-identical in content to a holding that genuinely has no facts available.
+_SCHEMA_FALLBACK_SOURCE = "composer.schema_fallback"
+
+# A fund with no identifiable issuer is thin, not fatal -- only an unresolvable
+# ticker halts a holding outright.
+_PLACEHOLDER_FUND = FundFacts(issuer=PLACEHOLDER)
+
+# The exception-fallback pack must carry a details shape that matches the
+# declared asset_class (FactPack validates the pairing) -- a hardcoded
+# EquityFacts() fallback labelled asset_class="etf" would build a pack that
+# contradicts itself and would raise on construction instead of degrading.
+_FALLBACK_DETAILS: dict[str, Callable[[], EquityFacts | FundFacts | CryptoFacts]] = {
+    "stock": lambda: EquityFacts(business_summary=PLACEHOLDER, leadership=PLACEHOLDER),
+    "etf": lambda: FundFacts(issuer=PLACEHOLDER),
+    "crypto": lambda: CryptoFacts(description=PLACEHOLDER),
+}
+
+
+def _describe(ticker: str, query_symbol: str) -> str:
+    """Holding identity for log lines, with the query form when it differs.
+
+    `BTC` alone is ambiguous about what was actually fetched -- yfinance's
+    `BTC` is a Grayscale trust ETF, not the coin -- so a log line names both
+    once they diverge.
+    """
+    return ticker if ticker == query_symbol else f"{ticker} (query={query_symbol})"
+
+
+def _equity_details(
+    query_symbol: str, info: dict, ticker: str, company_name: str, sector: str | None, industry: str | None
+) -> tuple[EquityFacts, tuple[str, ...], tuple[str, ...]]:
+    """The equity path keeps fragments: three sources genuinely merge here.
+
+    Perplexity is consulted only when filings and news both left
+    `recent_events` empty -- funds and crypto never reach this function, so
+    they never ask. Measured at 6 of 67 holdings. A failure here (quota,
+    timeout, malformed response) must never take down an otherwise-complete
+    pack; `fetch_missing_events` itself never raises, but the call is still
+    wrapped as a second line of defence.
+    """
+    fragment = merge_fragments(
+        yfinance_source.equity_fragment(query_symbol, info),
+        yfinance_source.filing_events(query_symbol),
+        yfinance_source.news_events(query_symbol),
+    )
+    recent_events = fragment.recent_events
+    events_from_filings = fragment.events_from_filings
+    sources = fragment.sources
+    if not recent_events and is_feature_enabled("perplexity_research"):
+        try:
+            # The bare ticker, not query_symbol -- this is a research prompt
+            # about the company, not a yfinance query.
+            gap_filled = perplexity_source.fetch_missing_events(ticker, company_name, sector, industry)
+        except Exception as e:
+            logger.warning(f"fact_pack: {ticker} gap-fill failed: {e}")
+            gap_filled = ()
+        if gap_filled:
+            recent_events = gap_filled
+            events_from_filings = False
+            sources = (*sources, "perplexity.gap_fill")
+
+    facts = EquityFacts(
+        business_summary=_clamp_text(ticker, "business_summary", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS),
+        leadership=_clamp_text(ticker, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS),
+        recent_events=list(recent_events),
+        events_from_filings=events_from_filings,
+    )
+    return facts, fragment.citations, sources
+
+
+def _clamp_text(ticker: str, field: str, value: str, max_chars: int) -> str:
+    """Truncate to the schema's own cap rather than let FactPack raise on it."""
+    if len(value) <= max_chars:
+        return value
+    logger.warning(f"fact_pack: {ticker} {field} truncated from {len(value)} to {max_chars} chars")
+    return value[:max_chars].rstrip()
+
+
+def _clamp_citations(ticker: str, citations: tuple[str, ...]) -> list[str]:
+    """Cap accumulated citations to the schema's max_length.
+
+    merge_fragments accumulates citations across every source rather than
+    first-non-empty-wins, so an ETF (identity quote page + up to 10 filing URLs
+    + up to 10 news URLs) can exceed FactPack's 20-URL cap by one.
+    """
+    if len(citations) <= _MAX_CITATIONS:
+        return list(citations)
+    logger.warning(f"fact_pack: {ticker} source_citations truncated from {len(citations)} to {_MAX_CITATIONS}")
+    return list(citations[:_MAX_CITATIONS])
+
+
+def compose_fact_pack(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack | None:
+    """Build a pack from free structured sources.
+
+    Returns None ONLY when the ticker resolves to nothing. Every other outcome is
+    a pack, however thin -- one provider must never be able to halt a holding,
+    which is exactly what happened on 2026-09-06 when a quota error took all 64.
+    """
+    # Normalise here, once, so every downstream use -- routing, the main
+    # FactPack construction, the exception backstop, the Literal cast, and
+    # the asset_class/details.kind pairing validator -- only ever sees one of
+    # the three enumerated classes. An unrecognised value used to reach the
+    # backstop's _FALLBACK_DETAILS[asset_class] lookup unnormalised and raise
+    # KeyError from inside the one code path whose entire purpose is that a
+    # holding never dies. Falling back to "stock" preserves the behaviour
+    # routing's `else` branch already gave an unknown class; this just says
+    # so in a log line instead of doing it silently.
+    if asset_class not in _FALLBACK_DETAILS:
+        logger.warning(f"fact_pack: {ticker} has unknown asset_class={asset_class!r}; routing as 'stock'")
+        asset_class = "stock"
+
+    # Domain-model tickers stay bare (BTC, AAVE); yfinance needs the query form
+    # (BTC-USD). Without this, yfinance's own `BTC` resolves to a Grayscale
+    # trust ETF, not the coin -- silently fetching facts about the wrong
+    # instrument rather than failing loudly. Derived once and threaded through
+    # every yfinance call below, including the ETF citation URL.
+    query_symbol = to_yfinance_symbol(ticker, asset_class)
+    identity = _describe(ticker, query_symbol)
+
+    info = yfinance_source.resolve(query_symbol)
+    if not yfinance_source.is_resolvable(info):
+        logger.warning(f"fact_pack: {identity} resolves to nothing (no quoteType); cannot build a pack")
+        return None
+
+    quote_type = info.get("quoteType")
+    expected = _EXPECTED_QUOTE_TYPES.get(asset_class)
+    if expected is not None and quote_type not in expected:
+        logger.warning(f"fact_pack: {identity} declared asset_class={asset_class!r} but yfinance reports quoteType={quote_type!r}; routing follows the declared value")
+
+    # Per-asset-class shape: funds and crypto call their builder directly (a
+    # text-shaped fragment would be a detour); equity keeps fragments, because
+    # three sources (identity, filings, news) genuinely merge there.
+    if asset_class == "etf":
+        facts, citations, sources = fund_source.fund_facts(query_symbol, info)
+        details: EquityFacts | FundFacts | CryptoFacts = facts or _PLACEHOLDER_FUND
+    elif asset_class == "crypto":
+        crypto, citations = crypto_source.crypto_facts(query_symbol, info)
+        details = crypto or CryptoFacts(description=PLACEHOLDER)
+        sources = ("yfinance.info",) if crypto else ()
+    else:
+        details, citations, sources = _equity_details(query_symbol, info, ticker, company_name, sector, industry)
+
+    fetched_at = datetime.now(UTC)
+    try:
+        return FactPack(
+            asset_class=cast(Literal["stock", "etf", "crypto"], asset_class),
+            details=details,
+            fetched_at=fetched_at,
+            freshness=FactPack.derive_freshness(fetched_at),
+            confidence=score(details, has_citation=bool(citations)),
+            source_citations=_clamp_citations(ticker, tuple(citations)),
+            sources_used=list(sources),
+        )
+    except Exception as e:
+        # Layer 1 (each source's own normalization, plus the clamps above)
+        # covers every constraint this module knows about; this is the
+        # backstop for one it doesn't. Logged at ERROR -- unlike the warnings
+        # above, this means the enumeration above is incomplete and should
+        # never fire silently. One provider must never be able to halt a
+        # holding, so the fallback is still a valid, if minimal, pack.
+        logger.error(f"fact_pack: {_describe(ticker, query_symbol)} FactPack construction failed unexpectedly: {e}", exc_info=True)
+        # A fallback pack is otherwise byte-identical to a legitimately
+        # data-free holding -- placeholders, confidence=0.0, no citations --
+        # and packs are cached to disk and read back long after this log line
+        # has scrolled away. The marker is provenance, appended alongside
+        # whatever real sources were already gathered, not instead of them.
+        return FactPack(
+            asset_class=cast(Literal["stock", "etf", "crypto"], asset_class),
+            details=_FALLBACK_DETAILS[asset_class](),
+            fetched_at=fetched_at,
+            freshness=FactPack.derive_freshness(fetched_at),
+            confidence=0.0,
+            source_citations=[],
+            sources_used=[*sources, _SCHEMA_FALLBACK_SOURCE],
+        )
