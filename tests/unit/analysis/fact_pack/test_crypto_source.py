@@ -98,6 +98,16 @@ class TestCryptoFacts:
         assert facts.circulating_supply is None
         assert facts.market_cap == 1604790386688.0  # unaffected by the neighbouring bad field
 
+    def test_an_infinite_field_is_treated_as_unknown_not_rendered_as_the_literal_word(self):
+        """`float("inf")` satisfies CryptoFacts's `ge=0.0` (infinity is not
+        less than zero), so before `_finite` rejected it explicitly, an
+        infinite marketCap would have been accepted and rendered downstream
+        as "Capitalisation : inf" rather than treated as missing data.
+        """
+        facts, _ = crypto_source.crypto_facts("BTC-USD", {**BTC, "marketCap": float("inf")})
+        assert facts is not None
+        assert facts.market_cap is None
+
     def test_the_construction_guard_degrades_when_the_schema_rejects_a_value(self, mocker, caplog):
         """An unanticipated schema constraint degrades to (None, ()) instead of raising."""
         mocker.patch.object(

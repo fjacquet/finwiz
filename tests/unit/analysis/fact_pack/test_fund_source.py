@@ -339,6 +339,23 @@ class TestFloatsCoercion:
     def test_a_non_dict_input_yields_an_empty_dict(self):
         assert fund_source._floats(None) == {}
 
+    def test_a_fund_with_a_nan_asset_class_keeps_the_others_end_to_end(self, mocker, info, operations, holdings):
+        """The reviewer's exact reproduction: {stocks: NaN, cash: 0.004}.
+
+        Before this fix, `asset_classes` fed straight to `dict[str, float]`
+        with no per-value bound, so a NaN survived into the cached pack --
+        and separately, render.py's `if v > 0` (False for NaN) meant the
+        fund's largest bucket vanished from the report with no log line,
+        rather than the NaN itself being caught here.
+        """
+        mocker.patch.object(
+            yfinance_source,
+            "_ticker",
+            return_value=_FakeTicker(_FakeFundsData(operations, holdings, asset_classes={"stocks": float("nan"), "cash": 0.004})),
+        )
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
+        assert facts.asset_mix == {"cash": 0.004}
+
 
 class TestFinite:
     """`_finite` is the shared NaN/inf guard every numeric accessor in this
