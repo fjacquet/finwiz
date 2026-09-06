@@ -95,9 +95,10 @@ because the probe printed it through `str()`, and the resulting wrong assumption
 
 ```python
 class FundHolding(BaseModel):
-    symbol: str          # the DataFrame index, e.g. "NVDA", "ASML.AS"
-    name: str            # "Holding Percent" column's companion "Name"
-    weight: float        # 0.0-1.0, as yfinance reports it
+    symbol: str  # the DataFrame index, e.g. "NVDA", "ASML.AS"
+    name: str  # "Holding Percent" column's companion "Name"
+    weight: float  # 0.0-1.0, as yfinance reports it
+
 
 class EquityFacts(BaseModel):
     business_summary: str
@@ -105,21 +106,23 @@ class EquityFacts(BaseModel):
     recent_events: list[str]
     events_from_filings: bool
 
+
 class FundFacts(BaseModel):
     issuer: str
     legal_type: str
     inception_year: int | None
-    expense_ratio: float | None      # 0.002 == 0.20 %
+    expense_ratio: float | None  # 0.002 == 0.20 %
     turnover: float | None
     top_holdings: list[FundHolding]  # symbol, name, weight
     asset_mix: dict[str, float]
     sector_weights: dict[str, float]
 
+
 class CryptoFacts(BaseModel):
     description: str
     launched_year: int | None
     circulating_supply: float | None
-    max_supply: float | None         # None == unknown; 0 == no cap, see `supply_is_capped`
+    max_supply: float | None  # None == unknown; 0 == no cap, see `supply_is_capped`
     supply_is_capped: bool
     market_cap: float | None
     volume_24h_market_cap_pct: float | None

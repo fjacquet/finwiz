@@ -46,6 +46,7 @@ Tests mirror the source tree under `tests/unit/analysis/fact_pack/`.
 ### Task 1: Fragment type and schema change
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/__init__.py`
 - Create: `src/finwiz/analysis/fact_pack/fragment.py`
 - Modify: `src/finwiz/schemas/hybrid_analysis/fact_pack.py`
@@ -53,6 +54,7 @@ Tests mirror the source tree under `tests/unit/analysis/fact_pack/`.
 - Test: `tests/unit/schemas/test_fact_pack.py` (append)
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `FactPackFragment` (frozen dataclass, fields `corporate_structure: str | None`, `leadership: str | None`, `recent_events: tuple[str, ...]`, `citations: tuple[str, ...]`, `sources: tuple[str, ...]`, `events_from_filings: bool`); `merge_fragments(*fragments: FactPackFragment) -> FactPackFragment`; `derive_confidence(fragment: FactPackFragment) -> float`; `FactPack.sources_used: list[str]`.
 
@@ -323,15 +325,18 @@ git commit -m "feat(fact-pack): fragment type, merge rule, and completeness-deri
 ### Task 2: yfinance identity sources
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/sources/__init__.py`
 - Create: `src/finwiz/analysis/fact_pack/sources/yfinance_source.py`
 - Test: `tests/unit/analysis/fact_pack/test_yfinance_source.py`
 
 **Interfaces:**
+
 - Consumes: `FactPackFragment` from Task 1.
 - Produces: `resolve(ticker: str) -> dict[str, Any]`; `is_resolvable(info: dict[str, Any]) -> bool`; `equity_fragment(info: dict[str, Any]) -> FactPackFragment`; `etf_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment`; `crypto_fragment(info: dict[str, Any]) -> FactPackFragment`; module-level seam `_ticker(symbol: str) -> Any`.
 
 **Field shapes**, verified against live responses on 2026-09-06 — do not re-derive:
+
 - `info["quoteType"]` is `"EQUITY"` / `"ETF"` / `"CRYPTOCURRENCY"`; an unresolvable ticker returns a dict of exactly one key with `quoteType` absent.
 - `info["companyOfficers"]` is a list of dicts with `name`, `title`, `age`, `fiscalYear`.
 - ETF `info` carries `fundFamily`, `legalType`, `longName`, `fundInceptionDate` (epoch seconds int), and `category` which may be `None`.
@@ -566,14 +571,17 @@ git commit -m "feat(fact-pack): identity fragments from yfinance info"
 ### Task 3: yfinance event sources
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/fact_pack/sources/yfinance_source.py`
 - Test: `tests/unit/analysis/fact_pack/test_yfinance_events.py`
 
 **Interfaces:**
+
 - Consumes: `FactPackFragment`, `_ticker` seam from Task 2.
 - Produces: `filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment`; `news_events(ticker: str, now: datetime | None = None) -> FactPackFragment`.
 
 **Field shapes**, verified 2026-09-06:
+
 - `Ticker.sec_filings` is a list of dicts with `date` (`"2026-09-01"`), `type` (`"8-K/A"`), `title` (`"Corporate Changes & Voting Matters"`), `edgarUrl`. Returns `[]` for European-only listings, ETFs and crypto — and yfinance logs an internal HTTP 404 doing so.
 - `Ticker.news` is a list of `{"id": ..., "content": {...}}`; `content` has `title`, `pubDate` (`"2026-09-05T19:40:00Z"`), `provider` (`{"displayName": "Motley Fool", ...}`) and `canonicalUrl` (`{"url": ...}`).
 
@@ -838,11 +846,13 @@ git commit -m "feat(fact-pack): filing and filtered-news events from yfinance"
 ### Task 4: The composer
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/composer.py`
 - Modify: `src/finwiz/analysis/fact_pack/__init__.py`
 - Test: `tests/unit/analysis/fact_pack/test_composer.py`
 
 **Interfaces:**
+
 - Consumes: everything from Tasks 1–3.
 - Produces: `compose_fact_pack(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack | None`. Returns `None` only when the ticker is unresolvable; every other outcome is a `FactPack`.
 
@@ -903,7 +913,11 @@ class TestUnresolvable:
 class TestPackConstruction:
     def test_filings_outrank_news_for_recent_events(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)))
+        mocker.patch.object(
+            composer.yfinance_source,
+            "filing_events",
+            return_value=FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)),
+        )
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment(recent_events=("A headline",), sources=("yfinance.news",)))
 
         pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
@@ -1087,6 +1101,7 @@ git commit -m "feat(fact-pack): composer routes by declared asset class and buil
 ### Task 5: Perplexity gap-fill and the seam swap
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/sources/perplexity_source.py`
 - Modify: `src/finwiz/analysis/fact_pack/composer.py` (replace `_gap_fill`)
 - Modify: `src/finwiz/analysis/fact_pack_research.py` (`fetch_fact_pack_sync` body, new `asset_class` parameter)
@@ -1095,6 +1110,7 @@ git commit -m "feat(fact-pack): composer routes by declared asset class and buil
 - Test: `tests/unit/analysis/test_fact_pack_research.py` (update existing)
 
 **Interfaces:**
+
 - Consumes: `FactPackFragment`; the existing `perplexity_with_retry`, `_FactPackRaw` and `_SYSTEM_FR` from `fact_pack_research.py`.
 - Produces: `fetch_missing(ticker, company_name, sector, industry, missing: tuple[str, ...], timeout: float = 15.0) -> FactPackFragment`; `fetch_fact_pack_sync(ticker, company_name, sector=None, industry=None, *, asset_class="stock", timeout=15.0) -> FactPack | None`.
 
@@ -1114,7 +1130,9 @@ from finwiz.analysis.fact_pack.sources import perplexity_source
 
 @pytest.fixture
 def resolved_etf(mocker):
-    mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares", "legalType": "Exchange Traded Fund", "longName": "iShares World"})
+    mocker.patch.object(
+        composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares", "legalType": "Exchange Traded Fund", "longName": "iShares World"}
+    )
     mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
     mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
 
@@ -1130,7 +1148,11 @@ class TestGapFillIsCalledOnlyForMissingFields:
         assert fetch.call_args.args[4] == ("recent_events",)
 
     def test_a_complete_pack_never_calls_perplexity(self, mocker):
-        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones.", "companyOfficers": [{"name": "Tim Cook", "title": "CEO"}]})
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones.", "companyOfficers": [{"name": "Tim Cook", "title": "CEO"}]},
+        )
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True))
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         fetch = mocker.patch.object(perplexity_source, "fetch_missing")
@@ -1400,6 +1422,7 @@ git commit -m "feat(fact-pack): Perplexity fills only the fields structured data
 ### Task 6: Documentation
 
 **Files:**
+
 - Modify: `docs/adr/ADR-010-fact-pack-grounded-qualitative.md`
 - Modify: `CHANGELOG.md`
 - Modify: `CLAUDE.md`
@@ -1407,6 +1430,7 @@ git commit -m "feat(fact-pack): Perplexity fills only the fields structured data
 - Test: none — prose only. Verified by reading, and by the grep in Step 5.
 
 **Interfaces:**
+
 - Consumes: the behaviour built in Tasks 1–5.
 - Produces: nothing code depends on.
 
@@ -1517,6 +1541,7 @@ git commit -m "docs(fact-pack): supersede ADR-010's source decision; record the 
 **Files:** none changed. This task produces evidence.
 
 **Interfaces:**
+
 - Consumes: everything above, Task 6 included.
 - Produces: the numbers for the PR body, and proof that a Perplexity outage can no longer empty a run.
 

@@ -62,10 +62,12 @@ Probed 2026-09-06 reading raw types:
 ### Task 1: The three facts models and the envelope
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/fact_pack.py`
 - Test: `tests/unit/schemas/test_fact_pack.py`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `FundHolding`, `EquityFacts`, `FundFacts`, `CryptoFacts`, and `FactPack` carrying `asset_class: Literal["stock", "etf", "crypto"]` and `details: EquityFacts | FundFacts | CryptoFacts` discriminated on `kind`.
 
@@ -111,8 +113,24 @@ class TestPerClassDetails:
 
     def test_a_capped_and_an_uncapped_crypto_are_distinguishable(self):
         """maxSupply == 0 means 'no cap'. It is information, not absence."""
-        btc = CryptoFacts(description="Bitcoin is...", launched_year=2010, circulating_supply=20080456.0, max_supply=21000000.0, supply_is_capped=True, market_cap=1.6e12, volume_24h_market_cap_pct=0.0125)
-        eth = CryptoFacts(description="Ethereum is...", launched_year=2015, circulating_supply=122023856.0, max_supply=None, supply_is_capped=False, market_cap=4.0e11, volume_24h_market_cap_pct=0.02)
+        btc = CryptoFacts(
+            description="Bitcoin is...",
+            launched_year=2010,
+            circulating_supply=20080456.0,
+            max_supply=21000000.0,
+            supply_is_capped=True,
+            market_cap=1.6e12,
+            volume_24h_market_cap_pct=0.0125,
+        )
+        eth = CryptoFacts(
+            description="Ethereum is...",
+            launched_year=2015,
+            circulating_supply=122023856.0,
+            max_supply=None,
+            supply_is_capped=False,
+            market_cap=4.0e11,
+            volume_24h_market_cap_pct=0.02,
+        )
 
         assert btc.supply_is_capped is True and btc.max_supply == 21000000.0
         assert eth.supply_is_capped is False and eth.max_supply is None
@@ -234,10 +252,12 @@ git commit -m "feat(fact-pack): three per-class facts models behind one envelope
 ### Task 2: Per-class confidence
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/confidence.py`
 - Test: `tests/unit/analysis/fact_pack/test_confidence.py`
 
 **Interfaces:**
+
 - Consumes: `EquityFacts`, `FundFacts`, `CryptoFacts` from Task 1; `PLACEHOLDER` from `fact_pack.fragment`.
 - Produces: `score(details: EquityFacts | FundFacts | CryptoFacts, has_citation: bool) -> float`.
 
@@ -433,10 +453,12 @@ git commit -m "feat(fact-pack): score confidence against each class's own fields
 ### Task 3: The fund source
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/sources/fund_source.py`
 - Test: `tests/unit/analysis/fact_pack/test_fund_source.py`
 
 **Interfaces:**
+
 - Consumes: `FundFacts`, `FundHolding` from Task 1; `yfinance_source._ticker` as the network seam.
 - Produces: `fund_facts(query_symbol: str, info: dict[str, Any]) -> tuple[FundFacts | None, tuple[str, ...]]` — the facts and its citation URLs.
 
@@ -491,7 +513,13 @@ class _FakeTicker:
 
 @pytest.fixture
 def info():
-    return {"quoteType": "ETF", "fundFamily": "BlackRock Asset Management Ireland - ETF", "legalType": "Exchange Traded Fund", "fundInceptionDate": 1602460800, "longName": "iShares MSCI World SRI UCITS ETF"}
+    return {
+        "quoteType": "ETF",
+        "fundFamily": "BlackRock Asset Management Ireland - ETF",
+        "legalType": "Exchange Traded Fund",
+        "fundInceptionDate": 1602460800,
+        "longName": "iShares MSCI World SRI UCITS ETF",
+    }
 
 
 @pytest.fixture
@@ -743,10 +771,12 @@ git commit -m "feat(fact-pack): fund facts from funds_data, with an expense-rati
 ### Task 4: The crypto source
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/sources/crypto_source.py`
 - Test: `tests/unit/analysis/fact_pack/test_crypto_source.py`
 
 **Interfaces:**
+
 - Consumes: `CryptoFacts` from Task 1.
 - Produces: `crypto_facts(query_symbol: str, info: dict[str, Any]) -> tuple[CryptoFacts | None, tuple[str, ...]]`.
 
@@ -774,7 +804,15 @@ BTC = {
     "volume24HrMarketCapPercent": 0.0125254495,
     "coinMarketCapLink": "https://coinmarketcap.com/currencies/bitcoin/",
 }
-ETH = {**BTC, "name": "Ethereum", "description": "Ethereum (ETH) is a cryptocurrency.", "startDate": 1438905600, "circulatingSupply": 122023856, "maxSupply": 0, "coinMarketCapLink": "https://coinmarketcap.com/currencies/ethereum/"}
+ETH = {
+    **BTC,
+    "name": "Ethereum",
+    "description": "Ethereum (ETH) is a cryptocurrency.",
+    "startDate": 1438905600,
+    "circulatingSupply": 122023856,
+    "maxSupply": 0,
+    "coinMarketCapLink": "https://coinmarketcap.com/currencies/ethereum/",
+}
 
 
 class TestCryptoFacts:
@@ -914,10 +952,12 @@ git commit -m "feat(fact-pack): crypto facts with explicit supply-cap semantics"
 ### Task 5: Composer builds the details
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/fact_pack/composer.py`
 - Test: `tests/unit/analysis/fact_pack/test_composer.py`
 
 **Interfaces:**
+
 - **Interface change agreed during Task 3:** `fund_facts(query_symbol, info)` returns a THREE-tuple `(facts, citations, sources)`, not a two-tuple. `sources` mirrors `FactPackFragment`'s existing `(citations, sources)` convention and is always `("yfinance.info", "yfinance.funds_data")`, plus `"etf_expense_ratios.yaml"` exactly when a false-zero expense ratio was substituted from the curated table. Use that tuple's `sources` for the fund branch instead of the hardcoded `("yfinance.funds_data",)` shown later in this task, so a substitution is visible in the pack's provenance. `crypto_facts` remains a two-tuple.
 - Consumes: `fund_facts`, `crypto_facts`, `score`, the three facts models, and the existing equity machinery (`yfinance_source.equity_fragment/filing_events/news_events`, `merge_fragments`).
 - Produces: `compose_fact_pack(ticker, company_name, sector, industry, asset_class) -> FactPack | None`, unchanged in signature.
@@ -932,7 +972,14 @@ Add to `tests/unit/analysis/fact_pack/test_composer.py`:
 class TestPerClassComposition:
     def test_a_fund_gets_fund_facts_and_never_an_equity_shape(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
-        mocker.patch.object(composer.fund_source, "fund_facts", return_value=(FundFacts(issuer="iShares", expense_ratio=0.002, asset_mix={"stockPosition": 1.0}, top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.07)]), ("https://finance.yahoo.com/quote/2B7K.DE",)))
+        mocker.patch.object(
+            composer.fund_source,
+            "fund_facts",
+            return_value=(
+                FundFacts(issuer="iShares", expense_ratio=0.002, asset_mix={"stockPosition": 1.0}, top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.07)]),
+                ("https://finance.yahoo.com/quote/2B7K.DE",),
+            ),
+        )
 
         pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
 
@@ -942,7 +989,14 @@ class TestPerClassComposition:
 
     def test_a_crypto_holding_gets_crypto_facts(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "CRYPTOCURRENCY", "description": "Bitcoin is..."})
-        mocker.patch.object(composer.crypto_source, "crypto_facts", return_value=(CryptoFacts(description="Bitcoin is...", launched_year=2010, circulating_supply=20080456.0, max_supply=21000000.0, supply_is_capped=True, market_cap=1.6e12), ("https://coinmarketcap.com/currencies/bitcoin/",)))
+        mocker.patch.object(
+            composer.crypto_source,
+            "crypto_facts",
+            return_value=(
+                CryptoFacts(description="Bitcoin is...", launched_year=2010, circulating_supply=20080456.0, max_supply=21000000.0, supply_is_capped=True, market_cap=1.6e12),
+                ("https://coinmarketcap.com/currencies/bitcoin/",),
+            ),
+        )
 
         pack = composer.compose_fact_pack("BTC", "Bitcoin", None, None, "crypto")
 
@@ -1082,6 +1136,7 @@ git commit -m "feat(fact-pack): compose per-class details behind the shared enve
 ### Task 6: Rendering and the prompt
 
 **Files:**
+
 - Create: `src/finwiz/analysis/fact_pack/render.py`
 - Modify: `src/finwiz/analysis/_helpers.py`, `src/finwiz/crews/deep_analysis/config/tasks.yaml`, `src/finwiz/reporting/sections/insights.py`, `src/finwiz/reporting/sections/factpack.py`, `src/finwiz/orchestrators/reporting/enrichment.py`
 - Also migrate to the envelope (controller ruling 2026-09-06 — the plan named no owner for these, and
@@ -1096,6 +1151,7 @@ git commit -m "feat(fact-pack): compose per-class details behind the shared enve
 - Test: `tests/unit/analysis/fact_pack/test_render.py`
 
 **Interfaces:**
+
 - Consumes: the three facts models.
 - Produces: `to_rows(pack: FactPack) -> list[tuple[str, str]]`, `to_prompt_block(pack: FactPack) -> str`.
 
@@ -1114,7 +1170,9 @@ from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, F
 
 def _pack(asset_class, details) -> FactPack:
     fetched_at = datetime.now(UTC)
-    return FactPack(asset_class=asset_class, details=details, fetched_at=fetched_at, freshness=FactPack.derive_freshness(fetched_at), confidence=1.0, source_citations=[], sources_used=[])
+    return FactPack(
+        asset_class=asset_class, details=details, fetched_at=fetched_at, freshness=FactPack.derive_freshness(fetched_at), confidence=1.0, source_citations=[], sources_used=[]
+    )
 
 
 class TestLabels:
@@ -1125,7 +1183,9 @@ class TestLabels:
         assert "Direction" in labels
 
     def test_a_fund_is_never_asked_about_a_director(self):
-        pack = _pack("etf", FundFacts(issuer="iShares", legal_type="Exchange Traded Fund", expense_ratio=0.002, top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.0777)]))
+        pack = _pack(
+            "etf", FundFacts(issuer="iShares", legal_type="Exchange Traded Fund", expense_ratio=0.002, top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.0777)])
+        )
         labels = [label for label, _ in to_rows(pack)]
         assert "Direction" not in labels
         assert "Émetteur" in labels
@@ -1322,6 +1382,7 @@ git commit -m "feat(fact-pack): one renderer owns the labels for prompt and repo
 ### Task 7: Canary, cache invalidation, and documentation
 
 **Files:**
+
 - Modify: `tests/integration/analysis/test_yfinance_shapes.py`
 - Modify: `docs/adr/ADR-010-fact-pack-grounded-qualitative.md`, `CHANGELOG.md`, `CLAUDE.md`, `docs/PRD.md`
 - Migrate to the envelope (controller ruling 2026-09-06 — the plan invalidated the cache but never
@@ -1437,6 +1498,7 @@ git commit -m "docs(fact-pack): supersede ADR-010's source and shape decisions"
 ### Task 8: Gap-fill for equities, and live verification
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/stages/fact_pack.py` **(Step 0 — see below)**
 - Modify: `src/finwiz/analysis/fact_pack/composer.py`
 - Create: `src/finwiz/analysis/fact_pack/sources/perplexity_source.py`
@@ -1463,6 +1525,7 @@ In `_fact_pack_inner`, replace the `fetch_fact_pack_sync` call with `compose_fac
 ```python
 from finwiz.analysis.fact_pack import compose_fact_pack
 
+
 def _fact_pack_inner(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack:
     ...
     fetched = compose_fact_pack(ticker, company_name, sector, industry, asset_class)
@@ -1486,6 +1549,7 @@ Run `uv run pytest tests/unit -q` after this step: it must report **0 failed** o
 `test_fact_pack_research.py` failure is resolved by Step 1's demotion of that module.
 
 **Interfaces:**
+
 - Consumes: everything above; the existing `perplexity_with_retry`, `_FactPackRaw` and `_SYSTEM_FR` in `fact_pack_research.py`.
 - Produces: `fetch_missing_events(ticker, company_name, sector, industry, timeout=15.0) -> tuple[str, ...]`.
 
@@ -1506,7 +1570,11 @@ from finwiz.analysis.fact_pack.sources import perplexity_source
 
 class TestGapFillScope:
     def test_an_equity_without_events_asks_perplexity(self, mocker):
-        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]})
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
+        )
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
@@ -1519,8 +1587,16 @@ class TestGapFillScope:
         assert pack.details.events_from_filings is False
 
     def test_an_equity_with_filing_events_never_asks(self, mocker):
-        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones.", "companyOfficers": [{"name": "T. Cook", "title": "CEO"}]})
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)))
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones.", "companyOfficers": [{"name": "T. Cook", "title": "CEO"}]},
+        )
+        mocker.patch.object(
+            composer.yfinance_source,
+            "filing_events",
+            return_value=composer.FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)),
+        )
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
         fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
@@ -1541,7 +1617,11 @@ class TestGapFillScope:
         fetch.assert_not_called()
 
     def test_the_feature_flag_switches_it_off(self, mocker):
-        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]})
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
+        )
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=False)
@@ -1553,7 +1633,11 @@ class TestGapFillScope:
 
     def test_a_quota_401_leaves_the_deterministic_pack_intact(self, mocker):
         """The 2026-09-06 outage in one assertion."""
-        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]})
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
+        )
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
