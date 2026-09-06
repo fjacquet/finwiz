@@ -80,8 +80,10 @@ def score(details: EquityFacts | FundFacts | CryptoFacts, has_citation: bool) ->
         total = _equity(details)
     elif isinstance(details, FundFacts):
         total = _fund(details)
-    else:
+    elif isinstance(details, CryptoFacts):
         total = _crypto(details)
+    else:
+        raise TypeError(f"unscored fact-pack details type: {type(details)!r}")
     if has_citation:
         total += _W_CITATION
     return round(min(total, 1.0), 2)

@@ -1,5 +1,7 @@
 """Confidence is scored over the fields that apply to each class."""
 
+import pytest
+
 from finwiz.analysis.fact_pack.confidence import score
 from finwiz.analysis.fact_pack.fragment import PLACEHOLDER
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FundFacts, FundHolding
@@ -63,3 +65,10 @@ class TestCrypto:
         unknown = CryptoFacts(description="Something", launched_year=2020, circulating_supply=None, max_supply=None, supply_is_capped=False, market_cap=1.0)
         uncapped = CryptoFacts(description="Something", launched_year=2020, circulating_supply=585445184.0, max_supply=None, supply_is_capped=False, market_cap=1.0)
         assert score(unknown, has_citation=True) < score(uncapped, has_citation=True)
+
+
+class TestExhaustiveDispatch:
+    def test_an_unrecognised_details_type_raises_rather_than_scoring_as_crypto(self):
+        """A fourth facts class must never be silently scored with crypto's weights."""
+        with pytest.raises(TypeError, match="unscored fact-pack details type"):
+            score("not a facts model", has_citation=False)

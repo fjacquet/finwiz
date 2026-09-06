@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import Literal, cast
 
-from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, FactPackFragment, derive_confidence, merge_fragments
-from finwiz.analysis.fact_pack.sources import yfinance_source
+from finwiz.analysis.fact_pack.confidence import score
+from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, FactPackFragment, merge_fragments
+from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, yfinance_source
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -40,6 +42,10 @@ _MAX_CITATIONS = 20
 # byte-identical in content to a holding that genuinely has no facts available.
 _SCHEMA_FALLBACK_SOURCE = "composer.schema_fallback"
 
+# A fund with no identifiable issuer is thin, not fatal -- only an unresolvable
+# ticker halts a holding outright.
+_PLACEHOLDER_FUND = FundFacts(issuer=PLACEHOLDER)
+
 
 def _gap_fill(ticker: str, company_name: str, sector: str | None, industry: str | None, missing: tuple[str, ...]) -> FactPackFragment:
     """Hook for the Perplexity gap-fill. Wired in Task 5; inert until then."""
@@ -56,12 +62,20 @@ def _describe(ticker: str, query_symbol: str) -> str:
     return ticker if ticker == query_symbol else f"{ticker} (query={query_symbol})"
 
 
-def _identity_fragment(query_symbol: str, asset_class: str, info: dict) -> FactPackFragment:
-    if asset_class == "etf":
-        return yfinance_source.etf_fragment(query_symbol, info)
-    if asset_class == "crypto":
-        return yfinance_source.crypto_fragment(query_symbol, info)
-    return yfinance_source.equity_fragment(query_symbol, info)
+def _equity_details(query_symbol: str, info: dict, ticker: str) -> tuple[EquityFacts, tuple[str, ...], tuple[str, ...]]:
+    """The equity path keeps fragments: three sources genuinely merge here."""
+    fragment = merge_fragments(
+        yfinance_source.equity_fragment(query_symbol, info),
+        yfinance_source.filing_events(query_symbol),
+        yfinance_source.news_events(query_symbol),
+    )
+    facts = EquityFacts(
+        business_summary=_clamp_text(ticker, "business_summary", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS),
+        leadership=_clamp_text(ticker, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS),
+        recent_events=list(fragment.recent_events),
+        events_from_filings=fragment.events_from_filings,
+    )
+    return facts, fragment.citations, fragment.sources
 
 
 def _missing_fields(fragment: FactPackFragment) -> tuple[str, ...]:
@@ -121,54 +135,49 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
     if expected is not None and quote_type not in expected:
         logger.warning(f"fact_pack: {identity} declared asset_class={asset_class!r} but yfinance reports quoteType={quote_type!r}; routing follows the declared value")
 
-    # Fixed precedence per asset class: identity first, then filings, then news.
-    # Filings outrank news because merge takes the first non-empty events tuple.
-    fragment = merge_fragments(
-        _identity_fragment(query_symbol, asset_class, info),
-        yfinance_source.filing_events(query_symbol),
-        yfinance_source.news_events(query_symbol),
-    )
-
-    missing = _missing_fields(fragment)
-    if missing:
-        fragment = merge_fragments(fragment, _gap_fill(ticker, company_name, sector, industry, missing))
+    # Per-asset-class shape: funds and crypto call their builder directly (a
+    # text-shaped fragment would be a detour); equity keeps fragments, because
+    # three sources (identity, filings, news) genuinely merge there.
+    if asset_class == "etf":
+        facts, citations, sources = fund_source.fund_facts(query_symbol, info)
+        details: EquityFacts | FundFacts | CryptoFacts = facts or _PLACEHOLDER_FUND
+    elif asset_class == "crypto":
+        crypto, citations = crypto_source.crypto_facts(query_symbol, info)
+        details = crypto or CryptoFacts(description=PLACEHOLDER)
+        sources = ("yfinance.info",) if crypto else ()
+    else:
+        details, citations, sources = _equity_details(query_symbol, info, ticker)
 
     fetched_at = datetime.now(UTC)
-    freshness = FactPack.derive_freshness(fetched_at)
-    corporate_structure = _clamp_text(identity, "corporate_structure", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS)
-    leadership = _clamp_text(identity, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS)
-    source_citations = _clamp_citations(identity, fragment.citations)
-
     try:
         return FactPack(
-            corporate_structure=corporate_structure,
-            recent_events=list(fragment.recent_events),
-            leadership=leadership,
+            asset_class=cast(Literal["stock", "etf", "crypto"], asset_class),
+            details=details,
             fetched_at=fetched_at,
-            freshness=freshness,
-            confidence=derive_confidence(fragment),
-            source_citations=source_citations,
-            sources_used=list(fragment.sources),
+            freshness=FactPack.derive_freshness(fetched_at),
+            confidence=score(details, has_citation=bool(citations)),
+            source_citations=_clamp_citations(ticker, tuple(citations)),
+            sources_used=list(sources),
         )
     except Exception as e:
-        # Layer 1 (the clamps above) covers every constraint this module knows
-        # about; this is the backstop for one it doesn't. Logged at ERROR --
-        # unlike the warnings above, this means the enumeration above is
-        # incomplete and should never fire silently. One provider must never be
-        # able to halt a holding, so the fallback is still a valid, if minimal, pack.
-        logger.error(f"fact_pack: {identity} FactPack construction failed unexpectedly, falling back to a minimal pack: {e}")
+        # Layer 1 (each source's own normalization, plus the clamps above)
+        # covers every constraint this module knows about; this is the
+        # backstop for one it doesn't. Logged at ERROR -- unlike the warnings
+        # above, this means the enumeration above is incomplete and should
+        # never fire silently. One provider must never be able to halt a
+        # holding, so the fallback is still a valid, if minimal, pack.
+        logger.error(f"fact_pack: {_describe(ticker, query_symbol)} FactPack construction failed unexpectedly: {e}", exc_info=True)
         # A fallback pack is otherwise byte-identical to a legitimately
         # data-free holding -- placeholders, confidence=0.0, no citations --
         # and packs are cached to disk and read back long after this log line
         # has scrolled away. The marker is provenance, appended alongside
-        # whatever real sources the fragment already carried, not instead of them.
+        # whatever real sources were already gathered, not instead of them.
         return FactPack(
-            corporate_structure=PLACEHOLDER,
-            recent_events=[],
-            leadership=PLACEHOLDER,
+            asset_class=cast(Literal["stock", "etf", "crypto"], asset_class),
+            details=EquityFacts(business_summary=PLACEHOLDER, leadership=PLACEHOLDER),
             fetched_at=fetched_at,
-            freshness=freshness,
+            freshness=FactPack.derive_freshness(fetched_at),
             confidence=0.0,
             source_citations=[],
-            sources_used=[*fragment.sources, _SCHEMA_FALLBACK_SOURCE],
+            sources_used=[*sources, _SCHEMA_FALLBACK_SOURCE],
         )

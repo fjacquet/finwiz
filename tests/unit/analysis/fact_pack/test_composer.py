@@ -1,9 +1,20 @@
 """Routing, merge order and FactPack construction."""
 
+import os
+
+# litellm's own __init__ eagerly fetches a remote model-cost map on first
+# import (triggered transitively by importing `composer` below, since crewai
+# is on that chain somewhere) and pytest-socket blocks it -- a real, if
+# harmless, network attempt that litellm swallows into a WARNING log rather
+# than raising. Set before the `composer` import below so litellm never
+# tries: this is litellm's own documented opt-out, not a widened allow-list.
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
+
 import pytest
 
 from finwiz.analysis.fact_pack import composer
 from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, FactPackFragment
+from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, FundFacts, FundHolding
 
 
 @pytest.fixture(autouse=True)
@@ -57,20 +68,19 @@ class TestPackConstruction:
 
         pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
 
-        assert pack.recent_events == ["2026-09-01 8-K: Changes"]
+        assert pack.details.recent_events == ["2026-09-01 8-K: Changes"]
         assert "yfinance.sec_filings" in pack.sources_used
 
     def test_empty_fields_become_the_placeholder_not_an_empty_string(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
 
         pack = composer.compose_fact_pack("BTC-USD", "Bitcoin", None, None, "crypto")
 
-        # FactPack requires min_length=1 on both; the placeholder satisfies the
-        # schema without asserting a fact nobody has.
-        assert pack.corporate_structure == PLACEHOLDER
-        assert pack.leadership == PLACEHOLDER
+        # CryptoFacts.description requires min_length=1; the placeholder
+        # satisfies the schema without asserting a fact nobody has -- there is
+        # no `description` in `info` here, so crypto_source.crypto_facts
+        # declines to build facts at all.
+        assert pack.details.description == PLACEHOLDER
         assert pack.confidence == 0.0
 
     def test_freshness_stays_python_owned(self, mocker):
@@ -99,30 +109,19 @@ class TestSchemaGuards:
 
         pack = composer.compose_fact_pack("NTNX", "Nutanix", None, None, "stock")
 
-        assert len(pack.corporate_structure) == 2000
+        assert len(pack.details.business_summary) == 2000
 
     def test_citations_over_the_schema_cap_are_truncated_not_rejected(self, mocker):
-        """An ETF's quote-page citation plus a full 10 filings + 10 news is 21."""
+        """A fund whose builder somehow returns 21 citations must still fit the 20-URL cap."""
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
         mocker.patch.object(
-            composer.yfinance_source,
-            "etf_fragment",
-            return_value=FactPackFragment(corporate_structure="iShares World ETF.", citations=("https://finance.yahoo.com/quote/2B7K.DE",), sources=("yfinance.info",)),
-        )
-        mocker.patch.object(
-            composer.yfinance_source,
-            "filing_events",
-            return_value=FactPackFragment(
-                recent_events=("2026-09-01 8-K: Changes",),
-                citations=tuple(f"https://filing/{i}" for i in range(10)),
-                events_from_filings=True,
-                sources=("yfinance.sec_filings",),
+            composer.fund_source,
+            "fund_facts",
+            return_value=(
+                FundFacts(issuer="iShares"),
+                tuple(f"https://example.com/citation/{i}" for i in range(21)),
+                ("yfinance.info", "yfinance.funds_data"),
             ),
-        )
-        mocker.patch.object(
-            composer.yfinance_source,
-            "news_events",
-            return_value=FactPackFragment(citations=tuple(f"https://news/{i}" for i in range(10)), sources=("yfinance.news",)),
         )
 
         pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
@@ -154,8 +153,8 @@ class TestSchemaGuards:
             pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
 
         assert pack is not None
-        assert pack.corporate_structure == PLACEHOLDER
-        assert pack.leadership == PLACEHOLDER
+        assert pack.details.business_summary == PLACEHOLDER
+        assert pack.details.leadership == PLACEHOLDER
         assert pack.confidence == 0.0
         assert any(r.levelname == "ERROR" and "AAPL" in r.message for r in caplog.records)
         # A fallback pack is otherwise byte-identical to a legitimately
@@ -174,8 +173,6 @@ class TestSymbolNormalization:
 
     def test_a_crypto_ticker_is_queried_with_the_usd_suffix(self, mocker):
         resolve = mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
 
         composer.compose_fact_pack("BTC", "Bitcoin", None, None, "crypto")
 
@@ -192,8 +189,7 @@ class TestSymbolNormalization:
 
     def test_an_etf_ticker_is_queried_unchanged(self, mocker):
         resolve = mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.fund_source, "fund_facts", return_value=(None, (), ()))
 
         composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
 
@@ -203,17 +199,70 @@ class TestSymbolNormalization:
         """BRK.B is renamed to BRK-B at the yfinance boundary (ticker_hygiene);
 
         a citation built from the bare ticker would point at a page Yahoo 404s.
-        Uses the real etf_fragment (not mocked) so the citation URL reflects
-        whatever symbol the composer actually threads through.
+        Uses the real fund_source.fund_facts (not mocked) so the citation URL
+        reflects whatever symbol the composer actually threads through --
+        only the network seam (`_ticker`) is mocked, so funds_data resolves
+        to nothing without touching the network.
         """
         mocker.patch.object(
             composer.yfinance_source,
             "resolve",
             return_value={"quoteType": "ETF", "longName": "Test Fund", "fundFamily": "Test Manager", "legalType": "Exchange Traded Fund", "fundInceptionDate": 1602460800},
         )
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "_ticker", return_value=mocker.Mock(funds_data=None))
 
         pack = composer.compose_fact_pack("BRK.B", "Test Fund", None, None, "etf")
 
         assert pack.source_citations == ["https://finance.yahoo.com/quote/BRK-B"]
+
+
+class TestPerClassComposition:
+    def test_a_fund_gets_fund_facts_and_never_an_equity_shape(self, mocker):
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
+        mocker.patch.object(
+            composer.fund_source,
+            "fund_facts",
+            return_value=(
+                FundFacts(issuer="iShares", expense_ratio=0.002, asset_mix={"stockPosition": 1.0}, top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.07)]),
+                ("https://finance.yahoo.com/quote/2B7K.DE",),
+                ("yfinance.info", "yfinance.funds_data"),
+            ),
+        )
+
+        pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
+
+        assert pack.asset_class == "etf"
+        assert pack.details.kind == "fund"
+        assert pack.confidence == 1.0
+
+    def test_a_crypto_holding_gets_crypto_facts(self, mocker):
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "CRYPTOCURRENCY", "description": "Bitcoin is..."})
+        mocker.patch.object(
+            composer.crypto_source,
+            "crypto_facts",
+            return_value=(
+                CryptoFacts(description="Bitcoin is...", launched_year=2010, circulating_supply=20080456.0, max_supply=21000000.0, supply_is_capped=True, market_cap=1.6e12),
+                ("https://coinmarketcap.com/currencies/bitcoin/",),
+            ),
+        )
+
+        pack = composer.compose_fact_pack("BTC", "Bitcoin", None, None, "crypto")
+
+        assert pack.asset_class == "crypto"
+        assert pack.details.kind == "crypto"
+        assert pack.details.supply_is_capped is True
+
+    def test_a_fund_whose_builder_returns_none_still_yields_a_pack(self, mocker):
+        """A fund with no issuer is thin, not fatal -- only an unresolvable ticker is fatal."""
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF"})
+        mocker.patch.object(composer.fund_source, "fund_facts", return_value=(None, (), ()))
+
+        pack = composer.compose_fact_pack("XXXX.DE", "Unknown fund", None, None, "etf")
+
+        assert pack is not None
+        assert pack.details.kind == "fund"
+        assert pack.confidence == 0.0
+
+    def test_an_unresolvable_ticker_still_returns_none(self, mocker):
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"trailingPegRatio": None})
+        assert composer.compose_fact_pack("ZZZZNOTREAL", "Nothing", None, None, "stock") is None

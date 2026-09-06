@@ -1,6 +1,6 @@
 """Fragment merge and confidence derivation."""
 
-from finwiz.analysis.fact_pack.fragment import FactPackFragment, derive_confidence, merge_fragments
+from finwiz.analysis.fact_pack.fragment import FactPackFragment, merge_fragments
 
 
 class TestMergeFragments:
@@ -30,40 +30,3 @@ class TestMergeFragments:
         # events win outright and the flag must still describe what was kept.
         assert merged.recent_events == ("2026-09-01 8-K: Corporate Changes",)
         assert merged.events_from_filings is True
-
-
-class TestDeriveConfidence:
-    def test_us_stock_with_filings_scores_one(self):
-        fragment = FactPackFragment(
-            corporate_structure="Apple Inc. designs...",
-            leadership="Tim Cook, CEO",
-            recent_events=("2026-09-01 8-K: Corporate Changes",),
-            citations=("https://example.com/edgar",),
-            events_from_filings=True,
-        )
-        assert derive_confidence(fragment) == 1.0
-
-    def test_european_stock_with_news_events_scores_0_85(self):
-        fragment = FactPackFragment(
-            corporate_structure="Airbus SE manufactures...",
-            leadership="Guillaume Faury, CEO",
-            recent_events=("Airbus wins order",),
-            citations=("https://example.com/news",),
-        )
-        assert derive_confidence(fragment) == 0.85
-
-    def test_typical_etf_scores_0_70(self):
-        fragment = FactPackFragment(
-            corporate_structure="UCITS ETF issued by BlackRock...",
-            leadership="BlackRock Asset Management Ireland - ETF",
-            citations=("https://finance.yahoo.com/quote/2B7K.DE",),
-        )
-        assert derive_confidence(fragment) == 0.70
-
-    def test_crypto_with_news_only_scores_0_25(self):
-        fragment = FactPackFragment(recent_events=("Bitcoin headline",), citations=("https://example.com/news",))
-        assert derive_confidence(fragment) == 0.25
-
-    def test_placeholder_text_does_not_count_as_populated(self):
-        fragment = FactPackFragment(corporate_structure="Information indisponible", leadership="Information indisponible")
-        assert derive_confidence(fragment) == 0.0

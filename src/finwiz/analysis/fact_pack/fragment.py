@@ -15,12 +15,6 @@ from dataclasses import dataclass, replace
 # of any dependency on the LLM path.
 PLACEHOLDER = "Information indisponible"
 
-_W_STRUCTURE = 0.35
-_W_LEADERSHIP = 0.25
-_W_EVENTS_FILINGS = 0.30
-_W_EVENTS_NEWS = 0.15
-_W_CITATIONS = 0.10
-
 
 @dataclass(frozen=True)
 class FactPackFragment:
@@ -63,22 +57,3 @@ def merge_fragments(*fragments: FactPackFragment) -> FactPackFragment:
                 sources.append(source)
 
     return replace(merged, citations=tuple(citations), sources=tuple(sources))
-
-
-def derive_confidence(fragment: FactPackFragment) -> float:
-    """Completeness score, not self-assessment.
-
-    A self-rated number cannot be checked against anything. This one can be
-    recomputed from the stored pack, compared between holdings, and trended
-    across runs -- which is the whole reason it replaces the AI's own rating.
-    """
-    score = 0.0
-    if _populated(fragment.corporate_structure):
-        score += _W_STRUCTURE
-    if _populated(fragment.leadership):
-        score += _W_LEADERSHIP
-    if fragment.recent_events:
-        score += _W_EVENTS_FILINGS if fragment.events_from_filings else _W_EVENTS_NEWS
-    if fragment.citations:
-        score += _W_CITATIONS
-    return round(min(score, 1.0), 2)
