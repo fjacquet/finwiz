@@ -116,9 +116,17 @@ class TestPerClassDetails:
         assert btc.supply_is_capped is True and btc.max_supply == 21000000.0
         assert eth.supply_is_capped is False and eth.max_supply is None
 
-    def test_the_discriminator_rejects_a_mismatched_payload(self):
+    def test_an_unknown_discriminator_is_rejected(self):
+        """A payload naming a class we do not model must not validate.
+
+        Asserting on a payload that is merely incomplete would pass for the
+        wrong reason -- it would fail on a missing required field rather than
+        on the discriminator.
+        """
+        envelope = self._envelope(asset_class="etf")
+        envelope["details"] = {"kind": "commodity", "issuer": "Somebody"}
         with pytest.raises(ValidationError):
-            FactPack.model_validate({**self._envelope(asset_class="etf"), "details": {"kind": "fund"}})
+            FactPack.model_validate(envelope)
 
     def test_business_summary_is_capped_at_two_thousand(self):
         with pytest.raises(ValidationError):
