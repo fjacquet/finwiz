@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from finwiz.analysis.fact_pack.render import to_prompt_block
 from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
@@ -199,19 +200,13 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
         inputs["industry"] = "Unknown"
         inputs["company_description"] = "No company description available."
 
-    # Inject FactPack keys (v5.2 grounded qualitative)
+    # Inject the fact pack as a single pre-rendered block (v5.2 grounded qualitative,
+    # per-asset-class facts). One renderer (finwiz.analysis.fact_pack.render) owns the
+    # labels, so the prompt cannot drift from the report.
     if fact_pack is not None:
-        inputs["corporate_structure"] = fact_pack.corporate_structure
-        inputs["recent_events"] = "\n".join(f"- {e}" for e in fact_pack.recent_events) if fact_pack.recent_events else "Aucun événement matériel signalé."
-        inputs["leadership"] = fact_pack.leadership
-        inputs["fact_pack_freshness"] = fact_pack.freshness  # "fresh" / "recent" / "stale"
-        inputs["fact_pack_confidence"] = f"{fact_pack.confidence:.2f}"
+        inputs["fact_pack_block"] = to_prompt_block(fact_pack)
     else:
-        inputs["corporate_structure"] = "Données non disponibles"
-        inputs["recent_events"] = "Données non disponibles"
-        inputs["leadership"] = "Données non disponibles"
-        inputs["fact_pack_freshness"] = "unknown"
-        inputs["fact_pack_confidence"] = "unknown"
+        inputs["fact_pack_block"] = "Fact pack non disponible."
 
     # Retry guidance is empty on the first attempt. The qualify-stage retry
     # callback overrides this with explicit JSON format instructions when the

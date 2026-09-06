@@ -60,18 +60,21 @@ def _make_quant() -> Any:
 
 
 def test_build_crew_inputs_with_fact_pack() -> None:
-    """When fact_pack is provided, all 5 keys flow into the inputs dict."""
+    """When fact_pack is provided, it renders to a single pre-labeled prompt block."""
     from datetime import UTC, datetime
 
     from finwiz.analysis._helpers import _build_crew_inputs
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
-    from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+    from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
     fetched_at = datetime.now(UTC)
     fp = FactPack(
-        corporate_structure="Independent — divested VMware Nov 2021",
-        recent_events=["Q4 earnings beat", "New CEO appointed"],
-        leadership="Michael Dell (CEO), Yvonne McGill (CFO)",
+        asset_class="stock",
+        details=EquityFacts(
+            business_summary="Independent — divested VMware Nov 2021",
+            recent_events=["Q4 earnings beat", "New CEO appointed"],
+            leadership="Michael Dell (CEO), Yvonne McGill (CFO)",
+        ),
         fetched_at=fetched_at,
         freshness=FactPack.derive_freshness(fetched_at),
         confidence=0.92,
@@ -83,16 +86,17 @@ def test_build_crew_inputs_with_fact_pack() -> None:
     raw: dict = {"sector": "Tech", "industry": "Hardware"}
 
     inputs = _build_crew_inputs(ctx, quant, raw, fact_pack=fp)
-    assert inputs["corporate_structure"] == "Independent — divested VMware Nov 2021"
-    assert "Q4 earnings beat" in inputs["recent_events"]
-    assert "New CEO appointed" in inputs["recent_events"]
-    assert inputs["leadership"].startswith("Michael Dell")
-    assert inputs["fact_pack_freshness"] == "fresh"
-    assert inputs["fact_pack_confidence"] == "0.92"
+    block = inputs["fact_pack_block"]
+    assert "Independent — divested VMware Nov 2021" in block
+    assert "Q4 earnings beat" in block
+    assert "New CEO appointed" in block
+    assert "Michael Dell" in block
+    assert "fresh" in block
+    assert "0.92" in block
 
 
 def test_build_crew_inputs_without_fact_pack_substitutes_unknowns() -> None:
-    """When fact_pack=None, fallback strings make the absence explicit to the AI."""
+    """When fact_pack=None, a fallback string makes the absence explicit to the AI."""
     from finwiz.analysis._helpers import _build_crew_inputs
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
 
@@ -101,8 +105,4 @@ def test_build_crew_inputs_without_fact_pack_substitutes_unknowns() -> None:
     raw: dict = {}
 
     inputs = _build_crew_inputs(ctx, quant, raw, fact_pack=None)
-    assert inputs["corporate_structure"] == "Données non disponibles"
-    assert inputs["recent_events"] == "Données non disponibles"
-    assert inputs["leadership"] == "Données non disponibles"
-    assert inputs["fact_pack_freshness"] == "unknown"
-    assert inputs["fact_pack_confidence"] == "unknown"
+    assert inputs["fact_pack_block"] == "Fact pack non disponible."

@@ -15,15 +15,13 @@ deep_qualitative_analysis_task:
     LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
     ---
-    📋 FACT PACK (vérifié via Perplexity, fraîcheur : {fact_pack_freshness}, confidence : {fact_pack_confidence}) :
-    - Structure corporate : {corporate_structure}
-    - Événements récents :
-    {recent_events}
-    - Direction : {leadership}
+    {fact_pack_block}
 
-    Le FACT PACK est AUTORITAIRE pour la structure corporate, les événements
-    des 12 derniers mois, et la direction. Tu ne dois JAMAIS le contredire.
-    Si tes souvenirs divergent du FACT PACK, le FACT PACK gagne.
+    Le FACT PACK est AUTORITAIRE pour les faits qu'il contient (structure
+    corporate et direction pour une action, émetteur et frais pour un fonds,
+    protocole et offre pour une crypto), ainsi que pour les événements
+    récents. Tu ne dois JAMAIS le contredire. Si tes souvenirs divergent du
+    FACT PACK, le FACT PACK gagne.
     ---
 
     CONTEXT (Python-calculated - DO NOT recalculate):
@@ -36,8 +34,10 @@ deep_qualitative_analysis_task:
     - Risk: {risk_metrics}
 
     🚨 ANTI-HALLUCINATION 🚨
-    - Le FACT PACK ci-dessus est ta source PRIMAIRE pour la structure corporate,
-      les événements récents (12 derniers mois), et la direction. Le champ
+    - Le FACT PACK ci-dessus est ta source PRIMAIRE pour les faits propres à
+      la classe d'actif (structure corporate et direction pour une action,
+      émetteur et frais pour un fonds, protocole et offre pour une crypto)
+      ainsi que pour les événements récents (12 derniers mois). Le champ
       Description est secondaire.
     - N'invente JAMAIS de filiales, partenariats, ou intégrations non mentionnés
       dans le FACT PACK ou la `Description` ci-dessus.
@@ -48,7 +48,7 @@ deep_qualitative_analysis_task:
       précédant {current_date}, pas d'années antérieures.
 
     🛠️ AUCUN OUTIL EXTERNE — tu n'as accès à aucun tool. Le FACT PACK
-    ci-dessus est déjà le résultat d'une recherche Perplexity vérifiée par
+    ci-dessus est déjà le résultat de sources structurées vérifiées par
     Python avant cette tâche, donc toute vérification supplémentaire est
     redondante. Réponds directement à partir du FACT PACK et du CONTEXT
     fournis ; n'émets aucun appel d'outil.
@@ -65,9 +65,10 @@ deep_qualitative_analysis_task:
     Python alimente lui-même les champs suivants à partir de sources
     déterministes ; les inclure dans ta réponse n'a AUCUN effet et déclenche
     des cycles de validation inutiles :
-    - `fact_pack` (et tous ses sous-champs : `corporate_structure`,
-      `recent_events`, `leadership`, `fetched_at`, `freshness`,
-      `confidence`, `source_citations`)
+    - `fact_pack` (et tous ses sous-champs : les faits propres à la classe
+      d'actif affichés ci-dessus — structure/direction pour une action,
+      émetteur/frais/lignes pour un fonds, protocole/offre pour une crypto —
+      plus `fetched_at`, `freshness`, `confidence`, `source_citations`)
     - `analysis_timestamp`
 
     Le FACT PACK affiché en haut de ce prompt est en lecture seule pour toi —
