@@ -1033,7 +1033,22 @@ and in `compose_fact_pack`, after the resolvability check and the `quoteType` wa
         )
 ```
 
-`derive_confidence` is no longer used once `score` replaces it — remove that import or ruff will flag it. Keep `_clamp_text`, `_clamp_citations`, `_describe`, `_EXPECTED_QUOTE_TYPES`, the `to_yfinance_symbol` call and the ERROR-logged backstop exactly as they are — all were reviewed and are load-bearing. `_missing_fields` and `_gap_fill` are no longer called from the equity branch in this task; leave them in place, unused, for Task 8.
+**Retire the old scoring path entirely in this task.** `score()` replaces
+`fragment.derive_confidence`, and leaving the old one alive would strand a second copy of the equity
+weights (0.35 / 0.25 / 0.30 / 0.15 / 0.10) in `fragment.py`, to be kept in sync with
+`confidence.py` by hand forever. Delete from `fragment.py`: the `derive_confidence` function and the
+five `_W_*` constants it uses. Keep `_populated` and `PLACEHOLDER` — `merge_fragments` still needs
+them. Then remove the five assertions in `tests/unit/analysis/fact_pack/test_fragment.py` that
+exercise `derive_confidence` (they are at roughly lines 44, 53, 61, 65 and 69) along with its
+import; those behaviours are now covered by `test_confidence.py`. Deleting the function without
+touching that test file introduces new failures, so do both in one commit.
+
+While you are in `confidence.py`, make its dispatch exhaustive: it currently reads
+`isinstance(EquityFacts)` / `isinstance(FundFacts)` / bare `else` → crypto, so a fourth facts class
+added later would be silently scored as crypto. Change the last branch to
+`elif isinstance(details, CryptoFacts): ...` followed by
+`raise TypeError(f"unscored fact-pack details type: {type(details)!r}")`, and add a test asserting
+the raise. Silent misclassification is the failure mode this whole branch exists to eliminate. Keep `_clamp_text`, `_clamp_citations`, `_describe`, `_EXPECTED_QUOTE_TYPES`, the `to_yfinance_symbol` call and the ERROR-logged backstop exactly as they are — all were reviewed and are load-bearing. `_missing_fields` and `_gap_fill` are no longer called from the equity branch in this task; leave them in place, unused, for Task 8.
 
 - [ ] **Step 4: Run the package suite**
 
