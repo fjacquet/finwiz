@@ -215,6 +215,49 @@ class TestTurnoverNormalization:
         assert facts.expense_ratio == pytest.approx(0.002)
 
 
+class TestHoldingsWeightNormalization:
+    """A NaN or out-of-domain weight is yfinance being scraped, not contractual --
+    FundHolding's own `ge=0.0, le=1.0` bound is not enforced by this source, and a
+    missing "Holding Percent" arrives as NaN, not None, so the earlier `weight is
+    None` guard never catches it. One unusable row must cost that row, not the
+    whole holdings table -- see fund_facts's own construction guard for what a
+    ValidationError escaping this function used to do to the rest of the pack.
+    """
+
+    def test_a_nan_weight_drops_only_that_row(self):
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp", "ASML Holding"], "Holding Percent": [0.07, float("nan")]}, index=["NVDA", "ASML.AS"])
+        holdings = fund_source._holdings(frame)
+        assert [h.symbol for h in holdings] == ["NVDA"]
+
+    def test_a_weight_above_one_drops_its_row(self):
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [1.5]}, index=["NVDA"])
+        assert fund_source._holdings(frame) == []
+
+    def test_a_negative_weight_drops_its_row(self):
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [-0.1]}, index=["NVDA"])
+        assert fund_source._holdings(frame) == []
+
+    def test_a_table_of_entirely_bad_rows_yields_an_empty_list_not_a_raise(self):
+        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [float("nan"), 2.0]}, index=["A", "B"])
+        assert fund_source._holdings(frame) == []
+
+    def test_a_broken_holdings_table_does_not_cost_the_rest_of_the_pack(self, mocker, info, operations):
+        """The real point: the expense ratio must survive a broken holdings table.
+
+        Before the fix, a NaN weight in `top_holdings` raised a ValidationError
+        inside `_holdings`, which escaped into `fund_facts`'s own construction
+        `try` and discarded the whole pack -- issuer, expense ratio, everything
+        -- degrading the fund to confidence 0.00.
+        """
+        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [float("nan"), 2.0]}, index=["A", "B"])
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, frame)))
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
+        assert facts is not None
+        assert facts.top_holdings == []
+        assert facts.expense_ratio == pytest.approx(0.002)
+        assert facts.issuer == "BlackRock Asset Management Ireland - ETF"
+
+
 class TestConstructionGuard:
     """Spec §6: no source may raise. This is the backstop for a schema
     constraint this module's own normalization doesn't yet know about."""

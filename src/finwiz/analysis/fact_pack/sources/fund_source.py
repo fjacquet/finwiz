@@ -7,6 +7,7 @@ unavailable, and vice versa. Nothing here may raise — spec §6.
 
 from __future__ import annotations
 
+import math
 from datetime import UTC, datetime
 from typing import Any
 
@@ -49,6 +50,14 @@ def _operations_value(operations: Any, symbol: str, row: str) -> float | None:
 
 
 def _holdings(frame: Any) -> list[FundHolding]:
+    """One bad row must cost that row, not the table.
+
+    See fund_facts's own construction guard for why: without this, a single
+    NaN or out-of-range weight (yfinance is scraped, not contractual) raised
+    out of `FundHolding` construction, escaped into `fund_facts`'s `try`, and
+    discarded the whole pack -- issuer, expense ratio, asset mix, everything
+    -- for nine other holdings that were perfectly fine.
+    """
     if frame is None or getattr(frame, "empty", True):
         return []
     rows: list[FundHolding] = []
@@ -57,7 +66,27 @@ def _holdings(frame: Any) -> list[FundHolding]:
         weight = row.get("Holding Percent")
         if not name or weight is None:
             continue
-        rows.append(FundHolding(symbol=str(symbol), name=name[:200], weight=float(weight)))
+        try:
+            weight_f = float(weight)
+        except (TypeError, ValueError):
+            logger.warning(f"fact_pack: holding {symbol} has a non-numeric weight ({weight!r}); dropping this row only")
+            continue
+        # Layer 1: a missing "Holding Percent" in a pandas frame is NaN, not
+        # None, so the None-check above doesn't catch it -- and FundHolding's
+        # own `ge=0.0, le=1.0` bound is not enforced by this source. An
+        # unusable weight is UNKNOWN, not a fact to repair to a boundary: for
+        # a holdings row the weight *is* the content, so the row is dropped,
+        # never clamped to 0.0 or 1.0.
+        if not math.isfinite(weight_f) or not (0.0 <= weight_f <= 1.0):
+            logger.warning(f"fact_pack: holding {symbol} has an out-of-domain weight ({weight!r}); dropping this row only")
+            continue
+        try:
+            # Layer 2: the checks above cover every constraint this module
+            # knows about; this is the backstop for one it doesn't.
+            rows.append(FundHolding(symbol=str(symbol), name=name[:200], weight=weight_f))
+        except Exception as e:
+            logger.warning(f"fact_pack: holding {symbol} dropped, failed FundHolding construction: {e}")
+            continue
         if len(rows) >= _MAX_HOLDINGS:
             break
     return rows
