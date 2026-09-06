@@ -1437,9 +1437,53 @@ git commit -m "docs(fact-pack): supersede ADR-010's source and shape decisions"
 ### Task 8: Gap-fill for equities, and live verification
 
 **Files:**
+- Modify: `src/finwiz/analysis/stages/fact_pack.py` **(Step 0 — see below)**
 - Modify: `src/finwiz/analysis/fact_pack/composer.py`
 - Create: `src/finwiz/analysis/fact_pack/sources/perplexity_source.py`
-- Test: `tests/unit/analysis/fact_pack/test_gap_fill.py`
+- Test: `tests/unit/analysis/fact_pack/test_gap_fill.py`, `tests/unit/analysis/stages/test_fact_pack.py`
+
+- [ ] **Step 0: Wire the composer into production — do this FIRST**
+
+**Controller ruling 2026-09-06, found by Task 7's implementer.** No task in this plan wired
+`compose_fact_pack` into the running system. `compose_fact_pack` has zero production callers —
+only its own `__init__.py` re-export — while `src/finwiz/analysis/stages/fact_pack.py:62` still
+calls `fetch_fact_pack_sync` from the superseded `analysis/fact_pack_research.py`. Everything
+Tasks 1-7 built is unreachable from a real run. Without this step the branch merges as dead code.
+
+It is also now urgent rather than merely wrong. Task 7 invalidated all 58 cached packs, which was
+required, so the next live run is a 100% cache miss. Every holding therefore reaches the old
+fetcher, which constructs a flat `FactPack(corporate_structure=..., leadership=..., ...)` that the
+current schema rejects; the resulting `ValidationError` is not caught by that fetcher, and
+`stages/_resilience.py:114,146` deliberately re-raises `ValidationError` rather than recording
+FAILED. A live run would crash rather than degrade holding by holding.
+
+In `_fact_pack_inner`, replace the `fetch_fact_pack_sync` call with `compose_fact_pack`, threading
+`asset_class` through:
+
+```python
+from finwiz.analysis.fact_pack import compose_fact_pack
+
+def _fact_pack_inner(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack:
+    ...
+    fetched = compose_fact_pack(ticker, company_name, sector, industry, asset_class)
+```
+
+and in the `fact_pack` stage entry point pass `analysis_ctx.asset_class`, which
+`AnalysisContext` already carries (`deep_analysis_pipeline.py:63`). Note that `stages/emit.py:73`
+constructs a context with `asset_class="unknown"`; the composer normalises any unenumerated value
+to `"stock"` with a warning, so that path is safe.
+
+Keep the surrounding cache logic exactly as it is — cache hit, stale-cache fallback, and the
+`TransientStageError` on total failure are unchanged and still correct. Only the fetch call and the
+one new parameter change. Update the docstring's step 3, which names Perplexity as the fetcher.
+
+Tests: `tests/unit/analysis/stages/test_fact_pack.py` must assert the stage calls
+`compose_fact_pack` and threads `asset_class` through. Add a test that a cache miss on an ETF
+produces a pack whose `details.kind == "fund"` — that is the end-to-end proof the routing survives
+the stage boundary, which is the whole point of this step.
+
+Run `uv run pytest tests/unit -q` after this step: it must report **0 failed** once the
+`test_fact_pack_research.py` failure is resolved by Step 1's demotion of that module.
 
 **Interfaces:**
 - Consumes: everything above; the existing `perplexity_with_retry`, `_FactPackRaw` and `_SYSTEM_FR` in `fact_pack_research.py`.
