@@ -9,8 +9,13 @@ from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, FundFacts, Fun
 
 @pytest.fixture(autouse=True)
 def _no_gap_fill(mocker):
-    """Deterministic path only; Task 5 wires and tests the Perplexity hook."""
-    mocker.patch.object(composer, "_gap_fill", return_value=FactPackFragment())
+    """Deterministic path only; test_gap_fill.py exercises the Perplexity hook.
+
+    Without this, an equity fixture with no recent_events would fall through
+    to a real `is_feature_enabled("perplexity_research")` check (default: on)
+    and attempt a live Perplexity call from these otherwise network-free tests.
+    """
+    mocker.patch.object(composer, "is_feature_enabled", return_value=False)
 
 
 class TestRouting:

@@ -8,7 +8,8 @@ from typing import Literal, cast
 
 from finwiz.analysis.fact_pack.confidence import score
 from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, FactPackFragment, merge_fragments
-from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, yfinance_source
+from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, perplexity_source, yfinance_source
+from finwiz.config.features.flags import is_feature_enabled
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts
 from finwiz.tools.logger import get_logger
@@ -58,11 +59,6 @@ _FALLBACK_DETAILS: dict[str, Callable[[], EquityFacts | FundFacts | CryptoFacts]
 }
 
 
-def _gap_fill(ticker: str, company_name: str, sector: str | None, industry: str | None, missing: tuple[str, ...]) -> FactPackFragment:
-    """Hook for the Perplexity gap-fill. Wired in Task 5; inert until then."""
-    return FactPackFragment()
-
-
 def _describe(ticker: str, query_symbol: str) -> str:
     """Holding identity for log lines, with the query form when it differs.
 
@@ -73,20 +69,46 @@ def _describe(ticker: str, query_symbol: str) -> str:
     return ticker if ticker == query_symbol else f"{ticker} (query={query_symbol})"
 
 
-def _equity_details(query_symbol: str, info: dict, ticker: str) -> tuple[EquityFacts, tuple[str, ...], tuple[str, ...]]:
-    """The equity path keeps fragments: three sources genuinely merge here."""
+def _equity_details(
+    query_symbol: str, info: dict, ticker: str, company_name: str, sector: str | None, industry: str | None
+) -> tuple[EquityFacts, tuple[str, ...], tuple[str, ...]]:
+    """The equity path keeps fragments: three sources genuinely merge here.
+
+    Perplexity is consulted only when filings and news both left
+    `recent_events` empty -- funds and crypto never reach this function, so
+    they never ask. Measured at 6 of 67 holdings. A failure here (quota,
+    timeout, malformed response) must never take down an otherwise-complete
+    pack; `fetch_missing_events` itself never raises, but the call is still
+    wrapped as a second line of defence.
+    """
     fragment = merge_fragments(
         yfinance_source.equity_fragment(query_symbol, info),
         yfinance_source.filing_events(query_symbol),
         yfinance_source.news_events(query_symbol),
     )
+    recent_events = fragment.recent_events
+    events_from_filings = fragment.events_from_filings
+    sources = fragment.sources
+    if not recent_events and is_feature_enabled("perplexity_research"):
+        try:
+            # The bare ticker, not query_symbol -- this is a research prompt
+            # about the company, not a yfinance query.
+            gap_filled = perplexity_source.fetch_missing_events(ticker, company_name, sector, industry)
+        except Exception as e:
+            logger.warning(f"fact_pack: {ticker} gap-fill failed: {e}")
+            gap_filled = ()
+        if gap_filled:
+            recent_events = gap_filled
+            events_from_filings = False
+            sources = (*sources, "perplexity.gap_fill")
+
     facts = EquityFacts(
         business_summary=_clamp_text(ticker, "business_summary", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS),
         leadership=_clamp_text(ticker, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS),
-        recent_events=list(fragment.recent_events),
-        events_from_filings=fragment.events_from_filings,
+        recent_events=list(recent_events),
+        events_from_filings=events_from_filings,
     )
-    return facts, fragment.citations, fragment.sources
+    return facts, fragment.citations, sources
 
 
 def _missing_fields(fragment: FactPackFragment) -> tuple[str, ...]:
@@ -170,7 +192,7 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
         details = crypto or CryptoFacts(description=PLACEHOLDER)
         sources = ("yfinance.info",) if crypto else ()
     else:
-        details, citations, sources = _equity_details(query_symbol, info, ticker)
+        details, citations, sources = _equity_details(query_symbol, info, ticker, company_name, sector, industry)
 
     fetched_at = datetime.now(UTC)
     try:
