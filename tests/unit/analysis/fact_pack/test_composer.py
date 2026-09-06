@@ -81,3 +81,80 @@ class TestPackConstruction:
         pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
 
         assert pack.freshness == "fresh"
+
+
+class TestSchemaGuards:
+    """FactPack's own Field(max_length=...) caps must never surface as a raise.
+
+    NTNX's real longBusinessSummary was 2212 chars against a 2000-char cap on
+    2026-09-06 -- this is not a hypothetical edge case.
+    """
+
+    def test_a_business_summary_over_the_schema_cap_is_truncated_not_rejected(self, mocker):
+        long_summary = "A" * 2500
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": long_summary})
+        mocker.patch.object(composer.yfinance_source, "equity_fragment", return_value=FactPackFragment(corporate_structure=long_summary))
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        pack = composer.compose_fact_pack("NTNX", "Nutanix", None, None, "stock")
+
+        assert len(pack.corporate_structure) == 2000
+
+    def test_citations_over_the_schema_cap_are_truncated_not_rejected(self, mocker):
+        """An ETF's quote-page citation plus a full 10 filings + 10 news is 21."""
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
+        mocker.patch.object(
+            composer.yfinance_source,
+            "etf_fragment",
+            return_value=FactPackFragment(corporate_structure="iShares World ETF.", citations=("https://finance.yahoo.com/quote/2B7K.DE",), sources=("yfinance.info",)),
+        )
+        mocker.patch.object(
+            composer.yfinance_source,
+            "filing_events",
+            return_value=FactPackFragment(
+                recent_events=("2026-09-01 8-K: Changes",),
+                citations=tuple(f"https://filing/{i}" for i in range(10)),
+                events_from_filings=True,
+                sources=("yfinance.sec_filings",),
+            ),
+        )
+        mocker.patch.object(
+            composer.yfinance_source,
+            "news_events",
+            return_value=FactPackFragment(citations=tuple(f"https://news/{i}" for i in range(10)), sources=("yfinance.news",)),
+        )
+
+        pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
+
+        assert len(pack.source_citations) == 20
+
+    def test_an_unexpected_construction_failure_falls_back_to_a_minimal_pack(self, mocker, caplog):
+        """The clamps above cover every constraint this module knows about; this
+
+        is the backstop for one it doesn't -- the composer's contract is that
+        nothing reaches the caller as an exception.
+        """
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        original_init = composer.FactPack.__init__
+        calls = {"n": 0}
+
+        def _flaky_init(self, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise ValueError("simulated schema failure")
+            original_init(self, *args, **kwargs)
+
+        mocker.patch.object(composer.FactPack, "__init__", _flaky_init)
+
+        with caplog.at_level("ERROR"):
+            pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
+
+        assert pack is not None
+        assert pack.corporate_structure == PLACEHOLDER
+        assert pack.leadership == PLACEHOLDER
+        assert pack.confidence == 0.0
+        assert any(r.levelname == "ERROR" and "AAPL" in r.message for r in caplog.records)

@@ -21,6 +21,18 @@ _EXPECTED_QUOTE_TYPES: dict[str, frozenset[str]] = {
     "crypto": frozenset({"CRYPTOCURRENCY"}),
 }
 
+# Mirrors FactPack's own Field(max_length=...) caps (schemas/hybrid_analysis/fact_pack.py).
+# Deliberately duplicated here rather than imported from fact_pack_research.py --
+# this package carries no dependency on the LLM path. A live-portfolio measurement
+# on 2026-09-06 found 19 of 36 stock summaries within 200 chars of the 2000-char
+# cap and one (NTNX, 2212 chars) already over it -- yfinance's longBusinessSummary
+# is unbounded prose, and FactPack's Field constraints raise ValidationError on
+# the first holding that crosses them. Clamping here keeps the composer's own
+# promise: every non-None outcome is a valid FactPack, however thin.
+_CORPORATE_STRUCTURE_MAX_CHARS = 2000
+_LEADERSHIP_MAX_CHARS = 1000
+_MAX_CITATIONS = 20
+
 
 def _gap_fill(ticker: str, company_name: str, sector: str | None, industry: str | None, missing: tuple[str, ...]) -> FactPackFragment:
     """Hook for the Perplexity gap-fill. Wired in Task 5; inert until then."""
@@ -44,6 +56,27 @@ def _missing_fields(fragment: FactPackFragment) -> tuple[str, ...]:
     if not fragment.recent_events:
         missing.append("recent_events")
     return tuple(missing)
+
+
+def _clamp_text(ticker: str, field: str, value: str, max_chars: int) -> str:
+    """Truncate to the schema's own cap rather than let FactPack raise on it."""
+    if len(value) <= max_chars:
+        return value
+    logger.warning(f"fact_pack: {ticker} {field} truncated from {len(value)} to {max_chars} chars")
+    return value[:max_chars].rstrip()
+
+
+def _clamp_citations(ticker: str, citations: tuple[str, ...]) -> list[str]:
+    """Cap accumulated citations to the schema's max_length.
+
+    merge_fragments accumulates citations across every source rather than
+    first-non-empty-wins, so an ETF (identity quote page + up to 10 filing URLs
+    + up to 10 news URLs) can exceed FactPack's 20-URL cap by one.
+    """
+    if len(citations) <= _MAX_CITATIONS:
+        return list(citations)
+    logger.warning(f"fact_pack: {ticker} source_citations truncated from {len(citations)} to {_MAX_CITATIONS}")
+    return list(citations[:_MAX_CITATIONS])
 
 
 def compose_fact_pack(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack | None:
@@ -76,13 +109,36 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
         fragment = merge_fragments(fragment, _gap_fill(ticker, company_name, sector, industry, missing))
 
     fetched_at = datetime.now(UTC)
-    return FactPack(
-        corporate_structure=fragment.corporate_structure or PLACEHOLDER,
-        recent_events=list(fragment.recent_events),
-        leadership=fragment.leadership or PLACEHOLDER,
-        fetched_at=fetched_at,
-        freshness=FactPack.derive_freshness(fetched_at),
-        confidence=derive_confidence(fragment),
-        source_citations=list(fragment.citations),
-        sources_used=list(fragment.sources),
-    )
+    freshness = FactPack.derive_freshness(fetched_at)
+    corporate_structure = _clamp_text(ticker, "corporate_structure", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS)
+    leadership = _clamp_text(ticker, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS)
+    source_citations = _clamp_citations(ticker, fragment.citations)
+
+    try:
+        return FactPack(
+            corporate_structure=corporate_structure,
+            recent_events=list(fragment.recent_events),
+            leadership=leadership,
+            fetched_at=fetched_at,
+            freshness=freshness,
+            confidence=derive_confidence(fragment),
+            source_citations=source_citations,
+            sources_used=list(fragment.sources),
+        )
+    except Exception as e:
+        # Layer 1 (the clamps above) covers every constraint this module knows
+        # about; this is the backstop for one it doesn't. Logged at ERROR --
+        # unlike the warnings above, this means the enumeration above is
+        # incomplete and should never fire silently. One provider must never be
+        # able to halt a holding, so the fallback is still a valid, if minimal, pack.
+        logger.error(f"fact_pack: {ticker} FactPack construction failed unexpectedly, falling back to a minimal pack: {e}")
+        return FactPack(
+            corporate_structure=PLACEHOLDER,
+            recent_events=[],
+            leadership=PLACEHOLDER,
+            fetched_at=fetched_at,
+            freshness=freshness,
+            confidence=0.0,
+            source_citations=[],
+            sources_used=list(fragment.sources),
+        )
