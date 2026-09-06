@@ -1,8 +1,10 @@
 """FactPack schema for grounded qualitative analysis (v5.2).
 
-Verified corporate facts fetched from Perplexity, cached for 7 days, injected
+Class-appropriate facts from structured sources, cached for 7 days, injected
 into the qualitative prompt as ground truth. The qualitative crew must NOT
 contradict the fact pack — anti-hallucination becomes structural.
+Equity facts come from SEC filings; fund facts from yfinance/issuer data;
+crypto facts from on-chain and market sources.
 """
 
 from __future__ import annotations
@@ -71,6 +73,22 @@ class CryptoFacts(BaseModel):
     volume_24h_market_cap_pct: float | None = Field(default=None, ge=0.0)
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    @model_validator(mode="after")
+    def _check_supply_cap_consistency(self) -> CryptoFacts:
+        """Capped and uncapped supplies are data, not inferred from max_supply value.
+
+        Without this invariant, a reader re-infers capped/uncapped from max_supply,
+        which is the yfinance magic (maxSupply == 0) we added supply_is_capped to
+        eliminate. The two fields must agree: if capped, max_supply is a number;
+        if uncapped, max_supply is None.
+        """
+        has_max = self.max_supply is not None
+        if self.supply_is_capped != has_max:
+            raise ValueError(
+                f"supply_is_capped={self.supply_is_capped!r} contradicts max_supply={self.max_supply!r} (if capped, max_supply must be not None; if uncapped, must be None)"
+            )
+        return self
 
 
 # Beyond this, a cached fact pack is not merely stale — it predates any

@@ -277,4 +277,27 @@ class TestPerClassDetails:
 
     def test_business_summary_is_capped_at_two_thousand(self):
         with pytest.raises(ValidationError):
-            EquityFacts(business_summary="x" * 2001, leadership="Someone", recent_events=[], events_from_filings=False)
+            EquityFacts(
+                business_summary="x" * 2001,
+                leadership="Someone",
+                recent_events=[],
+                events_from_filings=False,
+            )
+
+    def test_crypto_supply_cap_consistency_rejects_capped_with_no_max(self):
+        """supply_is_capped=True requires max_supply to be not None."""
+        with pytest.raises(ValidationError, match="contradicts"):
+            CryptoFacts(
+                description="Bitcoin is...",
+                supply_is_capped=True,
+                max_supply=None,
+            )
+
+    def test_crypto_supply_cap_consistency_rejects_uncapped_with_max(self):
+        """supply_is_capped=False requires max_supply to be None."""
+        with pytest.raises(ValidationError, match="contradicts"):
+            CryptoFacts(
+                description="Ethereum is...",
+                supply_is_capped=False,
+                max_supply=21000000.0,
+            )
