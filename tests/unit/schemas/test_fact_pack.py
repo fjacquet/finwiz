@@ -165,3 +165,35 @@ class TestAttachToQualitativeInsights:
 
         qual = QualitativeInsights()
         assert qual.fact_pack is None
+
+
+class TestSourcesUsed:
+    def test_sources_used_round_trips(self):
+        fetched_at = datetime.now(UTC)
+        pack = FactPack(
+            corporate_structure="Apple Inc. designs...",
+            leadership="Tim Cook, CEO",
+            fetched_at=fetched_at,
+            freshness=FactPack.derive_freshness(fetched_at),
+            confidence=1.0,
+            sources_used=["yfinance.info", "yfinance.sec_filings"],
+        )
+        assert pack.sources_used == ["yfinance.info", "yfinance.sec_filings"]
+
+    def test_a_pack_cached_before_sources_used_existed_still_loads(self):
+        """The 58 packs already in cache/fact_packs were written without this field.
+
+        FactPack is extra="forbid", so the field had to be added explicitly; this
+        pins that adding it did not invalidate everything already on disk.
+        """
+        fetched_at = datetime.now(UTC)
+        legacy = {
+            "corporate_structure": "Apple Inc. designs...",
+            "recent_events": [],
+            "leadership": "Tim Cook, CEO",
+            "fetched_at": fetched_at.isoformat(),
+            "freshness": FactPack.derive_freshness(fetched_at),
+            "confidence": 0.8,
+            "source_citations": [],
+        }
+        assert FactPack.model_validate(legacy).sources_used == []

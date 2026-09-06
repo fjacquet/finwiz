@@ -33,8 +33,12 @@ class FactPack(BaseModel):
     leadership: str = Field(min_length=1, max_length=1000, description="Current CEO/CFO and recent changes")
     fetched_at: datetime
     freshness: Freshness
-    confidence: float = Field(ge=0.0, le=1.0, description="AI-rated 0.0-1.0")
+    confidence: float = Field(ge=0.0, le=1.0, description="Python-derived completeness score 0.0-1.0 (see analysis/fact_pack/fragment.py)")
     source_citations: list[str] = Field(default_factory=list, max_length=20, description="Perplexity citation URLs")
+    sources_used: list[str] = Field(
+        default_factory=list,
+        description="Which sources produced this pack, e.g. ['yfinance.info', 'yfinance.sec_filings']",
+    )
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
