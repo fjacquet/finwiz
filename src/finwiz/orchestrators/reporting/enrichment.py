@@ -341,7 +341,7 @@ class ReportEnrichmentMixin:
             try:
                 rows = [list(r) for r in to_rows(FactPack.model_validate(fact))]
             except Exception as e:
-                logger.debug(f"Skipping fact_pack card block: could not render cached pack: {e}")
+                logger.warning(f"Skipping fact_pack card block: could not render cached pack: {e}")
                 rows = []
             if rows:
                 distilled["fact_pack"] = {
