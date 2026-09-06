@@ -23,6 +23,7 @@
 - Branch: `feat/run-gate` in worktree `/Users/fjacquet/Projects/finwiz/.claude/worktrees/run-gate`. All work happens there. Do not create additional branches.
 - Never restore files with `git checkout --` — it has destroyed uncommitted work in this repo twice. Copy to the scratchpad first.
 - AI Minimalism: Python does deterministic work; AI only qualitative reasoning. When Python and AI disagree, Python wins.
+- **Documentation ships with the change, never as a follow-up.** A doc that still describes the old behaviour is read as current and acted on — that is how `CLAUDE.md` came to promise a truthful `make gate` exit code that make cannot produce. Task 6 owns the doc updates for this plan; if a task invalidates a claim Task 6 does not cover, fix it in that task and say so in the commit.
 
 ## File Structure
 
@@ -1369,12 +1370,112 @@ git commit -m "feat(fact-pack): Perplexity fills only the fields structured data
 
 ---
 
-### Task 6: Live verification
+### Task 6: Documentation
+
+**Files:**
+- Modify: `docs/adr/ADR-010-fact-pack-grounded-qualitative.md`
+- Modify: `CHANGELOG.md`
+- Modify: `CLAUDE.md`
+- Modify: `docs/PRD.md`
+- Test: none — prose only. Verified by reading, and by the grep in Step 5.
+
+**Interfaces:**
+- Consumes: the behaviour built in Tasks 1–5.
+- Produces: nothing code depends on.
+
+No task may leave a doc asserting the old behaviour. ADR-010 currently describes
+the fact pack as Perplexity-fetched; that is now false for the majority of
+holdings, and an ADR read as current is acted on.
+
+- [ ] **Step 1: Supersede the relevant part of ADR-010**
+
+Read `docs/adr/ADR-010-fact-pack-grounded-qualitative.md`. Do NOT rewrite the
+decision — an ADR is a dated record. Add a section at the end:
+
+```markdown
+## Superseded in part (2026-09-06)
+
+The *grounding* decision stands: qualitative analysis is fed verified facts
+rather than trusting the model's recall. The *source* decision does not. This
+ADR specified Perplexity as the fact pack's provider; on 2026-09-06 a quota
+error (`insufficient_quota`, served as HTTP 401) made that single provider fail
+all 64 holdings in one run — `fact_pack failed ×64`, zero holdings analysed.
+
+Fact packs are now built from free structured sources (yfinance `info`,
+`companyOfficers`, `sec_filings`, filtered `news`), with Perplexity called only
+for fields the structured data left empty. `confidence` is derived by Python
+from field completeness rather than self-rated by the model.
+
+See `docs/superpowers/specs/2026-09-06-deterministic-fact-pack-design.md`.
+```
+
+- [ ] **Step 2: Add the CHANGELOG entry**
+
+Add under the `Unreleased` heading (create it directly below the intro block if
+absent), matching the file's existing bullet style:
+
+```markdown
+### Changed
+
+- **Fact packs are built from structured data, not an LLM.** `corporate_structure`,
+  `leadership` and `recent_events` now come from yfinance — business summaries,
+  officer lists, and for US listings and ADRs the SEC filing index with EDGAR
+  links. Perplexity is called only for fields those sources leave empty, so a
+  quota outage costs a few ETF event lists instead of every holding in the run.
+- **`FactPack.confidence` is Python-derived.** It is a completeness score over the
+  populated fields, not the model's opinion of itself, so it is comparable
+  between holdings and across runs.
+- **`FactPack.sources_used`** records which sources produced each pack. Packs
+  cached before this field existed still load.
+```
+
+- [ ] **Step 3: Correct CLAUDE.md**
+
+In the Environment Variables block, the line describing `FF_PERPLEXITY_RESEARCH`
+must state its new scope. Replace the existing feature-flag comment line with:
+
+```
+# Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
+#   (full registry: config/features/definitions.py)
+# FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: yfinance
+#   supplies every field and no gap-fill call is made. Fact packs never fail a
+#   holding for want of Perplexity.
+```
+
+- [ ] **Step 4: Correct docs/PRD.md**
+
+Run `grep -n "fact.pack\|fact_pack\|Perplexity" docs/PRD.md`. Where it states or
+implies that fact packs come from Perplexity, correct it to name the structured
+sources with Perplexity as gap-filler. Change only those sentences; leave the
+rest of the PRD alone.
+
+- [ ] **Step 5: Verify nothing still claims the old behaviour**
+
+Run:
+
+```bash
+grep -rn "fact.pack" --include="*.md" docs/adr docs/PRD.md CLAUDE.md README.md | grep -i perplexity
+```
+
+Expected: every remaining hit is either inside the ADR's own historical record
+(the decision as it was taken) or explicitly describes gap-fill. Any line that
+presents Perplexity as *the* fact-pack source is a miss — fix it.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add docs/adr/ADR-010-fact-pack-grounded-qualitative.md CHANGELOG.md CLAUDE.md docs/PRD.md
+git commit -m "docs(fact-pack): supersede ADR-010's source decision; record the new provider chain"
+```
+
+---
+
+### Task 7: Live verification
 
 **Files:** none changed. This task produces evidence.
 
 **Interfaces:**
-- Consumes: everything above.
+- Consumes: everything above, Task 6 included.
 - Produces: the numbers for the PR body, and proof that a Perplexity outage can no longer empty a run.
 
 **Requires explicit authorisation before running** — the flow spends real money. Do not start it on your own initiative.
@@ -1436,7 +1537,7 @@ Append the numbers to `.superpowers/sdd/<session>/progress.md` and to the PR bod
 
 ## Self-Review
 
-**Spec coverage.** D1 gap-filler → Task 5. D2 FAIL only when unresolvable → Task 4 (`compose_fact_pack` returns `None` solely on `is_resolvable` false) and Task 2's resolvability tests. D3 cache and ladder kept → untouched by construction; Task 5 Step 7 runs the cache tests to prove it. D4 confidence derived → Task 1. D5 declared routing → Task 4's first test, plus the `quoteType` warning. D6 CoinGecko out of scope → no task, deliberately. §2 components → Tasks 1–4 file-for-file. §3 composition order → Task 4. §4 confidence table → Task 1's weights and four expected-value tests. §5 schema change → Task 1 Steps 5–7 including the backward-compatibility test for the 58 cached packs. §6 error handling: unresolvable → Task 4; per-source degradation → Tasks 2 and 3; inert Perplexity failure → Task 5's 401 test; `quoteType` cross-check → Task 4. 429 backoff is NOT separately implemented — `resolve` and both event accessors already swallow every exception into an empty fragment, which is the specified degradation; sequential fetching is the existing call pattern, unchanged. §7 testing → every task ends with a mutation check.
+**Spec coverage.** D1 gap-filler → Task 5. D2 FAIL only when unresolvable → Task 4 (`compose_fact_pack` returns `None` solely on `is_resolvable` false) and Task 2's resolvability tests. D3 cache and ladder kept → untouched by construction; Task 5 Step 7 runs the cache tests to prove it. D4 confidence derived → Task 1. D5 declared routing → Task 4's first test, plus the `quoteType` warning. D6 CoinGecko out of scope → no task, deliberately. §2 components → Tasks 1–4 file-for-file. §3 composition order → Task 4. §4 confidence table → Task 1's weights and four expected-value tests. §5 schema change → Task 1 Steps 5–7 including the backward-compatibility test for the 58 cached packs. §6 error handling: unresolvable → Task 4; per-source degradation → Tasks 2 and 3; inert Perplexity failure → Task 5's 401 test; `quoteType` cross-check → Task 4. 429 backoff is NOT separately implemented — `resolve` and both event accessors already swallow every exception into an empty fragment, which is the specified degradation; sequential fetching is the existing call pattern, unchanged. §7 testing → every task ends with a mutation check. Documentation → Task 6, added after the plan was first written on the standing instruction that docs ship with the change; it supersedes ADR-010's source decision rather than rewriting it.
 
 **Placeholder scan.** None. Every code step carries runnable code. Task 6 Step 2's `# same script as Step 1` refers to a script written out in full one step earlier, in the same task.
 
