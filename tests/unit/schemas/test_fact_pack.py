@@ -7,15 +7,26 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import (
+    CryptoFacts,
+    EquityFacts,
+    FactPack,
+    FundFacts,
+    FundHolding,
+)
 
 
 def _build(fetched_at: datetime | None = None, freshness: str = "fresh") -> FactPack:
+    _fetched_at = fetched_at or datetime.now(UTC)
     return FactPack(
-        corporate_structure="Independent — divested VMware Nov 2021",
-        recent_events=["Q4 earnings beat expectations"],
-        leadership="Michael Dell (CEO), Yvonne McGill (CFO)",
-        fetched_at=fetched_at or datetime.now(UTC),
+        asset_class="stock",
+        details=EquityFacts(
+            business_summary="Independent — divested VMware Nov 2021",
+            leadership="Michael Dell (CEO), Yvonne McGill (CFO)",
+            recent_events=["Q4 earnings beat expectations"],
+            events_from_filings=False,
+        ),
+        fetched_at=_fetched_at,
         freshness=freshness,
         confidence=0.9,
         source_citations=["https://example.com/source1"],
@@ -62,15 +73,14 @@ class TestFreshnessDerivation:
 class TestFactPackValidation:
     def test_minimal_valid_factpack(self) -> None:
         fp = _build()
-        assert fp.corporate_structure
+        assert fp.details.business_summary
         assert fp.confidence == 0.9
 
     def test_extra_field_forbidden(self) -> None:
         with pytest.raises(ValidationError):
             FactPack(
-                corporate_structure="x",
-                recent_events=[],
-                leadership="x",
+                asset_class="stock",
+                details=EquityFacts(business_summary="x", leadership="x", recent_events=[], events_from_filings=False),
                 fetched_at=datetime.now(UTC),
                 freshness="fresh",
                 confidence=0.5,
@@ -81,9 +91,8 @@ class TestFactPackValidation:
     def test_confidence_out_of_range_rejected(self) -> None:
         with pytest.raises(ValidationError):
             FactPack(
-                corporate_structure="x",
-                recent_events=[],
-                leadership="x",
+                asset_class="stock",
+                details=EquityFacts(business_summary="x", leadership="x", recent_events=[], events_from_filings=False),
                 fetched_at=datetime.now(UTC),
                 freshness="fresh",
                 confidence=1.5,
@@ -92,14 +101,11 @@ class TestFactPackValidation:
 
     def test_recent_events_max_length(self) -> None:
         with pytest.raises(ValidationError):
-            FactPack(
-                corporate_structure="x",
-                recent_events=[f"event {i}" for i in range(11)],
+            EquityFacts(
+                business_summary="x",
                 leadership="x",
-                fetched_at=datetime.now(UTC),
-                freshness="fresh",
-                confidence=0.5,
-                source_citations=[],
+                recent_events=[f"event {i}" for i in range(11)],
+                events_from_filings=False,
             )
 
 
@@ -111,9 +117,8 @@ class TestAILiesAboutFreshness:
         fetched = datetime.now(UTC) - timedelta(days=5)
         with pytest.raises(ValidationError, match="contradicts"):
             FactPack(
-                corporate_structure="x",
-                recent_events=[],
-                leadership="x",
+                asset_class="stock",
+                details=EquityFacts(business_summary="x", leadership="x", recent_events=[], events_from_filings=False),
                 fetched_at=fetched,
                 freshness="fresh",  # LIE — should be "recent"
                 confidence=0.5,
@@ -171,8 +176,8 @@ class TestSourcesUsed:
     def test_sources_used_round_trips(self):
         fetched_at = datetime.now(UTC)
         pack = FactPack(
-            corporate_structure="Apple Inc. designs...",
-            leadership="Tim Cook, CEO",
+            asset_class="stock",
+            details=EquityFacts(business_summary="Apple Inc. designs...", leadership="Tim Cook, CEO", recent_events=[], events_from_filings=False),
             fetched_at=fetched_at,
             freshness=FactPack.derive_freshness(fetched_at),
             confidence=1.0,
@@ -181,10 +186,11 @@ class TestSourcesUsed:
         assert pack.sources_used == ["yfinance.info", "yfinance.sec_filings"]
 
     def test_a_pack_cached_before_sources_used_existed_still_loads(self):
-        """The 58 packs already in cache/fact_packs were written without this field.
+        """Backward-compat: packs cached without asset_class or details cannot validate.
 
-        FactPack is extra="forbid", so the field had to be added explicitly; this
-        pins that adding it did not invalidate everything already on disk.
+        The 58 packs already in cache/fact_packs were written before this refactor.
+        They lack asset_class and details, so they fail validation now.
+        The cache is invalidated once by Task 7 (run-gate final sweep) for this reason.
         """
         fetched_at = datetime.now(UTC)
         legacy = {
@@ -196,4 +202,79 @@ class TestSourcesUsed:
             "confidence": 0.8,
             "source_citations": [],
         }
-        assert FactPack.model_validate(legacy).sources_used == []
+        with pytest.raises(ValidationError):
+            FactPack.model_validate(legacy)
+
+
+class TestPerClassDetails:
+    @staticmethod
+    def _envelope(**overrides):
+        fetched_at = datetime.now(UTC)
+        base = {
+            "asset_class": "stock",
+            "fetched_at": fetched_at,
+            "freshness": FactPack.derive_freshness(fetched_at),
+            "confidence": 1.0,
+            "details": EquityFacts(business_summary="Designs phones.", leadership="Tim Cook (CEO)", recent_events=["2026-09-01 8-K: Changes"], events_from_filings=True),
+        }
+        return {**base, **overrides}
+
+    def test_an_equity_pack_carries_equity_facts(self):
+        pack = FactPack(**self._envelope())
+        assert pack.details.kind == "equity"
+        assert pack.details.leadership == "Tim Cook (CEO)"
+
+    def test_a_fund_pack_carries_fund_facts(self):
+        details = FundFacts(
+            issuer="BlackRock Asset Management Ireland - ETF",
+            legal_type="Exchange Traded Fund",
+            inception_year=2020,
+            expense_ratio=0.002,
+            turnover=0.0,
+            top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.077756)],
+            asset_mix={"stockPosition": 0.9942},
+            sector_weights={"technology": 0.25},
+        )
+        pack = FactPack(**self._envelope(asset_class="etf", details=details))
+        assert pack.details.kind == "fund"
+        assert pack.details.top_holdings[0].symbol == "NVDA"
+
+    def test_a_capped_and_an_uncapped_crypto_are_distinguishable(self):
+        """maxSupply == 0 means 'no cap'. It is information, not absence."""
+        btc = CryptoFacts(
+            description="Bitcoin is...",
+            launched_year=2010,
+            circulating_supply=20080456.0,
+            max_supply=21000000.0,
+            supply_is_capped=True,
+            market_cap=1.6e12,
+            volume_24h_market_cap_pct=0.0125,
+        )
+        eth = CryptoFacts(
+            description="Ethereum is...",
+            launched_year=2015,
+            circulating_supply=122023856.0,
+            max_supply=None,
+            supply_is_capped=False,
+            market_cap=4.0e11,
+            volume_24h_market_cap_pct=0.02,
+        )
+
+        assert btc.supply_is_capped is True and btc.max_supply == 21000000.0
+        assert eth.supply_is_capped is False and eth.max_supply is None
+
+    def test_an_unknown_discriminator_is_rejected(self):
+        """A payload naming a class we do not model must not validate.
+
+        Asserting on a payload that is merely incomplete would pass for the
+        wrong reason -- it would fail on a missing required field rather than
+        on the discriminator.
+        """
+        envelope = self._envelope(asset_class="etf")
+        envelope["details"] = {"kind": "commodity", "issuer": "Somebody"}
+        with pytest.raises(ValidationError):
+            FactPack.model_validate(envelope)
+
+    def test_business_summary_is_capped_at_two_thousand(self):
+        with pytest.raises(ValidationError):
+            EquityFacts(business_summary="x" * 2001, leadership="Someone", recent_events=[], events_from_filings=False)

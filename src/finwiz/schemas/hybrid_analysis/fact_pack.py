@@ -15,22 +15,79 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 _FRESHNESS_VALUES = ("fresh", "recent", "stale")
 Freshness = Literal["fresh", "recent", "stale"]
 
+
+class FundHolding(BaseModel):
+    """One line of a fund's published holdings."""
+
+    symbol: str = Field(min_length=1, max_length=32)
+    name: str = Field(min_length=1, max_length=200)
+    weight: float = Field(ge=0.0, le=1.0, description="Fraction of the fund, as yfinance reports it (0.077756 == 7.78%)")
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+class EquityFacts(BaseModel):
+    """A company: what it does, who runs it, what it filed."""
+
+    kind: Literal["equity"] = "equity"
+    business_summary: str = Field(min_length=1, max_length=2000)
+    leadership: str = Field(min_length=1, max_length=1000)
+    recent_events: list[str] = Field(default_factory=list, max_length=10)
+    events_from_filings: bool = False
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+class FundFacts(BaseModel):
+    """A fund: who issues it, what it costs, what it holds.
+
+    There is no CEO here, and asking for one is what produced a 0.70 ceiling
+    and an issuer's name standing in as `leadership`.
+    """
+
+    kind: Literal["fund"] = "fund"
+    issuer: str = Field(min_length=1, max_length=200)
+    legal_type: str = Field(default="", max_length=100)
+    inception_year: int | None = Field(default=None, ge=1900, le=2200)
+    expense_ratio: float | None = Field(default=None, ge=0.0, le=1.0, description="0.002 == 0.20% per year")
+    turnover: float | None = Field(default=None, ge=0.0)
+    top_holdings: list[FundHolding] = Field(default_factory=list, max_length=25)
+    asset_mix: dict[str, float] = Field(default_factory=dict)
+    sector_weights: dict[str, float] = Field(default_factory=dict)
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
+class CryptoFacts(BaseModel):
+    """A protocol: what it is, when it launched, how its supply behaves."""
+
+    kind: Literal["crypto"] = "crypto"
+    description: str = Field(min_length=1, max_length=2000)
+    launched_year: int | None = Field(default=None, ge=1900, le=2200)
+    circulating_supply: float | None = Field(default=None, ge=0.0)
+    max_supply: float | None = Field(default=None, ge=0.0, description="None when unknown OR uncapped; read supply_is_capped to tell them apart")
+    supply_is_capped: bool = False
+    market_cap: float | None = Field(default=None, ge=0.0)
+    volume_24h_market_cap_pct: float | None = Field(default=None, ge=0.0)
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+
 # Beyond this, a cached fact pack is not merely stale — it predates any
 # reporting cycle we would defend, so the cache evicts rather than serve it.
 _STALE_HORIZON_DAYS = 90
 
 
 class FactPack(BaseModel):
-    """Verified corporate facts for one holding.
+    """Verified facts for one holding, typed per asset class.
 
     Lifecycle: fetched once per holding via Perplexity, cached 7 days. The
     `freshness` field is Python-derived from `fetched_at` — AI cannot lie
     about it (cross-checked by model_validator).
     """
 
-    corporate_structure: str = Field(min_length=1, max_length=2000, description="Current entity / parent / subsidiaries / recent divestitures")
-    recent_events: list[str] = Field(default_factory=list, max_length=10, description="Material events in last 12 months")
-    leadership: str = Field(min_length=1, max_length=1000, description="Current CEO/CFO and recent changes")
+    asset_class: Literal["stock", "etf", "crypto"]
+    details: EquityFacts | FundFacts | CryptoFacts = Field(discriminator="kind")
     fetched_at: datetime
     freshness: Freshness
     confidence: float = Field(ge=0.0, le=1.0, description="Python-derived completeness score 0.0-1.0 (see analysis/fact_pack/fragment.py)")
