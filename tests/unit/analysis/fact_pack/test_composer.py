@@ -158,3 +158,62 @@ class TestSchemaGuards:
         assert pack.leadership == PLACEHOLDER
         assert pack.confidence == 0.0
         assert any(r.levelname == "ERROR" and "AAPL" in r.message for r in caplog.records)
+        # A fallback pack is otherwise byte-identical to a legitimately
+        # data-free holding; the marker is the only way to tell them apart
+        # once this log line has scrolled off (packs are cached to disk).
+        assert "composer.schema_fallback" in pack.sources_used
+
+
+class TestSymbolNormalization:
+    """yfinance's own `BTC` is a Grayscale trust ETF, not the coin.
+
+    Domain-model tickers stay bare (BTC, AAVE); only the yfinance query needs
+    the `-USD` suffix. Without normalization, two crypto holdings fetch facts
+    about the wrong instrument and a third (SOL) resolves to nothing at all.
+    """
+
+    def test_a_crypto_ticker_is_queried_with_the_usd_suffix(self, mocker):
+        resolve = mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        composer.compose_fact_pack("BTC", "Bitcoin", None, None, "crypto")
+
+        resolve.assert_called_once_with("BTC-USD")
+
+    def test_a_stock_ticker_is_queried_unchanged(self, mocker):
+        resolve = mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
+
+        resolve.assert_called_once_with("AAPL")
+
+    def test_an_etf_ticker_is_queried_unchanged(self, mocker):
+        resolve = mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF", "fundFamily": "iShares"})
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
+
+        resolve.assert_called_once_with("2B7K.DE")
+
+    def test_the_etf_citation_url_uses_the_query_symbol_not_the_bare_ticker(self, mocker):
+        """BRK.B is renamed to BRK-B at the yfinance boundary (ticker_hygiene);
+
+        a citation built from the bare ticker would point at a page Yahoo 404s.
+        Uses the real etf_fragment (not mocked) so the citation URL reflects
+        whatever symbol the composer actually threads through.
+        """
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "ETF", "longName": "Test Fund", "fundFamily": "Test Manager", "legalType": "Exchange Traded Fund", "fundInceptionDate": 1602460800},
+        )
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        pack = composer.compose_fact_pack("BRK.B", "Test Fund", None, None, "etf")
+
+        assert pack.source_citations == ["https://finance.yahoo.com/quote/BRK-B"]
