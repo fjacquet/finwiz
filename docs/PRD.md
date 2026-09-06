@@ -64,8 +64,10 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 - **Python wins** -- When AI and Python scores disagree, Python takes precedence.
 - **Trust spine (ADR-009)** -- Silent failure must be structurally impossible: typed `StageResult[T]` contracts per stage, persistent `RunLedger` JSONL evidence, and honest degradation (Python fallbacks surface as DEGRADED with amber report badge, never as silent OK).
 - **Grounded qualitative (ADR-010)** -- AI qualitative analysis is grounded
-  against a Perplexity-verified fact pack injected into every prompt. The
-  fact pack is authoritative: AI may not contradict it.
+  against a fact pack built from structured sources (yfinance, SEC filings,
+  a curated expense-ratio table), typed per asset class, and injected into
+  every prompt. Perplexity is called only to fill fields those sources leave
+  empty. The fact pack is authoritative: AI may not contradict it.
 
 ## 7. Scope Boundaries
 
@@ -95,6 +97,6 @@ Individual investors managing diversified multi-asset portfolios (stocks, ETFs, 
 - `docs/explanations/ARCHITECTURE.md` -- System architecture
 - `docs/adr/` -- Architecture Decision Records
   - [ADR-009: Trust Spine](adr/ADR-009-trust-spine.md) -- Typed stage contracts, RunLedger, honest degradation
-  - [ADR-010: Fact Pack Grounded Qualitative](adr/ADR-010-fact-pack-grounded-qualitative.md) -- Perplexity-verified fact pack injected into every qualitative prompt
+  - [ADR-010: Fact Pack Grounded Qualitative](adr/ADR-010-fact-pack-grounded-qualitative.md) -- structured-source fact pack, typed per asset class, injected into every qualitative prompt
 - `CLAUDE.md` -- Development guide
 - `CHANGELOG.md` -- Version history

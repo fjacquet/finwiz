@@ -125,6 +125,11 @@ SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
 # Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
 #   (full registry: config/features/definitions.py)
+# FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: they are
+#   built entirely from structured sources (yfinance, curated expense-ratio
+#   table), with no Perplexity call at all. Fact packs never fail a holding
+#   for want of Perplexity either way — it is a gap-filler for equity fields
+#   those sources leave empty, not a dependency.
 # Investment Discovery (Phase 4) runs unconditionally; the
 # INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
 # DEEP_PORTFOLIO_ANALYSIS is NOT a feature flag and gates nothing — deep
