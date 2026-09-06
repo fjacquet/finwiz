@@ -81,7 +81,7 @@ def _equity_details(
     pack; `fetch_missing_events` itself never raises, but the call is still
     wrapped as a second line of defence.
     """
-    fragment = merge_fragments(
+    fragment: FactPackFragment = merge_fragments(
         yfinance_source.equity_fragment(query_symbol, info),
         yfinance_source.filing_events(query_symbol),
         yfinance_source.news_events(query_symbol),
@@ -109,17 +109,6 @@ def _equity_details(
         events_from_filings=events_from_filings,
     )
     return facts, fragment.citations, sources
-
-
-def _missing_fields(fragment: FactPackFragment) -> tuple[str, ...]:
-    missing: list[str] = []
-    if not fragment.corporate_structure:
-        missing.append("corporate_structure")
-    if not fragment.leadership:
-        missing.append("leadership")
-    if not fragment.recent_events:
-        missing.append("recent_events")
-    return tuple(missing)
 
 
 def _clamp_text(ticker: str, field: str, value: str, max_chars: int) -> str:
