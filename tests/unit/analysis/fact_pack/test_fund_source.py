@@ -92,7 +92,8 @@ class TestFundFacts:
         assert [h.symbol for h in facts.top_holdings] == ["NVDA", "ASML.AS"]
         assert facts.top_holdings[0].name == "NVIDIA Corp"
         assert facts.top_holdings[0].weight == pytest.approx(0.077756)
-        # numpy scalars must not survive into the model, or JSON caching breaks.
+        # Type purity, not a JSON-caching guard: numpy.float64 subclasses float
+        # and serialises fine, and Pydantic would coerce it anyway.
         assert type(facts.top_holdings[0].weight) is float
 
     def test_a_fund_with_no_published_holdings_still_produces_facts(self, mocker, info, operations):

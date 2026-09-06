@@ -41,7 +41,10 @@ def _operations_value(operations: Any, symbol: str, row: str) -> float | None:
         return None
     column = symbol if symbol in operations.columns else operations.columns[0]
     value = operations.loc[row, column]
-    # yfinance yields numpy.float64; Pydantic accepts it but json.dumps does not.
+    # Cast for type purity, not because json.dumps would choke: numpy.float64
+    # subclasses float and serialises fine, and Pydantic would coerce it anyway.
+    # numpy.int64 is the one that breaks json.dumps -- no current field takes an
+    # integer from a DataFrame, but the cast is cheap insurance if one ever does.
     return None if value is None else float(value)
 
 
