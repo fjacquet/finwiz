@@ -9,6 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from finwiz.reporting.sections.insights import (
+    _fact_pack_block,
     generate_cost_summary_section,
     generate_holdings_insight_cards,
 )
@@ -106,6 +107,46 @@ def test_cards_grade_from_holdings_takes_precedence() -> None:
     insight = {"thesis": "t", "final_recommendation": "BUY", "grade": "C"}
     html = generate_holdings_insight_cards({"AAPL": insight}, [_Holding("AAPL", "A+")])
     assert "grade-a-plus" in html  # holding grade wins over insight grade
+
+
+class TestFactPackBlockValueContract:
+    """render.py's to_rows() returns list[str] for a genuinely list-shaped
+    value (holdings, recent events, allocation buckets) and str for prose.
+    _fact_pack_block must dispatch on the real type rather than sniffing
+    for "\\n" in the value -- the old heuristic mis-rendered a single event
+    (no newline, so it read as prose with a stray "- " marker) and
+    mis-rendered a business_summary that happened to contain a raw newline
+    (yfinance's longBusinessSummary is unedited scraped text) as a <ul>.
+    """
+
+    def test_a_list_value_renders_as_a_bulleted_list(self) -> None:
+        html = _fact_pack_block({"rows": [["Principales lignes", ["MSFT (Microsoft) 7,00 %", "NVDA (NVIDIA) 6,00 %"]]]})
+        assert "<ul>" in html
+        assert "<li>MSFT (Microsoft) 7,00 %</li>" in html
+        assert "<li>NVDA (NVIDIA) 6,00 %</li>" in html
+
+    def test_a_single_event_renders_without_a_stray_leading_dash(self) -> None:
+        html = _fact_pack_block({"rows": [["Événements récents (presse)", ["Airbus wins order"]]]})
+        assert "<li>Airbus wins order</li>" in html
+        assert "- Airbus wins order" not in html
+
+    def test_a_business_summary_with_an_embedded_newline_renders_as_prose(self) -> None:
+        summary = "Designs phones.\nAlso sells services."
+        html = _fact_pack_block({"rows": [["Structure", summary]]})
+        assert "<ul>" not in html
+        assert "<p>" in html
+        assert "Designs phones." in html
+
+    def test_an_old_shape_string_value_still_renders_without_crashing(self) -> None:
+        """A `*_enriched.json` written before this contract still carries
+        the old newline-joined-with-dash-markers string for a list-shaped
+        field. It now renders as one prose paragraph rather than a <ul> --
+        not the ideal rendering for old data, but the block still renders
+        (nothing lost, nothing crashes) with no migration required.
+        """
+        html = _fact_pack_block({"rows": [["Principales lignes", "- MSFT (Microsoft) 7,00 %\n- NVDA (NVIDIA) 6,00 %"]]})
+        assert "Principales lignes" in html
+        assert "MSFT" in html
 
 
 def test_cost_summary_renders_real_figures() -> None:

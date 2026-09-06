@@ -58,7 +58,16 @@ def _fact_pack_body(fact_pack: FactPack) -> str:
         return ""
     parts: list[str] = []
     for label, value in rows:
-        text = str(value).replace("\n", " ").strip()
+        # A list-valued row (holdings, recent events, allocation buckets) is
+        # joined compactly for this one-line table cell; a string value is
+        # prose and may itself contain a raw newline (yfinance's
+        # longBusinessSummary is unedited scraped text) -- flattened to a
+        # space rather than mistaken for a list the way insights.py's old
+        # "\n" sniff used to.
+        if isinstance(value, list):
+            text = " · ".join(str(v).strip() for v in value if str(v).strip())
+        else:
+            text = str(value).replace("\n", " ").strip()
         if len(text) > _MAX_BODY_VALUE_CHARS:
             text = text[: _MAX_BODY_VALUE_CHARS - 1].rstrip() + "…"
         if text:

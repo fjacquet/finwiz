@@ -38,9 +38,8 @@ class TestLabels:
         """
         pack = _pack("etf", FundFacts(issuer="iShares", top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=None)]))
         lines = next(value for label, value in to_rows(pack) if label == "Principales lignes")
-        assert "NVDA" in lines
-        assert "—" in lines
-        assert "None" not in lines
+        assert lines == ["NVDA (NVIDIA Corp) —"]
+        assert "None" not in lines[0]
 
     def test_the_expense_ratio_is_rendered_as_a_percentage(self):
         pack = _pack("etf", FundFacts(issuer="iShares", expense_ratio=0.002))
@@ -58,6 +57,35 @@ class TestLabels:
         assert "21" in supply
 
 
+class TestRowValueContract:
+    """A row's value is a plain str for prose and a list[str] for a
+    genuinely list-shaped fact (holdings, recent events, allocation
+    buckets) -- never a newline-joined string with a "- " marker per item.
+    Each of to_rows()'s three consumers (the prompt, the report card, the
+    report-table cell) used to decode that joined string by hand,
+    differently, and the prompt's decoding was wrong (see TestPromptBlock).
+    """
+
+    def test_a_holdings_row_is_a_list_not_a_joined_string(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=0.0777)]))
+        value = next(value for label, value in to_rows(pack) if label == "Principales lignes")
+        assert value == ["NVDA (NVIDIA Corp) 7,77 %"]
+
+    def test_an_allocation_row_is_a_list_of_buckets(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", asset_mix={"stockPosition": 0.9942, "cashPosition": 0.0058}))
+        value = next(value for label, value in to_rows(pack) if label == "Allocation")
+        assert value == ["stockPosition 99,42 %", "cashPosition 0,58 %"]
+
+    def test_a_recent_events_row_is_a_list_not_a_joined_string(self):
+        pack = _pack("stock", EquityFacts(business_summary="Builds planes.", leadership="Guillaume Faury (CEO)", recent_events=["Airbus wins order"], events_from_filings=False))
+        value = next(value for label, value in to_rows(pack) if label.startswith("Événements récents"))
+        assert value == ["Airbus wins order"]
+
+    def test_prose_rows_stay_plain_strings(self):
+        pack = _pack("stock", EquityFacts(business_summary="Designs phones.", leadership="Tim Cook (CEO)"))
+        assert all(isinstance(value, str) for _, value in to_rows(pack))
+
+
 class TestPromptBlock:
     def test_the_block_carries_every_row(self):
         pack = _pack("etf", FundFacts(issuer="iShares", expense_ratio=0.002))
@@ -71,3 +99,25 @@ class TestPromptBlock:
         block = to_prompt_block(pack)
         assert "fresh" in block
         assert "1.00" in block
+
+    def test_a_list_valued_row_is_indented_beneath_its_label_not_top_level(self):
+        """The bug this fixes: prefixing every holding with its own
+        top-level "- " read to the model as sibling facts about the fund,
+        inside the one block the prompt itself calls AUTORITAIRE.
+        """
+        pack = _pack(
+            "etf",
+            FundFacts(
+                issuer="iShares",
+                top_holdings=[
+                    FundHolding(symbol="MSFT", name="Microsoft", weight=0.07),
+                    FundHolding(symbol="NVDA", name="NVIDIA", weight=0.06),
+                ],
+            ),
+        )
+        lines = to_prompt_block(pack).split("\n")
+        label_idx = lines.index("- Principales lignes :")
+        assert lines[label_idx + 1] == "  - MSFT (Microsoft) 7,00 %"
+        assert lines[label_idx + 2] == "  - NVDA (NVIDIA) 6,00 %"
+        # Neither holding is a top-level fact sitting alongside "- Émetteur".
+        assert not any(line.startswith("- MSFT") or line.startswith("- NVDA") for line in lines)

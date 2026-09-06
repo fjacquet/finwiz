@@ -103,10 +103,17 @@ def _fact_pack_block(fact_pack: dict[str, Any] | None) -> str:
         if not isinstance(row, (list, tuple)) or len(row) != 2:
             continue
         label, value = row
-        if "\n" in str(value):
-            # to_rows() joins multi-line values ("- item" per line); strip the
-            # bullet prefix it added since _list_block renders its own <li>.
-            items = [line.removeprefix("- ") for line in str(value).split("\n")]
+        # to_rows() (current shape) returns a real list for a genuinely
+        # list-shaped value (holdings, recent events, allocation buckets)
+        # and a plain string for prose. A cached *_enriched.json written
+        # before this contract still carries the old shape -- a single
+        # newline-joined string with a "- " marker per item -- which lands
+        # here as a str and renders as one prose paragraph rather than a
+        # <ul>: not the ideal rendering for old data, but the block still
+        # renders (no crash, nothing lost), which is the whole point of
+        # dispatching on the real type instead of sniffing for "\n".
+        if isinstance(value, list):
+            items = [str(v) for v in value]
             parts.append(_list_block(str(label), items, 240))
         else:
             parts.append(_prose_block(str(label), str(value), 400))
