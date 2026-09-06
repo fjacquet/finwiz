@@ -101,3 +101,39 @@ class TestExceptionHandling:
         fragment = src.equity_fragment("AAPL", info)
         # Should return a fragment, not raise
         assert isinstance(fragment, src.FactPackFragment)
+
+
+class TestFieldCoercion:
+    """`_safe_str` fixes the class of defect described in this branch's
+    global constraint: a field that is usually a string can arrive as
+    anything else, and a bare `.strip()` on it used to raise inside the
+    one `try` that also builds every sibling field -- one bad officer name
+    used to cost the business summary too.
+    """
+
+    def test_a_non_string_officer_name_is_skipped_without_losing_the_summary_or_siblings(self):
+        info = {
+            "quoteType": "EQUITY",
+            "longBusinessSummary": "Designs phones.",
+            "companyOfficers": [{"name": 12345, "title": "CEO"}, {"name": "Real Person", "title": "CFO"}],
+        }
+        fragment = src.equity_fragment("AAPL", info)
+        assert fragment.corporate_structure == "Designs phones."
+        assert fragment.leadership == "Real Person (CFO)"
+
+    def test_a_non_string_officer_title_is_skipped_without_losing_siblings(self):
+        info = {
+            "quoteType": "EQUITY",
+            "companyOfficers": [{"name": "Bad Title Officer", "title": 999}, {"name": "Real Person", "title": "CFO"}],
+        }
+        fragment = src.equity_fragment("AAPL", info)
+        assert fragment.leadership == "Real Person (CFO)"
+
+    def test_a_non_string_summary_does_not_cost_leadership(self):
+        """Before `_safe_str`, computing `summary` raised before the officer
+        loop was ever reached -- a bad summary used to cost leadership too.
+        """
+        info = {"quoteType": "EQUITY", "longBusinessSummary": 12345, "companyOfficers": [{"name": "Real Person", "title": "CEO"}]}
+        fragment = src.equity_fragment("AAPL", info)
+        assert fragment.corporate_structure is None
+        assert fragment.leadership == "Real Person (CEO)"

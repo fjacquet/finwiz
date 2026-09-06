@@ -177,3 +177,51 @@ class TestMalformedData:
         assert len(fragment.recent_events) == 2
         assert "Good" in fragment.recent_events[0]
         assert "Also good" in fragment.recent_events[1]
+
+
+class TestPerItemContainment:
+    """A malformed *field* inside an otherwise dict-shaped item is different
+    from the non-dict-item case above: `_extract_filing_event`/
+    `_extract_news_event`'s own `isinstance` guard doesn't help, because the
+    item passes it. Before per-item containment in the loop, an exception
+    raised partway through extracting one item escaped to the function's
+    outer `except Exception` and discarded every sibling event and citation
+    gathered before it -- not just the bad one.
+    """
+
+    def test_a_filing_with_a_non_string_title_does_not_cost_its_siblings(self, mocker):
+        """Regression, not a probe of the loop-level containment itself:
+        a non-string filing title is fixed at the source by `_safe_str`
+        (an empty title, not a raise), so this filing degrades to an event
+        with a blank title rather than ever reaching the containment
+        try/except. The news case below is the one that actually exercises
+        it -- `_safe_str` alone doesn't cover `.replace()` on a non-string.
+        """
+        filings = [
+            {"date": "2026-09-01", "type": "8-K", "title": 12345, "edgarUrl": "https://example.com/edgar/bad"},
+            {"date": "2026-09-02", "type": "8-K", "title": "Good filing", "edgarUrl": "https://example.com/edgar/good"},
+        ]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=filings))
+        fragment = src.filing_events("AAPL", now=NOW)
+        assert len(fragment.recent_events) == 2
+        assert "Good filing" in fragment.recent_events[1]
+        assert fragment.citations == ("https://example.com/edgar/bad", "https://example.com/edgar/good")
+
+    def test_a_news_item_with_a_non_dict_provider_does_not_cost_its_siblings(self, mocker):
+        """The sharpest bite check. `_safe_str` guards the *value* a `.get()`
+        call returns, not the container it's called on: `provider` here is
+        a bare string, not a dict, so `(content.get("provider") or {})`
+        evaluates to that truthy string and `.get("displayName")` raises
+        `AttributeError` -- `_safe_str` never gets a chance to run. Before
+        per-item containment, this escaped `_extract_news_event` entirely
+        and `news_events`'s outer handler discarded every good headline
+        gathered before it, returning zero events instead of the survivor.
+        """
+        news = [
+            {"content": {"title": "Bad", "pubDate": "2026-09-05T19:40:00Z", "provider": "Reuters", "canonicalUrl": {"url": "https://example.com/bad"}}},
+            {"content": {"title": "Good headline", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/good"}}},
+        ]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+        fragment = src.news_events("AAPL", now=NOW)
+        assert fragment.recent_events == ("2026-09-05 Good headline",)
+        assert fragment.citations == ("https://example.com/good",)

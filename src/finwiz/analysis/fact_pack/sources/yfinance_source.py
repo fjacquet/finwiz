@@ -14,6 +14,7 @@ from typing import Any
 import yfinance as yf
 
 from finwiz.analysis.fact_pack.fragment import FactPackFragment
+from finwiz.analysis.fact_pack.sources._text import _safe_str
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -44,12 +45,12 @@ def is_resolvable(info: dict[str, Any]) -> bool:
 def equity_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
     """Extract corporate structure and leadership from equity info."""
     try:
-        summary = (info.get("longBusinessSummary") or "").strip() or None
+        summary = _safe_str(info.get("longBusinessSummary")) or None
 
         people: list[str] = []
         for officer in info.get("companyOfficers") or []:
-            name = (officer.get("name") or "").strip()
-            title = (officer.get("title") or "").strip()
+            name = _safe_str(officer.get("name"))
+            title = _safe_str(officer.get("title"))
             if name and title:
                 people.append(f"{name} ({title})")
             if len(people) >= _MAX_OFFICERS:
@@ -133,7 +134,7 @@ def _extract_filing_event(filing: Any, now: datetime) -> tuple[str | None, str |
         return None, None
     if not _within_window(filed, now):
         return None, None
-    title = (filing.get("title") or "").strip()
+    title = _safe_str(filing.get("title"))
     event = f"{date_str} {filing['type']}: {title}"[:_EVENT_MAX_CHARS]
     url = filing.get("edgarUrl")
     return event, url
@@ -144,17 +145,17 @@ def _extract_news_event(item: Any, now: datetime) -> tuple[str | None, str | Non
     if not isinstance(item, dict):
         return None, None
     content = item.get("content") or {}
-    provider = ((content.get("provider") or {}).get("displayName") or "").strip()
+    provider = _safe_str((content.get("provider") or {}).get("displayName"))
     if provider not in _NEWS_PROVIDER_ALLOWLIST:
         return None, None
-    raw_date = (content.get("pubDate") or "").replace("Z", "+00:00")
+    raw_date = _safe_str(content.get("pubDate")).replace("Z", "+00:00")
     try:
         published = datetime.fromisoformat(raw_date)
     except (ValueError, TypeError):
         return None, None
     if not _within_window(published, now):
         return None, None
-    title = (content.get("title") or "").strip()
+    title = _safe_str(content.get("title"))
     if not title:
         return None, None
     event = f"{published.date().isoformat()} {title}"[:_EVENT_MAX_CHARS]
@@ -177,7 +178,17 @@ def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
         for filing in filings:
             if len(events) >= _MAX_EVENTS:
                 break
-            event, url = _extract_filing_event(filing, now)
+            # One malformed filing (e.g. a bare string instead of a dict --
+            # _extract_filing_event's own isinstance check doesn't help if
+            # the AttributeError happens before it) must cost that filing,
+            # not the whole batch: without this, it used to escape to the
+            # outer handler below and discard every good filing and
+            # citation gathered so far, logged at debug where nobody saw it.
+            try:
+                event, url = _extract_filing_event(filing, now)
+            except Exception as e:
+                logger.warning(f"fact_pack: {ticker} skipped a malformed SEC filing: {e}")
+                continue
             if event:
                 events.append(event)
                 if url:
@@ -206,7 +217,14 @@ def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
         for item in items:
             if len(events) >= _MAX_EVENTS:
                 break
-            event, url = _extract_news_event(item, now)
+            # Same containment as filing_events above: one malformed item
+            # must cost that item, not every good headline and citation
+            # gathered before it.
+            try:
+                event, url = _extract_news_event(item, now)
+            except Exception as e:
+                logger.warning(f"fact_pack: {ticker} skipped a malformed news item: {e}")
+                continue
             if event:
                 events.append(event)
                 if url:

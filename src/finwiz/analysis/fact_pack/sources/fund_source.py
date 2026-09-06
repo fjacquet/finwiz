@@ -12,6 +12,7 @@ from typing import Any
 
 from finwiz.analysis.fact_pack.sources import yfinance_source
 from finwiz.analysis.fact_pack.sources._numeric import _finite
+from finwiz.analysis.fact_pack.sources._text import _safe_str
 from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
 from finwiz.schemas.hybrid_analysis.fact_pack import FundFacts, FundHolding
 from finwiz.tools.logger import get_logger
@@ -27,23 +28,6 @@ _EXPENSE_RATIO_FALLBACK_SOURCE = "etf_expense_ratios.yaml"
 # yfinance is authoritative; the repo's manual table is only a tripwire. A
 # disagreement beyond this is worth a human glancing at, not acting on.
 _EXPENSE_RATIO_DISAGREEMENT_THRESHOLD = 0.0005
-
-
-def _safe_str(value: Any, max_chars: int) -> str:
-    """A source-provided string field, defensively.
-
-    yfinance's `info` dict is scraped, not contractual -- `fundFamily` or
-    `legalType` being truthy but not a string (an int, a list, anything)
-    would raise `AttributeError` on a bare `.strip()`, same shape as the
-    `description` guard in crypto_source.py. Applied to every string field
-    `fund_facts` reads off `info` after a non-string `legalType` was found
-    to raise inside the construction `try` and discard the whole pack --
-    issuer, expense ratio, holdings, everything -- for one field that has
-    an empty-string default anyway.
-    """
-    if not isinstance(value, str):
-        return ""
-    return value.strip()[:max_chars]
 
 
 def _operations_value(operations: Any, symbol: str, row: str) -> float | None:

@@ -377,6 +377,25 @@ class TestFinite:
         assert fund_source._finite(0.077756) == pytest.approx(0.077756)
 
 
+class TestSafeStrCoercion:
+    """`_safe_str` (sources/_text.py) is the shared guard against a
+    truthy-but-non-string yfinance field, now shared between fund_source
+    and yfinance_source rather than duplicated between them.
+    """
+
+    def test_a_non_string_value_degrades_to_empty(self):
+        assert fund_source._safe_str(12345) == ""
+
+    def test_a_string_value_is_stripped(self):
+        assert fund_source._safe_str("  iShares  ") == "iShares"
+
+    def test_max_chars_truncates_when_given(self):
+        assert fund_source._safe_str("Exchange Traded Fund", max_chars=8) == "Exchange"
+
+    def test_no_max_chars_means_no_truncation(self):
+        assert fund_source._safe_str("Exchange Traded Fund") == "Exchange Traded Fund"
+
+
 class TestConstructionGuard:
     """Spec §6: no source may raise. This is the backstop for a schema
     constraint this module's own normalization doesn't yet know about."""
