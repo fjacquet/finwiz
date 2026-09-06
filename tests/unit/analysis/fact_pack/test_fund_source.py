@@ -69,26 +69,26 @@ def holdings():
 class TestFundFacts:
     def test_identity_comes_from_info(self, mocker, info, operations, holdings):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts.issuer == "BlackRock Asset Management Ireland - ETF"
         assert facts.legal_type == "Exchange Traded Fund"
         assert facts.inception_year == 2020
 
     def test_expense_ratio_is_read_from_the_ticker_column(self, mocker, info, operations, holdings):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts.expense_ratio == pytest.approx(0.002)
         assert facts.turnover == pytest.approx(0.0)
 
     def test_total_net_assets_is_not_modelled(self, mocker, info, operations, holdings):
         """Its unit is undocumented; an AUM without a unit is worse than none."""
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert not hasattr(facts, "total_net_assets")
 
     def test_holdings_are_converted_with_symbol_from_the_index(self, mocker, info, operations, holdings):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert [h.symbol for h in facts.top_holdings] == ["NVDA", "ASML.AS"]
         assert facts.top_holdings[0].name == "NVIDIA Corp"
         assert facts.top_holdings[0].weight == pytest.approx(0.077756)
@@ -99,32 +99,34 @@ class TestFundFacts:
         """AEEM.PA returns an empty frame while 2B7K.DE returns ten rows."""
         empty = pd.DataFrame({"Name": [], "Holding Percent": []})
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, empty)))
-        facts, _ = fund_source.fund_facts("AEEM.PA", info)
+        facts, _, _ = fund_source.fund_facts("AEEM.PA", info)
         assert facts.top_holdings == []
         assert facts.expense_ratio == pytest.approx(0.002)
 
     def test_a_failing_accessor_degrades_that_field_only(self, mocker, info, holdings):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(RuntimeError("boom"), holdings)))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts.expense_ratio is None
         assert [h.symbol for h in facts.top_holdings] == ["NVDA", "ASML.AS"]
 
     def test_funds_data_failing_entirely_still_yields_identity_facts(self, mocker, info):
         mocker.patch.object(yfinance_source, "_ticker", side_effect=RuntimeError("network down"))
-        facts, _ = fund_source.fund_facts("2B7K.DE", info)
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts.issuer == "BlackRock Asset Management Ireland - ETF"
         assert facts.top_holdings == []
 
     def test_an_info_without_an_issuer_yields_none(self, mocker):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData()))
-        facts, citations = fund_source.fund_facts("XXXX.DE", {"quoteType": "ETF"})
+        facts, citations, sources = fund_source.fund_facts("XXXX.DE", {"quoteType": "ETF"})
         assert facts is None
         assert citations == ()
+        assert sources == ()
 
     def test_the_quote_page_is_the_citation(self, mocker, info, operations, holdings):
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
-        _, citations = fund_source.fund_facts("2B7K.DE", info)
+        _, citations, sources = fund_source.fund_facts("2B7K.DE", info)
         assert citations == ("https://finance.yahoo.com/quote/2B7K.DE",)
+        assert sources == ("yfinance.info", "yfinance.funds_data")
 
 
 class TestExpenseRatioTripwire:
@@ -134,7 +136,7 @@ class TestExpenseRatioTripwire:
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
         mocker.patch.object(fund_source, "get_fallback_expense_ratio", return_value=0.0100)  # yfinance says 0.002
         with caplog.at_level("WARNING"):
-            facts, _ = fund_source.fund_facts("2B7K.DE", info)
+            facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts.expense_ratio == pytest.approx(0.002)  # yfinance value wins, untouched
         assert any("0.002" in r.message and "0.01" in r.message for r in caplog.records)
 
@@ -151,3 +153,75 @@ class TestExpenseRatioTripwire:
         with caplog.at_level("WARNING"):
             fund_source.fund_facts("2B7K.DE", info)
         assert caplog.records == []
+
+
+@pytest.fixture
+def zero_ter_operations():
+    """The real 2026-09-06 shape for VUSA.L, CSYZ.DE, GREIT.SW, XB0T.DE, ZSIL.SW:
+    yfinance reports a literal 0.0, never a genuine zero-fee fund."""
+    return pd.DataFrame(
+        {"VUSA.L": [0.0, 0.05, 9000000.0], "Category Average": [0.0031, 0.1, 500000.0]},
+        index=["Annual Report Expense Ratio", "Annual Holdings Turnover", "Total Net Assets"],
+    )
+
+
+class TestExpenseRatioFalseZero:
+    """yfinance encodes an unknown expense ratio as 0.0, not a missing row --
+    the same trap as maxSupply == 0 meaning 'uncapped' for crypto."""
+
+    def test_a_false_zero_is_replaced_by_the_curated_table_value(self, mocker, caplog, info, zero_ter_operations, holdings):
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(zero_ter_operations, holdings)))
+        mocker.patch.object(fund_source, "get_fallback_expense_ratio", return_value=0.0007)
+        with caplog.at_level("WARNING"):
+            facts, _, sources = fund_source.fund_facts("VUSA.L", info)
+        assert facts.expense_ratio == pytest.approx(0.0007)
+        assert any("false zero" in r.message for r in caplog.records)
+        assert sources == ("yfinance.info", "yfinance.funds_data", "etf_expense_ratios.yaml")
+
+    def test_a_false_zero_with_no_table_entry_yields_none(self, mocker, caplog, info, zero_ter_operations, holdings):
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(zero_ter_operations, holdings)))
+        mocker.patch.object(fund_source, "get_fallback_expense_ratio", return_value=None)
+        with caplog.at_level("WARNING"):
+            facts, _, sources = fund_source.fund_facts("VUSA.L", info)
+        assert facts.expense_ratio is None
+        assert any("no data/etf_expense_ratios.yaml entry" in r.message for r in caplog.records)
+        assert sources == ("yfinance.info", "yfinance.funds_data")
+
+    def test_a_genuine_nonzero_value_is_left_alone(self, mocker, info, operations, holdings):
+        """Regression guard: the false-zero fix must not touch real values."""
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
+        mocker.patch.object(fund_source, "get_fallback_expense_ratio", return_value=None)
+        facts, _, sources = fund_source.fund_facts("2B7K.DE", info)
+        assert facts.expense_ratio == pytest.approx(0.002)
+        assert sources == ("yfinance.info", "yfinance.funds_data")
+
+
+@pytest.fixture
+def negative_turnover_operations():
+    """The real 2026-09-06 shape for a portfolio ETF reporting -0.6146 turnover."""
+    return pd.DataFrame(
+        {"2B7K.DE": [0.002, -0.6146, 143259.6], "Category Average": [0.0031, 0.1, 500000.0]},
+        index=["Annual Report Expense Ratio", "Annual Holdings Turnover", "Total Net Assets"],
+    )
+
+
+class TestTurnoverNormalization:
+    def test_a_negative_turnover_is_treated_as_unknown(self, mocker, info, negative_turnover_operations, holdings):
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(negative_turnover_operations, holdings)))
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
+        assert facts.turnover is None
+        # The rest of the pack is unaffected by one bad field.
+        assert facts.expense_ratio == pytest.approx(0.002)
+
+
+class TestConstructionGuard:
+    """Spec §6: no source may raise. This is the backstop for a schema
+    constraint this module's own normalization doesn't yet know about."""
+
+    def test_an_unexpected_construction_failure_yields_none_not_a_raise(self, mocker, info, operations, holdings):
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
+        mocker.patch.object(fund_source, "FundFacts", side_effect=ValueError("boom"))
+        facts, citations, sources = fund_source.fund_facts("2B7K.DE", info)
+        assert facts is None
+        assert citations == ()
+        assert sources == ()
