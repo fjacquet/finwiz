@@ -1,4 +1,4 @@
-"""Tests for FactPackCache (v5.2)."""
+"""Tests for FactPackCache (v5.3)."""
 
 from __future__ import annotations
 
