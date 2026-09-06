@@ -137,6 +137,9 @@ structural, not advisory.
   with confidence ratings. Kept separate in v5.2 (different lifecycles:
   per-run vs cached 7d, different consumers: report-only vs every
   qualitative prompt). Unification candidate for v5.3+.
+  **↳ Superseded 2026-09-06: fact packs are no longer Perplexity-fetched
+  (structured sources now); strategic_analysis still is. See "Superseded
+  in part" below.**
 
 ### Risks
 
