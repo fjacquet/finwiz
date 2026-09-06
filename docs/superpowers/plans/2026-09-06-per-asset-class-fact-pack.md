@@ -1324,8 +1324,25 @@ git commit -m "feat(fact-pack): one renderer owns the labels for prompt and repo
 **Files:**
 - Modify: `tests/integration/analysis/test_yfinance_shapes.py`
 - Modify: `docs/adr/ADR-010-fact-pack-grounded-qualitative.md`, `CHANGELOG.md`, `CLAUDE.md`, `docs/PRD.md`
+- Migrate to the envelope (controller ruling 2026-09-06 — the plan invalidated the cache but never
+  updated the tests that build cached packs, so these 11 stay red until this task fixes them):
+  `tests/unit/cache/test_fact_pack_cache.py` (9 failures),
+  `tests/unit/scripts/test_invalidate_fact_pack.py` (2 failures)
 
 **Interfaces:** none produced.
+
+- [ ] **Step 0: Migrate the cache tests to the envelope**
+
+These fixtures still construct `FactPack` with `corporate_structure` / `leadership` /
+`recent_events` and no `asset_class` / `details`, so they fail against the shipped schema. This is
+the same mechanical shape change Task 6 applied to nine other files — batch it, and **migrate rather
+than delete**: a test asserting something about the old shape must assert the equivalent about the
+new one. A cache round-trip test is exactly where a discriminated union earns its keep, so at least
+one test must write a pack of each class and read it back with `details.kind` intact.
+
+Run: `uv run pytest tests/unit/cache/test_fact_pack_cache.py tests/unit/scripts/test_invalidate_fact_pack.py -q`
+Expected: all pass. Then `uv run pytest tests/unit -q` must report **0 failed** — this task is the
+last one holding the suite red.
 
 - [ ] **Step 1: Extend the canary to the fund and crypto fields**
 
