@@ -42,7 +42,7 @@ def is_resolvable(info: dict[str, Any]) -> bool:
     return info.get("quoteType") is not None
 
 
-def equity_fragment(info: dict[str, Any]) -> FactPackFragment:
+def equity_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
     """Extract corporate structure and leadership from equity info."""
     try:
         summary = (info.get("longBusinessSummary") or "").strip() or None
@@ -62,7 +62,7 @@ def equity_fragment(info: dict[str, Any]) -> FactPackFragment:
             sources=_SOURCES,
         )
     except Exception as e:
-        logger.warning(f"equity_fragment extraction failed: {e}")
+        logger.warning(f"equity_fragment extraction failed for {ticker}: {e}")
         return FactPackFragment()
 
 
@@ -97,7 +97,7 @@ def etf_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
         return FactPackFragment()
 
 
-def crypto_fragment(info: dict[str, Any]) -> FactPackFragment:
+def crypto_fragment(ticker: str, info: dict[str, Any]) -> FactPackFragment:
     """Crypto has no issuer and no officers; say nothing rather than invent one.
 
     Both fields stay None so the composer writes the placeholder and confidence
@@ -106,7 +106,7 @@ def crypto_fragment(info: dict[str, Any]) -> FactPackFragment:
     try:
         return FactPackFragment(sources=_SOURCES) if is_resolvable(info) else FactPackFragment()
     except Exception as e:
-        logger.warning(f"crypto_fragment extraction failed: {e}")
+        logger.warning(f"crypto_fragment extraction failed for {ticker}: {e}")
         return FactPackFragment()
 
 

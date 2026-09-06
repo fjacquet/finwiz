@@ -56,28 +56,28 @@ class TestResolvability:
 
 class TestEquityFragment:
     def test_business_summary_becomes_corporate_structure(self, equity_info):
-        assert src.equity_fragment(equity_info).corporate_structure == "Apple Inc. designs, manufactures and markets smartphones."
+        assert src.equity_fragment("AAPL", equity_info).corporate_structure == "Apple Inc. designs, manufactures and markets smartphones."
 
     def test_officers_become_leadership_as_name_and_title(self, equity_info):
-        leadership = src.equity_fragment(equity_info).leadership
+        leadership = src.equity_fragment("AAPL", equity_info).leadership
         assert "Mr. Timothy D. Cook (CEO & Director)" in leadership
         assert "Mr. Kevan Parekh (Senior VP & CFO)" in leadership
 
     def test_officers_without_a_name_or_title_are_skipped(self):
         info = {"quoteType": "EQUITY", "companyOfficers": [{"name": "", "title": "CEO"}, {"name": "Real Person", "title": ""}]}
-        assert src.equity_fragment(info).leadership is None
+        assert src.equity_fragment("AAPL", info).leadership is None
 
     def test_a_missing_summary_yields_none_not_an_empty_string(self):
-        assert src.equity_fragment({"quoteType": "EQUITY"}).corporate_structure is None
+        assert src.equity_fragment("AAPL", {"quoteType": "EQUITY"}).corporate_structure is None
 
     def test_the_source_is_labelled(self, equity_info):
-        assert src.equity_fragment(equity_info).sources == ("yfinance.info",)
+        assert src.equity_fragment("AAPL", equity_info).sources == ("yfinance.info",)
 
     def test_more_than_six_officers_are_capped(self):
         """More than _MAX_OFFICERS should only return the first 6."""
         officers = [{"name": f"Officer {i}", "title": f"Title {i}"} for i in range(10)]
         info = {"quoteType": "EQUITY", "longBusinessSummary": "Test", "companyOfficers": officers}
-        leadership = src.equity_fragment(info).leadership
+        leadership = src.equity_fragment("AAPL", info).leadership
         # Should have exactly 6 officers listed
         officer_count = leadership.count(" (Title ")
         assert officer_count == 6
@@ -102,7 +102,7 @@ class TestEtfFragment:
 
 class TestCryptoFragment:
     def test_crypto_has_no_structure_or_leadership_to_report(self):
-        fragment = src.crypto_fragment({"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
+        fragment = src.crypto_fragment("BTC-USD", {"quoteType": "CRYPTOCURRENCY", "longName": "Bitcoin USD"})
         assert fragment.corporate_structure is None
         assert fragment.leadership is None
 
@@ -120,7 +120,7 @@ class TestExceptionHandling:
                 "not a dict",  # This will cause AttributeError if not handled
             ],
         }
-        fragment = src.equity_fragment(info)
+        fragment = src.equity_fragment("AAPL", info)
         # Should return a fragment, not raise - exception caught and logged
         assert isinstance(fragment, src.FactPackFragment)
 
@@ -131,7 +131,7 @@ class TestExceptionHandling:
             "longBusinessSummary": 12345,  # Not a string
             "companyOfficers": [],
         }
-        fragment = src.equity_fragment(info)
+        fragment = src.equity_fragment("AAPL", info)
         # Should return a fragment, not raise
         assert isinstance(fragment, src.FactPackFragment)
 
@@ -164,6 +164,6 @@ class TestExceptionHandling:
     def test_crypto_fragment_handles_exception(self):
         """Exceptions in crypto_fragment should return empty fragment, not raise."""
         info = None  # Will cause exceptions in is_resolvable
-        fragment = src.crypto_fragment(info)
+        fragment = src.crypto_fragment("BTC-USD", info)
         # Should return a fragment, not raise
         assert isinstance(fragment, src.FactPackFragment)
