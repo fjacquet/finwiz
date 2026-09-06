@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 from typing import Literal, cast
 
 from finwiz.analysis.fact_pack.confidence import score
-from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, FactPackFragment, merge_fragments
+from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, merge_fragments
 from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, perplexity_source, yfinance_source
 from finwiz.config.features.flags import is_feature_enabled
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
@@ -81,7 +81,7 @@ def _equity_details(
     pack; `fetch_missing_events` itself never raises, but the call is still
     wrapped as a second line of defence.
     """
-    fragment: FactPackFragment = merge_fragments(
+    fragment = merge_fragments(
         yfinance_source.equity_fragment(query_symbol, info),
         yfinance_source.filing_events(query_symbol),
         yfinance_source.news_events(query_symbol),

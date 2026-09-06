@@ -1,6 +1,7 @@
 """Gap-fill may add events to an equity. It may never overwrite, and never fail a pack."""
 
 from finwiz.analysis.fact_pack import composer
+from finwiz.analysis.fact_pack.fragment import FactPackFragment
 from finwiz.analysis.fact_pack.sources import perplexity_source
 
 
@@ -11,8 +12,8 @@ class TestGapFillScope:
             "resolve",
             return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
         )
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
         fetch = mocker.patch.object(perplexity_source, "fetch_missing_events", return_value=("Airbus wins order",))
 
@@ -31,9 +32,9 @@ class TestGapFillScope:
         mocker.patch.object(
             composer.yfinance_source,
             "filing_events",
-            return_value=composer.FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)),
+            return_value=FactPackFragment(recent_events=("2026-09-01 8-K: Changes",), events_from_filings=True, sources=("yfinance.sec_filings",)),
         )
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
         fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
 
@@ -64,8 +65,8 @@ class TestGapFillScope:
             "resolve",
             return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
         )
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=False)
         fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
 
@@ -80,8 +81,8 @@ class TestGapFillScope:
             "resolve",
             return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
         )
-        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=composer.FactPackFragment())
-        mocker.patch.object(composer.yfinance_source, "news_events", return_value=composer.FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
         mocker.patch.object(perplexity_source, "fetch_missing_events", side_effect=RuntimeError("Perplexity HTTP 401 insufficient_quota"))
 
