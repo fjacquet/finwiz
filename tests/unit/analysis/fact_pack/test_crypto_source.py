@@ -85,6 +85,19 @@ class TestCryptoFacts:
         assert facts is None
         assert citations == ()
 
+    def test_a_nan_field_is_treated_as_unknown_not_a_whole_pack_loss(self):
+        """Before `_number` routed through the shared `_finite` guard, a NaN
+        here survived `isinstance(nan, float)` and `nan < 0` (both defeated
+        by NaN) and reached CryptoFacts's `ge=0.0` constraint as a literal
+        NaN, raising ValidationError -- caught by the construction guard by
+        discarding the WHOLE pack, not just this field. Same defect class as
+        fund_source's NaN holdings weight, one call site over.
+        """
+        facts, _ = crypto_source.crypto_facts("BTC-USD", {**BTC, "circulatingSupply": float("nan")})
+        assert facts is not None
+        assert facts.circulating_supply is None
+        assert facts.market_cap == 1604790386688.0  # unaffected by the neighbouring bad field
+
     def test_the_construction_guard_degrades_when_the_schema_rejects_a_value(self, mocker, caplog):
         """An unanticipated schema constraint degrades to (None, ()) instead of raising."""
         mocker.patch.object(

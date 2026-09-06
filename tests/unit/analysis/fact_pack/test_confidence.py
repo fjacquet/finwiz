@@ -49,6 +49,18 @@ class TestFund:
         """0.0 is a real, remarkable fee — not a missing value."""
         assert score(_fund(expense_ratio=0.0), has_citation=True) == 1.0
 
+    def test_holdings_with_unknown_weights_still_score_the_full_holdings_credit(self):
+        """A deliberate judgement call, not an oversight: `score()` checks
+        `if facts.top_holdings`, so a list of holdings whose weights are all
+        None (unusable yfinance data, kept as unknown rather than dropped --
+        see fund_source._holdings) earns the same 0.25 as a list with every
+        weight populated. Knowing WHAT a fund holds is most of the value;
+        the weight is a refinement on top of that, not a precondition for it.
+        """
+        known_weight = score(_fund(), has_citation=True)
+        unknown_weight = score(_fund(top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=None)]), has_citation=True)
+        assert known_weight == unknown_weight
+
 
 class TestCrypto:
     def test_a_capped_asset_scores_one(self):

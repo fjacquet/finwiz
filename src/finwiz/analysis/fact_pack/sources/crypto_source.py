@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
+from finwiz.analysis.fact_pack.sources._numeric import _finite
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts
 from finwiz.tools.logger import get_logger
 
@@ -23,12 +24,15 @@ _DESCRIPTION_MAX_CHARS = 2000
 def _number(value: Any, field_name: str = "") -> float | None:
     """Coerce to float. A wrong type or out-of-domain value is a missing field, not a crash.
 
-    A string where a number belongs, or a negative number where only non-negatives belong,
-    is treated as unknown. Logs mismatches at debug level with field name and value.
+    A string where a number belongs, NaN/+-inf (`_finite` rejects both --
+    a naive `fval < 0` check alone lets NaN through, since every comparison
+    against it is False), or a negative number where only non-negatives
+    belong, is treated as unknown. Logs mismatches at debug level with field
+    name and value.
     """
-    if isinstance(value, bool) or not isinstance(value, int | float):
+    fval = _finite(value)
+    if fval is None:
         return None
-    fval = float(value)
     if fval < 0:
         if field_name:
             logger.debug(f"fact_pack: {field_name} is negative ({fval}); treating as unknown")

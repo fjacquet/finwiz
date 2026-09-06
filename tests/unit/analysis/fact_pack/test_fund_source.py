@@ -198,6 +198,37 @@ class TestExpenseRatioFalseZero:
 
 
 @pytest.fixture
+def nan_ter_operations():
+    """A NaN cell, distinct from `zero_ter_operations`'s literal 0.0 -- both
+    read as missing, but before `_operations_value` routed through
+    `_finite`, NaN's `nan > 0` being False made `_resolve_expense_ratio`
+    mistake it for the genuine false-zero encoding and log that warning."""
+    return pd.DataFrame(
+        {"NANFUND": [float("nan"), 0.05, 9000000.0], "Category Average": [0.0031, 0.1, 500000.0]},
+        index=["Annual Report Expense Ratio", "Annual Holdings Turnover", "Total Net Assets"],
+    )
+
+
+class TestOperationsValueNaN:
+    def test_a_nan_expense_ratio_is_missing_not_a_mislabelled_false_zero(self, mocker, caplog, info, nan_ter_operations, holdings):
+        """Before `_operations_value` routed through `_finite`, a NaN cell's
+        `nan > 0` being False sent it down `_resolve_expense_ratio`'s "false
+        zero" branch -- consulting the curated table under a log message
+        that claims yfinance reported a literal 0.0, which it did not.
+        After the fix, NaN reads as `None` (genuinely missing, the same as
+        an absent operations row) -- no substitution, no false-zero label,
+        because there is nothing here to relabel as "false" or "true".
+        """
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(nan_ter_operations, holdings)))
+        mocker.patch.object(fund_source, "get_fallback_expense_ratio", return_value=0.0007)
+        with caplog.at_level("WARNING"):
+            facts, _, sources = fund_source.fund_facts("NANFUND", info)
+        assert facts.expense_ratio is None
+        assert not any("false zero" in r.message for r in caplog.records)
+        assert sources == ("yfinance.info", "yfinance.funds_data")
+
+
+@pytest.fixture
 def negative_turnover_operations():
     """The real 2026-09-06 shape for a portfolio ETF reporting -0.6146 turnover."""
     return pd.DataFrame(
@@ -216,46 +247,117 @@ class TestTurnoverNormalization:
 
 
 class TestHoldingsWeightNormalization:
-    """A NaN or out-of-domain weight is yfinance being scraped, not contractual --
-    FundHolding's own `ge=0.0, le=1.0` bound is not enforced by this source, and a
-    missing "Holding Percent" arrives as NaN, not None, so the earlier `weight is
-    None` guard never catches it. One unusable row must cost that row, not the
-    whole holdings table -- see fund_facts's own construction guard for what a
-    ValidationError escaping this function used to do to the rest of the pack.
+    """A NaN or out-of-domain weight is yfinance being scraped, not contractual.
+
+    A known holding whose weight is unusable is still a known holding --
+    `FundHolding.weight` is `float | None` so the row is kept with
+    weight=None rather than dropped. A missing "Holding Percent" arrives as
+    NaN, not None, so a plain `weight is None` guard never caught it before
+    this fix, and FundHolding's own `ge=0.0, le=1.0` bound is not enforced
+    by this source.
+
+    An unusable *identifier* (symbol) is handled differently -- see
+    TestHoldingsIdentifierNormalization below -- because a symbol is not
+    prose the way a weight is a number: there is no safe repair for it.
     """
 
-    def test_a_nan_weight_drops_only_that_row(self):
+    def test_a_nan_weight_keeps_the_row_with_weight_unknown(self):
         frame = pd.DataFrame({"Name": ["NVIDIA Corp", "ASML Holding"], "Holding Percent": [0.07, float("nan")]}, index=["NVDA", "ASML.AS"])
+        holdings = fund_source._holdings(frame)
+        assert [h.symbol for h in holdings] == ["NVDA", "ASML.AS"]
+        assert holdings[0].weight == pytest.approx(0.07)
+        assert holdings[1].weight is None
+
+    def test_an_out_of_range_weight_is_treated_as_unknown_not_dropped(self):
+        """1.5 is finite, so `_finite` alone would let it through -- the
+        separate [0,1] domain check in `_holdings` is what catches it."""
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [1.5]}, index=["NVDA"])
+        holdings = fund_source._holdings(frame)
+        assert [h.symbol for h in holdings] == ["NVDA"]
+        assert holdings[0].weight is None
+
+    def test_a_negative_weight_is_treated_as_unknown_not_dropped(self):
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [-0.1]}, index=["NVDA"])
+        holdings = fund_source._holdings(frame)
+        assert [h.symbol for h in holdings] == ["NVDA"]
+        assert holdings[0].weight is None
+
+
+class TestHoldingsIdentifierNormalization:
+    """A symbol is an identifier, not prose: truncating a 40-char symbol to
+    32 would produce a different, wrong identifier -- worse than omitting
+    the row. `name` still truncates (see test_holdings_are_converted_...
+    above); only the identifier is dropped outright.
+    """
+
+    def test_an_empty_symbol_drops_only_that_row(self):
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp", "No Symbol Co"], "Holding Percent": [0.07, 0.04]}, index=["NVDA", ""])
         holdings = fund_source._holdings(frame)
         assert [h.symbol for h in holdings] == ["NVDA"]
 
-    def test_a_weight_above_one_drops_its_row(self):
-        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [1.5]}, index=["NVDA"])
-        assert fund_source._holdings(frame) == []
+    def test_a_symbol_over_32_chars_drops_only_that_row(self):
+        overlong = "X" * 40
+        frame = pd.DataFrame({"Name": ["NVIDIA Corp", "Overlong Co"], "Holding Percent": [0.07, 0.04]}, index=["NVDA", overlong])
+        holdings = fund_source._holdings(frame)
+        assert [h.symbol for h in holdings] == ["NVDA"]
 
-    def test_a_negative_weight_drops_its_row(self):
-        frame = pd.DataFrame({"Name": ["NVIDIA Corp"], "Holding Percent": [-0.1]}, index=["NVDA"])
-        assert fund_source._holdings(frame) == []
-
-    def test_a_table_of_entirely_bad_rows_yields_an_empty_list_not_a_raise(self):
-        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [float("nan"), 2.0]}, index=["A", "B"])
+    def test_a_table_of_entirely_unusable_identifiers_yields_an_empty_list(self):
+        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [0.1, 0.2]}, index=["", "Y" * 40])
         assert fund_source._holdings(frame) == []
 
     def test_a_broken_holdings_table_does_not_cost_the_rest_of_the_pack(self, mocker, info, operations):
         """The real point: the expense ratio must survive a broken holdings table.
 
-        Before the fix, a NaN weight in `top_holdings` raised a ValidationError
-        inside `_holdings`, which escaped into `fund_facts`'s own construction
-        `try` and discarded the whole pack -- issuer, expense ratio, everything
-        -- degrading the fund to confidence 0.00.
+        Before the wider fix, an unusable value anywhere in `top_holdings`
+        raised a ValidationError inside `_holdings`, which escaped into
+        `fund_facts`'s own construction `try` and discarded the whole pack
+        -- issuer, expense ratio, everything -- degrading the fund to
+        confidence 0.00.
         """
-        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [float("nan"), 2.0]}, index=["A", "B"])
+        frame = pd.DataFrame({"Name": ["A", "B"], "Holding Percent": [0.1, 0.2]}, index=["", "Y" * 40])
         mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, frame)))
         facts, _, _ = fund_source.fund_facts("2B7K.DE", info)
         assert facts is not None
         assert facts.top_holdings == []
         assert facts.expense_ratio == pytest.approx(0.002)
         assert facts.issuer == "BlackRock Asset Management Ireland - ETF"
+
+
+class TestFloatsCoercion:
+    """`_floats` feeds `asset_mix`/`sector_weights`, both `dict[str, float]`
+    with no per-value bound for Pydantic to catch a bad one at -- a NaN or
+    inf entry would otherwise reach the cache as the non-standard JSON
+    token `NaN`/`Infinity` (`json.dumps` emits it rather than raising).
+    """
+
+    def test_a_nan_entry_is_dropped_the_rest_kept(self):
+        assert fund_source._floats({"tech": 0.4, "health": float("nan"), "energy": 0.1}) == {"tech": 0.4, "energy": 0.1}
+
+    def test_an_infinite_entry_is_dropped(self):
+        assert fund_source._floats({"tech": float("inf")}) == {}
+
+    def test_a_non_dict_input_yields_an_empty_dict(self):
+        assert fund_source._floats(None) == {}
+
+
+class TestFinite:
+    """`_finite` is the shared NaN/inf guard every numeric accessor in this
+    package routes through -- `isinstance(nan, float)` is True and every
+    comparison against NaN is False, so a bound written as a plain
+    comparison silently lets it through.
+    """
+
+    def test_nan_is_rejected(self):
+        assert fund_source._finite(float("nan")) is None
+
+    def test_positive_infinity_is_rejected(self):
+        assert fund_source._finite(float("inf")) is None
+
+    def test_negative_infinity_is_rejected(self):
+        assert fund_source._finite(float("-inf")) is None
+
+    def test_a_healthy_value_passes_through(self):
+        assert fund_source._finite(0.077756) == pytest.approx(0.077756)
 
 
 class TestConstructionGuard:

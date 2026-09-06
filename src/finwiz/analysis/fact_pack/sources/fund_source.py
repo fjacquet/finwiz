@@ -7,11 +7,11 @@ unavailable, and vice versa. Nothing here may raise — spec §6.
 
 from __future__ import annotations
 
-import math
 from datetime import UTC, datetime
 from typing import Any
 
 from finwiz.analysis.fact_pack.sources import yfinance_source
+from finwiz.analysis.fact_pack.sources._numeric import _finite
 from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
 from finwiz.schemas.hybrid_analysis.fact_pack import FundFacts, FundHolding
 from finwiz.tools.logger import get_logger
@@ -42,50 +42,56 @@ def _operations_value(operations: Any, symbol: str, row: str) -> float | None:
         return None
     column = symbol if symbol in operations.columns else operations.columns[0]
     value = operations.loc[row, column]
-    # Cast for type purity, not because json.dumps would choke: numpy.float64
-    # subclasses float and serialises fine, and Pydantic would coerce it anyway.
-    # numpy.int64 is the one that breaks json.dumps -- no current field takes an
-    # integer from a DataFrame, but the cast is cheap insurance if one ever does.
-    return None if value is None else float(value)
+    # `_finite` both casts (numpy.float64 subclasses float and serialises
+    # fine, but numpy.int64 breaks json.dumps) and rejects NaN/+-inf -- a
+    # missing operations cell reads back as NaN, not None, and without this
+    # `_resolve_expense_ratio` used to mistake it for yfinance's genuine
+    # "false zero" encoding and log the wrong warning for it.
+    return _finite(value)
+
+
+_SYMBOL_MAX_CHARS = 32
 
 
 def _holdings(frame: Any) -> list[FundHolding]:
-    """One bad row must cost that row, not the table.
+    """A holding with an unusable weight is still a known holding.
 
-    See fund_facts's own construction guard for why: without this, a single
-    NaN or out-of-range weight (yfinance is scraped, not contractual) raised
-    out of `FundHolding` construction, escaped into `fund_facts`'s `try`, and
-    discarded the whole pack -- issuer, expense ratio, asset mix, everything
-    -- for nine other holdings that were perfectly fine.
+    `FundHolding.weight` is `float | None` precisely so that a NaN or
+    out-of-[0,1] weight (yfinance is scraped, not contractual; a missing
+    "Holding Percent" arrives as NaN, not None) can be recorded as unknown
+    without discarding the fact that the fund holds this position at all --
+    dropping the whole row would throw away the one thing we do know.
+
+    An unusable *identifier* is different: `symbol` is not prose, so an
+    empty or over-32-character one is dropped rather than repaired --
+    truncating a 40-char symbol to 32 would produce a different, wrong
+    identifier, which is worse than omitting the row. `name` still
+    truncates, since a company name has no correctness a truncation could
+    violate the way an identifier does.
     """
     if frame is None or getattr(frame, "empty", True):
         return []
     rows: list[FundHolding] = []
     for symbol, row in frame.iterrows():
         name = str(row.get("Name") or "").strip()
-        weight = row.get("Holding Percent")
-        if not name or weight is None:
+        if not name:
             continue
-        try:
-            weight_f = float(weight)
-        except (TypeError, ValueError):
-            logger.warning(f"fact_pack: holding {symbol} has a non-numeric weight ({weight!r}); dropping this row only")
+        symbol_str = str(symbol)
+        if not symbol_str or len(symbol_str) > _SYMBOL_MAX_CHARS:
+            logger.debug(f"fact_pack: holding with unusable symbol ({symbol_str!r}) dropped")
             continue
-        # Layer 1: a missing "Holding Percent" in a pandas frame is NaN, not
-        # None, so the None-check above doesn't catch it -- and FundHolding's
-        # own `ge=0.0, le=1.0` bound is not enforced by this source. An
-        # unusable weight is UNKNOWN, not a fact to repair to a boundary: for
-        # a holdings row the weight *is* the content, so the row is dropped,
-        # never clamped to 0.0 or 1.0.
-        if not math.isfinite(weight_f) or not (0.0 <= weight_f <= 1.0):
-            logger.warning(f"fact_pack: holding {symbol} has an out-of-domain weight ({weight!r}); dropping this row only")
-            continue
+
+        weight_f = _finite(row.get("Holding Percent"))
+        if weight_f is not None and not (0.0 <= weight_f <= 1.0):
+            logger.debug(f"fact_pack: holding {symbol_str} weight {weight_f!r} out of [0, 1]; treating as unknown")
+            weight_f = None
+
         try:
             # Layer 2: the checks above cover every constraint this module
             # knows about; this is the backstop for one it doesn't.
-            rows.append(FundHolding(symbol=str(symbol), name=name[:200], weight=weight_f))
+            rows.append(FundHolding(symbol=symbol_str, name=name[:200], weight=weight_f))
         except Exception as e:
-            logger.warning(f"fact_pack: holding {symbol} dropped, failed FundHolding construction: {e}")
+            logger.warning(f"fact_pack: holding {symbol_str} dropped, failed FundHolding construction: {e}")
             continue
         if len(rows) >= _MAX_HOLDINGS:
             break
@@ -93,9 +99,22 @@ def _holdings(frame: Any) -> list[FundHolding]:
 
 
 def _floats(mapping: Any) -> dict[str, float]:
+    """Coerce a mapping's values to finite floats, dropping any that aren't.
+
+    Without `_finite`'s NaN/inf rejection, a bad entry survives as a literal
+    NaN in `asset_mix`/`sector_weights` -- both are `dict[str, float]` with
+    no per-value bound for Pydantic to catch it at, so it would reach the
+    cache as invalid JSON (`json.dumps` emits the non-standard token `NaN`
+    for it) instead of being caught here.
+    """
     if not isinstance(mapping, dict):
         return {}
-    return {str(k): float(v) for k, v in mapping.items() if isinstance(v, int | float)}
+    result: dict[str, float] = {}
+    for k, v in mapping.items():
+        fv = _finite(v)
+        if fv is not None:
+            result[str(k)] = fv
+    return result
 
 
 def _check_expense_ratio_tripwire(symbol: str, expense_ratio: float, fallback: float) -> None:

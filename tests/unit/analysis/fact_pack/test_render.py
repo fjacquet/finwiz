@@ -29,6 +29,19 @@ class TestLabels:
         assert "Émetteur" in labels
         assert "Frais courants" in labels
 
+    def test_a_holding_with_an_unknown_weight_renders_as_a_dash_not_a_crash(self):
+        """FundHolding.weight is float | None (a NaN/out-of-range yfinance
+        weight is kept as an unknown weight, not dropped) -- _pct already
+        handles None, so this is the "nearly free downstream" half of that
+        fix: a None weight must render as the same dash used elsewhere for
+        an unknown figure, never "None" or a TypeError from `value * 100`.
+        """
+        pack = _pack("etf", FundFacts(issuer="iShares", top_holdings=[FundHolding(symbol="NVDA", name="NVIDIA Corp", weight=None)]))
+        lines = next(value for label, value in to_rows(pack) if label == "Principales lignes")
+        assert "NVDA" in lines
+        assert "—" in lines
+        assert "None" not in lines
+
     def test_the_expense_ratio_is_rendered_as_a_percentage(self):
         pack = _pack("etf", FundFacts(issuer="iShares", expense_ratio=0.002))
         assert any("0,20 %" in value for _, value in to_rows(pack))

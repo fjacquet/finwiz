@@ -29,7 +29,10 @@ class FundHolding(BaseModel):
 
     symbol: str = Field(min_length=1, max_length=32)
     name: str = Field(min_length=1, max_length=200)
-    weight: float = Field(ge=0.0, le=1.0, description="Fraction of the fund, as yfinance reports it (0.077756 == 7.78%)")
+    # None when yfinance reported this holding's weight as unusable
+    # (missing/NaN/out of range): a known holding whose weight is unknown,
+    # not a fact to clamp to a boundary.
+    weight: float | None = Field(default=None, ge=0.0, le=1.0, description="Fraction of the fund, as yfinance reports it (0.077756 == 7.78%)")
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
