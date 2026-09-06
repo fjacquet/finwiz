@@ -8,7 +8,7 @@ instead of raising: a shape change must cost one field, never a holding.
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 import yfinance as yf
@@ -141,6 +141,49 @@ def _within_window(when: datetime, now: datetime) -> bool:
     return 0 <= (now - when).days <= _EVENT_WINDOW_DAYS
 
 
+def _parse_filing_date(raw_date: Any) -> tuple[datetime, str] | tuple[None, None]:
+    """Parse a filing date that may be a date object, datetime, or string.
+
+    Returns (datetime with UTC tz, ISO date string) or (None, None) on failure.
+    """
+    if isinstance(raw_date, datetime):
+        # Already a datetime; ensure it has UTC tz if naive
+        dt = raw_date if raw_date.tzinfo else raw_date.replace(tzinfo=UTC)
+        return dt, dt.date().isoformat()
+    if isinstance(raw_date, date):
+        # A date object; convert to datetime at UTC
+        dt = datetime.combine(raw_date, datetime.min.time()).replace(tzinfo=UTC)
+        return dt, raw_date.isoformat()
+    if isinstance(raw_date, str):
+        # A string; parse it
+        try:
+            dt = datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=UTC)
+            return dt, raw_date
+        except ValueError:
+            return None, None
+    return None, None
+
+
+def _extract_filing_event(filing: Any, now: datetime) -> tuple[str | None, str | None]:
+    """Extract a filing event and URL from a raw filing, or return (None, None)."""
+    if not isinstance(filing, dict):
+        return None, None
+    if filing.get("type") not in _MATERIAL_FILING_TYPES:
+        return None, None
+    raw_date = filing.get("date")
+    if raw_date is None:
+        return None, None
+    filed, date_str = _parse_filing_date(raw_date)
+    if filed is None:
+        return None, None
+    if not _within_window(filed, now):
+        return None, None
+    title = (filing.get("title") or "").strip()
+    event = f"{date_str} {filing['type']}: {title}"[:_EVENT_MAX_CHARS]
+    url = filing.get("edgarUrl")
+    return event, url
+
+
 def _extract_news_event(item: Any, now: datetime) -> tuple[str | None, str | None]:
     """Extract a news event and URL from a raw item, or return (None, None)."""
     if not isinstance(item, dict):
@@ -177,24 +220,13 @@ def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
         events: list[str] = []
         citations: list[str] = []
         for filing in filings:
-            if not isinstance(filing, dict):
-                continue
-            if filing.get("type") not in _MATERIAL_FILING_TYPES:
-                continue
-            raw_date = filing.get("date") or ""
-            try:
-                filed = datetime.strptime(raw_date, "%Y-%m-%d").replace(tzinfo=UTC)
-            except (ValueError, TypeError):
-                continue
-            if not _within_window(filed, now):
-                continue
-            title = (filing.get("title") or "").strip()
-            events.append(f"{raw_date} {filing['type']}: {title}"[:_EVENT_MAX_CHARS])
-            url = filing.get("edgarUrl")
-            if url:
-                citations.append(url)
             if len(events) >= _MAX_EVENTS:
                 break
+            event, url = _extract_filing_event(filing, now)
+            if event:
+                events.append(event)
+                if url:
+                    citations.append(url)
 
         if not events:
             return FactPackFragment()

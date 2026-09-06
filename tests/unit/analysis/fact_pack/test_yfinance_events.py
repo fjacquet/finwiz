@@ -5,7 +5,7 @@ Join..."). The project rule is to filter noise out, not emit it with a low
 grade, so these tests pin exclusion rather than down-weighting.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 import pytest
 
@@ -35,11 +35,13 @@ class _FakeTicker:
 
 @pytest.fixture
 def filings():
+    # Production shape: date is datetime.date object; kept one string case for tolerance
     return [
-        {"date": "2026-09-01", "type": "8-K", "title": "Corporate Changes & Voting Matters", "edgarUrl": "https://example.com/edgar/1"},
-        {"date": "2026-06-15", "type": "10-Q", "title": "Quarterly Report", "edgarUrl": "https://example.com/edgar/2"},
-        {"date": "2019-01-02", "type": "8-K", "title": "Ancient Event", "edgarUrl": "https://example.com/edgar/old"},
-        {"date": "2026-08-01", "type": "CORRESP", "title": "Correspondence", "edgarUrl": "https://example.com/edgar/3"},
+        {"date": date(2026, 9, 1), "type": "8-K", "title": "Corporate Changes & Voting Matters", "edgarUrl": "https://example.com/edgar/1"},
+        {"date": date(2026, 6, 15), "type": "10-Q", "title": "Quarterly Report", "edgarUrl": "https://example.com/edgar/2"},
+        {"date": date(2019, 1, 2), "type": "8-K", "title": "Ancient Event", "edgarUrl": "https://example.com/edgar/old"},
+        {"date": date(2026, 8, 1), "type": "CORRESP", "title": "Correspondence", "edgarUrl": "https://example.com/edgar/3"},
+        {"date": "2026-07-15", "type": "8-K", "title": "String Date (Fallback)", "edgarUrl": "https://example.com/edgar/str"},
     ]
 
 
@@ -49,10 +51,11 @@ class TestFilingEvents:
 
         fragment = src.filing_events("AAPL", now=NOW)
 
-        assert fragment.recent_events == (
-            "2026-09-01 8-K: Corporate Changes & Voting Matters",
-            "2026-06-15 10-Q: Quarterly Report",
-        )
+        # Should have 3 material filings: 8-K (date obj), 10-Q (date obj), 8-K (string date)
+        assert len(fragment.recent_events) == 3
+        assert "2026-09-01 8-K: Corporate Changes & Voting Matters" in fragment.recent_events
+        assert "2026-06-15 10-Q: Quarterly Report" in fragment.recent_events
+        assert "2026-07-15 8-K: String Date (Fallback)" in fragment.recent_events
         assert fragment.events_from_filings is True
 
     def test_filings_older_than_twelve_months_are_dropped(self, mocker, filings):
@@ -65,7 +68,12 @@ class TestFilingEvents:
 
     def test_edgar_urls_become_citations(self, mocker, filings):
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=filings))
-        assert src.filing_events("AAPL", now=NOW).citations == ("https://example.com/edgar/1", "https://example.com/edgar/2")
+        citations = src.filing_events("AAPL", now=NOW).citations
+        # Should have 3 citations from the material filings
+        assert len(citations) == 3
+        assert "https://example.com/edgar/1" in citations
+        assert "https://example.com/edgar/2" in citations
+        assert "https://example.com/edgar/str" in citations
 
     def test_a_european_listing_with_no_filings_yields_an_empty_fragment(self, mocker):
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(sec_filings=[]))
