@@ -9,7 +9,7 @@ analysis/
 ├── __init__.py                   # Module exports
 ├── deep_analysis_pipeline.py     # Backwards-compatible facade only
 ├── _helpers.py                   # Shared helpers
-├── fact_pack_research.py         # Perplexity fact-pack research
+├── fact_pack_research.py         # Perplexity gap-fill support (see analysis/fact_pack/)
 ├── strategic_research.py         # Strategic framework research
 └── stages/                       # WHERE THE PIPELINE ACTUALLY LIVES
     ├── __init__.py               # run_pipeline() — the real orchestrator
@@ -41,7 +41,7 @@ The analysis pipeline follows functional programming principles with pure functi
 │  │  Six stages, in finwiz.analysis.stages:                       │
 │  │  ├── collect     -> RawData                   [Python tools]  │
 │  │  ├── quantify    -> Quant                        [$0 Python]  │
-│  │  ├── fact_pack   -> FactPack                    [Perplexity]  │
+│  │  ├── fact_pack   -> FactPack       [yfinance + Perplexity gap-fill]  │
 │  │  ├── qualify     -> Qual                          [AI crew]   │
 │  │  ├── synthesize  -> Enriched                       [Python]   │
 │  │  └── emit        -> artifacts + RunLedger          [Python]   │

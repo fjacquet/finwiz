@@ -127,11 +127,14 @@ SERPER_API_KEY=...              # Required
 #   (full registry: config/features/definitions.py)
 # FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: they are
 #   built entirely from structured sources (yfinance, curated expense-ratio
-#   table), with no Perplexity call at all — effective once the fact_pack
-#   stage calls the composer (Task 8); today stages/fact_pack.py still calls
-#   the old Perplexity-only fetcher and never consults this flag. Fact packs
-#   never fail a holding for want of Perplexity either way — it is a
-#   gap-filler for equity fields those sources leave empty, not a dependency.
+#   table), with no Perplexity call at all. stages/fact_pack.py calls
+#   analysis/fact_pack/composer.py's compose_fact_pack(), which consults this
+#   flag itself, narrowly, in the equity path only (analysis/fact_pack/
+#   sources/perplexity_source.py) — funds and crypto never call Perplexity
+#   regardless of the flag. Fact packs never fail a holding for want of
+#   Perplexity either way — it is a gap-filler for equity recent_events when
+#   neither SEC filings nor allowlisted wire news covered the company
+#   (measured at 6 of 67 holdings), not a dependency.
 # Investment Discovery (Phase 4) runs unconditionally; the
 # INVESTMENT_DISCOVERY_ENABLED kill switch was removed.
 # DEEP_PORTFOLIO_ANALYSIS is NOT a feature flag and gates nothing — deep

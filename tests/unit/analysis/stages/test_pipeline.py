@@ -182,13 +182,13 @@ def test_pipeline_short_circuits_when_fact_pack_fails(tmp_path: Path, mocker: An
         return_value=(fake_partial, fake_quant),
     )
 
-    # Mock fact_pack to fail (no cache + Perplexity returns None)
+    # Mock fact_pack to fail (no cache + compose_fact_pack returns None)
     mocker.patch(
         "finwiz.analysis.stages.fact_pack._get_cache",
         return_value=_empty_cache(tmp_path, mocker),
     )
     mocker.patch(
-        "finwiz.analysis.stages.fact_pack.fetch_fact_pack_sync",
+        "finwiz.analysis.stages.fact_pack.compose_fact_pack",
         return_value=None,
     )
     # fact_pack fails first, so strategic research is never reached here — mocked
