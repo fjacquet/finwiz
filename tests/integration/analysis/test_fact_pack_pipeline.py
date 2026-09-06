@@ -9,7 +9,7 @@ from typing import Any
 import pytest
 
 from finwiz.cache.fact_pack_cache import FactPackCache
-from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 pytestmark = pytest.mark.integration
 
@@ -17,9 +17,12 @@ pytestmark = pytest.mark.integration
 def _build_dell_fact_pack() -> FactPack:
     fetched = datetime.now(UTC)
     return FactPack(
-        corporate_structure="Dell Technologies — divested VMware November 2021",
-        recent_events=["Q4 earnings beat"],
-        leadership="Michael Dell (CEO)",
+        asset_class="stock",
+        details=EquityFacts(
+            business_summary="Dell Technologies — divested VMware November 2021",
+            leadership="Michael Dell (CEO)",
+            recent_events=["Q4 earnings beat"],
+        ),
         fetched_at=fetched,
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.95,
@@ -48,6 +51,7 @@ class TestFactPackPipelineIntegration:
         analysis_ctx.company_name = "Dell Technologies"
         analysis_ctx.sector = "Technology"
         analysis_ctx.industry = "Hardware"
+        analysis_ctx.asset_class = "stock"
 
         ctx = StageContext(
             ticker="DELL",
@@ -58,4 +62,4 @@ class TestFactPackPipelineIntegration:
 
         result = fact_pack(ctx, {})
         assert result.payload is not None
-        assert "divested VMware" in result.payload.corporate_structure
+        assert "divested VMware" in result.payload.details.business_summary
