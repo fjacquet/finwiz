@@ -128,6 +128,19 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
     a pack, however thin -- one provider must never be able to halt a holding,
     which is exactly what happened on 2026-09-06 when a quota error took all 64.
     """
+    # Normalise here, once, so every downstream use -- routing, the main
+    # FactPack construction, the exception backstop, the Literal cast, and
+    # the asset_class/details.kind pairing validator -- only ever sees one of
+    # the three enumerated classes. An unrecognised value used to reach the
+    # backstop's _FALLBACK_DETAILS[asset_class] lookup unnormalised and raise
+    # KeyError from inside the one code path whose entire purpose is that a
+    # holding never dies. Falling back to "stock" preserves the behaviour
+    # routing's `else` branch already gave an unknown class; this just says
+    # so in a log line instead of doing it silently.
+    if asset_class not in _FALLBACK_DETAILS:
+        logger.warning(f"fact_pack: {ticker} has unknown asset_class={asset_class!r}; routing as 'stock'")
+        asset_class = "stock"
+
     # Domain-model tickers stay bare (BTC, AAVE); yfinance needs the query form
     # (BTC-USD). Without this, yfinance's own `BTC` resolves to a Grayscale
     # trust ETF, not the coin -- silently fetching facts about the wrong

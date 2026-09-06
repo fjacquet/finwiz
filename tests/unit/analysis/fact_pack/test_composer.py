@@ -286,3 +286,60 @@ class TestPerClassComposition:
         pack = composer.compose_fact_pack("2B7K.DE", "iShares World", None, None, "etf")
 
         assert "etf_expense_ratios.yaml" in pack.sources_used
+
+
+class TestUnknownAssetClass:
+    """An unenumerated asset_class must degrade to a labelled 'stock' pack, never kill the holding.
+
+    Before the entry-point normalisation, an unknown value reached the
+    backstop's _FALLBACK_DETAILS[asset_class] lookup unnormalised: the main
+    FactPack(...) call correctly rejected it (Literal validation), the except
+    caught that, and then the fallback line raised KeyError -- uncaught,
+    inside the one code path whose entire purpose is that a holding never
+    dies.
+    """
+
+    def test_an_unknown_asset_class_degrades_to_stock_with_a_warning(self, mocker, caplog):
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+
+        with caplog.at_level("WARNING"):
+            pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "bond")
+
+        assert pack is not None
+        assert pack.asset_class == "stock"
+        assert pack.details.kind == "equity"
+        assert any("unknown asset_class='bond'" in r.message for r in caplog.records)
+
+    @pytest.mark.parametrize("asset_class", ["stock", "etf", "crypto"])
+    def test_the_backstop_still_returns_a_valid_pack_for_each_real_class(self, mocker, asset_class):
+        """The normalisation must not weaken the backstop for the three real classes."""
+        info_by_class = {
+            "stock": {"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."},
+            "etf": {"quoteType": "ETF", "fundFamily": "iShares"},
+            "crypto": {"quoteType": "CRYPTOCURRENCY", "description": "Bitcoin is..."},
+        }
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value=info_by_class[asset_class])
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.fund_source, "fund_facts", return_value=(FundFacts(issuer="iShares"), (), ()))
+        mocker.patch.object(composer.crypto_source, "crypto_facts", return_value=(CryptoFacts(description="Bitcoin is..."), ()))
+
+        original_init = composer.FactPack.__init__
+        calls = {"n": 0}
+
+        def _flaky_init(self, *args, **kwargs):
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise ValueError("simulated schema failure")
+            original_init(self, *args, **kwargs)
+
+        mocker.patch.object(composer.FactPack, "__init__", _flaky_init)
+
+        pack = composer.compose_fact_pack("TICKER", "Some Holding", None, None, asset_class)
+
+        assert pack is not None
+        assert pack.asset_class == asset_class
+        assert pack.confidence == 0.0
+        assert "composer.schema_fallback" in pack.sources_used
