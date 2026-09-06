@@ -388,3 +388,33 @@ class TestConstructionGuard:
         assert facts is None
         assert citations == ()
         assert sources == ()
+
+
+class TestSafeStr:
+    """A non-string legalType/fundFamily used to raise AttributeError on a
+    bare `.strip()`, inside fund_facts's construction `try` -- discarding
+    the whole pack (issuer, expense ratio, holdings, everything) for one
+    field that has an empty-string default anyway. Same defect class Task 4
+    fixed for crypto_source's `description`, found here by a branch-wide
+    sweep after the fifth instance of it.
+    """
+
+    def test_a_non_string_legal_type_degrades_to_empty_not_a_pack_loss(self, mocker, info, operations, holdings):
+        bad_info = {**info, "legalType": 12345}
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData(operations, holdings)))
+        facts, _, _ = fund_source.fund_facts("2B7K.DE", bad_info)
+        assert facts is not None
+        assert facts.legal_type == ""
+        assert facts.issuer == "BlackRock Asset Management Ireland - ETF"
+        assert facts.expense_ratio == pytest.approx(0.002)
+
+    def test_a_non_string_fund_family_degrades_to_no_issuer_not_a_raise(self, mocker):
+        """fundFamily is required (no issuer means no pack, per the existing
+        contract) -- the fix here is that a non-string value degrades to
+        the same "no issuer" outcome as an absent one, rather than raising
+        before that check can even run."""
+        mocker.patch.object(yfinance_source, "_ticker", return_value=_FakeTicker(_FakeFundsData()))
+        facts, citations, sources = fund_source.fund_facts("XXXX.DE", {"quoteType": "ETF", "fundFamily": ["not", "a", "string"]})
+        assert facts is None
+        assert citations == ()
+        assert sources == ()

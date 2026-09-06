@@ -29,6 +29,23 @@ _EXPENSE_RATIO_FALLBACK_SOURCE = "etf_expense_ratios.yaml"
 _EXPENSE_RATIO_DISAGREEMENT_THRESHOLD = 0.0005
 
 
+def _safe_str(value: Any, max_chars: int) -> str:
+    """A source-provided string field, defensively.
+
+    yfinance's `info` dict is scraped, not contractual -- `fundFamily` or
+    `legalType` being truthy but not a string (an int, a list, anything)
+    would raise `AttributeError` on a bare `.strip()`, same shape as the
+    `description` guard in crypto_source.py. Applied to every string field
+    `fund_facts` reads off `info` after a non-string `legalType` was found
+    to raise inside the construction `try` and discard the whole pack --
+    issuer, expense ratio, holdings, everything -- for one field that has
+    an empty-string default anyway.
+    """
+    if not isinstance(value, str):
+        return ""
+    return value.strip()[:max_chars]
+
+
 def _operations_value(operations: Any, symbol: str, row: str) -> float | None:
     """Read one metric from the operations frame.
 
@@ -242,7 +259,7 @@ def fund_facts(query_symbol: str, info: dict[str, Any]) -> tuple[FundFacts | Non
     exactly when the expense ratio came from the curated table rather than
     yfinance (see `_resolve_expense_ratio`).
     """
-    issuer = (info.get("fundFamily") or "").strip()
+    issuer = _safe_str(info.get("fundFamily"), 200)
     if not issuer:
         logger.warning(f"fact_pack: {query_symbol} has no fundFamily; cannot build fund facts")
         return None, (), ()
@@ -256,8 +273,8 @@ def fund_facts(query_symbol: str, info: dict[str, Any]) -> tuple[FundFacts | Non
 
     try:
         facts = FundFacts(
-            issuer=issuer[:200],
-            legal_type=(info.get("legalType") or "").strip()[:100],
+            issuer=issuer,
+            legal_type=_safe_str(info.get("legalType"), 100),
             inception_year=inception_year,
             expense_ratio=expense_ratio,
             turnover=turnover,

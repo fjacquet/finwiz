@@ -6,11 +6,12 @@ deep_qualitative_analysis_task:
     Qualitative analysis for {ticker} ({asset_class}).
 
     📅 DATE D'ANALYSE : {current_date} ({current_date_iso}).
-    Tes données d'entraînement peuvent être périmées (l'entreprise a pu changer
-    d'actionnariat, vendre/acquérir des filiales, changer de PDG depuis ton
-    cutoff). Considère que la `Description` ci-dessous est la SEULE source de
-    vérité sur la structure actuelle de l'entreprise. Tous tes constats doivent
-    être cohérents avec la date {current_date}.
+    Tes données d'entraînement peuvent être périmées : la structure corporate
+    et la direction (action), l'émetteur (fonds), ou le protocole (crypto) de
+    ce holding, ainsi que ses événements récents, ont pu changer depuis ton
+    cutoff. Le FACT PACK ci-dessous est ta source de vérité sur son état
+    actuel — pas tes souvenirs d'entraînement. Tous tes constats doivent être
+    cohérents avec la date {current_date}.
 
     LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
