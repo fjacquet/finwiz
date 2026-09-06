@@ -3,8 +3,14 @@
 Class-appropriate facts from structured sources, cached for 7 days, injected
 into the qualitative prompt as ground truth. The qualitative crew must NOT
 contradict the fact pack — anti-hallucination becomes structural.
-Equity facts come from SEC filings; fund facts from yfinance/issuer data;
-crypto facts from on-chain and market sources.
+
+Provenance:
+- Equity: business summary and officers from yfinance info; recent events from
+  SEC filing index for US listings and ADRs, otherwise from filtered wire news.
+- Fund: issuer, legal form and inception from yfinance info; ongoing charges
+  and holdings from yfinance funds_data.
+- Crypto: description, supply and market figures from yfinance info, which
+  sources these from CoinMarketCap.
 """
 
 from __future__ import annotations
