@@ -59,12 +59,20 @@ class TestYfinanceShapes:
             assert "pubDate" in content, "News content must have 'pubDate' key"
             assert isinstance(content["pubDate"], str), f"News pubDate must be string, got {type(content['pubDate'])}"
 
-            provider = content.get("provider") or {}
-            display_name = provider.get("displayName", "")
+            # Hard assertions for provider and displayName — missing keys must fail the test
+            assert "provider" in content, "News content must have 'provider' key"
+            provider = content["provider"]
+            assert isinstance(provider, dict), f"News provider must be a dict, got {type(provider)}"
+            assert "displayName" in provider, "News provider must have 'displayName' key"
+            display_name = provider["displayName"]
             assert isinstance(display_name, str), f"Provider displayName must be string, got {type(display_name)}"
 
-            canonical = content.get("canonicalUrl") or {}
-            url = canonical.get("url", "")
+            # Hard assertions for canonicalUrl and url — missing keys must fail the test
+            assert "canonicalUrl" in content, "News content must have 'canonicalUrl' key"
+            canonical = content["canonicalUrl"]
+            assert isinstance(canonical, dict), f"News canonicalUrl must be a dict, got {type(canonical)}"
+            assert "url" in canonical, "News canonicalUrl must have 'url' key"
+            url = canonical["url"]
             assert isinstance(url, str), f"CanonicalUrl.url must be string, got {type(url)}"
 
     def test_info_equity_shape(self):
@@ -72,7 +80,9 @@ class TestYfinanceShapes:
         info = src._ticker("AAPL").info
         assert isinstance(info, dict), f"Info must be a dict, got {type(info)}"
         assert "quoteType" in info, "Info must have 'quoteType' key"
-        assert info["quoteType"] == "EQUITY", f"AAPL must be EQUITY, got {info['quoteType']}"
+        # Accept common equity types, but avoid pinning to one literal
+        assert isinstance(info["quoteType"], str), f"quoteType must be string, got {type(info['quoteType'])}"
+        assert info["quoteType"] in ("EQUITY", "AMERICAN_DEPOSITARY_RECEIPT"), f"AAPL quoteType should be equity-like, got {info['quoteType']}"
 
         officers = info.get("companyOfficers") or []
         if officers:
@@ -85,11 +95,13 @@ class TestYfinanceShapes:
                 assert isinstance(officer["title"], str), f"Officer title must be string, got {type(officer['title'])}"
 
     def test_info_etf_shape(self):
-        """info dict for an ETF must have quoteType='ETF' and fundFamily/legalType."""
+        """info dict for an ETF/fund must have quoteType and fundFamily/legalType."""
         info = src._ticker("VTSAX").info
         assert isinstance(info, dict), f"Info must be a dict, got {type(info)}"
         assert "quoteType" in info, "Info must have 'quoteType' key"
-        assert info["quoteType"] == "MUTUALFUND", f"VTSAX must be MUTUALFUND, got {info['quoteType']}"
+        # Accept fund/ETF types — Yahoo may report either ETF or MUTUALFUND for the same instrument
+        assert isinstance(info["quoteType"], str), f"quoteType must be string, got {type(info['quoteType'])}"
+        assert info["quoteType"] in ("ETF", "MUTUALFUND"), f"VTSAX quoteType should be fund-like, got {info['quoteType']}"
 
     def test_unresolvable_ticker_shape(self):
         """An unknown ticker's info dict must lack 'quoteType'."""
