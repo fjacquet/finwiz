@@ -94,8 +94,12 @@ class TestYfinanceShapes:
                 assert "title" in officer, "Officer must have 'title' key"
                 assert isinstance(officer["title"], str), f"Officer title must be string, got {type(officer['title'])}"
 
-    def test_info_etf_shape(self):
-        """info dict for an ETF/fund must have quoteType and fundFamily/legalType."""
+    def test_info_fund_shape(self):
+        """info dict for a mutual fund/ETF must have quoteType as a string.
+
+        Yahoo reports both ETF and MUTUALFUND for fund-like instruments; both are valid.
+        VTSAX is a mutual fund; European UCITS ETFs like 2B7K.DE report MUTUALFUND too.
+        """
         info = src._ticker("VTSAX").info
         assert isinstance(info, dict), f"Info must be a dict, got {type(info)}"
         assert "quoteType" in info, "Info must have 'quoteType' key"
