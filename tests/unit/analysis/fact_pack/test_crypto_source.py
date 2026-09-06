@@ -1,5 +1,7 @@
 """Crypto facts from the info dict the composer already fetched."""
 
+import logging
+
 from finwiz.analysis.fact_pack.sources import crypto_source
 
 BTC = {
@@ -83,15 +85,15 @@ class TestCryptoFacts:
         assert facts is None
         assert citations == ()
 
-    def test_the_construction_guard_catches_schema_violations(self):
-        """A schema violation in construction (e.g., invalid type for a required field) is caught and degraded."""
-        # Create data that will pass all layer-1 checks but fail layer-2 construction.
-        # The description is a string (passes layer 1), but we use an invalid type that
-        # Pydantic will reject — we use a dict for description which is not a string.
-        # Actually, description is already normalized to string in layer 1, so we need
-        # a different approach. We'll construct directly to trigger the backstop.
-        # For now, we mock this by verifying that if construction fails, we return (None, ()).
-        # In practice, this is hard to trigger since we normalize everything in layer 1.
-        # Test that the try/except is there by verifying the normal path works.
-        facts, _ = crypto_source.crypto_facts("BTC-USD", BTC)
-        assert facts is not None  # Normal path succeeds
+    def test_the_construction_guard_degrades_when_the_schema_rejects_a_value(self, mocker, caplog):
+        """An unanticipated schema constraint degrades to (None, ()) instead of raising."""
+        mocker.patch.object(
+            crypto_source,
+            "CryptoFacts",
+            side_effect=ValueError("a constraint no fixture violates"),
+        )
+        with caplog.at_level(logging.ERROR):
+            facts, citations = crypto_source.crypto_facts("BTC-USD", BTC)
+        assert facts is None
+        assert citations == ()
+        assert "BTC-USD" in caplog.text
