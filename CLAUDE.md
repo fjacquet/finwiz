@@ -143,7 +143,12 @@ run gate sets the process exit code (0 pass/warn, 1 fail, 2 could-not-evaluate),
 but the vendored CLI catches the child's `CalledProcessError` and returns 0
 regardless, so `crewai flow kickoff` reports success for every run. Anything
 that inspects `$?` — cron, CI, a shell `&&` — must call `uv run kickoff`.
-`make gate` re-judges a saved `output/run_summary.json` and its code is truthful.
+`make gate` re-judges a saved `output/run_summary.json`, but read its verdict
+from the printed block, not from `$?`: GNU make exits 2 whenever a recipe
+fails, so it reports 2 for FAIL and 2 for ERROR alike — collapsing the one
+distinction the exit codes exist to draw. Anything inspecting `$?` must call
+`uv run python scripts/run_gate.py output/run_summary.json` directly; that
+does return 0/1/2 truthfully.
 
 - **Programmatic:** call `FinwizFlow(state=FinwizState()).kickoff(inputs={...})`.
   Inputs populate the structured `FinwizState` Pydantic fields before any

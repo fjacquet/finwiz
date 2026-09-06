@@ -171,6 +171,9 @@ check-stage-contract:
 # Run gate — re-evaluate the last run's summary with the thresholds currently in settings.
 # Exit 0 PASS/WARN, 1 FAIL, 2 could not evaluate. See docs/superpowers/specs/2026-09-05-run-gate-design.md.
 .PHONY: gate
+# Human-facing: prints the block. Do NOT read $? from this target -- make exits 2
+# on any recipe failure, so FAIL (1) and ERROR (2) become indistinguishable.
+# Scripts that branch on the verdict must call scripts/run_gate.py directly.
 gate:
 	uv run python scripts/run_gate.py output/run_summary.json
 
