@@ -13,12 +13,6 @@ Functions:
 # Import and re-export for backward compatibility
 from finwiz.config.features.flags import is_feature_enabled
 from finwiz.core.app_initializer import kickoff
-from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
-from finwiz.crews.etf_crew.etf_crew import EtfCrew
-from finwiz.crews.investment_discovery_crew.investment_discovery_crew import InvestmentDiscoveryCrew
-from finwiz.crews.portfolio_rebalancing_crew.portfolio_rebalancing_crew import PortfolioRebalancingCrew
-from finwiz.crews.report_crew.report_crew import ReportCrew
-from finwiz.crews.stock_crew.stock_crew import StockCrew
 from finwiz.flow_state import FinwizState
 from finwiz.flows.orchestrator import FinwizFlow, plot
 from finwiz.integration.accessor import CrewDataAccessor
@@ -29,14 +23,8 @@ from finwiz.tools.logger import get_logger
 __all__ = [
     "CrewDataAccessor",
     "CrewDataIntegrationManager",
-    "CryptoCrew",
-    "EtfCrew",
     "FinwizFlow",
     "FinwizState",
-    "InvestmentDiscoveryCrew",
-    "PortfolioRebalancingCrew",
-    "ReportCrew",
-    "StockCrew",
     "is_feature_enabled",
     "kickoff",
     "plot",

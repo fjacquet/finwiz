@@ -23,7 +23,6 @@ class TestFlowDelegation:
         mocker.patch("finwiz.flows.orchestrator.CrewDataAccessor")
         mocker.patch("finwiz.flows.orchestrator.CoreAnalysisErrorHandler")
         mocker.patch("finwiz.flows.orchestrator.FlowStateManager")
-        mocker.patch("finwiz.flows.orchestrator.CrewFactory")
         mocker.patch("finwiz.flows.orchestrator.DataAvailabilityTracker")
         mocker.patch("finwiz.flows.orchestrator.get_resilience_config")
         mocker.patch("finwiz.flows.orchestrator.create_retry_decorator")

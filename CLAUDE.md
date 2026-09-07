@@ -71,7 +71,6 @@ main.py → core/app_initializer.py → flows/orchestrator.py (FinwizFlow)
 |-----------|----------|------|
 | Main flow | `flows/orchestrator.py` → `FinwizFlow(Flow[FinwizState])` | Coordinates all phases via orchestrator delegation |
 | Flow state | `flow_state.py` → `FinwizState` (Pydantic) | Type-safe state shared across flow phases |
-| Crew factory | `crew_factory.py` → `CrewFactory` | Constructed at flow startup, then **never called** — every `execute_*_crew` method has zero callers (see #187) |
 | Analysis pipeline | `analysis/deep_analysis_pipeline.py` | Functional pipeline: Python scoring + AI insights |
 | Scoring engine | `scoring/deep_analysis_scorer.py` → `DeepAnalysisScorer` | Composite: 40% fundamental, 30% technical, 30% risk |
 | Tool factories | `tools/tool_factories.py` | `get_stock_crew_tools()`, `get_etf_crew_tools()`, etc. |
@@ -82,7 +81,7 @@ main.py → core/app_initializer.py → flows/orchestrator.py (FinwizFlow)
 
 Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml`, and a crew class using `@CrewBase`.
 
-**Only `deep_analysis` runs.** It is reached from `analysis/_helpers.py`, not through `CrewFactory`. The other six — `stock_crew`, `etf_crew`, `crypto_crew`, `investment_discovery_crew`, `portfolio_rebalancing_crew`, `report_crew` — exist on disk and are wired into `CrewFactory`, but nothing calls the methods that would run them. No `*_export.json` has ever been produced. `stock_crew` has rotted far enough that it can no longer be instantiated at all. Their fate is tracked in #187; until it is settled, treat them as inert rather than as examples to follow.
+**`deep_analysis` is the only crew.** It is reached from `analysis/_helpers.py`. The six crews that used to exist — `stock_crew`, `etf_crew`, `crypto_crew`, `investment_discovery_crew`, `portfolio_rebalancing_crew`, `report_crew` — were deleted along with `CrewFactory` (the dependency-injected factory that constructed them at flow startup but never called any of them; see #187) because nothing invoked their execution methods. No `*_export.json` was ever produced by any of them.
 
 ### Orchestrator Delegation
 

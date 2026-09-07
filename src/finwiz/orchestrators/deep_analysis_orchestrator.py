@@ -159,7 +159,6 @@ class DeepAnalysisOrchestrator:
         self.state = state
         self.logger = get_logger(self.__class__.__name__)
         self.batch_prefetch_config = dependencies.get("batch_prefetch_config")
-        self.crew_factory = dependencies.get("crew_factory")
         self.integration_manager = dependencies.get("integration_manager")
         self.error_handler = dependencies.get("error_handler")
 
@@ -594,7 +593,6 @@ class DeepAnalysisOrchestrator:
 
             alternatives_orch = AlternativesMatchingOrchestrator(
                 state=self.state,
-                crew_factory=self.crew_factory,
                 integration_manager=self.integration_manager,
                 error_handler=self.error_handler,
             )

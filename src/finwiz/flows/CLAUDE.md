@@ -61,4 +61,3 @@ plot()  # Visualize flow structure
 - `finwiz.flow_state` — `FinwizState` Pydantic model
 - `finwiz.orchestrators` — Business logic orchestrators
 - `finwiz.analysis` — Functional analysis pipeline
-- `finwiz.crew_factory` — Crew execution

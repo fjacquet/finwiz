@@ -40,7 +40,6 @@ class TestImportBackwardCompatibility:
                 # Note: DeepAnalysisResult moved to finwiz.flow_state_models
                 # Note: Orchestrators moved to finwiz.orchestrators (lazy-loaded)
                 # Dependencies
-                "CrewFactory",
                 "CrewDataIntegrationManager",
                 "CrewDataAccessor",
                 "CoreAnalysisErrorHandler",
@@ -104,7 +103,6 @@ class TestImportBackwardCompatibility:
                     "FinwizFlow",
                     "FinwizState",
                     "FlowStateManager",
-                    "CrewFactory",
                     "plot",
                 ]
             ),
@@ -269,7 +267,6 @@ class TestAPIBackwardCompatibility:
                 "check_stock",
                 "check_etf",
                 "check_investment_discovery",
-                "check_portfolio_rebalancing",
                 "pre_validate_reporter_input",
                 "report",
                 # Orchestrator property accessors
@@ -397,7 +394,6 @@ class TestAPIBackwardCompatibility:
                 "check_stock",
                 "check_etf",
                 "check_investment_discovery",
-                "check_portfolio_rebalancing",
                 "pre_validate_reporter_input",
                 "report",
             ]

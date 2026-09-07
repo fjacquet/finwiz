@@ -38,7 +38,7 @@ class TestLoadYamlConfig:
     def test_should_load_valid_yaml(self):
         """Test loading a valid YAML configuration file."""
         # Use an actual crew config that exists
-        config = load_yaml_config("stock_crew/config/agents.yaml")
+        config = load_yaml_config("deep_analysis/config/agents.yaml")
 
         assert isinstance(config, dict)
         assert len(config) > 0

@@ -614,9 +614,11 @@ guide: there is no `PortfolioReviewOrchestrator` class (the package
 1. ✅ Use `Flow[PydanticModel]` for type safety
 2. ✅ All Flow methods return `dict[str, Any]`
 3. ✅ Access state via `self.state.field_name`
-4. ✅ Create crews through `CrewFactory`, never by direct instantiation — the
-   factory is the seam that carries error handling and fallback
-   (`flows/orchestrator.py:106`)
+4. ✅ Instantiate a crew directly from the module that actually calls it
+   (see `deep_analysis`, reached from `analysis/_helpers.py`) — there is no
+   `CrewFactory` seam any more; it was constructed at flow startup but never
+   invoked, so it was deleted along with the six crews it wired up and never
+   ran (see `CLAUDE.md`'s "Crew Pattern" section)
 5. ❌ NEVER use `self.inputs` (deprecated)
 
 ### Tool Factories Pattern
