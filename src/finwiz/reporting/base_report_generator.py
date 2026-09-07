@@ -135,7 +135,7 @@ class BaseReportGenerator(ABC):
         Return the template path relative to templates directory.
 
         Returns:
-            Template path (e.g., "crew_reports/stock_report.html")
+            Template path (e.g., "crew_reports/some_report.html")
 
         """
         pass

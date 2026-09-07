@@ -8,13 +8,7 @@ This directory contains Jinja2 HTML templates for report generation. Templates a
 templates/
 ├── crew_reports/                    # Per-crew report templates
 │   ├── base.html                   # Base template with common styles
-│   ├── stock_report.html           # Stock analysis report
-│   ├── etf_report.html             # ETF analysis report
-│   ├── crypto_report.html          # Crypto analysis report
-│   ├── deep_analysis_report.html.j2 # Deep analysis report
-│   ├── discovery_report.html       # A+ discovery report
-│   ├── rebalancing_report.html     # Rebalancing recommendations
-│   └── final_report.html           # Consolidated final report
+│   └── deep_analysis_report.html.j2 # Deep analysis report (live)
 ├── base_template.html              # Global base template
 ├── portfolio_review.html           # Portfolio review template
 ├── a_plus_discovery.html           # A+ discovery template
@@ -57,9 +51,13 @@ with open(f"output/reports/{session_id}/portfolio_review.html", "w") as f:
     f.write(html)
 ```
 
-Crew-specific generators subclass `BaseReportGenerator` and implement
-`get_template_name()`, `get_required_fields()`, and
-`prepare_template_variables()` rather than calling Jinja directly.
+`BaseReportGenerator` (implementing `get_template_name()`,
+`get_required_fields()`, and `prepare_template_variables()`) had subclasses
+for the per-crew templates below; those subclasses were deleted along with
+`crew_reports/{stock,etf,crypto,discovery,rebalancing}_report.html` and
+`crew_reports/final_report.html` — the crew subsystem that produced their
+JSON inputs was removed and nothing else loaded them (see #187). No
+subclass of `BaseReportGenerator` currently exists.
 
 ## Template Inheritance
 
