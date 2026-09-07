@@ -61,8 +61,14 @@ class IntegrationHealthChecker:
 
         self.logger = IntegrationLogger("finwiz.integration.health")
 
-        # Health check configuration
-        self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio", "report"]
+        # Health check configuration.
+        # "report" was dropped: output/report/ has no producer (get_output_dir()
+        # in flows/utils.py, the only function that ever built that path, has zero
+        # callers), so it always reported missing. The rest each have a live
+        # producer: stock/etf/crypto from scoring/portfolio_deep_analyzer.py's
+        # _export_json_files(), discovery from the discovery/extraction pipeline,
+        # portfolio from orchestrators/portfolio_review_orchestrator.py:265.
+        self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio"]
         self.critical_directories = [
             self.output_dir,
             self.integration_dir,
