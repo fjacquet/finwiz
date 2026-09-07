@@ -4,16 +4,13 @@ Reporting Orchestrator for FinWiz Flow.
 This module provides report consolidation and HTML generation including:
 - Report consolidation from crew exports
 - Final HTML report generation
-- HTML generation from export data using Jinja2
-- Crew export path management
 
 The implementation is split across cohesive mixins under
-``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, crew HTML);
+``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, enriched-file HTML);
 ``ReportingOrchestrator`` composes them so behavior is unchanged.
 """
 
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import FinwizState
@@ -130,10 +127,12 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewH
 
         Args:
             crew_export_paths: Dictionary mapping crew names to lists of export file paths
-            generate_html: If True, auto-generate HTML reports for all exports (default: True)
+            generate_html: Unused. Retained for API stability — per-crew HTML generation
+                (the CREW_GENERATORS registry) was removed since it was never reachable in
+                a live run; ``generate_enriched_html_reports`` is the live HTML path.
 
         Returns:
-            Dictionary with consolidated report data and generated HTML paths
+            Dictionary with consolidated report data
 
         """
         try:
@@ -159,16 +158,10 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewH
 
             self.logger.info(f"Consolidated {consolidated['total_reports']} reports")
 
-            # Auto-generate HTML reports (zero cost, Python-based)
-            html_reports: dict[str, list[Path]] = {}
-            if generate_html:
-                html_reports = self.generate_all_crew_html_reports(crew_export_paths)
-                consolidated["html_reports_generated"] = sum(len(v) for v in html_reports.values())
-
             return {
                 "success": True,
                 "consolidated_data": consolidated,
-                "html_report_paths": {k: [str(p) for p in v] for k, v in html_reports.items()},
+                "html_report_paths": {},
             }
 
         except Exception as e:

@@ -73,14 +73,17 @@ is a Pydantic model in `integration_models.py`.
 
 ### Crew Export Schemas (PRIMARY)
 
+`crew_exports.py` holds only `CrewExportBase` and `DeepAnalysisCrewExport` now.
+The per-crew export schemas (`StockCrewExport`, `ETFCrewExport`,
+`CryptoCrewExport`, `DiscoveryCrewExport`, `RebalancingCrewExport`,
+`DiscoveryOpportunity`) and `ConsolidatedReportExport` were deleted: none had
+a consumer outside their own schema test, because the six crews that would
+have produced them were removed (see #187).
+
 | File | Class | Purpose |
 |------|-------|---------|
-| `crew_exports.py` | `StockCrewExport` | Stock crew output schema |
-| `crew_exports.py` | `ETFCrewExport` | ETF crew output schema |
-| `crew_exports.py` | `CryptoCrewExport` | Crypto crew output schema |
-| `crew_exports.py` | `DiscoveryCrewExport` | Investment discovery output |
-| `crew_exports.py` | `RebalancingCrewExport` | Rebalancing output |
-| `crew_exports.py` | `DeepAnalysisExport` | Deep analysis output |
+| `crew_exports.py` | `CrewExportBase` | Shared base fields for crew exports |
+| `crew_exports.py` | `DeepAnalysisCrewExport` | Deep analysis output |
 
 ### Asset-Specific Schemas
 
@@ -171,10 +174,10 @@ class CrewExportBase(BaseModel):
 ### For Crew Output
 
 ```python
-from finwiz.schemas.crew_exports import StockCrewExport
+from finwiz.schemas.crew_exports import DeepAnalysisCrewExport
 
 # Create validated export
-export = StockCrewExport(
+export = DeepAnalysisCrewExport(
     ticker="AAPL",
     session_id="abc123",
     composite_score=0.85,
@@ -184,7 +187,7 @@ export = StockCrewExport(
 )
 
 # Save to JSON
-export_path = f"output/reports/{session_id}/stock/{ticker}_export.json"
+export_path = f"output/reports/{session_id}/deep_analysis/{ticker}_export.json"
 with open(export_path, "w") as f:
     f.write(export.model_dump_json(indent=2))
 ```
@@ -231,7 +234,7 @@ json_str = json.dumps(data, default=str, indent=2)
 uv run pytest tests/unit/schemas/ -v
 
 # Test specific schema
-uv run pytest tests/unit/schemas/test_crew_exports.py -v
+uv run pytest tests/unit/schemas/test_deep_analysis_result_schema.py -v
 
 # Type checking
 uv run mypy src/finwiz/schemas/

@@ -6,18 +6,12 @@ HTML report generation using Python/Jinja2 templates. All rendering is 100% Pyth
 
 ```
 reporting/
-├── __init__.py                          # CREW_GENERATORS registry, get_generator_for_crew()
+├── __init__.py                          # Package exports
 ├── base_report_generator.py             # BaseReportGenerator (abstract base, 14 methods)
 ├── python_report_generator.py           # PythonReportGenerator, generate_python_report()
 │
-├── # Per-crew generators
-├── stock_report_generator.py            # StockReportGenerator
-├── etf_report_generator.py              # ETFReportGenerator
-├── crypto_report_generator.py           # CryptoReportGenerator
-├── discovery_report_generator.py        # DiscoveryReportGenerator
-├── rebalancing_report_generator.py      # RebalancingReportGenerator
 ├── deep_analysis_report_generator.py    # DeepAnalysisReportGenerator
-├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator
+├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator — live per-holding HTML producer
 ├── individual_report_generator.py       # generate_individual_report_html()
 │
 ├── # HTML infrastructure
@@ -53,24 +47,33 @@ reporting/
     └── template_renderers.py            # TemplateRenderer
 ```
 
+The five per-crew report generators (`stock_report_generator.py`,
+`etf_report_generator.py`, `crypto_report_generator.py`,
+`discovery_report_generator.py`, `rebalancing_report_generator.py`) and the
+`CREW_GENERATORS` registry / `get_generator_for_crew()` were deleted: they
+were reachable only from `generate_all_crew_html_reports`, which a live run
+never called (`crew_export_paths` was always empty — nothing populated it
+after the crew subsystem was removed, see #187). The live per-holding HTML
+path is `enriched_analysis_report_generator.py` via
+`ReportingOrchestrator.generate_enriched_html_reports()`.
+
 ## Entry Points
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `__init__.py` | `CREW_GENERATORS` | Registry mapping crew names → generators |
-| `__init__.py` | `get_generator_for_crew()` | Get generator by crew name |
 | `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
 | `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
+| `enriched_analysis_report_generator.py` | `EnrichedAnalysisReportGenerator` | Live per-holding HTML generator |
 | `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
 
 ## Usage
 
 ```python
-from finwiz.reporting import get_generator_for_crew
+from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
 
-generator = get_generator_for_crew("stock_crew")
-html = generator.generate_report(data={...}, output_path="output/stock/AAPL_report.html")
+generator = EnrichedAnalysisReportGenerator()
+generator.generate_and_save_report(data={...}, output_path="output/stock/AAPL_enriched.html")
 ```
 
 ## Related Modules
