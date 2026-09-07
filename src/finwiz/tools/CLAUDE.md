@@ -25,7 +25,6 @@ tools/
 ├── quantitative_performance_analyzer.py    # perform_performance_analysis()
 ├── quantitative_technical_analyzer.py      # perform_technical_analysis()
 ├── backtesting_tool.py              # BacktestingResult/MarketRegime models
-├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
 ├── portfolio_price_service.py       # Price lookups, PriceServiceError hierarchy
 ├── portfolio_cache_service.py       # PortfolioCacheService
 ├── portfolio_rebalancing_tool.py    # PortfolioRebalancingTool
