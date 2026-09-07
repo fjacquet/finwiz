@@ -46,12 +46,16 @@ manager = CrewDataIntegrationManager(output_dir=Path("output"))
 data = manager.get_crew_data_with_freshness_check(crew_name="stock_crew", max_age_hours=24, warn_on_stale=True)
 ```
 
-For a plain read without the freshness check, use `CrewDataAccessor`:
+For a plain read without the freshness check, use `CrewDataAccessor`. Its
+`get_crew_data`/`get_stock_data` generic dispatch (`getattr(self.cache,
+f"get_{crew_name}_data")`) was removed — `DataCache` only ever backs
+`discovery` now, so `CrewDataAccessor.get_discovery_data()` calls
+`self.cache.get_discovery_data()` directly:
 
 ```python
 from finwiz.integration.accessor import CrewDataAccessor
 
-data = CrewDataAccessor(...).get_crew_data(crew_name="stock_crew", max_age_hours=24)
+data = CrewDataAccessor(...).get_discovery_data(max_age_hours=24)
 ```
 
 ## Related Modules
