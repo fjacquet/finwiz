@@ -57,7 +57,7 @@ class DataCache:
 
         try:
             # Get data from each crew
-            crews = ["discovery", "portfolio"]
+            crews = ["stock", "etf", "crypto", "discovery", "portfolio"]
 
             for crew_name in crews:
                 crew_data = self.integration_manager.get_crew_data_with_freshness_check(crew_name, max_age_hours, warn_on_stale=True)

@@ -199,9 +199,9 @@ sequenceDiagram
 
 ### 4. Reporting Flow
 
-`ReportingOrchestrator.consolidate_reports()` still exists but has no caller
-— it dates from the deleted crew-export pipeline. `report()` reads deep
-analysis results back off disk instead:
+`ReportingOrchestrator.report()` reads deep analysis results back off disk.
+(`consolidate_reports()`, the crew-export consolidation entry point, was
+deleted with the subsystem in #187.)
 
 ```mermaid
 sequenceDiagram
@@ -257,7 +257,7 @@ graph LR
 | DeepAnalysisOrchestrator | `deep_analysis_results`, `deep_analysis_success`, `deep_analysis_error` |
 | AlternativesMatchingOrchestrator | `portfolio_alternatives` |
 | DiscoveryOrchestrator | `investment_discovery_result`, `investment_discovery_structured`, `investment_discovery_available` |
-| ReportingOrchestrator | `report_path`, `report_generation_success`, `report_generation_method` (`final_report_path` is declared on `FinwizState` but has no writer — a dead field; `crew_export_paths` is not a state field at all, only a dead parameter name on the uncalled `consolidate_reports()`) |
+| ReportingOrchestrator | `report_path`, `report_generation_success`, `report_generation_method` (`final_report_path` is declared on `FinwizState` but has no writer — a dead field; `crew_export_paths` and `consolidate_reports()` were both removed in #187) |
 | ProgressTrackingOrchestrator | `holdings_processed`, `total_holdings`, `progress_percentage` |
 
 ## Error Handling Flow

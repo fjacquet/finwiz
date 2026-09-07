@@ -64,9 +64,11 @@ have different contracts.
 
 For a plain read without the freshness check, use `CrewDataAccessor`. Its
 `get_crew_data`/`get_stock_data` generic dispatch (`getattr(self.cache,
-f"get_{crew_name}_data")`) was removed — `DataCache` only ever backs
-`discovery` now, so `CrewDataAccessor.get_discovery_data()` calls
-`self.cache.get_discovery_data()` directly:
+f"get_{crew_name}_data")`) was removed in #187 — it broke when
+`DataCache.get_stock_data` went. `CrewDataAccessor.get_discovery_data()` now
+calls `self.cache.get_discovery_data()` directly. Note this is separate from
+`DataCache.get_consolidated_data()`, which still aggregates all five sources
+(`stock`, `etf`, `crypto`, `discovery`, `portfolio`):
 
 ```python
 from finwiz.integration.accessor import CrewDataAccessor

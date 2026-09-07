@@ -1,8 +1,8 @@
 """
 Reporting Orchestrator for FinWiz Flow.
 
-This module provides report consolidation and HTML generation including:
-- Report consolidation from crew exports
+This module provides HTML report generation:
+- Per-holding reports rendered from the enriched analysis files
 - Final HTML report generation
 
 The implementation is split across cohesive mixins under

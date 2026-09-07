@@ -6,6 +6,7 @@ Functions for retrieving, caching, and consolidating crew output data.
 
 import json
 import logging
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -107,6 +108,85 @@ def get_upstream_data(
         return UpstreamDataCollection(available_data={}, missing_data=crew_dirs, stale_data=[])
 
 
+def consolidate_crew_ticker_files(
+    crew_name: str,
+    output_files: list[Any],
+    logger: logging.Logger,
+) -> dict[str, Any]:
+    """Consolidate individual ticker analysis files into crew-level summary."""
+    consolidated_data = {
+        "crew_name": crew_name,
+        "execution_id": f"consolidated-{crew_name}-{int(datetime.now().timestamp())}",
+        "asset_class": crew_name,
+        "analysis_timestamp": datetime.now().isoformat(),
+        "metadata": {
+            "crew_name": crew_name,
+            "consolidation_timestamp": datetime.now().isoformat(),
+            "total_tickers": len(output_files),
+            "consolidation_method": "ticker_aggregation",
+        },
+        "ticker_analyses": {},
+        "summary_statistics": {
+            "total_analyses": 0,
+            "grade_distribution": {},
+            "average_composite_score": 0.0,
+            "recommendations": {"BUY": 0, "HOLD": 0, "SELL": 0},
+        },
+    }
+
+    total_score = 0.0
+    valid_analyses = 0
+
+    try:
+        for file_path in output_files:
+            try:
+                with open(file_path, encoding="utf-8") as f:
+                    ticker_data = json.load(f)
+
+                ticker = ticker_data.get("ticker", file_path.stem.split("_")[0])
+                consolidated_data["ticker_analyses"][ticker] = ticker_data
+
+                if "composite_score" in ticker_data:
+                    total_score += float(ticker_data["composite_score"])
+                    valid_analyses += 1
+
+                if "grade" in ticker_data:
+                    grade = ticker_data["grade"]
+                    dist = consolidated_data["summary_statistics"]["grade_distribution"]
+                    dist[grade] = dist.get(grade, 0) + 1
+
+                if "recommendation" in ticker_data:
+                    rec = ticker_data["recommendation"]
+                    recs = consolidated_data["summary_statistics"]["recommendations"]
+                    if rec in recs:
+                        recs[rec] += 1
+
+            except Exception as e:
+                logger.warning(f"Failed to load ticker file {file_path}: {e}")
+                continue
+
+        consolidated_data["summary_statistics"]["total_analyses"] = valid_analyses
+        if valid_analyses > 0:
+            avg = total_score / valid_analyses
+            consolidated_data["summary_statistics"]["average_composite_score"] = avg
+
+        logger.info(f"Consolidated {crew_name} crew data: {valid_analyses} ticker analyses, avg score: {consolidated_data['summary_statistics']['average_composite_score']:.3f}")
+        return consolidated_data
+
+    except Exception as e:
+        logger.error(f"Failed to consolidate {crew_name} crew data: {e}")
+        return {
+            "metadata": {
+                "crew_name": crew_name,
+                "consolidation_timestamp": datetime.now().isoformat(),
+                "total_tickers": 0,
+                "consolidation_error": str(e),
+            },
+            "ticker_analyses": {},
+            "summary_statistics": {"total_analyses": 0},
+        }
+
+
 def get_crew_data_with_freshness_check(
     output_dir: Path,
     crew_name: str,
@@ -158,7 +238,11 @@ def get_crew_data_with_freshness_check(
                     },
                 )
 
-        # Return the newest single file
+        # For crew types, consolidate individual ticker files
+        if crew_name in ["stock", "etf", "crypto"]:
+            return consolidate_crew_ticker_files(crew_name, output_files, logger)
+
+        # For other crew types, return the newest single file
         newest_file = max(output_files, key=lambda f: f.stat().st_mtime)
 
         if newest_file.stat().st_size == 0:
