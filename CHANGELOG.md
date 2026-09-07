@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `FinwizFlow`'s ten `@listen` methods. The chain's root trigger had no
+  producer, so none of them could fire; every body duplicated a call
+  `run_sequential_workflow` already makes. No behavior change. ([#193](https://github.com/fjacquet/finwiz/issues/193))
+
 ## [5.15.0] - 2026-09-07
 
 ### Removed

@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from crewai.flow import Flow, and_, listen, start
+from crewai.flow import Flow, start
 
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
@@ -333,56 +333,6 @@ class FinwizFlow(Flow[FinwizState]):
                 self.state.llm_cost_summary = summary
         except Exception as e:
             logger.debug(f"LLM cost summary skipped: {e}")
-
-    @listen("validate_data_integration")
-    async def analyze_and_update_portfolio(self) -> dict[str, Any]:
-        """Perform deep analysis and update portfolio review."""
-        return await self.deep_analysis_orch.analyze_and_update_portfolio()
-
-    @listen("analyze_and_update_portfolio")
-    async def check_portfolio(self) -> dict[str, Any]:
-        """Run portfolio keep-or-sell review."""
-        return await self.validation_orch.check_portfolio()
-
-    @listen("analyze_and_update_portfolio")
-    def build_gap_profile(self) -> dict[str, Any]:
-        """Build the portfolio gap profile for the opportunity cascade (Phase 3.6)."""
-        return self.gap_profile_orch.build_gap_profile()
-
-    @listen("check_portfolio")
-    def check_crypto(self) -> dict[str, Any]:
-        """Initiate cryptocurrency discovery."""
-        return self.discovery_orch.check_crypto()
-
-    @listen("check_portfolio")
-    def check_stock(self) -> dict[str, Any]:
-        """Initiate stock discovery."""
-        return self.discovery_orch.check_stock()
-
-    @listen("check_portfolio")
-    def check_etf(self) -> dict[str, Any]:
-        """Initiate ETF discovery."""
-        return self.discovery_orch.check_etf()
-
-    @listen(and_("check_crypto", "check_stock", "check_etf"))
-    def check_investment_discovery(self) -> dict[str, Any]:
-        """Consolidate discovery results."""
-        return self.discovery_orch.check_investment_discovery()
-
-    @listen("check_investment_discovery")
-    def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
-        """Match alternatives from discovery results."""
-        return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
-
-    @listen("match_alternatives_after_discovery")
-    def pre_validate_reporter_input(self) -> dict[str, Any]:
-        """Pre-validate reporter input data."""
-        return self.validation_orch.pre_validate_reporter_input()
-
-    @listen("pre_validate_reporter_input")
-    def report(self) -> dict[str, Any]:
-        """Generate consolidated report."""
-        return self.reporting_orch.report()
 
 
 def plot() -> None:

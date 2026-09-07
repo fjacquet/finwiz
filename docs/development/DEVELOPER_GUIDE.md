@@ -386,8 +386,17 @@ FinWiz uses CrewAI Flow for orchestration with Pydantic state management.
 
 **File**: `src/finwiz/flows/orchestrator.py`
 
+`FinwizFlow` has exactly one `@start()` method, `run_sequential_workflow()`,
+which drives all six phases by calling orchestrator methods directly and
+imperatively — there is no `@listen(...)` chain. The snippet below elides
+Phase 3.5 (stress testing, fail-soft, wrapped in its own try/except) since
+it is optional scaffolding around the pipeline rather than part of it; every
+other phase and call — including the `check_crypto` / `check_stock` /
+`check_etf` discovery scans that precede `check_investment_discovery` — is
+shown as it actually runs:
+
 ```python
-from crewai.flow.flow import Flow, listen, start
+from crewai.flow.flow import Flow, start
 from pydantic import BaseModel, Field
 from typing import Any
 
@@ -398,55 +407,32 @@ class FinwizState(BaseModel):
     session_id: str = Field(default="")
     portfolio_review: dict[str, Any] = Field(default_factory=dict)
     deep_analysis_results: dict[str, Any] = Field(default_factory=dict)
-    rebalancing_recommendations: dict[str, Any] = Field(default_factory=dict)
 
 
 class FinwizFlow(Flow[FinwizState]):
     """Main FinWiz orchestration flow."""
 
     @start()
-    def initialize(self) -> dict[str, Any]:
-        """Initialize flow with session setup."""
-        import uuid
+    async def run_sequential_workflow(self) -> dict[str, Any]:
+        """Execute the complete workflow in sequential order."""
+        await self.validation_orch.validate_data_integration()
+        await self.validation_orch.check_portfolio()
+        await self.deep_analysis_orch.analyze_and_update_portfolio()
 
-        session_id = str(uuid.uuid4())
-        self.state.session_id = session_id
+        # Phase 3.5 (stress testing) omitted here -- see orchestrator.py.
 
-        logger.info(f"Flow initialized: {session_id}")
+        self.gap_profile_orch.build_gap_profile()
 
-        return {"session_id": session_id, "status": "initialized"}
+        self.discovery_orch.check_crypto()
+        self.discovery_orch.check_stock()
+        self.discovery_orch.check_etf()
+        discovery_data = self.discovery_orch.check_investment_discovery() or {}
+        self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 
-    @listen(initialize)
-    async def analyze_portfolio(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Analyze portfolio holdings."""
-        from finwiz.orchestrators import portfolio_review_orchestrator
+        self.validation_orch.pre_validate_reporter_input()
+        self.reporting_orch.report()
 
-        # Module-level async run(), not a class. Returns the review's output Path.
-        review_path = await portfolio_review_orchestrator.run(self.state)
-
-        return {"review_path": str(review_path)}
-
-    @listen(analyze_portfolio)
-    def match_alternatives(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Match alternatives for holdings recommended for replacement."""
-        from finwiz.orchestrators.alternatives_matching_orchestrator import (
-            AlternativesMatchingOrchestrator,
-        )
-
-        orchestrator = AlternativesMatchingOrchestrator()
-        alternatives = orchestrator.match_alternatives_for_holdings(...)
-
-        return {"alternatives": alternatives}
-
-    @listen(match_alternatives)
-    def create_final_report(self, data: dict[str, Any]) -> dict[str, Any]:
-        """Generate comprehensive final report."""
-        from finwiz.orchestrators.reporting_orchestrator import ReportingOrchestrator
-
-        orchestrator = ReportingOrchestrator(self.state)
-        result = orchestrator.generate_final_report(...)
-
-        return {"report": result, "status": "complete"}
+        return {"status": "completed"}
 ```
 
 Note what does **not** exist, despite appearing in older versions of this
@@ -455,7 +441,10 @@ guide: there is no `PortfolioReviewOrchestrator` class (the package
 `build_citations`, `build_rationale`, `calculate_score`,
 `create_error_decision` and `merge_deep_analysis_from_flow_state`), no
 `generate_alternatives()` function, and no
-`finwiz.reporting.portfolio_report_generator` module.
+`finwiz.reporting.portfolio_report_generator` module. `FinwizFlow` also used
+to carry a parallel chain of `@listen(...)` methods mirroring these phases;
+that chain was unreachable — nothing emitted its root trigger — and it was
+deleted in #193.
 
 **CRITICAL Flow Rules**:
 
@@ -949,16 +938,16 @@ def test_crew_execution(mocker):
 
 **File**: `src/finwiz/flows/orchestrator.py` (modify)
 
+`FinwizFlow` has no `@listen(...)` chain — add the call directly inside
+`run_sequential_workflow()`, at the point in the phase sequence where it
+belongs:
+
 ```python
-@listen(some_trigger)
-def run_custom_analysis(self, data: dict[str, Any]) -> dict[str, Any]:
-    """Run custom analysis crew."""
-    from finwiz.crews.my_custom_crew.my_custom_crew import MyCustomCrew
+from finwiz.crews.my_custom_crew.my_custom_crew import MyCustomCrew
 
-    crew = MyCustomCrew()
-    result = crew.crew().kickoff(inputs={"ticker": data["ticker"], "asset_class": "stock"})
-
-    return {"custom_analysis": result.model_dump()}
+crew = MyCustomCrew()
+result = crew.crew().kickoff(inputs={"ticker": ticker, "asset_class": "stock"})
+custom_analysis = result.model_dump()
 ```
 
 ## Testing

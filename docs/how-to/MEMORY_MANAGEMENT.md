@@ -128,7 +128,8 @@ class FinwizFlow(Flow[FinwizState]):
         self.memory_manager = None
         self.prefetcher = None
 
-    @listen("check_portfolio")
+    # Called from run_sequential_workflow(), after check_portfolio() —
+    # FinwizFlow has no @listen(...) chain, only imperative calls between phases.
     def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
         """Execute deep analysis with batch pre-fetching and memory monitoring."""
 

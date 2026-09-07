@@ -84,59 +84,6 @@ class TestFlowDelegationProperties:
         assert orchestrator is not None, f"{orchestrator_name} is None"
 
     @settings(
-        max_examples=100,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-        deadline=None,
-    )
-    @given(
-        method_data=st.sampled_from(
-            [
-                # Note: validate_data_integration is called manually, not a listener
-                ("check_portfolio", "validation_orch", "check_portfolio"),
-                ("analyze_and_update_portfolio", "deep_analysis_orch", "analyze_and_update_portfolio"),
-                ("match_alternatives_after_discovery", "alternatives_orch", "match_alternatives_after_discovery"),
-                ("check_crypto", "discovery_orch", "check_crypto"),
-                ("check_stock", "discovery_orch", "check_stock"),
-                ("check_etf", "discovery_orch", "check_etf"),
-                ("check_investment_discovery", "discovery_orch", "check_investment_discovery"),
-                ("pre_validate_reporter_input", "validation_orch", "pre_validate_reporter_input"),
-                ("report", "reporting_orch", "report"),
-            ]
-        )
-    )
-    def test_property_flow_listener_delegation(self, flow_with_mocked_orchestrators, method_data, mocker):
-        """
-        **Feature: flow-orchestrator-refactoring, Property 25: Flow Listener Delegation**
-
-        For any Flow listener method call, it should delegate to the appropriate
-        orchestrator method.
-
-        This property ensures that:
-        1. Flow listeners exist and are callable
-        2. They delegate to the correct orchestrator
-        3. The orchestrator method is called when the Flow listener is invoked
-        """
-        flow = flow_with_mocked_orchestrators
-        listener_method, orchestrator_name, orchestrator_method = method_data
-
-        # Property 1: Flow has the listener method
-        assert hasattr(flow, listener_method), f"Flow missing listener {listener_method}"
-
-        # Property 2: Flow has the corresponding orchestrator
-        assert hasattr(flow, orchestrator_name), f"Flow missing orchestrator {orchestrator_name}"
-
-        # Get the orchestrator
-        orchestrator = getattr(flow, orchestrator_name)
-
-        # Property 3: Orchestrator has the expected method
-        assert hasattr(orchestrator, orchestrator_method), f"Orchestrator {orchestrator_name} missing method {orchestrator_method}"
-
-        # Note: We cannot easily test actual delegation without triggering the full Flow
-        # execution, which would require complex mocking of CrewAI internals.
-        # The unit tests in test_flow_delegation.py cover the actual delegation behavior.
-        # This property test verifies the structural requirements for delegation.
-
-    @settings(
         max_examples=50,
         suppress_health_check=[HealthCheck.function_scoped_fixture],
         deadline=None,

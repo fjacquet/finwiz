@@ -12,15 +12,10 @@ This document provides detailed diagrams and explanations of how orchestrators i
 method, `run_sequential_workflow()` (`flows/orchestrator.py`), which drives
 all six phases by calling orchestrator methods directly and imperatively —
 `await self.deep_analysis_orch.analyze_and_update_portfolio()`, and so on.
-The diagrams below describe *that* call sequence. `FinwizFlow` also defines a
-parallel chain of `@listen(...)`-decorated methods on itself
-(`analyze_and_update_portfolio`, `check_portfolio`, `check_crypto`,
-`check_stock`, `check_etf`, `check_investment_discovery`,
-`match_alternatives_after_discovery`, `pre_validate_reporter_input`,
-`report`) that mirror the same phases as CrewAI Flow event listeners — but
-`run_sequential_workflow` never emits the events they listen for, so that
-chain is never triggered by a normal run. It is unreachable, tracked as #193;
-this document does not treat it as the working pipeline.
+The diagrams below describe that call sequence, and it is the only one.
+`FinwizFlow` used to carry a parallel chain of `@listen(...)` methods
+mirroring these phases; that chain was unreachable — nothing emitted its root
+trigger — and it was deleted in #193.
 
 ## Flow Execution Sequence
 
@@ -433,16 +428,12 @@ results = self.state.deep_analysis_results
 
 ### 3. Return Value Communication
 
-`FinwizFlow` does define real `@listen(...)` methods that chain this way —
-but as the note at the top of this document says, `run_sequential_workflow`
-never emits the events this chain listens for, so it's never exercised by a
-normal run (#193). Shown here as the actual method pair from
-`flows/orchestrator.py`, not a hypothetical:
+Phases hand data to each other through return values inside
+`run_sequential_workflow`, not through listener events:
 
 ```python
-@listen("check_investment_discovery")
-def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
-    return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
+discovery_data = self.discovery_orch.check_investment_discovery() or {}
+self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 ```
 
 ## Performance Considerations

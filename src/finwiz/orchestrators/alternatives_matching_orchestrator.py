@@ -184,10 +184,10 @@ class AlternativesMatchingOrchestrator:
 
     def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, list[dict[str, Any]]]:
         """
-        Flow listener for alternative matching.
+        Match alternatives for underperforming holdings.
 
-        This method is called after discovery crews complete and matches alternatives
-        for underperforming holdings using discovery results.
+        Called from `run_sequential_workflow` after discovery crews complete, and
+        matches alternatives for underperforming holdings using discovery results.
 
         Requirements: 4.1, 4.2, 4.3, 4.4
 

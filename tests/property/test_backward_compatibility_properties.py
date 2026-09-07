@@ -260,15 +260,7 @@ class TestAPIBackwardCompatibility:
         method_name=st.sampled_from(
             [
                 # Flow listener methods (public API)
-                "run_sequential_workflow",  # Start method (replaces validate_data_integration)
-                "analyze_and_update_portfolio",
-                "match_alternatives_after_discovery",
-                "check_crypto",
-                "check_stock",
-                "check_etf",
-                "check_investment_discovery",
-                "pre_validate_reporter_input",
-                "report",
+                "run_sequential_workflow",  # The only @start method; drives all six phases
                 # Orchestrator property accessors
                 "error_handler_orch",
                 "progress_orch",
@@ -305,40 +297,6 @@ class TestAPIBackwardCompatibility:
         # If it's a property, check that it has a getter
         if isinstance(method, property):
             assert method.fget is not None, f"Property {method_name} missing getter"
-
-    @settings(
-        max_examples=50,
-        suppress_health_check=[HealthCheck.function_scoped_fixture],
-        deadline=None,
-    )
-    @given(
-        method_pairs=st.lists(
-            st.sampled_from(
-                [
-                    "run_sequential_workflow",  # Start method (replaces validate_data_integration)
-                    "analyze_and_update_portfolio",
-                    "report",
-                ]
-            ),
-            min_size=2,
-            max_size=3,
-            unique=True,
-        )
-    )
-    def test_property_multiple_methods_exist(self, flow_class, method_pairs):
-        """
-        **Feature: flow-orchestrator-refactoring, Property 27: API Compatibility**
-
-        For any set of public methods, all should exist in the refactored Flow.
-
-        This ensures comprehensive API coverage.
-        """
-        # Property: All methods should exist
-        for method_name in method_pairs:
-            assert hasattr(flow_class, method_name), f"FinwizFlow missing method {method_name}"
-
-            method = getattr(flow_class, method_name)
-            assert callable(method) or isinstance(method, property), f"{method_name} should be callable or a property"
 
     @settings(
         max_examples=100,
@@ -387,15 +345,7 @@ class TestAPIBackwardCompatibility:
     @given(
         method_name=st.sampled_from(
             [
-                "run_sequential_workflow",  # Start method (replaces validate_data_integration)
-                "analyze_and_update_portfolio",
-                "match_alternatives_after_discovery",
-                "check_crypto",
-                "check_stock",
-                "check_etf",
-                "check_investment_discovery",
-                "pre_validate_reporter_input",
-                "report",
+                "run_sequential_workflow",  # The only @start method; drives all six phases
             ]
         )
     )

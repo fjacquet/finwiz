@@ -54,8 +54,8 @@ prefetched_data = prefetcher.prefetch_all_data(["AAPL", "MSFT", "GOOGL"])
 The Flow orchestrator manages concurrent crew execution:
 
 ```python
-# Flow method for batch execution
-@listen("check_portfolio")
+# Called from run_sequential_workflow(), after check_portfolio() — FinwizFlow
+# has no @listen(...) chain, only imperative calls between phases.
 def execute_deep_analysis_with_prefetch(self) -> dict[str, Any]:
     """Execute deep analysis with batch processing."""
 
