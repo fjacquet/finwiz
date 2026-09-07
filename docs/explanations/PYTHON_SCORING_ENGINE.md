@@ -383,7 +383,6 @@ This provides:
 
 ## Related Topics
 
-- [Report Aggregation Architecture](REPORT_AGGREGATION_DEVELOPER_GUIDE.md) - Integration patterns
 - AI Minimalism - Decision framework for AI vs Python
 - [Performance Configuration](../how-to/PERFORMANCE_CONFIGURATION.md) - Optimization settings
 - Testing Standards - Unit testing approaches

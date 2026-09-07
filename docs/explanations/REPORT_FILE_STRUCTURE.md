@@ -1,325 +1,142 @@
 # Report File Structure Documentation
 
-This document describes the output directory structure and file naming conventions for FinWiz's report aggregation architecture.
-
-> **Note:** An earlier version of this document also described a `manifest.json` file tracking all generated files per session. No such manifest exists in the codebase — nothing writes, reads, or validates one. That section has been removed.
+This document describes the `output/` directory tree FinWiz actually writes, as observed
+from a live 3-holding kickoff run on 2026-09-07 (branch `refactor/remove-crew-subsystem`).
+An earlier version of this document described an `output/reports/{session_id}/{crew}/`
+tree — that layout never existed in production; it described infrastructure
+(`crew_export_generator.py`'s path strings, per-crew report generators) that no live
+code path ever called. This rewrite replaces it with the tree the run actually produced.
 
 ## Table of Contents
 
 1. [Directory Structure](#directory-structure)
 2. [File Naming Conventions](#file-naming-conventions)
-3. [File Management](#file-management)
-4. [Examples](#examples)
+3. [Accumulation, Not Sessions](#accumulation-not-sessions)
+4. [What Doesn't Exist](#what-doesnt-exist)
 
 ## Directory Structure
 
-### Overview
-
-All reports are organized under `output/reports/{session_id}/` with subdirectories for each crew type:
-
-```
-output/reports/{session_id}/
-├── stock_crew/
-│   ├── AAPL_export.json          # Pydantic-validated export
-│   ├── AAPL_report.html          # Python-generated HTML
-│   ├── MSFT_export.json
-│   └── MSFT_report.html
-├── etf_crew/
-│   ├── SPY_export.json
-│   ├── SPY_report.html
-│   ├── QQQ_export.json
-│   └── QQQ_report.html
-├── crypto_crew/
-│   ├── BTC_export.json
-│   ├── BTC_report.html
-│   ├── ETH_export.json
-│   └── ETH_report.html
-├── deep_analysis_crew/
-│   ├── AAPL_export.json
-│   ├── AAPL_report.html
-│   ├── IBM_export.json
-│   └── IBM_report.html
-├── discovery_crew/
-│   ├── discovery_export.json     # No ticker (portfolio-level)
-│   └── discovery_report.html
-├── rebalancing_crew/
-│   ├── rebalancing_export.json   # No ticker (portfolio-level)
-│   └── rebalancing_report.html
-```
-
-**None of `consolidated_report.json`, `final_report.html`, or
-`manifest.json` are written here.** `consolidated_report.json` is only
-produced by `ReportConsolidator`, which has no caller anywhere in `src/`.
-`final_report.html` is a Jinja2 template *name* inside the unused
-`final_report_generator.py`, not an output path anything writes to. There
-is no manifest of any kind — `manifest` doesn't appear anywhere in `src/`
-or `tests/`. The actual final report is written outside this per-session
-tree entirely, at `output/finwiz_family_financial_plan.html`
-(`PythonReportGenerator`'s default `output_dir` is `"output"`, and
-`report_crew/config/tasks.yaml:924` confirms the same path). See "Manifest
-Format" below for more detail on what doesn't exist.
-
-### Session ID Format
-
-Session IDs are generated using ISO 8601 timestamp format:
+`output/` is flat — there is no per-session subdirectory. A run writes into the same
+tree every time, adding to what previous runs left behind:
 
 ```
-{session_id} = YYYYMMDD_HHMMSS
-Example: 20250125_143022
+output/
+├── stock/
+│   ├── AAPL_enriched.json          # deep-analysis result (written once, at analysis time)
+│   ├── AAPL_report.html            # HTML for this holding (written once, same time as the .json)
+│   ├── AAPL_enriched.html          # HTML for this holding (regenerated on every run — see below)
+│   └── discovery_output_20260907_170625.json   # per-run backup snapshot (accumulates)
+├── etf/
+│   ├── 2B7K.DE_enriched.json
+│   ├── 2B7K.DE_report.html
+│   ├── 2B7K.DE_enriched.html
+│   └── discovery_output_20260907_170625.json
+├── crypto/
+│   ├── BTC-USD_enriched.json
+│   ├── BTC-USD_report.html
+│   ├── BTC-USD_enriched.html
+│   └── discovery_output_20260907_170625.json
+├── discovery/
+│   ├── a_plus_stocks.json          # per-asset-class A+ opportunity list
+│   ├── a_plus_etfs.json
+│   ├── a_plus_crypto.json
+│   ├── consolidated_discovery.json # merged A+ list — the one file alternative_finder_tool.py reads
+│   └── discovery_output_20260907_170625.json   # same backup pattern, one per asset class per run
+├── portfolio/
+│   ├── portfolio_review.json
+│   └── portfolio_processing_summary.json
+├── cache/
+│   ├── fred_snapshot.json
+│   ├── returns_2026-09-07.json
+│   └── sectors_2026-09-07.json
+├── run_ledger/
+│   └── <run_id>.jsonl              # one file per per-holding analysis run — see below
+├── finwiz_family_financial_plan.html   # the one report every run always produces
+├── finwiz_posture_strategique.html     # companion strategic-posture report
+└── run_summary.json                # the run gate's verdict and eight checks (see the Quick Reference in root CLAUDE.md)
 ```
 
-This format ensures:
+### Where each file comes from
 
-- Chronological sorting
-- Human-readable timestamps
-- Unique session identification
-- No special characters (filesystem-safe)
-
-### Crew Subdirectories
-
-Each crew has its own subdirectory under the session:
-
-| Crew Type | Directory Name | Purpose |
-|-----------|---------------|---------|
-| Stock Crew | `stock_crew/` | Stock analysis reports |
-| ETF Crew | `etf_crew/` | ETF analysis reports |
-| Crypto Crew | `crypto_crew/` | Cryptocurrency analysis reports |
-| Deep Analysis Crew | `deep_analysis_crew/` | Deep analysis for underperformers |
-| Discovery Crew | `discovery_crew/` | A+ opportunity discovery |
-| Rebalancing Crew | `rebalancing_crew/` | Portfolio rebalancing recommendations |
+- **`{ticker}_enriched.json`** and **`{ticker}_report.html`** are written together, once
+  per holding, by `DeepAnalysisOrchestrator` during Phase 3 (`src/finwiz/orchestrators/
+  deep_analysis_orchestrator.py`). `_report.html` is a snapshot of the report as it looked
+  at analysis time.
+- **`{ticker}_enriched.html`** is written by `EnrichedAnalysisReportGenerator`
+  (`src/finwiz/reporting/enriched_analysis_report_generator.py`), called from
+  `ReportingOrchestrator.generate_enriched_html_reports()` during Phase 6. This step
+  re-renders HTML for **every** `*_enriched.json` it finds in `output/stock/`,
+  `output/etf/`, and `output/crypto/` — not just the holdings this run analyzed. In the
+  observed run, 3 holdings were analyzed but 93 HTML reports were regenerated, because
+  the directories held `*_enriched.json` files accumulated from prior runs going back to
+  2026-09-05. `{ticker}_enriched.html` and `{ticker}_report.html` are byte-identical
+  except for the "Rapport généré par FinWiz le …" timestamp in the footer, for any
+  holding this run actually re-analyzed.
+- **`discovery_output_{timestamp}.json`** (one per asset class, written into
+  `output/stock/`, `output/etf/`, `output/crypto/`, and `output/discovery/`) is a backup
+  snapshot written by `DiscoveryOrchestrator` (`src/finwiz/orchestrators/
+  discovery_orchestrator.py:420`) on every run. Nothing prunes these — the observed
+  `output/discovery/` directory held 200+ of them going back to 2026-09-05.
+- **`a_plus_stocks.json`** / **`a_plus_etfs.json`** / **`a_plus_crypto.json`** and
+  **`consolidated_discovery.json`** are written by `DiscoveryOrchestrator`.
+  `consolidated_discovery.json` is the only one of the four that
+  `alternative_finder_tool.py` reads back.
+- **`portfolio_review.json`** and **`portfolio_processing_summary.json`** are written by
+  `PortfolioReviewOrchestrator` (`src/finwiz/orchestrators/portfolio_review_orchestrator.py`).
+- **`run_ledger/<run_id>.jsonl`** is appended to by `RunLedger`
+  (`src/finwiz/schemas/run_ledger.py`, `src/finwiz/analysis/stages/_ledger.py`) — one JSONL
+  line per pipeline stage (`collect`, `quantitative`, `qualitative`, `synthesize`) per
+  holding, each recording outcome, retries, fallback use, and cost. `run_id` here is the
+  per-holding analysis run's own id, not the top-level `run_summary.json` `run_id`. The
+  run gate's `coverage` check is computed from these files.
+- **`finwiz_family_financial_plan.html`** is written by `PythonReportGenerator`
+  (`src/finwiz/reporting/python_report_generator.py:123`), whose `output_dir` defaults to
+  `"output"`. This is the one file every successful run always produces, regardless of
+  how many holdings were analyzed.
+- **`finwiz_posture_strategique.html`** is written alongside it, from
+  `src/finwiz/orchestrators/reporting/enrichment.py:147`.
+- **`run_summary.json`** is written by the run gate orchestrator
+  (`src/finwiz/orchestrators/run_gate_orchestrator.py`) and holds the `verdict` and the
+  eight named checks; see root `CLAUDE.md`'s "Parameterizing a flow run" section for how
+  to read it.
 
 ## File Naming Conventions
 
-### Export JSON Files
+- Tickers appear as given by the data source (e.g. `AAPL`, `2B7K.DE`, `BTC-USD`) — not
+  normalized to a single case or suffix convention.
+- `_enriched.json` / `_report.html` / `_enriched.html` are fixed suffixes; there is no
+  timestamp embedded in a per-ticker filename.
+- `discovery_output_{YYYYMMDD_HHMMSS}.json` is the one filename pattern that does embed a
+  timestamp, because it's a backup snapshot rather than a per-holding artifact.
 
-**Pattern:** `{ticker}_export.json` — **no timestamp is embedded** in
-per-ticker filenames, unlike a previous version of this doc claimed. The
-directory tree above already shows the correct pattern
-(`AAPL_export.json`), which contradicted the timestamped pattern
-documented here.
+## Accumulation, Not Sessions
 
-**Components:**
+There is no session concept and no cleanup. Every run adds to `output/stock/`,
+`output/etf/`, `output/crypto/`, and `output/discovery/` rather than writing into an
+isolated directory; `{ticker}_enriched.json`/`{ticker}_report.html`/`{ticker}_enriched.html`
+are overwritten in place for a holding that gets re-analyzed, but nothing removes files for
+holdings that drop out of the portfolio, and the `discovery_output_*.json` backups are
+never pruned. A directory that has been run against repeatedly over multiple days (as
+observed here) accumulates hundreds of files.
 
-- `{ticker}`: Asset ticker symbol (uppercase, e.g., AAPL, SPY, BTC)
-- `_export.json`: Fixed suffix indicating Pydantic export
+## What Doesn't Exist
 
-**Examples:**
+None of the following are written by anything in `src/`, and none appeared in the
+observed run's output:
 
-```
-AAPL_export.json
-SPY_export.json
-BTC_export.json
-```
-
-(Source: `src/finwiz/scoring/crew_export_generator.py:77-78`;
-`src/finwiz/crews/etf_crew/config/tasks.yaml:308,311`;
-`src/finwiz/reporting/stock_report_generator.py:100-101`.)
-
-### Report HTML Files
-
-**Pattern:** `{ticker}_report.html` — again, no timestamp.
-
-**Examples:**
-
-```
-AAPL_report.html
-SPY_report.html
-BTC_report.html
-```
-
-### Consolidated Files — mostly do not exist
-
-- **`consolidated_report.json`**: Only produced by `ReportConsolidator`,
-  which has no caller anywhere in `src/` — it's effectively dead code.
-- **`final_report.html`**: Not a real output path. It's a Jinja2 template
-  *name* referenced inside the unused `final_report_generator.py`.
-- **`manifest.json`**: Does not exist. `manifest` doesn't appear anywhere
-  in `src/` or `tests/` — nothing writes, reads, or validates a manifest.
-
-**The actual final report** is written to
-`output/finwiz_family_financial_plan.html`, outside the per-session
-`output/reports/{session_id}/` tree entirely.
-
-## Manifest Format — NOT IMPLEMENTED
-
-There is no manifest of any kind in this codebase. The schema, update
-points, and worked examples that previously followed this heading (a
-`manifest.json` supposedly tracking file status, updated at session start,
-crew completion, consolidation, and final report) describe a feature that
-was never built. If file-tracking/manifest functionality is added in the
-future, document it here — until then, treat any reference elsewhere in
-this repo's docs to a manifest as aspirational, not real.
-
-## File Management
-
-### Directory Creation
-
-Directories are created automatically before file writes:
-
-```python
-from pathlib import Path
-
-
-def ensure_directory(file_path: str) -> None:
-    """Ensure parent directory exists for file path."""
-    Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-```
-
-### File Path Helpers
-
-Standardized helper functions for generating file paths:
-
-These illustrative helpers are not real functions in the codebase — they
-show the naming convention the actual per-crew, per-ticker paths follow
-(see `src/finwiz/scoring/crew_export_generator.py:77-78`). There is no
-`get_consolidated_path`, `get_final_report_path`, or `get_manifest_path`
-equivalent in `src/`, because none of those three files are written by
-anything (see "Consolidated Files" above).
-
-```python
-def get_export_path(session_id: str, crew_name: str, ticker: str) -> str:
-    """Get path for crew export JSON. No timestamp — see File Naming Conventions above."""
-    return f"output/reports/{session_id}/{crew_name}/{ticker}_export.json"
-
-
-def get_html_path(session_id: str, crew_name: str, ticker: str) -> str:
-    """Get path for crew HTML report. No timestamp — see File Naming Conventions above."""
-    return f"output/reports/{session_id}/{crew_name}/{ticker}_report.html"
-```
-
-The one file that *is* always produced — the family financial plan HTML —
-lives outside this per-session tree entirely, at
-`output/finwiz_family_financial_plan.html` (see "Consolidated Files"
-above).
-
-### File Validation
-
-Validate file existence and format:
-
-```python
-def validate_export_file(file_path: str, schema_class: type) -> bool:
-    """Validate export file exists and conforms to schema."""
-    if not Path(file_path).exists():
-        return False
-
-    try:
-        with open(file_path) as f:
-            data = json.load(f)
-        schema_class.model_validate(data)
-        return True
-    except (json.JSONDecodeError, ValidationError):
-        return False
-```
-
-### Cleanup Policies
-
-**Retention Policy:**
-
-- Keep reports for 30 days by default
-- Archive old reports to compressed storage
-- Delete reports older than 90 days
-
-**Cleanup Script:**
-
-```bash
-#!/bin/bash
-# cleanup_old_reports.sh
-
-# Archive reports older than 30 days
-find output/reports -type d -mtime +30 -exec tar -czf {}.tar.gz {} \; -exec rm -rf {} \;
-
-# Delete archives older than 90 days
-find output/reports -name "*.tar.gz" -mtime +90 -delete
-```
-
-## Examples
-
-### Example 1: Single Stock Analysis
-
-**Directory Structure:**
-
-```
-output/reports/20250125_143022/
-└── stock_crew/
-    ├── AAPL_export.json
-    └── AAPL_report.html
-```
-
-There is no `consolidated_report.json`, `final_report.html`, or
-`manifest.json` alongside it — see "Consolidated Files" above.
-
-### Example 2: Full Portfolio Analysis
-
-**Directory Structure:**
-
-```
-output/reports/20250125_143022/
-├── stock_crew/
-│   ├── AAPL_export.json
-│   ├── AAPL_report.html
-│   ├── MSFT_export.json
-│   └── MSFT_report.html
-├── etf_crew/
-│   ├── SPY_export.json
-│   └── SPY_report.html
-├── crypto_crew/
-│   ├── BTC_export.json
-│   └── BTC_report.html
-├── deep_analysis_crew/
-│   ├── IBM_export.json
-│   └── IBM_report.html
-├── discovery_crew/
-│   ├── discovery_export.json
-│   └── discovery_report.html
-└── rebalancing_crew/
-    ├── rebalancing_export.json
-    └── rebalancing_report.html
-```
-
-The family financial plan HTML for this run is written separately, at
-`output/finwiz_family_financial_plan.html` — not inside this session
-directory.
-
-## Best Practices
-
-### File Naming
-
-1. **Always use uppercase** for ticker symbols (AAPL, not aapl)
-2. **Use consistent suffixes** (_export.json,_report.html) — no timestamp is embedded in the filename itself; chronological ordering comes from the session ID directory
-3. **Avoid special characters** in filenames (use only alphanumeric, underscore, hyphen)
-
-### Directory Organization
-
-1. **One crew per subdirectory** for clear organization
-2. **Session ID as the top-level directory** for grouping a run's per-crew exports
-3. **No nested subdirectories** within crew folders (flat structure)
-
-### Error Handling
-
-1. **Create directories** before writing files
-2. **Validate paths** before operations
-3. **Handle missing files** gracefully
-4. **Log all file operations** for debugging
-
-## Summary
-
-The file structure provides:
-
-- ✅ **Clear Organization**: Crew-based subdirectories with consistent naming
-- ✅ **Chronological Sorting**: Timestamp-based session ID for run ordering
-- ✅ **Filesystem-Safe**: No special characters, consistent conventions
-
-There is no manifest and no consolidated/final-report file inside the
-per-session tree — see "Consolidated Files" above.
-
-Follow these conventions to maintain consistency across the codebase.
+- **`output/reports/{session_id}/`** — no per-session directory tree of any kind exists.
+- **`{crew}_export.json`** (e.g. `AAPL_export.json`) — the export-schema/crew-report
+  infrastructure that would have written these was deleted; see root `CLAUDE.md`'s "Crew
+  Pattern" section.
+- **`consolidated_report.json`**, **`final_report.html`** — these were never real output
+  paths; they were, respectively, `ReportConsolidator`'s output (no caller ever existed)
+  and a Jinja2 template *name* inside code that was itself deleted along with the rest of
+  the crew subsystem.
+- **`manifest.json`** — no manifest of any kind exists or ever existed; `manifest` does
+  not appear anywhere in `src/` or `tests/`.
 
 ---
 
-**Version**: 1.0
-**Last Updated**: 2025-01-25
-**Related Docs**:
-
-- [Developer Guide](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)
-- Architecture Design (internal spec)
-- Requirements (internal spec)
+**Version**: 2.0 — rewritten from an observed run, replacing the fictional
+`output/reports/{session_id}/{crew}/` layout documented in version 1.0.
+**Last Updated**: 2026-09-07

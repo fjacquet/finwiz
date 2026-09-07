@@ -40,7 +40,6 @@ Explanations are **understanding-oriented** discussions that provide context and
 
 ### Reporting
 
-- **[Report Aggregation Guide](REPORT_AGGREGATION_DEVELOPER_GUIDE.md)** - Report aggregation
 - **[Report File Structure](REPORT_FILE_STRUCTURE.md)** - Report file organization
 
 ### Evolution and History

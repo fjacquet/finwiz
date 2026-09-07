@@ -251,8 +251,8 @@ The structure supports the complete ban on `unittest.mock`:
 # Unit tests only (fast)
 uv run pytest tests/unit/ -v
 
-# Specific crew tests
-uv run pytest tests/unit/crews/stock_crew/ -v
+# Specific crew tests — deep_analysis is the only crew (#187 deleted the other six)
+uv run pytest tests/unit/crews/test_deep_analysis_crew.py -v
 
 # Flow orchestration tests
 uv run pytest tests/unit/flow/ -v
