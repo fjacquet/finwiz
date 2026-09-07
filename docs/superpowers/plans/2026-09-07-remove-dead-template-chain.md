@@ -15,11 +15,7 @@
 - **`unittest.mock` is BANNED.** pytest-mock only (`mocker.patch`). Enforced by ruff and `make check-unittest-mock`.
 - **Line length 180 characters** (ruff).
 - Run tests with `uv run pytest`, never bare `pytest`.
-- Commit messages end with:
-  ```
-  Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
-  Claude-Session: https://claude.ai/code/session_01JtXz89ibcafk3p5LP5Ewms
-  ```
+- Commit messages end with a `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>` line followed by `Claude-Session: https://claude.ai/code/session_01JtXz89ibcafk3p5LP5Ewms`.
 - Branch is already created: `refactor/remove-dead-template-chain`. Do not create another.
 - If a commit fails with `files were modified by this hook` and the file is `uv.lock`, `git add uv.lock` and re-commit. Never use `--no-verify`.
 - There is an untracked `output0905/` directory predating this work. Never add it to a commit.
@@ -30,9 +26,11 @@
 ### Task 1: Delete the templates the converter chain owns
 
 **Files:**
+
 - Delete: `src/finwiz/templates/a_plus_discovery.html`, `backtesting_results.html`, `consolidated_report.html`, `deep_analysis_consolidated.html`, `discovery_latest.html`, `optimization_report.html`, `portfolio_processing_summary.html`, `portfolio_review.html`, `validation_report.html`, `base_template.html`, `demo.html`, `portfolio_configuration.html`, `rebalancing_template.html`, `stress_test_section.html`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: a `templates/` directory holding only `crew_reports/`, `partials/`, `enriched_analysis_report.html`, `html_template.html`, `unified_portfolio_report.html` and `CLAUDE.md`. Task 3 deletes the two remaining loose templates.
 
@@ -113,12 +111,14 @@ EOM
 ### Task 2: Delete the converter chain
 
 **Files:**
+
 - Delete: `src/finwiz/infrastructure/json/to_html_converter.py` (452 lines)
 - Delete: `src/finwiz/reporting/html_auto_generator.py`
 - Delete: `tests/unit/utils/test_json_to_html_converter.py`
 - Modify: any `__init__.py` that re-exports the deleted names
 
 **Interfaces:**
+
 - Consumes: Task 1's deletions.
 - Produces: no `JsonToHtmlConverter`, `TEMPLATE_MAPPING`, `auto_generate_html` or `auto_generate_html_for_crew` anywhere in the tree.
 
@@ -191,6 +191,7 @@ EOM
 This is the largest task and the one with a real chance of surprise. Verify the chain end to end **before** deleting anything, in the order given, and stop at the first link that does not hold.
 
 **Files:**
+
 - Delete: `src/finwiz/tools/scenario_comparison_report_generator.py` (101 lines)
 - Delete: `src/finwiz/tools/scenario_report_renderer.py` (360)
 - Delete: `src/finwiz/tools/scenario_report_sections.py` (224)
@@ -200,6 +201,7 @@ This is the largest task and the one with a real chance of surprise. Verify the 
 - Delete: `src/finwiz/templates/html_template.html`, `src/finwiz/templates/unified_portfolio_report.html`
 
 **Interfaces:**
+
 - Consumes: Tasks 1 and 2.
 - Produces: no `HTMLReportGenerator`, `HTMLReportFormatter`, `ReportSectionBuilder`, `ReportSection` or scenario-report symbol anywhere. `src/finwiz/tools/reporting/` ceases to exist.
 
@@ -305,18 +307,21 @@ EOM
 ### Task 4: Correct the documentation
 
 **Files:**
+
 - Modify: `src/finwiz/templates/CLAUDE.md`
 - Modify: `src/finwiz/tools/CLAUDE.md`
 - Modify: `src/finwiz/reporting/CLAUDE.md`
 - Modify: `CHANGELOG.md`
 
 **Interfaces:**
+
 - Consumes: Tasks 1-3.
 - Produces: no document describing any deleted file as live.
 
 - [ ] **Step 1: `src/finwiz/templates/CLAUDE.md`**
 
 Three places are now false:
+
 - the directory tree (around lines 15-19) lists `backtesting_results.html`, `optimization_report.html`, `validation_report.html` and "[other specialized templates]"
 - the **Major Entry Points** table (lines 21-29) lists `portfolio_review.html`, `a_plus_discovery.html`, `deep_analysis_consolidated.html` and `rebalancing_template.html` — all four deleted
 - **Related Modules** (line 90) points at `finwiz.tools.html_report_generator`, deleted
@@ -389,6 +394,7 @@ Expected: it must not regress from its state on `main`. Note that `make check` c
 ```bash
 make docs-lint 2>&1 | grep "dead-template-chain"
 ```
+
 Expected: no output.
 
 - [ ] **Step 2: Coverage**
