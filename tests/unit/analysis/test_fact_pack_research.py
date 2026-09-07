@@ -6,33 +6,14 @@ zero production callers once `stages/fact_pack.py` switched to
 `compose_fact_pack`. Their coverage moved to
 `tests/unit/analysis/fact_pack/test_gap_fill.py`, which exercises the
 replacement (`perplexity_source.fetch_missing_events`) through the composer.
-What remains here is what that replacement still depends on: `_build_prompt`
-(legacy, still used only by its own tests below) and `_FactPackRaw`'s
-truncating validators.
+What remains here is what that replacement still depends on: `_FactPackRaw`'s
+truncating validators. `_build_prompt` went with them -- it had no production
+caller once the composer owned the prompt, and survived only on these tests.
 """
 
 from __future__ import annotations
 
-from finwiz.analysis.fact_pack_research import (
-    _build_prompt,
-    _FactPackRaw,
-)
-
-
-class TestPromptBuilder:
-    def test_prompt_contains_today_and_company(self) -> None:
-        prompt = _build_prompt("DELL", "Dell Technologies", "Technology", "Hardware")
-        assert "Dell Technologies" in prompt
-        assert "DELL" in prompt
-        assert "Technology" in prompt
-        # French today date should contain a French month
-        assert any(m in prompt for m in ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"])
-
-    def test_prompt_handles_missing_sector(self) -> None:
-        prompt = _build_prompt("X", "Xenon", None, None)
-        assert "secteur inconnu" in prompt
-        assert "industrie inconnue" in prompt
-
+from finwiz.analysis.fact_pack_research import _FactPackRaw
 
 # ---------------------------------------------------------------------------
 # WS-D.2 — Truncating-validator regression tests (2026-04-29 follow-up)
