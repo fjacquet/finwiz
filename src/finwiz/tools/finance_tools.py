@@ -19,17 +19,14 @@ from crewai_custom_tools import (
     YahooFinanceNewsTool,
     YahooFinanceTickerInfoTool,
 )
-from crewai_custom_tools.tools.analytics.a_plus_scoring import APlusScoringTool
 from crewai_custom_tools.tools.analytics.aplus_screening import APlusScreeningTool
 from crewai_custom_tools.tools.analytics.regulatory_compliance import RegulatoryComplianceTool
 
 from finwiz.tools.alpha_vantage_tool import AlphaVantageCompanyOverviewTool
-from finwiz.tools.backtesting_tool import BacktestingTool
 from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
 from finwiz.tools.enhanced_etf_tool import EnhancedETFAnalysisTool
 from finwiz.tools.enhanced_sec_tool import EnhancedSECAnalysisTool
 from finwiz.tools.logger import get_logger
-from finwiz.tools.quantitative_analysis_tool import QuantitativeAnalysisTool
 from finwiz.tools.standardized_sentiment_tool import StandardizedSentimentAnalysisTool
 from finwiz.tools.twelve_data_tool import TwelveDataIndicatorTool
 
@@ -128,64 +125,6 @@ def get_etf_research_tools() -> list[BaseTool]:
     return tools
 
 
-def get_investment_discovery_tools() -> list[BaseTool]:
-    """
-    Get tools optimized for A+ investment discovery.
-
-    Returns:
-        list[BaseTool]: A list of tools focused on discovering A+ grade investments.
-
-    """
-    return [
-        APlusScoringTool(),
-        APlusScreeningTool(),
-        BacktestingTool(),
-        TickerExistenceValidationTool(),
-        StandardizedRiskScoringTool(),
-        StandardizedSentimentAnalysisTool(),
-    ]
-
-
-def get_stock_discovery_tools() -> list[BaseTool]:
-    """
-    Get tools optimized for stock discovery with fundamental analysis and screening.
-
-    Provides the fundamental_analysis_tool, stock_screening_tool, and a_plus_scoring_tool
-    capabilities required for stock discovery agents.
-
-    Returns:
-        list[BaseTool]: A list of tools focused on stock discovery and fundamental analysis.
-
-    """
-    # Public API tools (no key required)
-    tools: list[BaseTool] = [
-        # Core discovery tools
-        APlusScreeningTool(),  # Provides stock_screening_tool functionality
-        APlusScoringTool(),  # Provides a_plus_scoring_tool functionality
-        # Fundamental analysis tools (provides fundamental_analysis_tool functionality)
-        EnhancedSECAnalysisTool(),  # 10-K/10-Q analysis for fundamental insights
-        YahooFinanceCompanyInfoTool(),  # Company fundamentals and metrics
-        YahooFinanceTickerInfoTool(),  # Financial ratios and key metrics
-        # Supporting analysis tools
-        QuantitativeAnalysisTool(),  # Quantitative metrics and ratios
-        StandardizedRiskScoringTool(),  # Risk assessment
-        StandardizedSentimentAnalysisTool(),  # Market sentiment analysis
-        TickerExistenceValidationTool(),  # Ticker validation
-        # Historical and technical analysis
-        YahooFinanceHistoryTool(),  # Price history for trend analysis
-        # News and sentiment
-        YahooFinanceNewsTool(),  # Company news analysis
-        AlphaVantageNewsSentimentTool(),  # Central tool: checks key lazily in _run, always included
-    ]
-    # API-key-gated tools (skip if key missing; these still fail fast at construction)
-    for cls in (AlphaVantageCompanyOverviewTool, TwelveDataIndicatorTool):
-        t = _safe_init(cls)
-        if t:
-            tools.append(t)
-    return tools
-
-
-# Tool aliases for backward compatibility and explicit naming
 def fundamental_analysis_tool() -> BaseTool:
     """
     Alias for Enhanced SEC Analysis Tool - provides fundamental analysis capabilities.

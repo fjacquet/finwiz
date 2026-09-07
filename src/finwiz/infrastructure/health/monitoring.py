@@ -61,18 +61,9 @@ class IntegrationHealthChecker:
 
         self.logger = IntegrationLogger("finwiz.integration.health")
 
-        # Health check configuration.
-        # "report" was dropped: output/report/ has no producer. get_output_dir()
-        # in flows/utils.py has exactly one caller, run_crew_with_caching() in
-        # the same file — but that caller itself has zero callers anywhere in
-        # src/ (confirmed at merge-base 171b8145 too: it was never wired up),
-        # so the path is never actually built. The rest each have a live
-        # producer: stock/etf/crypto from orchestrators/deep_analysis_orchestrator.py
-        # (writes output/{asset_class}/{ticker}_enriched.json — NOT
-        # scoring/portfolio_deep_analyzer.py's _export_json_files(), which is itself
-        # unreachable: PortfolioDeepAnalyzer has no consumers in src/ beyond the
-        # scoring/__init__.py re-export), discovery from the discovery/extraction
-        # pipeline, portfolio from orchestrators/portfolio_review_orchestrator.py:265.
+        # Health check configuration. "report" is absent because output/report/
+        # has no producer; the five below are checked against directories a run
+        # actually writes. See #187 for the reachability analysis behind this list.
         self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio"]
         self.critical_directories = [
             self.output_dir,

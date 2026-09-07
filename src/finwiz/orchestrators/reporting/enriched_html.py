@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from finwiz.flow_state import FinwizState
 
 
-class CrewHtmlMixin:
+class EnrichedHtmlMixin:
     """Generates per-enriched-file HTML reports."""
 
     # Provided by ReportingOrchestrator.__init__

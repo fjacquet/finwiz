@@ -64,7 +64,7 @@ orchestrators/
 │   └── registry_data_retrieval.py
 │
 ├── reporting/                           # Report assembly helpers
-│   ├── crew_html.py
+│   ├── enriched_html.py
 │   ├── data_loading.py
 │   └── enrichment.py
 │

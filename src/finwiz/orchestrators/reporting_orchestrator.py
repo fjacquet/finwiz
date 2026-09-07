@@ -10,17 +10,16 @@ The implementation is split across cohesive mixins under
 ``ReportingOrchestrator`` composes them so behavior is unchanged.
 """
 
-from datetime import datetime
 from typing import Any
 
 from finwiz.flow_state import FinwizState
-from finwiz.orchestrators.reporting.crew_html import CrewHtmlMixin
 from finwiz.orchestrators.reporting.data_loading import ReportDataLoadingMixin
+from finwiz.orchestrators.reporting.enriched_html import EnrichedHtmlMixin
 from finwiz.orchestrators.reporting.enrichment import ReportEnrichmentMixin
 from finwiz.tools.logger import get_logger
 
 
-class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewHtmlMixin):
+class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, EnrichedHtmlMixin):
     """Generates consolidated reports and final HTML output."""
 
     def __init__(self, state: FinwizState, **dependencies: Any) -> None:
@@ -113,60 +112,6 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewH
 
             return {
                 "report_generation_complete": False,
-                "success": False,
-                "error": str(e),
-            }
-
-    def consolidate_reports(
-        self,
-        crew_export_paths: dict[str, list[str]],
-        generate_html: bool = True,
-    ) -> dict[str, Any]:
-        """
-        Consolidate crew reports into single structure.
-
-        Args:
-            crew_export_paths: Dictionary mapping crew names to lists of export file paths
-            generate_html: Unused. Retained for API stability — per-crew HTML generation
-                (the CREW_GENERATORS registry) was removed since it was never reachable in
-                a live run; ``generate_enriched_html_reports`` is the live HTML path.
-
-        Returns:
-            Dictionary with consolidated report data
-
-        """
-        try:
-            self.logger.info(f"Consolidating reports from {len(crew_export_paths)} crews")
-
-            consolidated = {
-                "crews": {},
-                "timestamp": datetime.now().isoformat(),
-                "total_reports": 0,
-            }
-
-            for crew_name, export_paths in crew_export_paths.items():
-                crew_reports = []
-                for export_path in export_paths:
-                    try:
-                        report_data = self._read_json_file(export_path)
-                        crew_reports.append(report_data)
-                    except Exception as e:
-                        self.logger.warning(f"Failed to read {export_path}: {e}")
-
-                consolidated["crews"][crew_name] = crew_reports
-                consolidated["total_reports"] += len(crew_reports)
-
-            self.logger.info(f"Consolidated {consolidated['total_reports']} reports")
-
-            return {
-                "success": True,
-                "consolidated_data": consolidated,
-                "html_report_paths": {},
-            }
-
-        except Exception as e:
-            self.logger.error(f"Report consolidation failed: {e}", exc_info=True)
-            return {
                 "success": False,
                 "error": str(e),
             }

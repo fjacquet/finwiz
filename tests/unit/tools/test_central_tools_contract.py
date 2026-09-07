@@ -67,14 +67,6 @@ def test_stock_crew_bundle_contains_central_valuation_tool():
     assert any(isinstance(tool, ValuationTool) for tool in get_stock_crew_tools())
 
 
-def test_discovery_bundle_contains_central_aplus_screening_tool():
-    from crewai_custom_tools.tools.analytics.aplus_screening import APlusScreeningTool
-
-    from finwiz.tools.finance_tools import get_investment_discovery_tools
-
-    assert any(isinstance(tool, APlusScreeningTool) for tool in get_investment_discovery_tools())
-
-
 def test_file_tools_come_from_central_package():
     from crewai_custom_tools import DirectoryReadTool, FileReadTool
 

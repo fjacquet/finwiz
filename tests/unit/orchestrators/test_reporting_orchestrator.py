@@ -83,50 +83,6 @@ class TestReportingOrchestrator:
         assert orch.state == state
         assert orch.logger is not None
 
-    def test_should_consolidate_reports_from_export_paths(self, orchestrator, tmp_path, mocker):
-        """Test consolidating reports from crew export paths."""
-        # Arrange
-        # Create temporary JSON files
-        stock_file = tmp_path / "AAPL_export.json"
-        stock_data = {"ticker": "AAPL", "grade": "A", "composite_score": 0.85}
-        stock_file.write_text(json.dumps(stock_data))
-
-        etf_file = tmp_path / "SPY_export.json"
-        etf_data = {"ticker": "SPY", "grade": "A+", "composite_score": 0.92}
-        etf_file.write_text(json.dumps(etf_data))
-
-        crew_export_paths = {
-            "stock_crew": [str(stock_file)],
-            "etf_crew": [str(etf_file)],
-        }
-
-        # Act
-        result = orchestrator.consolidate_reports(crew_export_paths)
-
-        # Assert
-        assert result["success"] is True
-        assert "consolidated_data" in result
-        consolidated = result["consolidated_data"]
-        assert "stock_crew" in consolidated["crews"]
-        assert "etf_crew" in consolidated["crews"]
-        assert len(consolidated["crews"]["stock_crew"]) == 1
-        assert len(consolidated["crews"]["etf_crew"]) == 1
-        assert consolidated["total_reports"] == 2
-
-    def test_should_handle_missing_export_files_gracefully(self, orchestrator):
-        """Test consolidation handles missing files gracefully."""
-        # Arrange
-        crew_export_paths = {
-            "stock_crew": ["nonexistent_file.json"],
-        }
-
-        # Act
-        result = orchestrator.consolidate_reports(crew_export_paths)
-
-        # Assert
-        assert result["success"] is True
-        assert result["consolidated_data"]["total_reports"] == 0
-
     def test_should_calculate_grade_distribution(self):
         """Test calculating grade distribution using centralized grading_system.
 
@@ -408,22 +364,6 @@ class TestReportingOrchestrator:
         # Assert
         assert data["ticker"] == "AAPL"
         assert data["grade"] == "A"
-
-    def test_should_handle_consolidation_error(self, orchestrator, mocker):
-        """Test handling consolidation errors."""
-        # Arrange
-        # Mock _read_json_file to raise an exception
-        mocker.patch.object(orchestrator, "_read_json_file", side_effect=Exception("Read error"))
-
-        crew_export_paths = {"stock_crew": ["test.json"]}
-
-        # Act
-        result = orchestrator.consolidate_reports(crew_export_paths)
-
-        # Assert
-        # Should still succeed but with 0 reports
-        assert result["success"] is True
-        assert result["consolidated_data"]["total_reports"] == 0
 
 
 class TestHoldingsInsightsExtraction:

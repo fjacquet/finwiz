@@ -151,13 +151,7 @@ class FinwizState(BaseModel):
     portfolio_review_error: str | None = None
     core_analysis_status: dict[str, Any] | None = None
 
-    # Portfolio rebalancing data
-    portfolio_rebalancing_available: bool = Field(default=False)
-    portfolio_rebalancing_result: dict[str, Any] | None = None
-    rebalancing_success: bool = Field(default=False)
-    rebalancing_results: dict[str, Any] | None = None
-    rebalancing_error: str | None = None
-    portfolio_rebalancing_error: str | None = None
+    # Written by ValidationOrchestrator from the consolidated reporter input.
     portfolio_allocation_updates: dict[str, Any] | None = None
 
     # Investment discovery data
