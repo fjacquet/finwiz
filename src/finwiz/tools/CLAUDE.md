@@ -43,7 +43,6 @@ tools/
 ├── # Rebalancing report subsystem
 ├── rebalancing_calculations.py      # RebalancingCalculations
 ├── rebalancing_formatters.py        # RebalancingFormatters
-├── rebalancing_report_generator.py  # RebalancingReportGenerator(HTMLReportGenerator)
 ├── rebalancing_sections.py          # RebalancingSections
 ├── rebalancing_templates.py         # RebalancingTemplates
 │
