@@ -38,13 +38,15 @@ reporting/
 │   ├── css_elements.py                  # get_base_styles(), get_table_styles(), ...
 │   └── css_layouts.py                   # get_responsive_styles(), ...
 │
-├── js/                                  # JavaScript loaders (read from assets/)
-│   └── javascript_code.py              # get_rebalancing_javascript()
-│
-└── rebalancing/                         # Rebalancing report builders
-    ├── template_builders.py             # TemplateBuilder
-    └── template_renderers.py            # TemplateRenderer
+└── js/                                  # JavaScript loaders (read from assets/)
+    └── javascript_code.py              # get_rebalancing_javascript()
 ```
+
+The `rebalancing/` subdirectory (`rebalancing_html_builders.py`, `template_builders.py`,
+`template_renderers.py`) was deleted along with `orchestrators/portfolio_rebalancing.py`
+and `tools/rebalancing_report_generator.py` — its only consumers — once the two crews
+that used those tools (`investment_discovery_crew`, `portfolio_rebalancing_crew`) were
+removed.
 
 The five per-crew report generators (`stock_report_generator.py`,
 `etf_report_generator.py`, `crypto_report_generator.py`,

@@ -42,7 +42,6 @@ tools/
 │
 ├── # Rebalancing report subsystem
 ├── rebalancing_calculations.py      # RebalancingCalculations (pre-existing dead code, issue #194 — not this closure)
-├── rebalancing_templates.py         # RebalancingTemplates
 │
 ├── # Scenario report subsystem
 ├── scenario_comparison_report_generator.py # ScenarioComparisonReportGenerator
@@ -71,8 +70,12 @@ tools/
 ├── etf/                             # ETF data fetchers/analyzers
 │   ├── etf_analyzers.py             # ETFAnalyzer
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
-├── rebalancing/                     # Re-export shim for finwiz.reporting.rebalancing
-│   └── __init__.py                  # TemplateBuilder / TemplateRenderer
+├── rebalancing/                     # Re-export shim for finwiz.reporting.rebalancing — pre-existing dead
+│   └── __init__.py                  # code (zero consumers even at merge-base 171b8145); its targets
+│                                     # (TemplateBuilder/TemplateRenderer) were deleted from
+│                                     # finwiz.reporting.rebalancing as part of this branch, so this
+│                                     # shim is now also import-broken. Left in place for issue #194,
+│                                     # same as rebalancing_calculations.py above — nothing imports it.
 └── reporting/                       # Report formatters
     ├── report_formatters.py         # HTMLReportFormatter
     └── report_sections.py           # ReportSectionBuilder
