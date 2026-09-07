@@ -27,20 +27,17 @@ reporting/
 │   ├── portfolio_summary.py
 │   └── sentiment.py
 ├── html_auto_generator.py               # auto_generate_html()
-├── css_styles.py                        # get_report_css() — reads assets/report_styles.css
-│
-├── assets/                              # Static CSS/JS files; one file per loader function,
-│                                        # named after the function (report_styles.css is the
-│                                        # top-level report stylesheet exception)
-│
-├── css/                                 # Modular CSS loaders (read from assets/)
-│   ├── css_styles.py                    # get_rebalancing_css() — concatenates the loaders below
-│   ├── css_elements.py                  # get_base_styles(), get_table_styles(), ...
-│   └── css_layouts.py                   # get_responsive_styles(), ...
-│
-└── js/                                  # JavaScript loaders (read from assets/)
-    └── javascript_code.py              # get_rebalancing_javascript()
+└── css_styles.py                        # get_report_css() — reads assets/report_styles.css
 ```
+
+`assets/` holds one static file: `report_styles.css`, read by `css_styles.py`'s
+`get_report_css()` — the live stylesheet for `python_report_generator.py` and
+`sections/posture_page.py`. The `css/` and `js/` subdirectories (modular
+rebalancing-report CSS/JS loaders — `css/css_styles.py`'s `get_rebalancing_css()`,
+`css/css_elements.py`, `css/css_layouts.py`, `js/javascript_code.py`) and the ten
+`css_*.css` + one `rebalancing_javascript.js` files they read from `assets/` were
+deleted: their only consumer, `reporting/rebalancing/template_builders.py`, was
+deleted along with the rest of the `rebalancing/` subdirectory below.
 
 The `rebalancing/` subdirectory (`rebalancing_html_builders.py`, `template_builders.py`,
 `template_renderers.py`) was deleted along with `orchestrators/portfolio_rebalancing.py`
