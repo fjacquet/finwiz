@@ -65,9 +65,12 @@ class IntegrationHealthChecker:
         # "report" was dropped: output/report/ has no producer (get_output_dir()
         # in flows/utils.py, the only function that ever built that path, has zero
         # callers), so it always reported missing. The rest each have a live
-        # producer: stock/etf/crypto from scoring/portfolio_deep_analyzer.py's
-        # _export_json_files(), discovery from the discovery/extraction pipeline,
-        # portfolio from orchestrators/portfolio_review_orchestrator.py:265.
+        # producer: stock/etf/crypto from orchestrators/deep_analysis_orchestrator.py
+        # (writes output/{asset_class}/{ticker}_enriched.json — NOT
+        # scoring/portfolio_deep_analyzer.py's _export_json_files(), which is itself
+        # unreachable: PortfolioDeepAnalyzer has no consumers in src/ beyond the
+        # scoring/__init__.py re-export), discovery from the discovery/extraction
+        # pipeline, portfolio from orchestrators/portfolio_review_orchestrator.py:265.
         self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio"]
         self.critical_directories = [
             self.output_dir,
