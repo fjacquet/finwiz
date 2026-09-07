@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The report's fact-pack block no longer disappears as it ages.** A holding's
+  cached analysis stores the freshness it had when written; `FactPack`
+  cross-checks that against `fetched_at`, so once a file crossed the 3-day
+  boundary it failed validation and the whole fact-pack card was dropped from
+  the report — silently, and triggered by nothing but the clock. Freshness is
+  now re-derived on load, as the cache layer already did.
+
 ### Changed
 
 - **Fact packs are built from structured data, not an LLM.** For equities:

@@ -44,10 +44,6 @@ _MAX_CITATIONS = 20
 # byte-identical in content to a holding that genuinely has no facts available.
 _SCHEMA_FALLBACK_SOURCE = "composer.schema_fallback"
 
-# A fund with no identifiable issuer is thin, not fatal -- only an unresolvable
-# ticker halts a holding outright.
-_PLACEHOLDER_FUND = FundFacts(issuer=PLACEHOLDER)
-
 # The exception-fallback pack must carry a details shape that matches the
 # declared asset_class (FactPack validates the pairing) -- a hardcoded
 # EquityFacts() fallback labelled asset_class="etf" would build a pack that
@@ -175,10 +171,13 @@ def compose_fact_pack(ticker: str, company_name: str, sector: str | None, indust
     # three sources (identity, filings, news) genuinely merge there.
     if asset_class == "etf":
         facts, citations, sources = fund_source.fund_facts(query_symbol, info)
-        details: EquityFacts | FundFacts | CryptoFacts = facts or _PLACEHOLDER_FUND
+        # A fund with no identifiable issuer is thin, not fatal -- only an
+        # unresolvable ticker halts a holding outright. The placeholder comes
+        # from the factory table so each pack owns its own instance.
+        details: EquityFacts | FundFacts | CryptoFacts = facts or _FALLBACK_DETAILS[asset_class]()
     elif asset_class == "crypto":
         crypto, citations = crypto_source.crypto_facts(query_symbol, info)
-        details = crypto or CryptoFacts(description=PLACEHOLDER)
+        details = crypto or _FALLBACK_DETAILS[asset_class]()
         sources = ("yfinance.info",) if crypto else ()
     else:
         details, citations, sources = _equity_details(query_symbol, info, ticker, company_name, sector, industry)

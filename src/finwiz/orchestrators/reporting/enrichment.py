@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Iterator
+from datetime import datetime
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -338,15 +339,24 @@ class ReportEnrichmentMixin:
             # labels. A malformed cached pack degrades to no fact-pack block,
             # never a traceback (Task 6/7: cached *_enriched.json can predate
             # this schema).
+            # Re-derive freshness before validating. The stored value was correct
+            # when written; FactPack cross-checks it against fetched_at, so a file
+            # that merely crossed the 3- or 7-day boundary fails validation and the
+            # except below drops the whole card -- data loss triggered by the clock
+            # alone. FactPackCache.get() re-derives on load for the same reason.
+            freshness = ""
             try:
-                rows = [list(r) for r in to_rows(FactPack.model_validate(fact))]
+                payload = dict(fact)
+                freshness = FactPack.derive_freshness(datetime.fromisoformat(str(payload["fetched_at"])))
+                payload["freshness"] = freshness
+                rows = [list(r) for r in to_rows(FactPack.model_validate(payload))]
             except Exception as e:
                 logger.warning(f"Skipping fact_pack card block: could not render cached pack: {e}")
                 rows = []
             if rows:
                 distilled["fact_pack"] = {
                     "rows": rows,
-                    "freshness": fact.get("freshness", ""),
+                    "freshness": freshness,
                     "source_citations": (fact.get("source_citations") or [])[:5],
                 }
 

@@ -5,7 +5,7 @@ Tests report consolidation, HTML generation, and export path management.
 """
 
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pytest import approx
@@ -561,6 +561,43 @@ class TestHoldingsInsightsExtraction:
         assert card["fact_pack"]["source_citations"] == ["https://a.com"]
         assert card["report_link"] == "stock/AAPL_report.html"
         assert card["grade"] == "A"
+
+    def test_a_pack_whose_stored_freshness_has_aged_still_renders(self, orchestrator, tmp_path, monkeypatch):
+        """An enriched file written 5 days ago says "fresh"; Python now derives "recent".
+
+        FactPack cross-checks the two in a model_validator, so validating the
+        stored payload as-is raises -- and the caller's except turns that into
+        rows=[], silently dropping the whole fact-pack card from the report.
+        Nothing about the pack is wrong; only the clock moved. FactPackCache.get
+        re-derives on load for exactly this reason; this path must too.
+        """
+        monkeypatch.chdir(tmp_path)
+        aged = datetime.now(UTC) - timedelta(days=5)
+        qualitative = {
+            "investment_synthesis": {"investment_thesis": "Aged but sound."},
+            "fact_pack": {
+                "asset_class": "stock",
+                "details": {
+                    "kind": "equity",
+                    "business_summary": "Single entity.",
+                    "leadership": "CEO X.",
+                    "recent_events": [],
+                    "events_from_filings": False,
+                },
+                "fetched_at": aged.isoformat(),
+                "freshness": "fresh",  # what it was when written
+                "confidence": 0.9,
+                "source_citations": [],
+                "sources_used": [],
+            },
+        }
+        self._write_enriched(tmp_path / "output" / "enriched" / "default" / "stock", "AAPL", qualitative)
+
+        card = orchestrator._extract_holdings_insights({"AAPL": {}})["AAPL"]
+
+        assert "fact_pack" in card, "the card vanished because the clock moved"
+        assert dict(card["fact_pack"]["rows"])["Structure"] == "Single entity."
+        assert card["fact_pack"]["freshness"] == "recent", "must report what Python derives now, not what was stored"
 
     def test_returns_none_when_no_qualitative(self, orchestrator, tmp_path, monkeypatch):
         # Arrange — enriched file with no qualitative section (ETF/crypto-only).

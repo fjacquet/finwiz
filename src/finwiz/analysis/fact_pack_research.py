@@ -11,8 +11,7 @@ news. `fetch_fact_pack`/`fetch_fact_pack_sync` are gone: they built a shape
 discriminated-union `FactPack` schema rejects outright (`extra="forbid"`).
 
 What remains here is what `perplexity_source` still needs: the retry-wrapped
-request schema (`_FactPackRaw`), the system prompt (`_SYSTEM_FR`), the legacy
-full-fact prompt builder (`_build_prompt`, still covered by its own tests), and
+request schema (`_FactPackRaw`), the system prompt (`_SYSTEM_FR`), and
 the sync/async bridge (`_run_coroutine_sync`) extracted from the old
 `fetch_fact_pack_sync` body.
 """
@@ -26,8 +25,6 @@ from collections.abc import Coroutine
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
-
-from finwiz.analysis._helpers import _today_french
 
 logger = logging.getLogger(__name__)
 
@@ -144,34 +141,6 @@ _SYSTEM_FR = (
     "Perplexity. Tu auto-évalues ta confidence dans [0.0, 1.0]. Tu ne dois "
     "JAMAIS inventer des faits ; si tu n'as pas de source fiable, dis-le."
 )
-
-
-def _build_prompt(ticker: str, company_name: str, sector: str | None, industry: str | None) -> str:
-    today = _today_french()
-    sector_str = sector or "secteur inconnu"
-    industry_str = industry or "industrie inconnue"
-    return (
-        f"Date du jour : {today}.\n\n"
-        f"Recherche les faits VÉRIFIÉS et ACTUELS sur {company_name} ({ticker}, "
-        f"{sector_str} / {industry_str}).\n\n"
-        "1. **corporate_structure** (≤2000 chars) : structure actuelle de l'entité — "
-        "société-mère, filiales, divisions, et toute cession ou acquisition majeure "
-        "des 24 derniers mois. Exemple type : "
-        "'Independent — divested VMware November 2021. Subsidiary of Dell Technologies."
-        "'\n\n"
-        "2. **recent_events** (liste de 0 à 10 strings, ≤200 chars chacun) : "
-        f"événements matériels des 12 derniers mois (par rapport à {today}) — "
-        "résultats trimestriels notables, M&A, changements de direction, "
-        "événements réglementaires/légaux majeurs. Pas de bavardage marketing.\n\n"
-        "3. **leadership** (≤1000 chars) : CEO et CFO actuels avec dates de prise "
-        "de fonction si récents (<24 mois), plus tout changement d'équipe "
-        "exécutive matériel récent.\n\n"
-        "4. **confidence** : auto-évaluation [0.0-1.0] de la fiabilité de tes "
-        "réponses (sources multiples = haut, sources rares ou contradictoires = bas).\n\n"
-        "5. **source_citations** : URLs Perplexity utilisées (max 20).\n\n"
-        "Si tu n'as PAS de source fiable pour un champ, écris une description "
-        "courte expliquant l'incertitude — ne pas inventer."
-    )
 
 
 def _run_coroutine_sync[T](coro: Coroutine[Any, Any, T], *, timeout: float) -> T | None:

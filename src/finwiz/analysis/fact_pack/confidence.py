@@ -64,8 +64,11 @@ def _crypto(facts: CryptoFacts) -> float:
     total = 0.0
     if _populated(facts.description):
         total += _CRYPTO_DESCRIPTION
-    # Supply is known when we can state it, and "uncapped" is a statement.
-    if facts.circulating_supply is not None and (facts.supply_is_capped or facts.max_supply is None):
+    # Supply is known when we can state it, and "uncapped" is a statement --
+    # so the cap flag deliberately does not gate this. It cannot: CryptoFacts
+    # enforces supply_is_capped == (max_supply is not None), which made the
+    # old `(supply_is_capped or max_supply is None)` guard `X or not X`.
+    if facts.circulating_supply is not None:
         total += _CRYPTO_SUPPLY
     if facts.market_cap is not None:
         total += _CRYPTO_MARKET_CAP

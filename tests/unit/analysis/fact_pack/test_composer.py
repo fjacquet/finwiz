@@ -264,6 +264,23 @@ class TestPerClassComposition:
         assert pack.details.kind == "fund"
         assert pack.confidence == 0.0
 
+    def test_two_fallback_funds_do_not_share_one_details_object(self, mocker):
+        """Every thin fund got the SAME FundFacts instance, aliased into each pack.
+
+        Pydantic's default ``revalidate_instances='never'`` means a shared model is
+        aliased, not copied. Nothing mutates it today; nothing stops it either, and
+        a mutation would rewrite history for every fund that ever fell back.
+        _FALLBACK_DETAILS already holds a factory per class for this exact purpose.
+        """
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "ETF"})
+        mocker.patch.object(composer.fund_source, "fund_facts", return_value=(None, (), ()))
+
+        a = composer.compose_fact_pack("AAAA.DE", "Fund A", None, None, "etf")
+        b = composer.compose_fact_pack("BBBB.DE", "Fund B", None, None, "etf")
+
+        assert a.details == b.details, "same content"
+        assert a.details is not b.details, "but not the same object"
+
     def test_an_unresolvable_ticker_still_returns_none(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"trailingPegRatio": None})
         assert composer.compose_fact_pack("ZZZZNOTREAL", "Nothing", None, None, "stock") is None
