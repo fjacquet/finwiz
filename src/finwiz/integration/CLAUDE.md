@@ -43,8 +43,18 @@ whole-crew artifacts — there is no per-ticker accessor.
 from finwiz.integration import CrewDataIntegrationManager
 
 manager = CrewDataIntegrationManager(output_dir=Path("output"))
-data = manager.get_crew_data_with_freshness_check(crew_name="stock_crew", max_age_hours=24, warn_on_stale=True)
+data = manager.get_crew_data_with_freshness_check(crew_name="discovery", max_age_hours=24, warn_on_stale=True)
 ```
+
+`get_crew_data_with_freshness_check` is a generic `output_dir / crew_name /
+f"{crew_name}_latest.json"` file lookup — it accepts any `crew_name` string
+and isn't validated against a registry. `crew_name="stock_crew"` (or any of
+the other five deleted crews) always returns `None` now that those packages
+are gone (see #187). But no code path was found, on this branch, that ever
+writes `output/<crew_name>/<crew_name>_latest.json` for *any* crew name,
+`"discovery"` included — this lookup path appears to have had no producer
+even before the crew deletion. Treat any `get_crew_data_with_freshness_check`
+call as returning `None` in practice until a producer is confirmed.
 
 For a plain read without the freshness check, use `CrewDataAccessor`. Its
 `get_crew_data`/`get_stock_data` generic dispatch (`getattr(self.cache,

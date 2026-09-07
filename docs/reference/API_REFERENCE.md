@@ -10,35 +10,27 @@ Complete API documentation for FinWiz financial analysis platform.
 
 ## Analysis Crews
 
-FinWiz provides specialized crews for different asset types:
+`deep_analysis` is FinWiz's only crew — it produces the qualitative half of
+each holding's deep analysis (Phase 3), invoked from the `qualify` stage of
+`analysis/stages/`. The per-asset-type crews this section
+used to document (`StockCrew`, `ETFCrew`, `CryptoCrew`,
+`PortfolioRebalancingCrew`, `InvestmentDiscoveryCrew`) were deleted on
+2026-09-07 because nothing invoked their execution methods — see root
+`CLAUDE.md`'s "Crew Pattern" section and #187.
 
-### Stock Analysis
-
-- **StockCrew** - Fundamental and technical stock analysis
-- See [Stock Crew API](api/crews.md#stock-crew) for details
-
-### ETF Analysis
-
-- **ETFCrew** - Exchange-traded fund analysis
-- See [ETF Crew API](api/crews.md#etf-crew) for details
-
-### Cryptocurrency Analysis
-
-- **CryptoCrew** - Cryptocurrency and digital asset analysis
-- See [Crypto Crew API](api/crews.md#crypto-crew) for details
+- **DeepAnalysisCrew** - qualitative analysis for one holding
+- See [Deep Analysis Crew API](api/crews.md#deep-analysis-crew) for details
 
 ### Portfolio Analysis
 
-- `PortfolioReviewCrew` does not exist. Portfolio holdings analysis and
-  recommendations are handled by `ValidationOrchestrator` (Python, not a
-  crew) — see `orchestrators/validation_orchestrator.py`.
-- **PortfolioRebalancingCrew** - Portfolio optimization and rebalancing
-- See [Portfolio Crews](api/crews.md) for details
+Portfolio holdings analysis and recommendations are handled by
+`ValidationOrchestrator` (Python, not a crew) — see
+`orchestrators/validation_orchestrator.py`.
 
 ### Discovery
 
-- **InvestmentDiscoveryCrew** - A+ investment opportunity discovery
-- See [Discovery Crew API](api/crews.md) for details
+A+ investment opportunity discovery (Phase 4) is Python scoring, not a crew —
+see `orchestrators/discovery_orchestrator.py`.
 
 ## Tool Reference
 
@@ -56,7 +48,9 @@ See [Tool APIs](api/tools.md) for complete documentation.
 
 Pydantic data models for type-safe analysis:
 
-- **CrewExportSchemas** - Output schemas for each crew
+- **CrewExportSchemas** - `CrewExportBase` and `DeepAnalysisCrewExport`, the
+  only export schema left now that the per-crew schemas were deleted with
+  their crews
 - **PortfolioSchemas** - Portfolio structure and holdings
 - **AnalysisSchemas** - Analysis results and recommendations
 - **ValidationSchemas** - Data validation models
@@ -81,18 +75,23 @@ New to the FinWiz API? Check out these resources:
 
 ## API Examples
 
-### Running Stock Analysis
+### Running Deep Analysis
 
-`finwiz/crews/stock_crew/` has no `__init__.py` and re-exports nothing —
-import from the submodule:
+`finwiz/crews/stock_crew/` was deleted along with the rest of the crew
+subsystem on 2026-09-07 (see #187). Deep analysis — Python quantitative
+scoring plus one `deep_analysis` crew call for qualitative insight — is
+driven through `finwiz.analysis.analyze_holding()`, not by constructing a
+crew directly:
 
 ```python
-from finwiz.crews.stock_crew.stock_crew import StockCrew
+from finwiz.analysis import analyze_holding
 
-crew = StockCrew()
-result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
-print(result.raw)
+result, enriched = analyze_holding(ticker="AAPL", asset_class="stock", company_name="Apple Inc.")
+print(f"Grade: {result.grade}, Score: {result.composite_score:.2f}")
 ```
+
+See `src/finwiz/analysis/CLAUDE.md` for the full pipeline and its individual
+stages.
 
 ### Portfolio Review
 
