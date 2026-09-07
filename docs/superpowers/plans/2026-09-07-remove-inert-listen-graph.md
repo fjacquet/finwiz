@@ -383,7 +383,7 @@ In the `test_property_multiple_methods_exist` list (~line 319) only `"run_sequen
 
 Update the stale trailing comment on the surviving entry:
 
-```python
+```text
 "run_sequential_workflow",  # The only @start method; drives all six phases
 ```
 
