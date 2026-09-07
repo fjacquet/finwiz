@@ -59,7 +59,6 @@ class TestDeepAnalysisOrchestratorProperties:
             batch_prefetch_config=batch_prefetch_config,
             cache_service=None,
             cache_enabled=False,
-            crew_factory=None,
             integration_manager=None,
             error_handler=None,
         )

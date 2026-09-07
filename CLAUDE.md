@@ -100,7 +100,6 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 - **unittest.mock is BANNED** - Use pytest-mock only (`mocker.patch()`). Enforced by ruff and `make check-unittest-mock`.
 - **json.dumps** - Always use `default=str` to handle datetime and other non-serializable types.
 - **Pydantic models** - All models go in `schemas/`, not in domain folders.
-- **Final reporters** - Report crew agents must have `tools=[]` and use `@final_reporter` decorator.
 - **Flow methods** - Must return `dict[str, Any]`.
 - **self.inputs** - NEVER use in flows (deprecated). Use `self.state` for all state access.
 - **Tool instantiation** - Use factory functions from `tools/tool_factories.py`, never instantiate tools directly.

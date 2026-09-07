@@ -54,11 +54,10 @@ pattern `deep_analysis` uses.
 
 ## Critical Rules
 
-1. **Final Reporters**: Must have empty tools list and use `@final_reporter` decorator
-2. **Tool Factories**: Use `get_*_crew_tools()` functions from `finwiz.tools.tool_factories`, never hardcode tools
-3. **YAML Configs**: Agent and task configs must be in `config/` directory
-4. **Async Execution**: Only final task should be synchronous
-5. **Reasoning**: Enable for complex analysis, disable for high-volume runs
+1. **Tool Factories**: Use `get_*_crew_tools()` functions from `finwiz.tools.tool_factories`, never hardcode tools
+2. **YAML Configs**: Agent and task configs must be in `config/` directory
+3. **Async Execution**: Only final task should be synchronous
+4. **Reasoning**: Enable for complex analysis, disable for high-volume runs
 
 ## Testing
 

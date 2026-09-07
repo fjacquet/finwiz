@@ -49,8 +49,7 @@ The main execution flow shall be re-architected to follow the logical business s
     2. **Phase 2: Deep Analysis & Update**: `analyze_and_update_portfolio` (Grade holdings, find needs)
     3. **Phase 3: Portfolio Analysis**: `check_portfolio` (Analyze what you own)
     4. **Phase 4: Discovery**: `check_stock`, `check_etf`, `check_crypto` -> `check_investment_discovery` (Find A+ solutions)
-    5. **Phase 5: Rebalancing**: `check_portfolio_rebalancing` (Optimize allocations)
-    6. **Phase 6: Reporting**: `report` (Present final recommendations)
+    5. **Phase 5: Reporting**: `report` (Present final recommendations)
 - **3.2.2. Atomic Portfolio Update:** `analyze_and_update_portfolio()`
   performs deep analysis and updates the portfolio review, but it does
   **not** match underperforming holdings with alternatives — alternative

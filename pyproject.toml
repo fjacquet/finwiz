@@ -411,8 +411,6 @@ omit = [
     # Entire crew tree — agents, tasks, crew wiring, prompt config.
     "src/finwiz/crews/*",
     "src/finwiz/crews/**/*",
-    # Crew factory is pure LLM instantiation + fallback wiring.
-    "src/finwiz/crew_factory.py",
     # LLM configuration (model choice, temperature, API keys).
     "src/finwiz/config/llm/*",
     "src/finwiz/config/llm/**/*",
