@@ -15,7 +15,6 @@ from finwiz.flow_state_analysis import (
 from finwiz.flow_state_models import FinwizState
 from finwiz.flow_state_utils import (
     check_core_analysis_availability,
-    extract_market_conditions,
     extract_market_context_from_core_analysis,
     get_degraded_functionality_summary,
 )
@@ -73,14 +72,12 @@ class TestCheckCoreAnalysisAvailability:
         state = FinwizState(
             stock_analysis_success=True,
             etf_analysis_success=False,
-            etf_analysis_fallback=True,
-            etf_analysis_result={"data": "fallback"},
             crypto_analysis_success=False,
         )
         result = check_core_analysis_availability(state, logger)
 
         assert result["stock_available"] is True
-        assert result["etf_available"] is True  # fallback with result
+        assert result["etf_available"] is False
         assert result["crypto_available"] is False
 
     def test_should_track_failed_crews(self, mocker, logger):
@@ -103,76 +100,6 @@ class TestCheckCoreAnalysisAvailability:
         assert "crypto" in result["failed_crews"]
         assert "etf" not in result["failed_crews"]
         assert result["total_failed"] == 2
-
-    def test_should_track_disabled_crews(self, mocker, logger):
-        """Test tracking of disabled crews."""
-        mock_manager = mocker.MagicMock()
-        mock_manager.get_crew_data_with_freshness_check.return_value = None
-        mocker.patch(
-            "finwiz.integration.manager.CrewDataIntegrationManager",
-            return_value=mock_manager,
-        )
-
-        state = FinwizState(
-            stock_analysis_disabled=False,
-            etf_analysis_disabled=True,
-            crypto_analysis_disabled=True,
-        )
-        result = check_core_analysis_availability(state, logger)
-
-        assert "etf" in result["disabled_crews"]
-        assert "crypto" in result["disabled_crews"]
-        assert "stock" not in result["disabled_crews"]
-        assert result["total_disabled"] == 2
-
-
-class TestExtractMarketConditions:
-    """Tests for extract_market_conditions function."""
-
-    def test_should_extract_stock_conditions(self):
-        """Test extracting conditions when stock analysis available."""
-        state = FinwizState(stock_analysis_result={"market": "bullish"})
-        result = extract_market_conditions(state)
-
-        assert "stock_market_sentiment" in result
-        assert "Available from stock analysis" in result["stock_market_sentiment"]
-
-    def test_should_extract_etf_conditions(self):
-        """Test extracting conditions when ETF analysis available."""
-        state = FinwizState(etf_analysis_result={"sectors": ["tech", "finance"]})
-        result = extract_market_conditions(state)
-
-        assert "sector_trends" in result
-        assert "Available from ETF analysis" in result["sector_trends"]
-
-    def test_should_extract_crypto_conditions(self):
-        """Test extracting conditions when crypto analysis available."""
-        state = FinwizState(crypto_analysis_result={"market": "volatile"})
-        result = extract_market_conditions(state)
-
-        assert "crypto_market_dynamics" in result
-        assert "Available from crypto analysis" in result["crypto_market_dynamics"]
-
-    def test_should_return_empty_when_no_results(self):
-        """Test empty conditions when no analysis results."""
-        state = FinwizState()
-        result = extract_market_conditions(state)
-
-        assert result == {}
-
-    def test_should_extract_all_conditions(self):
-        """Test extracting all conditions when all analyses available."""
-        state = FinwizState(
-            stock_analysis_result={"market": "bullish"},
-            etf_analysis_result={"sectors": ["tech"]},
-            crypto_analysis_result={"market": "volatile"},
-        )
-        result = extract_market_conditions(state)
-
-        assert len(result) == 3
-        assert "stock_market_sentiment" in result
-        assert "sector_trends" in result
-        assert "crypto_market_dynamics" in result
 
 
 class TestExtractMarketContextFromCoreAnalysis:
@@ -659,9 +586,6 @@ class TestIntegration:
 
         # Create a state with analysis results
         state = FinwizState(
-            stock_analysis_result={"market": "bullish"},
-            etf_analysis_result={"sectors": ["tech"]},
-            crypto_analysis_result={"market": "volatile"},
             stock_analysis_success=True,
             etf_analysis_success=True,
             crypto_analysis_success=True,
@@ -670,10 +594,6 @@ class TestIntegration:
         # Check availability
         availability = check_core_analysis_availability(state, logger)
         assert availability["any_available"] is True
-
-        # Extract market conditions
-        conditions = extract_market_conditions(state)
-        assert len(conditions) == 3
 
         # Get degraded functionality summary
         degraded = get_degraded_functionality_summary(state)
@@ -693,10 +613,8 @@ class TestIntegration:
         )
 
         state = FinwizState(
-            stock_analysis_result={"market": "bullish"},
             stock_analysis_success=True,
             etf_analysis_error="API timeout",
-            crypto_analysis_disabled=True,
         )
 
         availability = check_core_analysis_availability(state, logger)
@@ -705,7 +623,6 @@ class TestIntegration:
         assert availability["etf_available"] is False
         assert availability["crypto_available"] is False
         assert "etf" in availability["failed_crews"]
-        assert "crypto" in availability["disabled_crews"]
 
     def test_should_prepare_summary_from_core_analysis(self, logger):
         """Test preparing summary from core analysis data."""

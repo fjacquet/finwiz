@@ -133,37 +133,6 @@ class TestValidationOrchestrator:
         assert "etf" not in result["failed_crews"]
         assert result["total_failed"] == 2
 
-    def test_should_identify_disabled_crews(self, orchestrator, state):
-        """Test identification of disabled crews."""
-        # Arrange
-        state.stock_analysis_disabled = True
-        state.etf_analysis_disabled = False
-        state.crypto_analysis_disabled = True
-
-        # Act
-        result = orchestrator.check_core_analysis_availability()
-
-        # Assert
-        assert "stock" in result["disabled_crews"]
-        assert "crypto" in result["disabled_crews"]
-        assert "etf" not in result["disabled_crews"]
-        assert result["total_disabled"] == 2
-
-    def test_should_extract_market_conditions(self, orchestrator, state):
-        """Test market conditions extraction."""
-        # Arrange
-        state.stock_analysis_result = {"sentiment": "positive"}
-        state.etf_analysis_result = {"trends": ["tech"]}
-        state.crypto_analysis_result = None
-
-        # Act
-        result = orchestrator.extract_market_conditions()
-
-        # Assert
-        assert "stock_market_sentiment" in result
-        assert "sector_trends" in result
-        assert "crypto_market_dynamics" not in result
-
     def test_should_extract_market_context_from_stock_analysis(self, orchestrator):
         """Test market context extraction from stock analysis."""
         # Arrange

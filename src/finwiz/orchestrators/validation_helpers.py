@@ -72,7 +72,7 @@ def prepare_core_analysis_summary(
     core_analysis_status: dict[str, Any],
 ) -> dict[str, Any]:
     """Prepare a summary of core analysis data."""
-    summary = {key: core_analysis_status[key] for key in ["available_crews", "failed_crews", "disabled_crews", "total_available", "total_failed", "total_disabled"]}
+    summary = {key: core_analysis_status[key] for key in ["available_crews", "failed_crews", "total_available", "total_failed"]}
 
     crew_data = consolidated_data.get("consolidated_crew_data", {})
     for crew_type in ["stock", "etf", "crypto"]:

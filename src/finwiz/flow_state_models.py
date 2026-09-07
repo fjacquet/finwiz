@@ -129,23 +129,14 @@ class FinwizState(BaseModel):
     # Stock analysis status
     stock_analysis_success: bool = Field(default=False)
     stock_analysis_error: str | None = None
-    stock_analysis_disabled: bool = Field(default=False)
-    stock_analysis_fallback: bool = Field(default=False)
-    stock_analysis_result: dict[str, Any] | None = None
 
     # ETF analysis status
     etf_analysis_success: bool = Field(default=False)
     etf_analysis_error: str | None = None
-    etf_analysis_disabled: bool = Field(default=False)
-    etf_analysis_fallback: bool = Field(default=False)
-    etf_analysis_result: dict[str, Any] | None = None
 
     # Crypto analysis status
     crypto_analysis_success: bool = Field(default=False)
     crypto_analysis_error: str | None = None
-    crypto_analysis_disabled: bool = Field(default=False)
-    crypto_analysis_fallback: bool = Field(default=False)
-    crypto_analysis_result: dict[str, Any] | None = None
 
     # Data integration and validation
     data_availability_report: dict[str, Any] | None = None

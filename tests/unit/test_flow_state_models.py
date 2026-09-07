@@ -780,24 +780,15 @@ class TestFinwizStateDefaults:
 
         # Stock
         assert state.stock_analysis_success is False
-        assert state.stock_analysis_disabled is False
-        assert state.stock_analysis_fallback is False
         assert state.stock_analysis_error is None
-        assert state.stock_analysis_result is None
 
         # ETF
         assert state.etf_analysis_success is False
-        assert state.etf_analysis_disabled is False
-        assert state.etf_analysis_fallback is False
         assert state.etf_analysis_error is None
-        assert state.etf_analysis_result is None
 
         # Crypto
         assert state.crypto_analysis_success is False
-        assert state.crypto_analysis_disabled is False
-        assert state.crypto_analysis_fallback is False
         assert state.crypto_analysis_error is None
-        assert state.crypto_analysis_result is None
 
 
 class TestFinwizStateValidation:

@@ -192,7 +192,6 @@ class ValidationOrchestrator:
 
         available_crews = [crew for crew, avail in availability.items() if avail]
         failed_crews = [crew for crew in ["stock", "etf", "crypto"] if getattr(self.state, f"{crew}_analysis_error")]
-        disabled_crews = [crew for crew in ["stock", "etf", "crypto"] if getattr(self.state, f"{crew}_analysis_disabled")]
 
         return {
             "any_available": len(available_crews) > 0,
@@ -201,28 +200,9 @@ class ValidationOrchestrator:
             "crypto_available": availability["crypto"],
             "available_crews": available_crews,
             "failed_crews": failed_crews,
-            "disabled_crews": disabled_crews,
             "total_available": len(available_crews),
             "total_failed": len(failed_crews),
-            "total_disabled": len(disabled_crews),
         }
-
-    def extract_market_conditions(self) -> dict[str, Any]:
-        """
-        Extract market conditions from core analysis.
-
-        Returns:
-            Dictionary with market conditions extracted from state
-
-        """
-        conditions = {}
-        if self.state.stock_analysis_result:
-            conditions["stock_market_sentiment"] = "Available from stock analysis"
-        if self.state.etf_analysis_result:
-            conditions["sector_trends"] = "Available from ETF analysis"
-        if self.state.crypto_analysis_result:
-            conditions["crypto_market_dynamics"] = "Available from crypto analysis"
-        return conditions
 
     def extract_market_context_from_core_analysis(
         self,
@@ -297,7 +277,6 @@ class ValidationOrchestrator:
             self.state.core_analysis_summary = {
                 "available_crews": core_analysis_status["available_crews"],
                 "failed_crews": core_analysis_status["failed_crews"],
-                "disabled_crews": core_analysis_status["disabled_crews"],
                 "error": "Failed to prepare detailed summary",
             }
 
@@ -310,7 +289,4 @@ class ValidationOrchestrator:
         except Exception as e:
             self.logger.warning(f"Failed to check {crew_type} availability: {e}")
 
-        success = getattr(self.state, f"{crew_type}_analysis_success")
-        fallback = getattr(self.state, f"{crew_type}_analysis_fallback")
-        result = getattr(self.state, f"{crew_type}_analysis_result")
-        return success or (fallback and result is not None)
+        return bool(getattr(self.state, f"{crew_type}_analysis_success"))
