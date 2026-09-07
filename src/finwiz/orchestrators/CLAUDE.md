@@ -24,7 +24,6 @@ orchestrators/
 │
 ├── # Portfolio orchestrators
 ├── portfolio_review_orchestrator.py     # run()
-├── portfolio_rebalancing.py             # run_rebalancing(), calculate_trades()
 ├── portfolio_holdings_processor.py      # PortfolioHoldingsProcessor
 │
 ├── # Helpers
