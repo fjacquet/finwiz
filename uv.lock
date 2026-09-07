@@ -12,38 +12,38 @@ exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for 
 exclude-newer-span = "P7D"
 
 [options.exclude-newer-package]
+aiohttp = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+backtrader = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+beautifulsoup4 = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+crewai = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+crewai-cli = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+crewai-core = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+crewai-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+empyrical-reloaded = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+fear-and-greed = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+feedparser = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+finnhub-python = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+fredapi = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 gitpython = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-pandas = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-quantlib = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+gnews = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+httpx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+jinja2 = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+langchain-core = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+litellm = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+nest-asyncio = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 numpy = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+pandas = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+plotly = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+psutil = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+pyportfolioopt = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+python-dateutil = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+python-dotenv = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+quantlib = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 scipy = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 ta-lib = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-aiohttp = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-litellm = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-yfinance = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-gnews = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-fredapi = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-crewai-core = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-finnhub-python = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-crewai-tools = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-python-dotenv = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-python-dateutil = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-feedparser = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-plotly = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-httpx = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-langchain-core = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 tenacity = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-backtrader = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-nest-asyncio = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-pyportfolioopt = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-crewai = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-fear-and-greed = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-empyrical-reloaded = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-crewai-cli = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 vadersentiment = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-psutil = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-beautifulsoup4 = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
-jinja2 = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
+yfinance = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 
 [manifest]
 constraints = [{ name = "gitpython", specifier = ">=3.1.58" }]
@@ -1216,12 +1216,12 @@ requires-dist = [
     { name = "aiohttp", specifier = ">=3.14.3" },
     { name = "backtrader", specifier = ">=1.9.78.123" },
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
-    { name = "crewai", specifier = ">=1.15.16" },
+    { name = "crewai", specifier = ">=1.15.18" },
     { name = "crewai-custom-tools", git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.6.0" },
     { name = "empyrical-reloaded", specifier = ">=0.5.12" },
     { name = "fear-and-greed", specifier = ">=0.4" },
     { name = "feedparser", specifier = ">=6.0.14" },
-    { name = "finnhub-python", specifier = ">=2.4.20" },
+    { name = "finnhub-python", specifier = ">=2.4.29" },
     { name = "fredapi", specifier = ">=0.5.2" },
     { name = "gnews", specifier = ">=0.8.2" },
     { name = "httpx", specifier = ">=0.28.1" },
@@ -1262,8 +1262,8 @@ dev = [
     { name = "pytest-timeout", specifier = ">=2.4.0" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "ruff", specifier = ">=0.16.2,<1.0.0" },
-    { name = "scipy-stubs", specifier = ">=1.18.0.1" },
-    { name = "types-psutil", specifier = ">=7.2.2.20260518" },
+    { name = "scipy-stubs", specifier = ">=1.18.1.0" },
+    { name = "types-psutil", specifier = ">=7.2.2.20260827" },
     { name = "types-pyyaml", specifier = ">=6.0.12.20260518" },
     { name = "types-requests", specifier = ">=2.33.0.20260712" },
 ]
@@ -1274,7 +1274,7 @@ docs = [
     { name = "mkdocs-material", specifier = ">=9.7.7" },
     { name = "mkdocs-mermaid2-plugin", specifier = ">=1.2.3" },
     { name = "pre-commit", specifier = ">=4.6.2" },
-    { name = "pymdown-extensions", specifier = ">=11.0.1" },
+    { name = "pymdown-extensions", specifier = ">=11.0.2" },
 ]
 
 [[package]]
