@@ -250,17 +250,19 @@ class TestDataSourceOrchestratorIntegration:
         # Act
         result = await orchestrator.get_fundamental_data("AAPL", sector="Technology")
 
-        # Assert - YFinance should be attempted first
-        assert len(result.sources_attempted) > 0
-        # Most cases YFinance succeeds for AAPL, but verify it was attempted
-        assert "YFinance" in result.sources_attempted or "Industry Average" in result.sources_succeeded
+        # Assert the ordering this test is named for, not mere membership.
+        # The previous assertions named the sources "YFinance" and
+        # "Industry Average"; the orchestrator emits adapter.source_name
+        # ("yfinance") and the literal "IndustryAverages". Neither string could
+        # ever match, so the first assertion passed only via its `or` and the
+        # fallback branch below was unreachable.
+        assert result.sources_attempted, "no source was even attempted"
+        assert result.sources_attempted[0] == "yfinance", f"yfinance heads the waterfall, got {result.sources_attempted}"
 
-        # If fallback was used, verify Industry Average was last
-        if result.used_fallback and "Industry Average" in result.sources_succeeded:
-            # Industry Average should be last source tried
-            lineage_dict = result.lineage.to_dict()
-            industry_avg_count = sum(1 for v in lineage_dict.values() if v == "Industry Average")
-            assert industry_avg_count > 0, "Should have some fields from industry averages"
+        if result.used_fallback:
+            assert result.sources_attempted[-1] == "IndustryAverages", "industry averages are the last resort, not an earlier rung"
+            lineage = result.lineage.to_dict()
+            assert any(v == "IndustryAverages" for v in lineage.values()), "fallback claimed, but no field is attributed to it"
 
         print("\n✓ Waterfall strategy verified")
         print(f"  Attempt order: {result.sources_attempted}")

@@ -16,30 +16,31 @@ import pytest
 class TestDeepAnalysisCrewIntegration:
     """Integration tests for DeepAnalysisCrew execution."""
 
-    def test_should_instantiate_crew_for_crypto_without_keyerror(self):
-        """
-        Test that DeepAnalysisCrew instantiates for crypto without KeyError.
+    def test_configured_agents_and_tasks_match_the_declared_methods(self):
+        """Config and code must agree in both directions -- the KeyError this file exists for.
 
-        This verifies the fix for the production bug where risk_assessor
-        was causing KeyError during crew instantiation.
+        The original bug was a ``risk_assessor`` method reading an agents.yaml key
+        that had been deleted: ``KeyError: 'risk_assessor'`` at instantiation. The
+        two tests replaced here pinned the roster of that moment by name
+        (asset_analyst + investment_reporter) rather than the agreement itself, so
+        they broke when ``investment_reporter`` was later removed for unrelated
+        reasons -- reporting a defect where there was none, and going unnoticed
+        because integration tests are deselected by default.
 
-        Requirements: 2.1
+        This asserts the invariant instead of the census: every configured key has
+        a decorated method, and every decorated method has a configured key. It
+        holds for a one-agent crew and would still hold for a five-agent one, while
+        failing the moment either side drifts from the other.
         """
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
-        # Should instantiate without KeyError
         crew = DeepAnalysisCrew()
 
-        # Verify crew was created successfully
-        assert crew is not None
-        assert hasattr(crew, "agents_config")
-        assert hasattr(crew, "tasks_config")
+        def declared(marker: str) -> set[str]:
+            return {name for name, value in type(crew).__dict__.items() if getattr(value, marker, False)}
 
-        # Verify exactly 2 agents
-        assert len(crew.agents_config) == 2
-        assert "asset_analyst" in crew.agents_config
-        assert "investment_reporter" in crew.agents_config
-        assert "risk_assessor" not in crew.agents_config
+        assert set(crew.agents_config) == declared("is_agent"), "agents.yaml and the @agent methods disagree"
+        assert set(crew.tasks_config) == declared("is_task"), "tasks.yaml and the @task methods disagree"
 
     @pytest.mark.skipif(not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"), reason="Requires API keys for crew execution")
     def test_should_execute_crew_for_btc_usd_without_error(self):
@@ -80,26 +81,6 @@ class TestDeepAnalysisCrewIntegration:
             # Otherwise, log the error but don't fail the test
             # (API errors, rate limits, etc. are not the focus of this test)
             print(f"Note: Crew execution encountered error (not KeyError): {e}")
-
-    def test_should_verify_agent_methods_exist(self):
-        """
-        Test that crew has the correct agent methods.
-
-        Verifies that only asset_analyst and investment_reporter methods exist,
-        confirming risk_assessor has been removed.
-
-        Requirements: 2.2
-        """
-        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
-
-        crew = DeepAnalysisCrew()
-
-        # Verify required agent methods exist
-        assert hasattr(crew, "asset_analyst"), "Missing asset_analyst method"
-        assert hasattr(crew, "investment_reporter"), "Missing investment_reporter method"
-
-        # Verify risk_assessor method does NOT exist
-        assert not hasattr(crew, "risk_assessor"), "risk_assessor method still exists"
 
     def test_should_not_log_deprecation_warnings(self, caplog):
         """
