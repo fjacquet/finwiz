@@ -24,8 +24,8 @@ FinWiz follows a modular, microservices-inspired architecture built on CrewAI's 
 flowchart TD
     Flow["Flow Orchestrator<br/>(CrewAI Flow - Pydantic State)"]
 
-    Orch["Orchestrators (Business Logic)<br/>• Portfolio Review<br/>• Rebalancing<br/>• Decisions"]
-    Crews["Crews (AI) (Analysis)<br/>• Stock Crew<br/>• ETF Crew<br/>• Crypto Crew<br/>• Deep Analysis<br/>• Discovery"]
+    Orch["Orchestrators (Business Logic)<br/>• Validation / Portfolio Review<br/>• Deep Analysis<br/>• Discovery<br/>• Alternative Matching<br/>• Reporting"]
+    Crews["Crews (AI)<br/>• Deep Analysis (the only crew — see #187)"]
 
     Scoring["Scoring Engine (Python)<br/>• Deep Analysis<br/>• Portfolio<br/>• Risk"]
     Tools["Tools<br/>• Quantitative<br/>• Sentiment<br/>• Technical<br/>• Data Access"]
@@ -109,40 +109,20 @@ def analysis_task(self) -> Task:
 
 #### 3. File-Based Data Passing
 
-**Principle**: Pass file paths between crews, not large data objects.
+**Principle**: Pass file paths between phases, not large data objects held in memory.
 
 **Why**: Avoids context window limits, enables caching, improves performance.
 
-**Implementation**:
+**Implementation**: This is how `ReportingOrchestrator.report()` actually works today —
+deep analysis writes each holding's result to disk, and reporting reads it back
+by path rather than receiving it as an in-memory argument:
 
 ```python
-# ✅ CORRECT: Pass file paths
-@listen("analyze_holdings")
-def generate_report(self, data: dict[str, Any]) -> dict[str, Any]:
-    # Write analysis to file
-    export_path = f"output/reports/{session_id}/analysis.json"
-    with open(export_path, "w") as f:
-        f.write(json.dumps(data, indent=2))
+# Deep analysis writes results to disk (one file per holding)
+# ...
 
-    # Pass path to next crew
-    report_crew = ReportCrew()
-    result = report_crew.crew().kickoff(
-        inputs={
-            "analysis_file": export_path  # Path, not data
-        }
-    )
-
-    return {"report_path": result.report_path}
-
-
-# ❌ WRONG: Pass large data directly
-def generate_report(self, data: dict[str, Any]) -> dict[str, Any]:
-    report_crew = ReportCrew()
-    result = report_crew.crew().kickoff(
-        inputs={
-            "analysis_data": data  # May exceed context limits
-        }
-    )
+# Reporting reads them back by path, not by holding a reference
+deep_analysis_results = self._read_deep_analysis_from_files()
 ```
 
 #### 4. Concurrent Execution
@@ -183,18 +163,18 @@ def analyze_portfolio_concurrent(holdings: list[str]) -> dict[str, Any]:
 **Implementation**:
 
 ```python
-# Analysis (AI)
+# Analysis (AI) — the qualify stage of analyze_holding()'s pipeline
 class DeepAnalysisCrew:
     @task
     def analyze_task(self) -> Task:
         return Task(description="Analyze {ticker}", output_pydantic=DeepAnalysisCrewExport, agent=self.analyst())
 
 
-# Presentation (Python/Jinja2)
-from finwiz.reporting.deep_analysis_report_generator import DeepAnalysisReportGenerator
+# Presentation (Python/Jinja2) — the live per-holding HTML path
+from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
 
-generator = DeepAnalysisReportGenerator()
-html_path = generator.generate_crew_report(crew_name="deep_analysis", export_data=analysis_result.model_dump(), output_path="output/reports/AAPL_report.html")
+generator = EnrichedAnalysisReportGenerator()
+html_path = generator.generate_and_save_report(enriched_analysis, output_path="output/reports/AAPL_report.html")
 ```
 
 ### Directory Structure Deep-Dive
@@ -202,16 +182,17 @@ html_path = generator.generate_crew_report(crew_name="deep_analysis", export_dat
 ```
 src/finwiz/
 ├── crews/                          # AI Agent Crews
-│   ├── stock_crew/
-│   │   ├── stock_crew.py          # @agent, @task, @crew decorators
+│   ├── deep_analysis/              # Per-holding deep analysis — the only crew
+│   │   ├── deep_analysis.py       # @agent, @task, @crew decorators
 │   │   └── config/
 │   │       ├── agents.yaml        # Agent definitions
 │   │       └── tasks.yaml         # Task definitions
-│   ├── etf_crew/
-│   ├── crypto_crew/
-│   ├── deep_analysis/             # Per-holding deep analysis
-│   ├── investment_discovery_crew/ # A+ opportunity discovery
-│   └── portfolio_rebalancing_crew/
+│   └── helpers/                    # Shared crew-facing helpers (tool_routing.py, etc.)
+│
+│   # stock_crew/, etf_crew/, crypto_crew/, investment_discovery_crew/, and
+│   # portfolio_rebalancing_crew/ were deleted 2026-09-07 — nothing invoked
+│   # their execution methods. See root CLAUDE.md's "Crew Pattern" section
+│   # and #187.
 │
 ├── analysis/                       # Deep-analysis pipeline
 │   ├── deep_analysis_pipeline.py  # Facade only
@@ -228,7 +209,6 @@ src/finwiz/
 │   ├── deep_analysis_orchestrator.py
 │   ├── discovery_orchestrator.py
 │   ├── gap_profile_orchestrator.py
-│   ├── portfolio_rebalancing.py
 │   └── reporting/                 # crew_html.py, data_loading.py, enrichment.py
 │
 ├── discovery/                      # Universe mining and candidate signals
@@ -267,7 +247,7 @@ src/finwiz/
 │   └── analysis/, etf/, rebalancing/, reporting/
 │
 ├── schemas/                        # Pydantic Data Models
-│   ├── crew_exports.py            # Export schemas per crew
+│   ├── crew_exports.py            # CrewExportBase, DeepAnalysisCrewExport — the only two left
 │   ├── quantitative/              # Quantitative models
 │   │   ├── config_models.py
 │   │   └── analysis_models.py
@@ -391,144 +371,12 @@ crews/{crew_name}/
     └── tasks.yaml              # Task definitions
 ```
 
-#### Example: Stock Crew
-
-**File**: `src/finwiz/crews/stock_crew/stock_crew.py`
-
-```python
-from crewai import Agent, Crew, Task, agent, crew, task
-from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.infrastructure.decorators.agent_validators import final_reporter
-from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
-from finwiz.infrastructure.logging.helpers import CrewLogger
-
-
-class StockCrew:
-    """Stock analysis crew."""
-
-    def __init__(self):
-        self.logger = CrewLogger("StockCrew")
-
-    @agent
-    def analyst(self) -> Agent:
-        """Financial analyst with quantitative tools."""
-        return Agent(
-            config=self.agents_config["analyst"],
-            tools=get_stock_crew_tools(
-                include_quantitative=True,
-                include_valuation=True,
-            ),
-            reasoning=True,
-            max_reasoning_attempts=3,
-            allow_delegation=False,
-            max_rpm=20,
-            verbose=True,
-        )
-
-    @final_reporter  # Enforces empty tools
-    @agent
-    def reporter(self) -> Agent:
-        """Final report generator."""
-        return Agent(
-            config=self.agents_config["reporter"],
-            tools=[],  # MUST be empty
-            reasoning=False,
-            verbose=True,
-        )
-
-    @async_task
-    @task
-    def research_task(self) -> Task:
-        """Research task with async execution."""
-        return Task(config=self.tasks_config["research"], agent=self.analyst())
-
-    @sync_task  # Final task MUST be sync
-    @task
-    def report_task(self) -> Task:
-        """Generate final report."""
-        return Task(config=self.tasks_config["report"], output_pydantic=StockCrewExport, output_json=True, agent=self.reporter())
-
-    @crew
-    def crew(self) -> Crew:
-        """Create crew with configured agents and tasks."""
-        return Crew(agents=[self.analyst(), self.reporter()], tasks=[self.research_task(), self.report_task()], process=Process.sequential, verbose=True)
-```
-
-**File**: `src/finwiz/crews/stock_crew/config/agents.yaml`
-
-```yaml
-analyst:
-  role: "Stock Market Research Analyst"
-  goal: "Conduct comprehensive analysis of {ticker} to provide investment recommendations"
-  backstory: |
-    You are a senior equity research analyst with 20+ years of experience analyzing
-    publicly traded companies. You excel at fundamental analysis, technical analysis,
-    and synthesizing multiple data sources into actionable insights.
-
-reporter:
-  role: "Investment Report Writer"
-  goal: "Create clear, structured investment reports from analysis"
-  backstory: |
-    You are an expert at distilling complex financial analysis into clear,
-    actionable investment reports. You ensure consistency and completeness
-    while maintaining professional standards.
-```
-
-**File**: `src/finwiz/crews/stock_crew/config/tasks.yaml`
-
-```yaml
-research:
-  description: |
-    Perform comprehensive analysis of {ticker} ({asset_class}).
-
-    Required Analysis:
-    1. Fundamental Analysis:
-       - Financial metrics (P/E, ROE, debt ratios)
-       - Revenue and earnings trends
-       - Competitive positioning
-
-    2. Technical Analysis:
-       - Price trends and patterns
-       - Key technical indicators
-       - Support/resistance levels
-
-    3. Risk Assessment:
-       - Volatility analysis
-       - Sector and market risks
-       - Company-specific risks
-
-  expected_output: |
-    Comprehensive analysis with:
-    - Fundamental metrics and interpretation
-    - Technical analysis findings
-    - Risk assessment (1-10 scale)
-    - Investment thesis
-
-  agent: analyst
-  async_execution: true
-
-report:
-  description: |
-    Generate final investment report for {ticker}.
-
-    Consolidate all analysis into structured output:
-    - Grade (A+ to F)
-    - Composite score (0.0-1.0)
-    - Clear recommendation (BUY/HOLD/SELL)
-    - Supporting rationale
-
-  expected_output: |
-    Structured report with:
-    - Executive summary
-    - Detailed findings
-    - Clear recommendation
-    - Risk disclosure
-
-  output_pydantic: "StockCrewExport"
-  output_json: true
-  agent: reporter
-  async_execution: false  # Final task must be sync
-```
+`deep_analysis` (`src/finwiz/crews/deep_analysis/`) is the only crew left —
+the tutorial that used to live here walked through `stock_crew`, deleted
+2026-09-07 along with the rest of the per-asset-type crew subsystem (see
+root `CLAUDE.md`'s "Crew Pattern" section and #187). See
+`src/finwiz/crews/deep_analysis/deep_analysis.py` and its `config/` directory
+for a live example of this structure.
 
 ### Flow Architecture
 
@@ -614,9 +462,11 @@ guide: there is no `PortfolioReviewOrchestrator` class (the package
 1. ✅ Use `Flow[PydanticModel]` for type safety
 2. ✅ All Flow methods return `dict[str, Any]`
 3. ✅ Access state via `self.state.field_name`
-4. ✅ Create crews through `CrewFactory`, never by direct instantiation — the
-   factory is the seam that carries error handling and fallback
-   (`flows/orchestrator.py:106`)
+4. ✅ Instantiate a crew directly from the module that actually calls it
+   (see `deep_analysis`, reached from `analysis/_helpers.py`) — there is no
+   `CrewFactory` seam any more; it was constructed at flow startup but never
+   invoked, so it was deleted along with the six crews it wired up and never
+   ran (see `CLAUDE.md`'s "Crew Pattern" section)
 5. ❌ NEVER use `self.inputs` (deprecated)
 
 ### Tool Factories Pattern
@@ -681,6 +531,12 @@ There is no `include_rag` parameter on any factory, and no `DataFetcherTool`,
 also accepts `prefetched_data`, which lets a bulk prefetch feed the crew
 instead of every tool refetching.
 
+Despite their names, `get_stock_crew_tools()` and `get_etf_crew_tools()` are
+still live — the `stock_crew`/`etf_crew` packages they were originally built
+for were deleted (#187), but `deep_analysis`, the only remaining crew, calls
+them through `crews/helpers/tool_routing.py`, keyed off `asset_class` rather
+than a per-asset-type crew.
+
 ## Core Patterns
 
 ### 1. Final Reporter Pattern
@@ -737,10 +593,10 @@ from finwiz.infrastructure.logging.helpers import CrewLogger
 import time
 
 
-class StockCrew:
+class DeepAnalysisCrew:
     def __init__(self):
         super().__init__()
-        self.logger = CrewLogger("StockCrew")
+        self.logger = CrewLogger("DeepAnalysisCrew")
 
     def kickoff(self, inputs: dict) -> Any:
         self.logger.log_start(inputs)
@@ -818,29 +674,26 @@ from pathlib import Path
 
 
 class DeepAnalysisReportGenerator:
-    """Generate HTML reports from analysis data."""
+    """Generate an HTML report from a single DeepAnalysisResult."""
 
     def __init__(self):
         template_dir = Path(__file__).parent.parent / "templates" / "crew_reports"
         self.env = Environment(loader=FileSystemLoader(template_dir))
+        self.template = self.env.get_template("deep_analysis_report.html.j2")
 
-    def generate_crew_report(self, crew_name: str, export_data: dict, output_path: str) -> str:
-        """Generate HTML report for crew analysis."""
-
-        # Load template
-        template = self.env.get_template(f"{crew_name}_report.html.j2")
-
-        # Render with data
-        html_content = template.render(
-            ticker=export_data["ticker"], grade=export_data["grade"], score=export_data["composite_score"], recommendation=export_data["recommendation"], **export_data
-        )
-
-        # Write to file
+    def generate_and_save_report(self, result_data: dict, output_path: str) -> str:
+        """Render and write the report."""
+        html_content = self.template.render(**result_data)
         with open(output_path, "w") as f:
             f.write(html_content)
-
         return output_path
 ```
+
+There is no crew-name-based template dispatch any more — one class, one
+template. (This class is a secondary report path, used by
+`scoring/portfolio_deep_analyzer.py`; the report `ReportingOrchestrator.report()`
+actually writes per holding goes through `EnrichedAnalysisReportGenerator`
+instead — see "Clean Separation" above.)
 
 **Template**: `src/finwiz/templates/crew_reports/deep_analysis_report.html.j2`
 
@@ -1138,8 +991,8 @@ def test_example(mocker):
 tests/
 ├── unit/                          # Unit tests (< 3 minutes)
 │   ├── crews/                     # Crew tests
-│   │   ├── test_stock_crew.py
-│   │   └── test_deep_analysis.py
+│   │   ├── test_deep_analysis_crew.py
+│   │   └── test_deep_analysis_prompt.py
 │   ├── tools/                     # Tool tests
 │   │   ├── test_quantitative_analysis_tool.py
 │   │   └── test_sentiment_tool.py
@@ -1260,91 +1113,52 @@ def test_grade_mapping(scorer, score, expected_grade):
 
 #### Mocking External Dependencies
 
+`CrewDataAccessor.get_crew_data()` / `get_stock_data()` — the generic,
+crew-name-keyed dispatch used in older versions of this guide — were
+removed along with the crew subsystem (see #187 and
+`src/finwiz/integration/CLAUDE.md`). `DataCache` only ever backs
+`discovery` now:
+
 ```python
 import pytest
 from finwiz.integration.accessor import CrewDataAccessor
 
 
-def test_get_stock_data(mocker, tmp_path):
-    """Read a crew's persisted output, with the on-disk artifact mocked."""
+def test_get_discovery_data(mocker, tmp_path):
+    """Read discovery's persisted output, with the on-disk artifact mocked."""
     mocker.patch.object(
         CrewDataAccessor,
-        "get_crew_data",
-        return_value={"symbol": "AAPL", "currentPrice": 175.50},
+        "get_discovery_data",
+        return_value={"discovery_result": {"asset_type": "stock"}},
     )
 
     accessor = CrewDataAccessor(tmp_path)
-    data = accessor.get_stock_data()
+    data = accessor.get_discovery_data()
 
-    assert data["symbol"] == "AAPL"
-    assert data["currentPrice"] == 175.50
+    assert data["discovery_result"]["asset_type"] == "stock"
 
 
 def test_missing_data_returns_none(tmp_path):
-    """A crew that never wrote its artifact reads back as None, not as zeros."""
+    """Missing on-disk data reads back as None, not as zeros."""
     accessor = CrewDataAccessor(tmp_path)
 
-    assert accessor.get_crew_data("stock_crew") is None
+    assert accessor.get_discovery_data() is None
 ```
 
-`CrewDataAccessor` reads crew artifacts already written under `output/` — it
-does not call market APIs, so there is nothing here to mock at the yfinance
-level. Its accessors are `get_crew_data(crew_name, max_age_hours)`,
-`get_stock_data()`, `get_discovery_data()`, `get_consolidated_data()` and the
-`check_data_availability()` / `get_stale_data_warnings()` freshness helpers.
-Note that a missing artifact returns `None` rather than an empty dict, so
+`CrewDataAccessor` reads artifacts already written under `output/` — it does
+not call market APIs, so there is nothing here to mock at the yfinance
+level. Its accessors are `get_discovery_data()`, `get_consolidated_data()`
+and the `check_data_availability()` / `get_stale_data_warnings()` freshness
+helpers. Note that missing data returns `None` rather than an empty dict, so
 callers can distinguish "not produced" from "produced but empty".
 
 #### Testing Crews
 
-```python
-import pytest
-from finwiz.crews.stock_crew.stock_crew import StockCrew
-from finwiz.schemas.crew_exports import StockCrewExport
-
-
-def test_stock_crew_initialization():
-    """Test stock crew initializes correctly."""
-    crew = StockCrew()
-
-    assert crew is not None
-    assert crew.logger is not None
-    assert crew.agents_config is not None
-    assert crew.tasks_config is not None
-
-
-def test_agents_have_correct_tools(mocker):
-    """Test agents are configured with correct tools."""
-    crew = StockCrew()
-
-    analyst = crew.analyst()
-    assert len(analyst.tools) > 0
-    assert analyst.reasoning is True
-
-    reporter = crew.reporter()
-    assert len(reporter.tools) == 0  # Final reporter has no tools
-
-
-@pytest.mark.integration
-def test_crew_execution_full(mocker):
-    """Test full crew execution (integration test)."""
-    # Mock expensive API calls
-    mocker.patch("finwiz.tools.tool_factories.get_stock_crew_tools")
-    mocker.patch("finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run")
-
-    crew = StockCrew()
-
-    result = crew.crew().kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
-
-    # Validate result structure
-    assert result is not None
-
-    # Validate export schema
-    export = StockCrewExport(**result.model_dump())
-    assert export.ticker == "AAPL"
-    assert export.asset_class == "stock"
-    assert 0.0 <= export.composite_score <= 1.0
-```
+`deep_analysis` is the only crew — see `tests/unit/crews/test_deep_analysis_crew.py`
+for a live example of testing it (agent/task config loading, tool
+assignment per asset class, `max_iter`/timeout behavior), rather than the
+`StockCrew`/`StockCrewExport` example that used to be here (both deleted,
+see #187).
 
 ### Test Coverage
 

@@ -1,29 +1,25 @@
 """
 Reporting Orchestrator for FinWiz Flow.
 
-This module provides report consolidation and HTML generation including:
-- Report consolidation from crew exports
+This module provides HTML report generation:
+- Per-holding reports rendered from the enriched analysis files
 - Final HTML report generation
-- HTML generation from export data using Jinja2
-- Crew export path management
 
 The implementation is split across cohesive mixins under
-``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, crew HTML);
+``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, enriched-file HTML);
 ``ReportingOrchestrator`` composes them so behavior is unchanged.
 """
 
-from datetime import datetime
-from pathlib import Path
 from typing import Any
 
 from finwiz.flow_state import FinwizState
-from finwiz.orchestrators.reporting.crew_html import CrewHtmlMixin
 from finwiz.orchestrators.reporting.data_loading import ReportDataLoadingMixin
+from finwiz.orchestrators.reporting.enriched_html import EnrichedHtmlMixin
 from finwiz.orchestrators.reporting.enrichment import ReportEnrichmentMixin
 from finwiz.tools.logger import get_logger
 
 
-class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewHtmlMixin):
+class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, EnrichedHtmlMixin):
     """Generates consolidated reports and final HTML output."""
 
     def __init__(self, state: FinwizState, **dependencies: Any) -> None:
@@ -116,64 +112,6 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, CrewH
 
             return {
                 "report_generation_complete": False,
-                "success": False,
-                "error": str(e),
-            }
-
-    def consolidate_reports(
-        self,
-        crew_export_paths: dict[str, list[str]],
-        generate_html: bool = True,
-    ) -> dict[str, Any]:
-        """
-        Consolidate crew reports into single structure.
-
-        Args:
-            crew_export_paths: Dictionary mapping crew names to lists of export file paths
-            generate_html: If True, auto-generate HTML reports for all exports (default: True)
-
-        Returns:
-            Dictionary with consolidated report data and generated HTML paths
-
-        """
-        try:
-            self.logger.info(f"Consolidating reports from {len(crew_export_paths)} crews")
-
-            consolidated = {
-                "crews": {},
-                "timestamp": datetime.now().isoformat(),
-                "total_reports": 0,
-            }
-
-            for crew_name, export_paths in crew_export_paths.items():
-                crew_reports = []
-                for export_path in export_paths:
-                    try:
-                        report_data = self._read_json_file(export_path)
-                        crew_reports.append(report_data)
-                    except Exception as e:
-                        self.logger.warning(f"Failed to read {export_path}: {e}")
-
-                consolidated["crews"][crew_name] = crew_reports
-                consolidated["total_reports"] += len(crew_reports)
-
-            self.logger.info(f"Consolidated {consolidated['total_reports']} reports")
-
-            # Auto-generate HTML reports (zero cost, Python-based)
-            html_reports: dict[str, list[Path]] = {}
-            if generate_html:
-                html_reports = self.generate_all_crew_html_reports(crew_export_paths)
-                consolidated["html_reports_generated"] = sum(len(v) for v in html_reports.values())
-
-            return {
-                "success": True,
-                "consolidated_data": consolidated,
-                "html_report_paths": {k: [str(p) for p in v] for k, v in html_reports.items()},
-            }
-
-        except Exception as e:
-            self.logger.error(f"Report consolidation failed: {e}", exc_info=True)
-            return {
                 "success": False,
                 "error": str(e),
             }

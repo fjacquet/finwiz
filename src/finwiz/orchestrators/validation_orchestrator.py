@@ -132,87 +132,6 @@ class ValidationOrchestrator:
                 "holdings_count": 0,
             }
 
-    def check_portfolio_rebalancing(self) -> dict[str, Any]:
-        """
-        Run portfolio rebalancing analysis.
-
-        Phase 6: Rebalancing
-        - Execute rebalancing crew (if enabled)
-        - Store results in state
-
-        Requirements: 7.1
-
-        Returns:
-            dict: Rebalancing results
-
-        """
-        self.logger.info("=" * 80)
-        self.logger.info("Phase 6: Portfolio Rebalancing")
-        self.logger.info("=" * 80)
-
-        # Check if rebalancing is enabled
-        import os
-
-        enabled = os.getenv("PORTFOLIO_ENABLE_REBALANCING", "false").lower() == "true"
-
-        if not enabled:
-            self.logger.info("Portfolio rebalancing disabled via PORTFOLIO_ENABLE_REBALANCING")
-            self.logger.info("=" * 80)
-            return {"success": True, "rebalancing_enabled": False}
-
-        # Import here to avoid circular dependencies
-        from finwiz.crews.portfolio_rebalancing.portfolio_rebalancing_crew import PortfolioRebalancingCrew
-
-        try:
-            import asyncio
-
-            from finwiz.infrastructure.resilience.crew_execution import execute_crew_with_timeout
-
-            # Execute rebalancing crew with timeout and circuit breaker
-            crew = PortfolioRebalancingCrew()
-            crew_instance = crew.crew()
-            rebalancing_inputs = {
-                "current_day": self.state.current_day,
-                "current_month": self.state.current_month,
-                "current_year": self.state.current_year,
-                "current_date": self.state.current_date,
-                "full_date": self.state.full_date,
-                "timestamp": self.state.timestamp,
-                "report_language": self.state.report_language,
-            }
-            result = asyncio.run(execute_crew_with_timeout("portfolio_rebalancing_validation", crew_instance, rebalancing_inputs))
-
-            # Extract rebalancing results from crew output
-            if hasattr(result, "pydantic") and result.pydantic:
-                rebalancing_results = result.pydantic.model_dump() if hasattr(result.pydantic, "model_dump") else result.pydantic.dict()
-            else:
-                rebalancing_results = {"error": "Failed to extract rebalancing results"}
-
-            # Update state
-            self.state.rebalancing_results = rebalancing_results
-            self.state.rebalancing_success = True
-
-            self.logger.info("Portfolio rebalancing completed")
-            self.logger.info("=" * 80)
-
-            return {
-                "success": True,
-                "rebalancing_enabled": True,
-                "rebalancing_results": rebalancing_results,
-            }
-
-        except Exception as e:
-            self.logger.error(f"Portfolio rebalancing failed: {e}", exc_info=True)
-            self.state.rebalancing_success = False
-            self.state.rebalancing_error = str(e)
-            self.logger.info("=" * 80)
-
-            return {
-                "success": False,
-                "rebalancing_enabled": True,
-                "error": str(e),
-            }
-
     def pre_validate_reporter_input(
         self,
         consolidated_data: dict[str, Any] | None = None,
@@ -273,7 +192,6 @@ class ValidationOrchestrator:
 
         available_crews = [crew for crew, avail in availability.items() if avail]
         failed_crews = [crew for crew in ["stock", "etf", "crypto"] if getattr(self.state, f"{crew}_analysis_error")]
-        disabled_crews = [crew for crew in ["stock", "etf", "crypto"] if getattr(self.state, f"{crew}_analysis_disabled")]
 
         return {
             "any_available": len(available_crews) > 0,
@@ -282,28 +200,9 @@ class ValidationOrchestrator:
             "crypto_available": availability["crypto"],
             "available_crews": available_crews,
             "failed_crews": failed_crews,
-            "disabled_crews": disabled_crews,
             "total_available": len(available_crews),
             "total_failed": len(failed_crews),
-            "total_disabled": len(disabled_crews),
         }
-
-    def extract_market_conditions(self) -> dict[str, Any]:
-        """
-        Extract market conditions from core analysis.
-
-        Returns:
-            Dictionary with market conditions extracted from state
-
-        """
-        conditions = {}
-        if self.state.stock_analysis_result:
-            conditions["stock_market_sentiment"] = "Available from stock analysis"
-        if self.state.etf_analysis_result:
-            conditions["sector_trends"] = "Available from ETF analysis"
-        if self.state.crypto_analysis_result:
-            conditions["crypto_market_dynamics"] = "Available from crypto analysis"
-        return conditions
 
     def extract_market_context_from_core_analysis(
         self,
@@ -378,7 +277,6 @@ class ValidationOrchestrator:
             self.state.core_analysis_summary = {
                 "available_crews": core_analysis_status["available_crews"],
                 "failed_crews": core_analysis_status["failed_crews"],
-                "disabled_crews": core_analysis_status["disabled_crews"],
                 "error": "Failed to prepare detailed summary",
             }
 
@@ -391,7 +289,4 @@ class ValidationOrchestrator:
         except Exception as e:
             self.logger.warning(f"Failed to check {crew_type} availability: {e}")
 
-        success = getattr(self.state, f"{crew_type}_analysis_success")
-        fallback = getattr(self.state, f"{crew_type}_analysis_fallback")
-        result = getattr(self.state, f"{crew_type}_analysis_result")
-        return success or (fallback and result is not None)
+        return bool(getattr(self.state, f"{crew_type}_analysis_success"))

@@ -50,9 +50,6 @@ class UtilityOrchestrator:
             # Extract from deep_analysis_results
             sec_filing_urls.update(self._extract_from_deep_analysis(url_generator, url_validator))
 
-            # Extract from stock_analysis_result
-            sec_filing_urls.update(self._extract_from_stock_analysis(sec_filing_urls, url_generator, url_validator))
-
             self.logger.info(f"Extracted SEC filing URLs for {len(sec_filing_urls)} stock holdings" if sec_filing_urls else "No SEC filing URLs found")
             return sec_filing_urls
 
@@ -75,26 +72,6 @@ class UtilityOrchestrator:
                         validated = self.validate_and_fix_sec_urls(sec_data, ticker, url_generator, url_validator)
                         if validated:
                             sec_urls[ticker] = validated
-        return sec_urls
-
-    def _extract_from_stock_analysis(
-        self,
-        existing_urls: dict[str, dict[str, str]],
-        url_generator: SECFilingURLGenerator,
-        url_validator: Any,
-    ) -> dict[str, dict[str, str]]:
-        """Extract SEC URLs from stock analysis result."""
-        sec_urls: dict[str, dict[str, str]] = {}
-        if hasattr(self.state, "stock_analysis_result") and self.state.stock_analysis_result:
-            stock_result = self.state.stock_analysis_result
-            if isinstance(stock_result, dict):
-                sec_data = stock_result.get("sec_filing_urls") or stock_result.get("sec_filings")
-                if sec_data and isinstance(sec_data, dict):
-                    for ticker, urls in sec_data.items():
-                        if ticker not in existing_urls:
-                            validated = self.validate_and_fix_sec_urls(urls, ticker, url_generator, url_validator)
-                            if validated:
-                                sec_urls[ticker] = validated
         return sec_urls
 
     def validate_and_fix_sec_urls(

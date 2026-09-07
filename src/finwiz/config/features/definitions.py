@@ -115,28 +115,12 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             fallback_strategy=FallbackStrategy.REDUCED_FUNCTIONALITY,
             description="Fundamental analysis stock screening",
         ),
-        "portfolio_rebalancing": FeatureFlagConfig(
-            name="portfolio_rebalancing",
-            enabled=get_env_bool("FF_PORTFOLIO_REBALANCING", True),
-            strategy=FeatureFlagStrategy.PERCENTAGE,
-            rollout_percentage=get_env_float("FF_PORTFOLIO_REBALANCING_ROLLOUT", 0.0),
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="Portfolio rebalancing with optimization algorithms",
-        ),
         "monitoring": FeatureFlagConfig(
             name="monitoring",
             enabled=get_env_bool("FF_MONITORING", True),
             strategy=FeatureFlagStrategy.BOOLEAN,
             fallback_strategy=FallbackStrategy.DISABLE,
             description="Performance monitoring and metrics collection",
-        ),
-        "investment_discovery": FeatureFlagConfig(
-            name="investment_discovery",
-            enabled=get_env_bool("FF_INVESTMENT_DISCOVERY", True),
-            strategy=FeatureFlagStrategy.PERCENTAGE,
-            rollout_percentage=get_env_float("FF_INVESTMENT_DISCOVERY_ROLLOUT", 100.0),
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="A+ grade investment discovery agents for proactive opportunity identification",
         ),
         "newcomer_discovery": FeatureFlagConfig(
             name="newcomer_discovery",
@@ -153,27 +137,6 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             description=(
                 "Portfolio-Aware Opportunity Cascade: rank discovery candidates by marginal fit to the current portfolio (factor x portfolio_fit) instead of signal-gated screening"
             ),
-        ),
-        "stock_analysis": FeatureFlagConfig(
-            name="stock_analysis",
-            enabled=get_env_bool("FF_STOCK_ANALYSIS", True),
-            strategy=FeatureFlagStrategy.BOOLEAN,
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="Stock market analysis crew for equity research and recommendations",
-        ),
-        "etf_analysis": FeatureFlagConfig(
-            name="etf_analysis",
-            enabled=get_env_bool("FF_ETF_ANALYSIS", True),
-            strategy=FeatureFlagStrategy.BOOLEAN,
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="ETF analysis crew for exchange-traded fund research and recommendations",
-        ),
-        "crypto_analysis": FeatureFlagConfig(
-            name="crypto_analysis",
-            enabled=get_env_bool("FF_CRYPTO_ANALYSIS", True),
-            strategy=FeatureFlagStrategy.BOOLEAN,
-            fallback_strategy=FallbackStrategy.DISABLE,
-            description="Cryptocurrency analysis crew for digital asset research and recommendations",
         ),
         "perplexity_research": FeatureFlagConfig(
             name="perplexity_research",

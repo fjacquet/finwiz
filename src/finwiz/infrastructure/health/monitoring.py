@@ -61,8 +61,10 @@ class IntegrationHealthChecker:
 
         self.logger = IntegrationLogger("finwiz.integration.health")
 
-        # Health check configuration
-        self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio", "report"]
+        # Health check configuration. "report" is absent because output/report/
+        # has no producer; the five below are checked against directories a run
+        # actually writes. See #187 for the reachability analysis behind this list.
+        self.crew_names = ["stock", "etf", "crypto", "discovery", "portfolio"]
         self.critical_directories = [
             self.output_dir,
             self.integration_dir,

@@ -24,7 +24,6 @@ orchestrators/
 │
 ├── # Portfolio orchestrators
 ├── portfolio_review_orchestrator.py     # run()
-├── portfolio_rebalancing.py             # run_rebalancing(), calculate_trades()
 ├── portfolio_holdings_processor.py      # PortfolioHoldingsProcessor
 │
 ├── # Helpers
@@ -65,7 +64,7 @@ orchestrators/
 │   └── registry_data_retrieval.py
 │
 ├── reporting/                           # Report assembly helpers
-│   ├── crew_html.py
+│   ├── enriched_html.py
 │   ├── data_loading.py
 │   └── enrichment.py
 │

@@ -26,20 +26,6 @@ class DataCache:
         self.integration_manager = integration_manager
         self.logger = logger
 
-    def get_stock_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """
-        Get stock crew data with freshness validation.
-
-        Args:
-            max_age_hours: Maximum acceptable age in hours
-
-        Returns:
-            Stock crew data dictionary, or None if unavailable
-
-        """
-        result: dict[str, Any] | None = self.integration_manager.get_crew_data_with_freshness_check("stock", max_age_hours, warn_on_stale=True)
-        return result
-
     def get_discovery_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """
         Get discovery crew data with freshness validation.
@@ -93,9 +79,9 @@ class DataCache:
                             },
                         )
                 else:
-                    self.logger.warning(f"No data available for {crew_name} crew")
+                    self.logger.warning(f"No data available for {crew_name} source")
 
-            self.logger.info(f"Consolidated data from {len(consolidated)} crews", extra={"crews": list(consolidated.keys())})
+            self.logger.info(f"Consolidated data from {len(consolidated)} sources", extra={"sources": list(consolidated.keys())})
 
             # Serialize datetime objects for CrewAI compatibility
             serialized_consolidated: dict[str, Any] = serialize_datetime_objects(consolidated)

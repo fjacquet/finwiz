@@ -49,29 +49,10 @@ class CrewDataAccessor:
 
         self.logger.info("CrewDataAccessor initialized with enhanced extractors")
 
-    def get_crew_data(self, crew_name: str, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """
-        Get crew data with freshness validation.
-
-        Args:
-            crew_name: Name of the crew (stock, etf, crypto, discovery)
-            max_age_hours: Maximum acceptable age in hours
-
-        Returns:
-            Crew data dictionary, or None if unavailable
-
-        """
-        result: dict[str, Any] | None = getattr(self.cache, f"get_{crew_name}_data")(max_age_hours)
-        return result
-
-    # Convenience methods for backward compatibility
-    def get_stock_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
-        """Get stock crew data with freshness validation."""
-        return self.get_crew_data("stock", max_age_hours)
-
     def get_discovery_data(self, max_age_hours: int = 24) -> dict[str, Any] | None:
         """Get discovery crew data with freshness validation."""
-        return self.get_crew_data("discovery", max_age_hours)
+        result: dict[str, Any] | None = self.cache.get_discovery_data(max_age_hours)
+        return result
 
     def get_consolidated_data(self, max_age_hours: int = 24) -> dict[str, Any]:
         """

@@ -21,29 +21,38 @@ FinWiz uses Jinja2 templates for generating professional HTML reports from Pytho
 
 ### Template Hierarchy
 
-The tree below was wrong on several points: most `crew_reports/` files are
-plain `.html`, not `.j2` (only `deep_analysis_report.html.j2` is a real
-Jinja2 template); there is no `stock_crew_report.html.j2` /
-`etf_crew_report.html.j2` / `crypto_crew_report.html.j2` / `final_report.html.j2`
-naming; and there is no `email/` or `static/` directory anywhere under
-`src/finwiz/templates/` — no CSS or JS files live there at all. The real
-tree (`find src/finwiz/templates -type f`):
+The tree below is `find src/finwiz/templates -type f`, verified against the
+working tree. Two earlier inaccuracies are worth knowing about, because older
+copies of this document are still in circulation: most files under
+`crew_reports/` were plain `.html`, never `.j2`, and there has never been an
+`email/` or `static/` directory here — no CSS or JS files live under
+`templates/` at all.
+
+`crew_reports/` held eight files until #187. Six of them — `stock_report.html`,
+`etf_report.html`, `crypto_report.html`, `discovery_report.html`,
+`rebalancing_report.html` and `final_report.html` — were rendered only by the
+crew subsystem, which had no caller, and were deleted with it. Two remain:
 
 ```
 src/finwiz/templates/
 ├── crew_reports/
-│   ├── base.html
-│   ├── crypto_report.html
-│   ├── deep_analysis_report.html.j2   # the one real Jinja2 template
-│   ├── discovery_report.html
-│   ├── etf_report.html
-│   ├── final_report.html
-│   ├── rebalancing_report.html
-│   └── stock_report.html
+│   ├── base.html                      # extended by deep_analysis_report.html.j2
+│   └── deep_analysis_report.html.j2   # the one real Jinja2 template, live
 ├── partials/
 │   └── _design_tokens.html
-└── (17 top-level .html files, e.g. portfolio_review.html, backtesting_results.html, ...)
+├── enriched_analysis_report.html      # live — the production report path
+└── (16 further top-level .html files)
 ```
+
+`deep_analysis_report.html.j2` is loaded by `DeepAnalysisReportGenerator`, and
+`enriched_analysis_report.html` backs `generate_enriched_html_reports`, the path
+that actually produces the reports a run writes to `output/`.
+
+Most of the 16 remaining top-level files have no reachable caller — they are
+reached only through a `JsonToHtmlConverter` chain whose entry point
+`auto_generate_html` has no callers, or by nothing at all. That predates #187
+and is tracked separately on issue #194; do not treat their presence here as
+evidence that they are live.
 
 ### Template Inheritance
 

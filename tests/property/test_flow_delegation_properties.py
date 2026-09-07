@@ -26,7 +26,6 @@ class TestFlowDelegationProperties:
         mocker.patch("finwiz.flows.orchestrator.CrewDataAccessor")
         mocker.patch("finwiz.flows.orchestrator.CoreAnalysisErrorHandler")
         mocker.patch("finwiz.flows.orchestrator.FlowStateManager")
-        mocker.patch("finwiz.flows.orchestrator.CrewFactory")
         mocker.patch("finwiz.flows.orchestrator.DataAvailabilityTracker")
         mocker.patch("finwiz.flows.orchestrator.get_resilience_config")
         mocker.patch("finwiz.flows.orchestrator.create_retry_decorator")
@@ -100,7 +99,6 @@ class TestFlowDelegationProperties:
                 ("check_stock", "discovery_orch", "check_stock"),
                 ("check_etf", "discovery_orch", "check_etf"),
                 ("check_investment_discovery", "discovery_orch", "check_investment_discovery"),
-                ("check_portfolio_rebalancing", "validation_orch", "check_portfolio_rebalancing"),
                 ("pre_validate_reporter_input", "validation_orch", "pre_validate_reporter_input"),
                 ("report", "reporting_orch", "report"),
             ]

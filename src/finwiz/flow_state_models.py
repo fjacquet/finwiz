@@ -129,23 +129,14 @@ class FinwizState(BaseModel):
     # Stock analysis status
     stock_analysis_success: bool = Field(default=False)
     stock_analysis_error: str | None = None
-    stock_analysis_disabled: bool = Field(default=False)
-    stock_analysis_fallback: bool = Field(default=False)
-    stock_analysis_result: dict[str, Any] | None = None
 
     # ETF analysis status
     etf_analysis_success: bool = Field(default=False)
     etf_analysis_error: str | None = None
-    etf_analysis_disabled: bool = Field(default=False)
-    etf_analysis_fallback: bool = Field(default=False)
-    etf_analysis_result: dict[str, Any] | None = None
 
     # Crypto analysis status
     crypto_analysis_success: bool = Field(default=False)
     crypto_analysis_error: str | None = None
-    crypto_analysis_disabled: bool = Field(default=False)
-    crypto_analysis_fallback: bool = Field(default=False)
-    crypto_analysis_result: dict[str, Any] | None = None
 
     # Data integration and validation
     data_availability_report: dict[str, Any] | None = None
@@ -160,14 +151,11 @@ class FinwizState(BaseModel):
     portfolio_review_error: str | None = None
     core_analysis_status: dict[str, Any] | None = None
 
-    # Portfolio rebalancing data
-    portfolio_rebalancing_available: bool = Field(default=False)
-    portfolio_rebalancing_result: dict[str, Any] | None = None
-    rebalancing_success: bool = Field(default=False)
-    rebalancing_results: dict[str, Any] | None = None
-    rebalancing_error: str | None = None
-    portfolio_rebalancing_error: str | None = None
-    portfolio_allocation_updates: dict[str, Any] | None = None
+    # Written by ValidationOrchestrator from the consolidated reporter input.
+    # A list, not a mapping: DataCache._generate_portfolio_allocation_updates
+    # returns list[dict[str, Any]]. The annotation said dict and Pydantic warned
+    # on every run that populated it.
+    portfolio_allocation_updates: list[dict[str, Any]] | None = None
 
     # Investment discovery data
     investment_discovery_available: bool = Field(default=False)
@@ -197,7 +185,6 @@ class FinwizState(BaseModel):
     report_generation_success: bool = Field(default=False)
     report_path: str | None = None
     report_generation_method: str | None = None
-    generated_html_reports: dict[str, Any] | None = None
 
     # Degraded functionality tracking
     stock_degraded_functionality: list[str] = Field(default_factory=list)
@@ -242,8 +229,6 @@ class FinwizState(BaseModel):
     data_availability_summary_formatted: str | None = None
 
     # Report aggregation fields
-    crew_export_paths: dict[str, list[str]] = Field(default_factory=dict)
-    crew_html_paths: dict[str, list[str]] = Field(default_factory=dict)
     consolidated_json_path: str | None = None
     final_report_path: str | None = None
     crew_execution_status: dict[str, str] = Field(default_factory=dict)

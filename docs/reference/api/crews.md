@@ -12,171 +12,19 @@ date: "2025-10-26"
 
 # Crews Reference
 
-Complete reference documentation for FinWiz's CrewAI crews, including configuration, inputs, outputs, and usage examples.
+Complete reference documentation for FinWiz's CrewAI crew(s), including configuration, inputs, outputs, and usage examples.
 
 ## Overview
 
-FinWiz uses CrewAI crews for autonomous financial analysis. Each crew specializes in analyzing specific asset classes or performing particular analysis tasks.
+FinWiz uses one CrewAI crew, `deep_analysis`, for qualitative financial
+analysis. Six other crews (`stock_crew`, `etf_crew`, `crypto_crew`,
+`investment_discovery_crew`, `portfolio_rebalancing_crew`, `report_crew`)
+were deleted on 2026-09-07 because nothing invoked them — see root
+`CLAUDE.md`'s "Crew Pattern" section. Everything below this point documented
+those six crews and has been removed; only the surviving crew is documented
+now.
 
 ## Available Crews
-
-### Stock Crew
-
-Comprehensive analysis of individual stocks using fundamental and technical analysis.
-
-**Location**: `src/finwiz/crews/stock_crew/stock_crew.py`
-
-**Purpose**: Analyze individual stocks for investment recommendations
-
-**Inputs**:
-
-```python
-{
-    "ticker": "AAPL"  # Required: Stock ticker symbol
-}
-```
-
-**Output Schema**: `EnrichedAnalysis` — the final task in the chain
-(`output_pydantic: EnrichedAnalysis`, `stock_crew/config/tasks.yaml:359`).
-`TenKInsight` is not a task output anywhere in this crew; the earlier tasks
-in the chain emit `SecAnalysisInsights`, `FundamentalContextInsights`,
-`TechnicalStrategyInsights`, `ContextualRiskInsights`, and
-`InvestmentSynthesis`.
-
-**Example Usage**:
-
-```python
-from finwiz.crews.stock_crew.stock_crew import StockCrew
-
-crew = StockCrew()
-result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
-
-print(f"Recommendation: {result.recommendation}")
-print(f"Grade: {result.grade}")
-```
-
-**Agents** (6, not 4 — `stock_crew/config/agents.yaml`):
-
-- **sec_analyst**
-- **fundamental_analyst**
-- **technical_analyst**
-- **risk_analyst**
-- **investment_strategist**
-- **investment_reporter**
-
-**Tools Used**:
-
-- `YahooFinanceTickerInfoTool`
-- `EnhancedSECAnalysisTool`
-- `QuantitativeAnalysisTool`
-- `StandardizedSentimentAnalysisTool`
-- `TickerExistenceValidationTool`
-
-### ETF Crew
-
-Specialized analysis of Exchange-Traded Funds (ETFs) including expense ratios, holdings, and tracking performance.
-
-**Location**: `src/finwiz/crews/etf_crew/etf_crew.py`
-
-**Purpose**: Analyze ETFs for investment suitability
-
-**Inputs**:
-
-```python
-{
-    "ticker": "SPY"  # Required: ETF ticker symbol
-}
-```
-
-**Output Schema**: `ETFCrewExport` — the final task
-(`output_pydantic: ETFCrewExport`, `etf_crew/config/tasks.yaml:343`).
-`ETFFactsheet` is not a task output anywhere in this crew.
-
-**Example Usage**:
-
-```python
-from finwiz.crews.etf_crew.etf_crew import EtfCrew
-
-crew = EtfCrew()
-result = crew.crew().kickoff(inputs={"ticker": "SPY"})
-
-print(f"Expense Ratio: {result.expense_ratio}")
-print(f"Tracking Error: {result.tracking_error}")
-```
-
-**Agents** (3, not 4 — `etf_crew/config/agents.yaml`; there is no cost or
-performance analyst):
-
-- **market_etf_analyst**
-- **risk_assessor**
-- **investment_reporter**
-
-**Tools Used**:
-
-- `YahooFinanceTickerInfoTool`
-- `EnhancedETFAnalysisTool`
-- `QuantitativeAnalysisTool`
-- `TickerExistenceValidationTool`
-
-### Crypto Crew
-
-Analysis of cryptocurrencies including market dynamics, technology assessment, and regulatory considerations.
-
-**Location**: `src/finwiz/crews/crypto_crew/crypto_crew.py`
-
-**Purpose**: Analyze cryptocurrencies for investment potential
-
-**Inputs**:
-
-```python
-{
-    "ticker": "BTC"  # Required: Crypto ticker symbol
-}
-```
-
-**Output Schema**: `CryptoCrewExport` — the final task
-(`output_pydantic: CryptoCrewExport`, `crypto_crew/config/tasks.yaml:367`).
-`CryptoThesis` is not a task output anywhere in this crew.
-
-**Example Usage**:
-
-```python
-from finwiz.crews.crypto_crew.crypto_crew import CryptoCrew
-
-crew = CryptoCrew()
-result = crew.crew().kickoff(inputs={"ticker": "BTC"})
-
-print(f"Market Cap: {result.market_cap}")
-print(f"Technology Score: {result.technology_score}")
-```
-
-**Agents** (6, not 4 — `crypto_crew/config/agents.yaml`; there is no
-dedicated regulatory analyst):
-
-- **market_analyst**
-- **technical_analyst**
-- **risk_assessor**
-- **investment_strategist**
-- **research_director**
-- **investment_reporter**
-
-**Tools Used**: `CoinMarketCapTool` does not exist anywhere in the codebase.
-The real tool set (`get_crypto_research_tools()` in
-`src/finwiz/tools/finance_tools.py`):
-
-- `YahooFinanceHistoryTool`
-- `YahooFinanceNewsTool`
-- `YahooFinanceTickerInfoTool`
-- `KrakenTickerInfoTool`
-- `TickerExistenceValidationTool`
-- `EnhancedCryptoAnalysisTool`
-- `DeFiMetricsTool`
-- `RegulatoryComplianceTool`
-- `StandardizedRiskScoringTool`
-- `StandardizedSentimentAnalysisTool`
-- `AlphaVantageNewsSentimentTool`
-- `ChartImgTool`
-- `TwelveDataIndicatorTool` (optional, initialized only if configured)
 
 ### Deep Analysis Crew
 
@@ -195,28 +43,31 @@ Unified crew for comprehensive analysis of any asset class with detailed grading
 }
 ```
 
-**Output Schema**: `DeepAnalysisResult`
-
-**Example Usage**:
+**Example Usage** (verified: the import succeeds and the instance exposes
+both `.kickoff()` and `.crew()`, matching the crew's own docstring):
 
 ```python
 from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
 crew = DeepAnalysisCrew()
-result = crew.crew().kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
-
-print(f"Grade: {result.grade}")
-print(f"Composite Score: {result.composite_score}")
+result = crew.kickoff(inputs={"ticker": "AAPL", "asset_class": "stock"})
 ```
 
-**Agents** (1, not 3 — `deep_analysis/config/agents.yaml`):
+In production this crew is never called directly this way — it runs through
+`analysis/stages/qualify.py`, wrapped by
+`infrastructure/resilience/crew_execution.py`'s `execute_crew_with_timeout()`
+for timeout handling, retries, and cost tracking. Its qualitative output is
+combined with Python-computed quantitative scoring in
+`synthesize_enriched_analysis()` (see root `CLAUDE.md`'s Execution Flow
+diagram, Phase 3).
+
+**Agents** (1 — `deep_analysis/config/agents.yaml`):
 
 - **asset_analyst**: Qualitative-only agent ("Financial Analyst (Qualitative)").
-  A second `investment_reporter` agent was deliberately removed — Python's
-  `synthesize_enriched_analysis()` now handles consolidation for $0, which
-  is why there's no separate reporter or grading agent here. Quantitative
-  scoring and grading happen in Python (`DeepAnalysisScorer`), not in this
-  crew.
+  There is no separate reporter or grading agent — Python's
+  `synthesize_enriched_analysis()` handles consolidation for $0.
+  Quantitative scoring and grading happen in Python (`DeepAnalysisScorer`),
+  not in this crew.
 
 **Dynamic Tool Routing**:
 
@@ -224,81 +75,28 @@ print(f"Composite Score: {result.composite_score}")
 - **ETF**: Fund analysis, expense evaluation
 - **Crypto**: Blockchain analysis, market metrics
 
-### Report Crew
-
-Consolidates analysis results from multiple crews into comprehensive reports.
-
-**Location**: `src/finwiz/crews/report_crew/report_crew.py`
-
-**Purpose**: Generate consolidated investment reports
-
-**Inputs**:
-
-```python
-{
-    "analysis_results": [...],  # Results from other crews
-    "report_type": "portfolio",  # Type of report to generate
-}
-```
-
-**Output Schema**: No single `ConsolidatedReport` class exists (`grep -rn
-'class ConsolidatedReport' src/` finds only the unrelated
-`ConsolidatedReportExport` in `crew_exports.py`). The report crew's tasks
-each output their own schema:
-
-- `ReporterInput` (`report_crew/config/tasks.yaml:205`)
-- `PortfolioConfiguration` (`:288`)
-- `RiskAssessmentStandardized` (`:383`)
-
-**Example Usage**:
-
-```python
-from finwiz.crews.report_crew.report_crew import ReportCrew
-
-crew = ReportCrew()
-result = crew.crew().kickoff(inputs={"analysis_results": analysis_data, "report_type": "portfolio"})
-```
-
-**Agents** (4, not 2 — `report_crew/config/agents.yaml`):
-
-- **financial_integration_analyst**: Integrates Stock/ETF/Crypto analyses into a unified narrative
-- **portfolio_allocator**: Proposes optimal cross-asset portfolio allocations
-- **risk_manager**: Identifies and mitigates portfolio and market risks
-- **investment_reporter**: `@final_reporter`, formats the consolidated HTML report
-
-**Tools Used**: Only `investment_reporter` has `tools=[]`. The other three
-agents are all constructed with `tools=self.tools`, which
-`ReportCrew._get_tools()` populates with `DirectoryReadTool` instances for
-every `output/` subdirectory (stock, etf, crypto, portfolio, discovery,
-deep_analysis, report) plus `docs/schemas` and `docs/schemas/examples`, and
-five `FileReadTool` instances for specific schema/example JSON files.
-
 ## Crew Configuration
 
 ### Agent Configuration
 
-All crews use YAML configuration files for agents:
+Agents are configured in YAML (`deep_analysis/config/agents.yaml`):
 
 ```yaml
-# config/agents.yaml
-stock_analyst:
-  role: "Senior Stock Analyst"
-  goal: "Analyze stock fundamentals and provide investment recommendations"
-  backstory: "Expert financial analyst with deep knowledge of equity markets"
+asset_analyst:
+  role: Financial Analyst (Qualitative)
+  goal: Provide qualitative insights in French for {ticker}. Output JSON only.
+  backstory: Expert financier qualitative.
 ```
 
 ### Task Configuration
 
-Tasks are defined in YAML configuration:
+Tasks are defined in YAML configuration (`deep_analysis/config/tasks.yaml`):
 
 ```yaml
-# config/tasks.yaml
-stock_analysis_task:
-  description: "Analyze stock with quantitative metrics and risk assessment"
-  expected_output: "Structured analysis with risk assessment and technical indicators"
-  output_pydantic: "TenKInsight"
-  output_json: true
-  agent: stock_analyst
+deep_qualitative_analysis_task:
+  description: >
+    Qualitative analysis for {ticker} ({asset_class}). ...
+  agent: asset_analyst
   async_execution: true
 ```
 

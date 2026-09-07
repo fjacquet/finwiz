@@ -124,10 +124,8 @@ class TestCheckCoreAnalysisAvailability:
                 "crypto_available": False,
                 "available_crews": ["stock"],
                 "failed_crews": [],
-                "disabled_crews": [],
                 "total_available": 1,
                 "total_failed": 0,
-                "total_disabled": 0,
             },
         )
 
@@ -150,10 +148,8 @@ class TestCheckCoreAnalysisAvailability:
                 "crypto_available": False,
                 "available_crews": [],
                 "failed_crews": ["stock", "etf", "crypto"],
-                "disabled_crews": [],
                 "total_available": 0,
                 "total_failed": 3,
-                "total_disabled": 0,
             },
         )
 
@@ -167,37 +163,6 @@ class TestCheckCoreAnalysisAvailability:
         assert "crypto_available" in result
         assert "available_crews" in result
         assert "failed_crews" in result
-
-
-class TestExtractMarketConditions:
-    """Tests for extract_market_conditions method."""
-
-    def test_should_delegate_to_utility_function(self, mocker):
-        """Test that method delegates to utility function."""
-        mock_extract = mocker.patch(
-            "finwiz.flow_state.extract_market_conditions",
-            return_value={"stock_market_sentiment": "bullish"},
-        )
-
-        manager = FlowStateManager()
-        state = FinwizState()
-        result = manager.extract_market_conditions(state)
-
-        mock_extract.assert_called_once_with(state)
-        assert "stock_market_sentiment" in result
-
-    def test_should_return_empty_dict_when_no_results(self, mocker):
-        """Test empty conditions when no analysis results."""
-        mock_extract = mocker.patch(
-            "finwiz.flow_state.extract_market_conditions",
-            return_value={},
-        )
-
-        manager = FlowStateManager()
-        state = FinwizState()
-        result = manager.extract_market_conditions(state)
-
-        assert result == {}
 
 
 class TestExtractMarketContextFromCoreAnalysis:

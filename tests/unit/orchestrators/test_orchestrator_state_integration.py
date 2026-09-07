@@ -141,7 +141,6 @@ class TestOrchestratorStateIntegration:
 
         orch = DeepAnalysisOrchestrator(
             state,
-            crew_factory=mocker.Mock(),
             integration_manager=mocker.Mock(),
             error_handler=mocker.Mock(),
         )
@@ -175,7 +174,6 @@ class TestOrchestratorStateIntegration:
         """
         orch = DeepAnalysisOrchestrator(
             state,
-            crew_factory=mocker.Mock(),
             integration_manager=mocker.Mock(),
             error_handler=mocker.Mock(),
         )

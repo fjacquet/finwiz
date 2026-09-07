@@ -7,7 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.15.0] - 2026-09-07
+
+### Removed
+
+- **The uncalled crew subsystem is gone — 23,500 lines.** Six of the seven crews
+  had no caller, and neither did the factory that built them, the modules that
+  would have consolidated their output, nor the generators that would have
+  rendered it. This was not a mistake at the time: discovery moved from AI crews
+  to Python scoring, correctly, and nothing was deleted afterwards. The cost was
+  that a reader could not tell which parts of the codebase run. `stock_crew` had
+  rotted until it could no longer be instantiated at all — `agents.yaml`,
+  `tasks.yaml` and the `@agent` methods had diverged into a `KeyError` — and
+  nothing anywhere reported it, because nothing called it.
+
+  Removed: the `stock_crew`, `etf_crew`, `crypto_crew`, `investment_discovery_crew`,
+  `portfolio_rebalancing_crew` and `report_crew` packages; `crew_factory.py`;
+  `reporting/consolidator.py`, `export_loaders.py`, `html_collector.py` and
+  `final_report_generator.py`; the five per-crew report generators and the
+  `CREW_GENERATORS` registry; six `crew_reports/` Jinja templates and the three
+  separate loaders that reached them; the per-crew export schemas; fifteen
+  `FinwizState` fields with no writer; five feature flags; the crew-data query
+  paths that returned zero; and the tool and orchestrator closure those
+  deletions orphaned, including `PortfolioRebalancingOrchestrator`, which was
+  never wired into `FinwizFlow` even before this change.
+
+  Kept: `deep_analysis`, the one crew that runs; `DeepAnalysisCrewExport`; the
+  CrewAI **Flow** framework, which is the phase state machine and is
+  load-bearing; and the tool abstraction.
+
+  Verified by a live 3-holding run, not by the test suite — the suite passed
+  with this subsystem entirely dead and would have passed with it half-deleted.
+  The run returns `VERDICT: PASS` with all eight gate checks green, and its
+  `run_summary.json` matches the pre-deletion baseline field for field:
+  `checks`, `coverage`, `fact_pack`, `phases`, `valuation` and `verdict` all
+  identical. Only `cost` moved, by two tenths of a cent across the same three
+  LLM calls.
+
 ### Fixed
+
+- **Crew-data aggregation was deleted mid-refactor and is restored.** One step of
+  the removal deleted `consolidate_crew_ticker_files()` and narrowed the
+  consolidated-data source list, on the premise that those queries searched for
+  producers that no longer existed. The producer exists: deep analysis writes
+  `output/{asset_class}/{ticker}_enriched.json` on every run. Without the
+  aggregator, `core_analysis_summary` was permanently empty and per-asset
+  availability was judged from whichever file in the directory happened to be
+  newest — a discovery dump, in practice. Caught by review before release.
+- **`portfolio_allocation_updates` is typed as the list it has always been**,
+  ending a Pydantic serializer warning on every run that populated it.
 
 - **The report's fact-pack block no longer disappears as it ages.** A holding's
   cached analysis stores the freshness it had when written; `FactPack`

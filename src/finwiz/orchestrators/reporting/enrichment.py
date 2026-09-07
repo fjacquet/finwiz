@@ -190,7 +190,7 @@ class ReportEnrichmentMixin:
         """Yield ``(asset_class, json_file_path)`` for the current run's enriched files.
 
         Single source of truth for *locating* per-holding enriched JSON, shared by
-        :meth:`_iter_enriched_records` and by ``CrewHtmlMixin.generate_enriched_html_reports``
+        :meth:`_iter_enriched_records` and by ``EnrichedHtmlMixin.generate_enriched_html_reports``
         so the directory list cannot drift between them.
 
         ``DeepAnalysisOrchestrator._store_enriched_analysis`` writes the canonical

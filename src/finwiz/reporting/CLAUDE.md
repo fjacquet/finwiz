@@ -6,19 +6,12 @@ HTML report generation using Python/Jinja2 templates. All rendering is 100% Pyth
 
 ```
 reporting/
-├── __init__.py                          # CREW_GENERATORS registry, get_generator_for_crew()
-├── base_report_generator.py             # BaseReportGenerator (abstract base, 14 methods)
+├── __init__.py                          # Package exports
+├── base_report_generator.py             # create_report_jinja_env() — shared Jinja2 env factory
 ├── python_report_generator.py           # PythonReportGenerator, generate_python_report()
 │
-├── # Per-crew generators
-├── stock_report_generator.py            # StockReportGenerator
-├── etf_report_generator.py              # ETFReportGenerator
-├── crypto_report_generator.py           # CryptoReportGenerator
-├── discovery_report_generator.py        # DiscoveryReportGenerator
-├── rebalancing_report_generator.py      # RebalancingReportGenerator
 ├── deep_analysis_report_generator.py    # DeepAnalysisReportGenerator
-├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator
-├── final_report_generator.py            # FinalReportGenerator
+├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator — live per-holding HTML producer
 ├── individual_report_generator.py       # generate_individual_report_html()
 │
 ├── # HTML infrastructure
@@ -33,49 +26,55 @@ reporting/
 │   ├── macro.py
 │   ├── portfolio_summary.py
 │   └── sentiment.py
-├── consolidator.py                      # ReportConsolidator
-├── html_collector.py                    # collect_html_report_paths()
 ├── html_auto_generator.py               # auto_generate_html()
-├── export_loaders.py                    # load_exports(), load_deep_analysis_exports()
-├── css_styles.py                        # get_report_css() — reads assets/report_styles.css
-│
-├── assets/                              # Static CSS/JS files; one file per loader function,
-│                                        # named after the function (report_styles.css is the
-│                                        # top-level report stylesheet exception)
-│
-├── css/                                 # Modular CSS loaders (read from assets/)
-│   ├── css_styles.py                    # get_rebalancing_css() — concatenates the loaders below
-│   ├── css_elements.py                  # get_base_styles(), get_table_styles(), ...
-│   └── css_layouts.py                   # get_responsive_styles(), ...
-│
-├── js/                                  # JavaScript loaders (read from assets/)
-│   └── javascript_code.py              # get_rebalancing_javascript()
-│
-└── rebalancing/                         # Rebalancing report builders
-    ├── rebalancing_html_builders.py     # RebalancingHTMLBuilder
-    ├── template_builders.py             # TemplateBuilder
-    └── template_renderers.py            # TemplateRenderer
+└── css_styles.py                        # get_report_css() — reads assets/report_styles.css
 ```
+
+`assets/` holds one static file: `report_styles.css`, read by `css_styles.py`'s
+`get_report_css()` — the live stylesheet for `python_report_generator.py` and
+`sections/posture_page.py`. The `css/` and `js/` subdirectories (modular
+rebalancing-report CSS/JS loaders — `css/css_styles.py`'s `get_rebalancing_css()`,
+`css/css_elements.py`, `css/css_layouts.py`, `js/javascript_code.py`) and the ten
+`css_*.css` + one `rebalancing_javascript.js` files they read from `assets/` were
+deleted: their only consumer, `reporting/rebalancing/template_builders.py`, was
+deleted along with the rest of the `rebalancing/` subdirectory below.
+
+The `rebalancing/` subdirectory (`rebalancing_html_builders.py`, `template_builders.py`,
+`template_renderers.py`) was deleted along with `orchestrators/portfolio_rebalancing.py`
+and `tools/rebalancing_report_generator.py` — its only consumers — once the two crews
+that used those tools (`investment_discovery_crew`, `portfolio_rebalancing_crew`) were
+removed.
+
+The five per-crew report generators (`stock_report_generator.py`,
+`etf_report_generator.py`, `crypto_report_generator.py`,
+`discovery_report_generator.py`, `rebalancing_report_generator.py`) and the
+`CREW_GENERATORS` registry / `get_generator_for_crew()` were deleted: they
+were reachable only from `generate_all_crew_html_reports`, which a live run
+never called (`crew_export_paths` was always empty — nothing populated it
+after the crew subsystem was removed, see #187). The live per-holding HTML
+path is `enriched_analysis_report_generator.py` via
+`ReportingOrchestrator.generate_enriched_html_reports()`.
+
+`BaseReportGenerator`, the abstract base those five generators subclassed, was
+itself deleted from `base_report_generator.py` once its last subclass was
+gone — `create_report_jinja_env()` in the same file is unrelated and stays live.
 
 ## Entry Points
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `__init__.py` | `CREW_GENERATORS` | Registry mapping crew names → generators |
-| `__init__.py` | `get_generator_for_crew()` | Get generator by crew name |
-| `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
 | `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
-| `consolidator.py` | `ReportConsolidator` | Consolidate multiple reports |
+| `enriched_analysis_report_generator.py` | `EnrichedAnalysisReportGenerator` | Live per-holding HTML generator |
 | `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
 
 ## Usage
 
 ```python
-from finwiz.reporting import get_generator_for_crew
+from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
 
-generator = get_generator_for_crew("stock_crew")
-html = generator.generate_report(data={...}, output_path="output/stock/AAPL_report.html")
+generator = EnrichedAnalysisReportGenerator()
+generator.generate_and_save_report(data={...}, output_path="output/stock/AAPL_enriched.html")
 ```
 
 ## Related Modules

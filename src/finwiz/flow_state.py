@@ -16,7 +16,6 @@ from .flow_state_models import DeepAnalysisResult, FinwizState
 # Import utility functions from dedicated module
 from .flow_state_utils import (
     check_core_analysis_availability,
-    extract_market_conditions,
     extract_market_context_from_core_analysis,
     get_degraded_functionality_summary,
     prepare_core_analysis_summary,
@@ -72,13 +71,6 @@ class FlowStateManager:
         Delegates to flow_state_utils.check_core_analysis_availability().
         """
         return check_core_analysis_availability(state, self.logger)
-
-    def extract_market_conditions(self, state: FinwizState) -> dict[str, Any]:
-        """Extract market conditions from core analysis results.
-
-        Delegates to flow_state_utils.extract_market_conditions().
-        """
-        return extract_market_conditions(state)
 
     def extract_market_context_from_core_analysis(self, core_analysis_data: dict[str, Any]) -> dict[str, Any]:
         """Extract market context information from core analysis results.

@@ -128,21 +128,3 @@ class TestUtilityOrchestrator:
 
         # Assert - should return empty dict on exception
         assert urls == {}
-
-    def test_extract_sec_filing_urls_from_stock_analysis(self, orchestrator, state):
-        """Test SEC URL extraction from stock analysis result."""
-        # Arrange
-        state.stock_analysis_result = {
-            "sec_filing_urls": {
-                "MSFT": {
-                    "10-K": "https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0000789019&type=10-K",
-                },
-            },
-        }
-
-        # Act
-        urls = orchestrator.extract_sec_filing_urls(crew_output=None)
-
-        # Assert
-        assert "MSFT" in urls
-        assert "10-K" in urls["MSFT"]

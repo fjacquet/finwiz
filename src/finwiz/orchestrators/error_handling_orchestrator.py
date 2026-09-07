@@ -22,7 +22,7 @@ class ErrorHandlingOrchestrator:
 
         Args:
             state: FinwizState instance for tracking errors
-            **dependencies: Additional dependencies (crew_factory, integration_manager, etc.)
+            **dependencies: Additional dependencies (integration_manager, etc.)
 
         """
         self.state = state

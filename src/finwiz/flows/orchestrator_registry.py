@@ -27,7 +27,7 @@ ORCHESTRATOR_REGISTRY: dict[str, OrchestratorConfig] = {
     "error_handler": OrchestratorConfig(
         module="finwiz.orchestrators.error_handling_orchestrator",
         class_name="ErrorHandlingOrchestrator",
-        deps_keys=("crew_factory", "integration_manager", "error_handler"),
+        deps_keys=("integration_manager", "error_handler"),
     ),
     "progress": OrchestratorConfig(
         module="finwiz.orchestrators.progress_tracking_orchestrator",
@@ -42,12 +42,12 @@ ORCHESTRATOR_REGISTRY: dict[str, OrchestratorConfig] = {
     "deep_analysis": OrchestratorConfig(
         module="finwiz.orchestrators.deep_analysis_orchestrator",
         class_name="DeepAnalysisOrchestrator",
-        deps_keys=("crew_factory", "integration_manager", "error_handler", "batch_prefetch_config"),
+        deps_keys=("integration_manager", "error_handler", "batch_prefetch_config"),
     ),
     "alternatives": OrchestratorConfig(
         module="finwiz.orchestrators.alternatives_matching_orchestrator",
         class_name="AlternativesMatchingOrchestrator",
-        deps_keys=("crew_factory", "integration_manager", "error_handler"),
+        deps_keys=("integration_manager", "error_handler"),
     ),
     "discovery": OrchestratorConfig(
         module="finwiz.orchestrators.discovery_orchestrator",

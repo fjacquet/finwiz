@@ -16,7 +16,6 @@ from .flow_state_analysis import prepare_core_analysis_summary
 
 __all__ = [
     "check_core_analysis_availability",
-    "extract_market_conditions",
     "extract_market_context_from_core_analysis",
     "get_degraded_functionality_summary",
     "prepare_core_analysis_summary",
@@ -48,9 +47,9 @@ def check_core_analysis_availability(
 
     except Exception as e:
         logger.warning(f"Failed to check actual data availability, falling back to state flags: {e}")
-        stock_available = state.stock_analysis_success or (state.stock_analysis_fallback and state.stock_analysis_result is not None)
-        etf_available = state.etf_analysis_success or (state.etf_analysis_fallback and state.etf_analysis_result is not None)
-        crypto_available = state.crypto_analysis_success or (state.crypto_analysis_fallback and state.crypto_analysis_result is not None)
+        stock_available = state.stock_analysis_success
+        etf_available = state.etf_analysis_success
+        crypto_available = state.crypto_analysis_success
 
     available_crews = []
     if stock_available:
@@ -68,14 +67,6 @@ def check_core_analysis_availability(
     if state.crypto_analysis_error:
         failed_crews.append("crypto")
 
-    disabled_crews = []
-    if state.stock_analysis_disabled:
-        disabled_crews.append("stock")
-    if state.etf_analysis_disabled:
-        disabled_crews.append("etf")
-    if state.crypto_analysis_disabled:
-        disabled_crews.append("crypto")
-
     return {
         "any_available": len(available_crews) > 0,
         "stock_available": stock_available,
@@ -83,25 +74,9 @@ def check_core_analysis_availability(
         "crypto_available": crypto_available,
         "available_crews": available_crews,
         "failed_crews": failed_crews,
-        "disabled_crews": disabled_crews,
         "total_available": len(available_crews),
         "total_failed": len(failed_crews),
-        "total_disabled": len(disabled_crews),
     }
-
-
-def extract_market_conditions(state: "FinwizState") -> dict[str, Any]:
-    """Extract market conditions from core analysis results."""
-    conditions: dict[str, Any] = {}
-
-    if state.stock_analysis_result:
-        conditions["stock_market_sentiment"] = "Available from stock analysis"
-    if state.etf_analysis_result:
-        conditions["sector_trends"] = "Available from ETF analysis"
-    if state.crypto_analysis_result:
-        conditions["crypto_market_dynamics"] = "Available from crypto analysis"
-
-    return conditions
 
 
 def extract_market_context_from_core_analysis(

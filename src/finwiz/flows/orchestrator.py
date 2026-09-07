@@ -15,7 +15,6 @@ from crewai.flow import Flow, and_, listen, start
 
 from finwiz.config.batch_prefetch_config import get_batch_prefetch_config
 from finwiz.config.resilience_config import get_resilience_config
-from finwiz.crew_factory import CrewFactory
 from finwiz.flow_state import FinwizState, FlowStateManager
 from finwiz.flows.orchestrator_registry import create_orchestrator
 from finwiz.infrastructure.monitoring.litellm_callback import enable_token_monitoring
@@ -34,7 +33,6 @@ logger = get_logger(__name__)
 class OrchestratorDependencies:
     """Shared dependencies for all orchestrators."""
 
-    crew_factory: CrewFactory
     integration_manager: CrewDataIntegrationManager
     error_handler: CoreAnalysisErrorHandler
     state_manager: FlowStateManager
@@ -103,10 +101,6 @@ class FinwizFlow(Flow[FinwizState]):
         state_manager = FlowStateManager()
         logger.info("Flow state manager initialized")
 
-        # Initialize crew factory
-        crew_factory = CrewFactory(integration_manager, error_handler)
-        logger.info("Crew factory initialized")
-
         # Initialize data availability tracker
         availability_tracker = DataAvailabilityTracker(
             stale_threshold_hours=168.0,  # 7 days
@@ -127,7 +121,6 @@ class FinwizFlow(Flow[FinwizState]):
         logger.info("Batch prefetch configuration loaded and validated")
 
         return OrchestratorDependencies(
-            crew_factory=crew_factory,
             integration_manager=integration_manager,
             error_handler=error_handler,
             state_manager=state_manager,
@@ -382,11 +375,6 @@ class FinwizFlow(Flow[FinwizState]):
         return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 
     @listen("match_alternatives_after_discovery")
-    def check_portfolio_rebalancing(self) -> dict[str, Any]:
-        """Run portfolio rebalancing analysis."""
-        return self.validation_orch.check_portfolio_rebalancing()
-
-    @listen("check_portfolio_rebalancing")
     def pre_validate_reporter_input(self) -> dict[str, Any]:
         """Pre-validate reporter input data."""
         return self.validation_orch.pre_validate_reporter_input()

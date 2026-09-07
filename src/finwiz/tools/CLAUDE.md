@@ -25,10 +25,8 @@ tools/
 ├── quantitative_performance_analyzer.py    # perform_performance_analysis()
 ├── quantitative_technical_analyzer.py      # perform_technical_analysis()
 ├── backtesting_tool.py              # BacktestingResult/MarketRegime models
-├── portfolio_analysis_tool.py       # PortfolioAnalysisTool
 ├── portfolio_price_service.py       # Price lookups, PriceServiceError hierarchy
 ├── portfolio_cache_service.py       # PortfolioCacheService
-├── portfolio_rebalancing_tool.py    # PortfolioRebalancingTool
 ├── standardized_sentiment_tool.py   # StandardizedSentimentAnalysisTool
 ├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 │
@@ -43,19 +41,24 @@ tools/
 ├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
 ├── # Rebalancing report subsystem
-├── rebalancing_calculations.py      # RebalancingCalculations
-├── rebalancing_formatters.py        # RebalancingFormatters
-├── rebalancing_report_generator.py  # RebalancingReportGenerator(HTMLReportGenerator)
-├── rebalancing_sections.py          # RebalancingSections
-├── rebalancing_templates.py         # RebalancingTemplates
+├── rebalancing_calculations.py      # RebalancingCalculations (pre-existing dead code, issue #194 — not this closure)
 │
-├── # Scenario report subsystem
-├── scenario_comparison_report_generator.py # ScenarioComparisonReportGenerator
+├── # Scenario report subsystem — pre-existing dead code, issue #194, not this closure.
+├── #   Verified via git grep at merge-base 171b8145: none of the three was ever
+├── #   imported by any crew, directly or via the CREW_GENERATORS registry — only
+├── #   by their own test and by each other's docstrings. Only its own test
+├── #   (tests/unit/tools/test_scenario_comparison_report_generator.py) keeps this
+├── #   trio's imports alive.
+├── scenario_comparison_report_generator.py # ScenarioComparisonReportGenerator(HTMLReportGenerator)
 ├── scenario_report_renderer.py      # render_scenario_report_template()
 ├── scenario_report_sections.py      # create_summary_sections()/create_comparison_tables()
 │
 ├── # Reporting infrastructure
 ├── html_report_generator.py         # HTMLReportGenerator base class
+├── #   Coupled to the scenario trio above: scenario_comparison_report_generator.py
+├── #   is its only remaining consumer now that orchestrators/portfolio_rebalancing.py
+├── #   and rebalancing_report_generator.py are gone. When #194 clears the scenario
+├── #   trio, delete HTMLReportGenerator in the same pass — it becomes a true orphan then.
 ├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
 ├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # RobustToolWrapper / make_tools_robust()
@@ -76,12 +79,17 @@ tools/
 ├── etf/                             # ETF data fetchers/analyzers
 │   ├── etf_analyzers.py             # ETFAnalyzer
 │   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
-├── rebalancing/                     # Re-export shim for finwiz.reporting.rebalancing
-│   └── __init__.py                  # TemplateBuilder / TemplateRenderer
 └── reporting/                       # Report formatters
     ├── report_formatters.py         # HTMLReportFormatter
     └── report_sections.py           # ReportSectionBuilder
 ```
+
+The `tools/rebalancing/` re-export shim (`__init__.py`, re-exporting
+`TemplateBuilder`/`TemplateRenderer`) was deleted. It had zero consumers even
+at merge-base `171b8145`, so it was originally left in place for issue #194 —
+but this branch deleted its targets from `finwiz.reporting.rebalancing`,
+which left it import-broken (not just unused) with no path forward except
+deletion, so it was deleted here rather than left broken for #194 to find.
 
 ## Entry Points
 

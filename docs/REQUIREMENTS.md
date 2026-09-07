@@ -7,7 +7,9 @@ This document provides a unified and consistent set of requirements for the FinW
 This specification resolves these conflicts by adopting a single, robust architecture:
 
 1. **A Unified `DeepAnalysisCrew`**: A new, single crew is established for the in-depth analysis of individual portfolio holdings (stocks, ETFs, or crypto). This replaces the problematic use of "discovery" crews for single-ticker analysis, which was identified as a root cause of system hangs and instability.
-2. **A Corrected Business Logic Flow**: The main execution flow is re-sequenced to follow a logical business process: **Portfolio Analysis → Deep Analysis → Discovery → Rebalancing → Reporting**. This ensures that analysis of existing assets happens *before* discovering new ones.
+2. **A Corrected Business Logic Flow**: The main execution flow is re-sequenced to follow a logical business process: **Data Validation → Portfolio Review → Deep Analysis → Discovery → Alternative Matching → Reporting**. This ensures that analysis of existing assets happens *before* discovering new ones.
+
+   > Historical note: earlier revisions of this document listed a **Rebalancing** stage between Discovery and Reporting. No such stage was ever wired into `FinwizFlow` — `PortfolioRebalancingOrchestrator` existed but no flow method ever called it. The orchestrator and its tooling were deleted in #187; the stage is removed here because it was never accurate, not because the deletion removed it.
 
 All requirements from previous documents have been migrated and adapted to align with this clear architectural vision, creating a single source of truth for development.
 
@@ -49,8 +51,7 @@ The main execution flow shall be re-architected to follow the logical business s
     2. **Phase 2: Deep Analysis & Update**: `analyze_and_update_portfolio` (Grade holdings, find needs)
     3. **Phase 3: Portfolio Analysis**: `check_portfolio` (Analyze what you own)
     4. **Phase 4: Discovery**: `check_stock`, `check_etf`, `check_crypto` -> `check_investment_discovery` (Find A+ solutions)
-    5. **Phase 5: Rebalancing**: `check_portfolio_rebalancing` (Optimize allocations)
-    6. **Phase 6: Reporting**: `report` (Present final recommendations)
+    5. **Phase 5: Reporting**: `report` (Present final recommendations)
 - **3.2.2. Atomic Portfolio Update:** `analyze_and_update_portfolio()`
   performs deep analysis and updates the portfolio review, but it does
   **not** match underperforming holdings with alternatives — alternative
@@ -58,7 +59,7 @@ The main execution flow shall be re-architected to follow the logical business s
   (`@listen("check_investment_discovery")`), that runs much later, after
   discovery completes. This prevents the portfolio from being generated
   twice.
-- **3.2.3. Logical Dependency:** Discovery crews must run *after* portfolio analysis to ensure they can find A+ alternatives for identified needs. Rebalancing must run *after* discovery to incorporate new opportunities.
+- **3.2.3. Logical Dependency:** Discovery must run *after* portfolio analysis to ensure it can find A+ alternatives for identified needs, and alternative matching must run *after* discovery so it can draw on the opportunities discovery found. Discovery is Python scoring, not a crew — see the note at the top of this document.
 
 ---
 
@@ -110,7 +111,7 @@ The main execution flow shall be re-architected to follow the logical business s
 
 - **Stability:** The system successfully analyzes large portfolios (50+ holdings) without hangs, infinite loops, or crashes. Deep analysis of a single ticker completes in under 5 minutes.
 - **Correctness:** The main flow executes in the specified logical order. Portfolio holdings receive accurate, nuanced grades (A+ to F) based on deep analysis.
-- **Completeness:** The final report integrates data from all stages: deep analysis, A+ discovery alternatives, and rebalancing recommendations.
+- **Completeness:** The final report integrates data from all stages: deep analysis, A+ discovery, and the alternatives matched against portfolio holdings.
 - **Resilience:** The system can successfully resume from an interrupted flow, recovering its progress from a persisted checkpoint.
 - **Maintainability:** The codebase is cleaner, with smaller modules, consistent testing patterns, and adherence to CrewAI best practices.
 - **Efficiency:** API call volume is optimized through smart batching and context sharing, and overall execution time is reduced through parallelization.
