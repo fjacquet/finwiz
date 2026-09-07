@@ -107,25 +107,39 @@ def flow_with_recording_orchestrators(mocker):
     flow = FinwizFlow()
     parent = mocker.MagicMock()
 
-    for attr in (
-        "error_handler_orch",
-        "progress_orch",
-        "utility_orch",
-        "deep_analysis_orch",
-        "alternatives_orch",
-        "discovery_orch",
-        "gap_profile_orch",
-        "validation_orch",
-        "reporting_orch",
+    # Orchestrators are cached in `flow._orchestrators`, keyed by the short
+    # registry names `_get_orch()` uses -- there are no `_<name>_orch`
+    # attributes. Seeding that dict is what makes the properties return mocks
+    # instead of building real orchestrators.
+    for registry_name in (
+        "error_handler",
+        "progress",
+        "utility",
+        "deep_analysis",
+        "alternatives",
+        "discovery",
+        "gap_profile",
+        "validation",
+        "reporting",
     ):
         child = mocker.MagicMock()
-        parent.attach_mock(child, attr)
-        setattr(flow, f"_{attr}", child)
+        parent.attach_mock(child, f"{registry_name}_orch")
+        flow._orchestrators[registry_name] = child
+
+    # Phases 1, 2 and 3 are awaited, so those three need AsyncMock. They are
+    # attached rather than assigned: attach_mock keeps them in the parent's
+    # call record, which a bare assignment would break.
+    for registry_name, method in (
+        ("validation", "validate_data_integration"),
+        ("validation", "check_portfolio"),
+        ("deep_analysis", "analyze_and_update_portfolio"),
+    ):
+        flow._orchestrators[registry_name].attach_mock(mocker.AsyncMock(), method)
 
     # check_investment_discovery's return value is passed to alternatives
     # matching; a MagicMock would flow through, but a dict keeps the assertion
     # about what phase 5 receives honest.
-    flow._discovery_orch.check_investment_discovery.return_value = {"candidates": []}
+    flow.discovery_orch.check_investment_discovery.return_value = {"candidates": []}
 
     return flow, parent
 
@@ -173,7 +187,7 @@ class TestRunSequentialWorkflowPhases:
     async def test_discovery_none_result_becomes_empty_dict(self, flow_with_recording_orchestrators):
         """`check_investment_discovery() or {}` -- phase 5 must never see None."""
         flow, _parent = flow_with_recording_orchestrators
-        flow._discovery_orch.check_investment_discovery.return_value = None
+        flow.discovery_orch.check_investment_discovery.return_value = None
 
         await flow.run_sequential_workflow()
 
@@ -184,7 +198,7 @@ class TestRunSequentialWorkflowPhases:
         """Phase 3 is the largest LLM spend; its cost attribution must survive
         the failure path."""
         flow, _parent = flow_with_recording_orchestrators
-        flow._deep_analysis_orch.analyze_and_update_portfolio.side_effect = RuntimeError("no analyses produced")
+        flow.deep_analysis_orch.analyze_and_update_portfolio.side_effect = RuntimeError("no analyses produced")
         log_summaries = mocker.patch.object(flow, "_log_post_flow_summaries")
 
         with pytest.raises(RuntimeError, match="no analyses produced"):
