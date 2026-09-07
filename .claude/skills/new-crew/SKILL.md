@@ -33,7 +33,11 @@ Also add:
 
 ## Hard Rules (project CLAUDE.md)
 
-1. **Final reporter agents** must have `tools=[]` and the `@final_reporter` decorator from `finwiz.utils.agent_validators`.
+1. **Final reporter agents** must have `tools=[]` and the `@final_reporter` decorator from
+   `finwiz.infrastructure.decorators.agent_validators`. (The old `finwiz.utils.agent_validators`
+   path in earlier copies of this skill never existed.) Note that #187 deleted `report_crew`,
+   the decorator's only user, so it currently enforces nothing — it is kept as the guardrail
+   for the next reporter crew, not as a description of existing code.
 2. **Tool instantiation** — never instantiate tools directly; call the factory from `tools/tool_factories.py`.
 3. **Pydantic models** live in `schemas/`, never in the crew directory.
 4. **Tasks** declare `output_pydantic=<YourSchema>` (not raw dicts).

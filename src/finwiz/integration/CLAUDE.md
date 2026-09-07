@@ -46,15 +46,21 @@ manager = CrewDataIntegrationManager(output_dir=Path("output"))
 data = manager.get_crew_data_with_freshness_check(crew_name="discovery", max_age_hours=24, warn_on_stale=True)
 ```
 
-`get_crew_data_with_freshness_check` is a generic `output_dir / crew_name /
-f"{crew_name}_latest.json"` file lookup — it accepts any `crew_name` string
-and isn't validated against a registry. `crew_name="stock_crew"` (or any of
-the other five deleted crews) always returns `None` now that those packages
-are gone (see #187). But no code path was found, on this branch, that ever
-writes `output/<crew_name>/<crew_name>_latest.json` for *any* crew name,
-`"discovery"` included — this lookup path appears to have had no producer
-even before the crew deletion. Treat any `get_crew_data_with_freshness_check`
-call as returning `None` in practice until a producer is confirmed.
+`get_crew_data_with_freshness_check` (`orchestrators/registry/registry_data_retrieval.py:110`)
+globs the crew's output directory and returns the **newest** matching file:
+`discovery_output_*.json` when `crew_name == "discovery"`, `*.json` otherwise.
+It accepts any `crew_name` string and is not validated against a registry, so
+`crew_name="stock_crew"` returns `None` — but only because no directory of that
+name exists, not because the lookup has no producer.
+
+Producers do exist. `discovery_orchestrator.py:420` writes
+`output/discovery/discovery_output_{timestamp}.json`, and `output/stock`,
+`output/etf` and `output/crypto` accumulate `{ticker}_enriched.json` from
+`deep_analysis_orchestrator.py:381-385`. A separate function,
+`get_upstream_data` (same file, line 29), is the one that reads
+`output_dir / crew_name / f"{crew_name}_latest.json"`; that name is written by
+`tools/analysis/holding_processors.py:243`. The two are easy to confuse and
+have different contracts.
 
 For a plain read without the freshness check, use `CrewDataAccessor`. Its
 `get_crew_data`/`get_stock_data` generic dispatch (`getattr(self.cache,

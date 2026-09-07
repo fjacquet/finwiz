@@ -165,7 +165,6 @@ max-complexity = 10
 "scripts/**/*.py" = ["ANN", "D", "S", "B", "RUF", "C901", "PLR0915"]
 "tests/property/*.py" = ["D400", "D415"]
 "src/finwiz/crews/deep_analysis/deep_analysis.py" = ["D401"]
-"src/finwiz/reporting/css/*.py" = ["D"]
 
 # --- Complexity grandfathering (Pass 3): shrink this list, never grow it ---
 # Files with BOTH C901 (cyclomatic complexity) and PLR0915 (too many statements):
@@ -180,13 +179,11 @@ max-complexity = 10
 "src/finwiz/tools/enhanced_sec_tool.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/perplexity_analysis_integration.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/portfolio_holdings_html_generator.py" = ["C901", "PLR0915"]
-"src/finwiz/tools/rebalancing_formatters.py" = ["C901", "PLR0915"]
 # Files with ONLY C901 (cyclomatic complexity):
 "src/finwiz/analysis/fact_pack_research.py" = ["C901"]
 "src/finwiz/analysis/stages/qualify.py" = ["C901"]
 "src/finwiz/cache/_helpers.py" = ["C901"]
 "src/finwiz/config/resilience_config.py" = ["C901"]
-"src/finwiz/crews/helpers/data_extraction_helpers.py" = ["C901"]
 "src/finwiz/discovery/market_data.py" = ["C901"]
 "src/finwiz/flow_state_utils.py" = ["C901"]
 "src/finwiz/flows/hybrid_analysis_synthesizer.py" = ["C901"]
@@ -235,8 +232,6 @@ max-complexity = 10
 "src/finwiz/integration/batch_data_prefetcher.py" = ["PLR0915"]
 "src/finwiz/orchestrators/portfolio_review/merge.py" = ["PLR0915"]
 "src/finwiz/quantitative/optimization_algorithms.py" = ["PLR0915"]
-"src/finwiz/reporting/rebalancing/rebalancing_html_builders.py" = ["PLR0915"]
-"src/finwiz/tools/rebalancing_sections.py" = ["PLR0915"]
 "src/finwiz/tools/reporting/report_formatters.py" = ["PLR0915"]
 
 [tool.ruff.format]

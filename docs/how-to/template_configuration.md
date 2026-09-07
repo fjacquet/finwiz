@@ -41,14 +41,14 @@ src/finwiz/templates/
 ├── partials/
 │   └── _design_tokens.html
 ├── enriched_analysis_report.html      # live — the production report path
-└── (15 further top-level .html files)
+└── (16 further top-level .html files)
 ```
 
 `deep_analysis_report.html.j2` is loaded by `DeepAnalysisReportGenerator`, and
 `enriched_analysis_report.html` backs `generate_enriched_html_reports`, the path
 that actually produces the reports a run writes to `output/`.
 
-Most of the 15 remaining top-level files have no reachable caller — they are
+Most of the 16 remaining top-level files have no reachable caller — they are
 reached only through a `JsonToHtmlConverter` chain whose entry point
 `auto_generate_html` has no callers, or by nothing at all. That predates #187
 and is tracked separately on issue #194; do not treat their presence here as
