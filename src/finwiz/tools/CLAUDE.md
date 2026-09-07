@@ -27,7 +27,6 @@ tools/
 ├── backtesting_tool.py              # BacktestingResult/MarketRegime models
 ├── portfolio_price_service.py       # Price lookups, PriceServiceError hierarchy
 ├── portfolio_cache_service.py       # PortfolioCacheService
-├── portfolio_rebalancing_tool.py    # PortfolioRebalancingTool
 ├── standardized_sentiment_tool.py   # StandardizedSentimentAnalysisTool
 ├── (ValuationTool/ETFAnalysisTool now come from crewai-custom-tools — see "Centralized tools" below)
 │
