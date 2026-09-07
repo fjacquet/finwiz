@@ -81,7 +81,7 @@ class DataCache:
                 else:
                     self.logger.warning(f"No data available for {crew_name} crew")
 
-            self.logger.info(f"Consolidated data from {len(consolidated)} crews", extra={"crews": list(consolidated.keys())})
+            self.logger.info(f"Consolidated data from {len(consolidated)} sources", extra={"sources": list(consolidated.keys())})
 
             # Serialize datetime objects for CrewAI compatibility
             serialized_consolidated: dict[str, Any] = serialize_datetime_objects(consolidated)
