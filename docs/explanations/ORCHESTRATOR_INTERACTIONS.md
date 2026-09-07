@@ -8,6 +8,20 @@
 
 This document provides detailed diagrams and explanations of how orchestrators interact within the FinWiz Flow architecture.
 
+**A note on how this actually runs.** `FinwizFlow` has exactly one `@start()`
+method, `run_sequential_workflow()` (`flows/orchestrator.py`), which drives
+all six phases by calling orchestrator methods directly and imperatively —
+`await self.deep_analysis_orch.analyze_and_update_portfolio()`, and so on.
+The diagrams below describe *that* call sequence. `FinwizFlow` also defines a
+parallel chain of `@listen(...)`-decorated methods on itself
+(`analyze_and_update_portfolio`, `check_portfolio`, `check_crypto`,
+`check_stock`, `check_etf`, `check_investment_discovery`,
+`match_alternatives_after_discovery`, `pre_validate_reporter_input`,
+`report`) that mirror the same phases as CrewAI Flow event listeners — but
+`run_sequential_workflow` never emits the events they listen for, so that
+chain is never triggered by a normal run. It is unreachable, tracked as #193;
+this document does not treat it as the working pipeline.
+
 ## Flow Execution Sequence
 
 ### Complete Workflow
@@ -34,7 +48,7 @@ sequenceDiagram
     Val->>State: Update portfolio data
     Val-->>Flow: Return portfolio result
 
-    Flow->>Deep: run_deep_analysis_on_holdings()
+    Flow->>Deep: analyze_and_update_portfolio()
     Deep->>State: Update deep_analysis_results
     Deep-->>Flow: Return analysis results
 
@@ -49,7 +63,7 @@ sequenceDiagram
     Alt-->>Flow: Return alternatives
 
     Flow->>Rep: report()
-    Rep->>State: Update final_report_path
+    Rep->>State: Update report_path
     Rep-->>Flow: Return report path
 
     Flow-->>User: Return final result
@@ -97,34 +111,32 @@ graph TD
 
 ### 1. Deep Analysis Flow
 
+`ErrorHandlingOrchestrator.execute_crew_with_error_handling()` and
+`ProgressTrackingOrchestrator.update_progress()` both still exist, but
+neither has any caller anywhere in `src/finwiz` — the deep analysis path
+below does not go through either of them. What actually runs is
+`finwiz.analysis.analyze_holding()`, called once per holding, concurrently,
+by `DeepAnalysisOrchestrator.run_deep_analysis_concurrent()`:
+
 ```mermaid
 sequenceDiagram
     participant Flow
     participant Deep as DeepAnalysisOrchestrator
-    participant Error as ErrorHandlingOrchestrator
-    participant Prog as ProgressTrackingOrchestrator
-    participant Util as UtilityOrchestrator
-    participant Crew as CrewFactory
+    participant Pipeline as analyze_holding()
+    participant DAC as DeepAnalysisCrew
     participant State as FinwizState
 
-    Flow->>Deep: run_deep_analysis_on_holdings(holdings)
+    Flow->>Deep: analyze_and_update_portfolio()
 
-    loop For each holding
-        Deep->>Error: execute_crew_with_error_handling()
-        Error->>Crew: Execute deep analysis crew
-        Crew-->>Error: Return crew result
-        Error-->>Deep: Return wrapped result
-
-        Note over Deep,Util: parse_crew_output_for_holding() does not exist on UtilityOrchestrator —
-        Note over Deep,Util: it only has extract_sec_filing_urls / validate_and_fix_sec_urls
-
-        Deep->>State: Store analysis result
-
-        Deep->>Prog: update_progress()
-        Prog->>State: Update progress metrics
+    par For each holding, concurrently
+        Deep->>Pipeline: analyze_holding(ticker, asset_class, company_name)
+        Note over Pipeline: collect -> quantify -> fact_pack -> qualify -> synthesize -> emit
+        Pipeline->>DAC: qualify stage: run the deep_analysis crew
+        DAC-->>Pipeline: Qualitative insights
+        Pipeline-->>Deep: (DeepAnalysisResult, EnrichedAnalysis)
     end
 
-    Deep->>State: Store all results
+    Deep->>State: Store deep_analysis_results, deep_analysis_coverage, deep_analysis_success
     Deep-->>Flow: Return analysis results
 ```
 
@@ -156,64 +168,62 @@ sequenceDiagram
 
 ### 3. Discovery Flow
 
+Discovery is Python scoring, not crews — there is no `crypto_crew`,
+`stock_crew`, or `etf_crew` any more (deleted, see #187), and
+`run_sequential_workflow` calls the three `check_*` methods sequentially, not
+in parallel:
+
 ```mermaid
 sequenceDiagram
     participant Flow
     participant Disc as DiscoveryOrchestrator
-    participant Error as ErrorHandlingOrchestrator
-    participant Crew as CrewFactory
     participant State as FinwizState
 
+    Flow->>Disc: check_crypto()
+    Note over Disc: Python analysis, $0
+    Disc-->>Flow: crypto_analysis_complete, crypto_result
+
+    Flow->>Disc: check_stock()
+    Note over Disc: Python analysis, $0
+    Disc-->>Flow: stock_analysis_complete, stock_result
+
+    Flow->>Disc: check_etf()
+    Note over Disc: Python analysis, $0
+    Disc-->>Flow: etf_analysis_complete, etf_result
+
     Flow->>Disc: check_investment_discovery()
-
-    par Parallel Discovery
-        Disc->>Error: execute_crew_with_error_handling(crypto_crew)
-        Error->>Crew: Execute crypto discovery
-        Crew-->>Error: Return crypto results
-        Error-->>Disc: Return wrapped results
-    and
-        Disc->>Error: execute_crew_with_error_handling(stock_crew)
-        Error->>Crew: Execute stock discovery
-        Crew-->>Error: Return stock results
-        Error-->>Disc: Return wrapped results
-    and
-        Disc->>Error: execute_crew_with_error_handling(etf_crew)
-        Error->>Crew: Execute ETF discovery
-        Crew-->>Error: Return ETF results
-        Error-->>Disc: Return wrapped results
-    end
-
-    Disc->>Disc: Consolidate all results
+    Disc->>Disc: Consolidate results, find A+ opportunities, validate via backtesting
     Disc->>State: Store discovery results
     Disc-->>Flow: Return consolidated results
 ```
 
 ### 4. Reporting Flow
 
+`ReportingOrchestrator.consolidate_reports()` still exists but has no caller
+— it dates from the deleted crew-export pipeline. `report()` reads deep
+analysis results back off disk instead:
+
 ```mermaid
 sequenceDiagram
     participant Flow
     participant Rep as ReportingOrchestrator
-    participant Util as UtilityOrchestrator
     participant State as FinwizState
     participant FS as FileSystem
 
     Flow->>Rep: report()
 
-    Rep->>State: Get crew export paths
-    Rep->>Rep: consolidate_reports()
+    Rep->>State: Read portfolio_review from state
+    Rep->>FS: _read_deep_analysis_from_files()
+    FS-->>Rep: Deep analysis JSON files
 
-    loop For each crew export
-        Rep->>FS: Read export file
-        FS-->>Rep: Return export data
-        Note over Rep,Util: parse_crew_output() does not exist on UtilityOrchestrator
-    end
+    Rep->>Rep: Merge deep analysis into portfolio review
+    Rep->>FS: Save merged portfolio review
 
-    Rep->>Rep: generate_final_report()
-    Rep->>Rep: generate_html_from_export()
+    Rep->>Rep: _generate_python_report(portfolio_review, deep_analysis_results)
+    Rep->>Rep: generate_enriched_html_reports()
 
-    Rep->>FS: Write HTML report
-    Rep->>State: Store report path
+    Rep->>FS: Write HTML report(s)
+    Rep->>State: Store report_path, report_generation_success, report_generation_method
     Rep-->>Flow: Return report path
 ```
 
@@ -225,9 +235,9 @@ sequenceDiagram
 graph LR
     Init[Initialize State] --> Val[Validation]
     Val --> Deep[Deep Analysis]
-    Deep --> Alt[Alternative Matching]
-    Alt --> Disc[Discovery]
-    Disc --> Rep[Reporting]
+    Deep --> Disc[Discovery]
+    Disc --> Alt[Alternative Matching]
+    Alt --> Rep[Reporting]
     Rep --> Final[Final State]
 
     style Init fill:#e1f5ff
@@ -247,38 +257,47 @@ graph LR
 | DeepAnalysisOrchestrator | `deep_analysis_results`, `deep_analysis_success`, `deep_analysis_error` |
 | AlternativesMatchingOrchestrator | `portfolio_alternatives` |
 | DiscoveryOrchestrator | `investment_discovery_result`, `investment_discovery_structured`, `investment_discovery_available` |
-| ReportingOrchestrator | `final_report_path`, `crew_export_paths` |
+| ReportingOrchestrator | `report_path`, `report_generation_success`, `report_generation_method` (`final_report_path` is declared on `FinwizState` but has no writer — a dead field; `crew_export_paths` is not a state field at all, only a dead parameter name on the uncalled `consolidate_reports()`) |
 | ProgressTrackingOrchestrator | `holdings_processed`, `total_holdings`, `progress_percentage` |
 
 ## Error Handling Flow
+
+**This flow has no live caller.** `ErrorHandlingOrchestrator.execute_crew_with_error_handling()`
+still exists with the shape shown below, but nothing in `src/finwiz` calls it
+— not the deep analysis path, not discovery. `CrewFactory`, the dependency
+it used to hand a crew through, was deleted along with the crew subsystem
+(see #187). Kept here as a description of the method's own logic, not of a
+wired execution path:
 
 ```mermaid
 sequenceDiagram
     participant Orch as Any Orchestrator
     participant Error as ErrorHandlingOrchestrator
-    participant Crew as CrewFactory
+    participant Func as crew_func (any callable)
     participant State as FinwizState
 
-    Orch->>Error: execute_crew_with_error_handling(crew_func)
+    Orch->>Error: execute_crew_with_error_handling(crew_func, crew_name)
 
-    Error->>Crew: Execute crew
+    Error->>Func: crew_func(**kwargs)
 
     alt Success
-        Crew-->>Error: Return result
-        Error->>Error: Wrap success result
+        Func-->>Error: Return result
         Error-->>Orch: Return {success: true, data: result}
     else Failure
-        Crew-->>Error: Raise exception
-        Error->>Error: generate_error_summary()
-        Error->>State: Store error info
+        Func-->>Error: Raise exception
+        Error->>State: Store error info (errors, crew_execution_errors, crew_execution_status)
         Error-->>Orch: Return {success: false, error: info}
     end
-
-    Orch->>Orch: Handle result
-    Orch->>State: Update state accordingly
 ```
 
 ## Progress Tracking Flow
+
+`DeepAnalysisOrchestrator` does not call `ProgressTrackingOrchestrator`
+directly. `FinwizFlow._update_progress()` is the only caller of
+`update_progress()`, and `_update_progress()` itself has no caller anywhere
+in `src/finwiz` — it is dead code. `save_batch_metrics_to_file()` likewise
+has no caller. The diagram below describes what these methods would do if
+invoked, not a wired path in the live flow.
 
 ```mermaid
 sequenceDiagram
@@ -361,12 +380,14 @@ graph TD
 
     Flow --> Deps
 
-    Deps --> CF[CrewFactory]
     Deps --> IM[IntegrationManager]
     Deps --> EH[ErrorHandler]
     Deps --> SM[StateManager]
     Deps --> RC[ResilienceConfig]
     Deps --> BC[BatchPrefetchConfig]
+    Deps --> DA[DataAccessor]
+    Deps --> AT[AvailabilityTracker]
+    Deps --> RD[RetryDecorator]
 
     Orch1[ErrorHandlingOrchestrator]
     Orch2[DeepAnalysisOrchestrator]
@@ -391,11 +412,12 @@ Most orchestrator interactions are synchronous:
 
 ```python
 # Flow calls orchestrator
-result = self.deep_analysis_orch.run_deep_analysis_on_holdings(holdings)
-
-# Orchestrator calls another orchestrator
-wrapped_result = self.error_handler_orch.execute_crew_with_error_handling(crew_func, "crew_name")
+result = await self.deep_analysis_orch.analyze_and_update_portfolio()
 ```
+
+`ErrorHandlingOrchestrator.execute_crew_with_error_handling()` is a generic
+wrapper (any callable, not specifically a crew) that exists for this
+purpose, but see "Error Handling Flow" above — nothing calls it today.
 
 ### 2. State-Based Communication
 
@@ -411,19 +433,16 @@ results = self.state.deep_analysis_results
 
 ### 3. Return Value Communication
 
-Flow methods return data for downstream listeners:
+`FinwizFlow` does define real `@listen(...)` methods that chain this way —
+but as the note at the top of this document says, `run_sequential_workflow`
+never emits the events this chain listens for, so it's never exercised by a
+normal run (#193). Shown here as the actual method pair from
+`flows/orchestrator.py`, not a hypothetical:
 
 ```python
-@listen("check_portfolio")
-def analyze_holdings(self) -> dict[str, Any]:
-    results = self.deep_analysis_orch.run_deep_analysis_on_holdings(holdings)
-    return {"analysis": results}  # Passed to next listener
-
-
-@listen("analyze_holdings")
-def match_alternatives(self, analysis_data: dict[str, Any]) -> dict[str, Any]:
-    results = analysis_data["analysis"]  # Received from upstream
-    # Process and return
+@listen("check_investment_discovery")
+def match_alternatives_after_discovery(self, discovery_data: dict[str, Any]) -> dict[str, Any]:
+    return self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 ```
 
 ## Performance Considerations
@@ -443,18 +462,10 @@ graph LR
 
 ### Parallel Execution
 
-Discovery crews can run in parallel:
-
-```python
-# Parallel execution using asyncio
-async def run_discovery():
-    crypto_task = asyncio.create_task(check_crypto())
-    stock_task = asyncio.create_task(check_stock())
-    etf_task = asyncio.create_task(check_etf())
-
-    results = await asyncio.gather(crypto_task, stock_task, etf_task)
-    return consolidate_results(results)
-```
+Discovery's three `check_*` calls are sequential today, not parallel — see
+"3. Discovery Flow" above. What does run concurrently is deep analysis: one
+`analyze_holding()` call per holding, via
+`DeepAnalysisOrchestrator.run_deep_analysis_concurrent()`.
 
 ## Best Practices
 
