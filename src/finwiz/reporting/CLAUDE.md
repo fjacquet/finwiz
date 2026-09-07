@@ -18,7 +18,6 @@ reporting/
 ├── rebalancing_report_generator.py      # RebalancingReportGenerator
 ├── deep_analysis_report_generator.py    # DeepAnalysisReportGenerator
 ├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator
-├── final_report_generator.py            # FinalReportGenerator
 ├── individual_report_generator.py       # generate_individual_report_html()
 │
 ├── # HTML infrastructure
@@ -33,10 +32,7 @@ reporting/
 │   ├── macro.py
 │   ├── portfolio_summary.py
 │   └── sentiment.py
-├── consolidator.py                      # ReportConsolidator
-├── html_collector.py                    # collect_html_report_paths()
 ├── html_auto_generator.py               # auto_generate_html()
-├── export_loaders.py                    # load_exports(), load_deep_analysis_exports()
 ├── css_styles.py                        # get_report_css() — reads assets/report_styles.css
 │
 ├── assets/                              # Static CSS/JS files; one file per loader function,
@@ -66,7 +62,6 @@ reporting/
 | `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
 | `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
-| `consolidator.py` | `ReportConsolidator` | Consolidate multiple reports |
 | `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
 
 ## Usage
