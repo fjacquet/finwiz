@@ -264,10 +264,9 @@ class DeepAnalysisOrchestrator:
 
         if analyzed == 0:
             # FAIL LOUDLY from the orchestrator. This is the single source of
-            # truth for "Phase 3 produced nothing" — fires regardless of which
-            # flow path called us (sequential body vs @listen callback). The
-            # flow-level wrapper (try/except: _log_post_flow_summaries; raise)
-            # ensures cost summary still fires before this propagates.
+            # truth for "Phase 3 produced nothing". The flow-level wrapper
+            # (try/except: _log_post_flow_summaries; raise) ensures cost
+            # summary still fires before this propagates.
             failed_preview = self._failed_holdings[:10]
             ellipsis = "..." if len(self._failed_holdings) > 10 else ""
             msg = f"Deep analysis produced 0 results for {total} holdings. Failed tickers: {failed_preview}{ellipsis}"
