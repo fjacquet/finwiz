@@ -188,7 +188,6 @@ class FinwizState(BaseModel):
     report_generation_success: bool = Field(default=False)
     report_path: str | None = None
     report_generation_method: str | None = None
-    generated_html_reports: dict[str, Any] | None = None
 
     # Degraded functionality tracking
     stock_degraded_functionality: list[str] = Field(default_factory=list)
@@ -233,8 +232,6 @@ class FinwizState(BaseModel):
     data_availability_summary_formatted: str | None = None
 
     # Report aggregation fields
-    crew_export_paths: dict[str, list[str]] = Field(default_factory=dict)
-    crew_html_paths: dict[str, list[str]] = Field(default_factory=dict)
     consolidated_json_path: str | None = None
     final_report_path: str | None = None
     crew_execution_status: dict[str, str] = Field(default_factory=dict)

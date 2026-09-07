@@ -763,8 +763,6 @@ class TestFinwizStateDefaults:
         assert state.crypto_degraded_functionality == []
         assert state.deep_analysis_results == {}
         assert state.portfolio_alternatives == {}
-        assert state.crew_export_paths == {}
-        assert state.crew_html_paths == {}
         assert state.crew_execution_status == {}
         assert state.crew_execution_errors == {}
         assert state.errors == []
@@ -987,14 +985,7 @@ class TestFinwizStateComplexScenarios:
 
     def test_report_generation_state(self):
         """Test state for report generation."""
-        crew_paths = {
-            "stock_crew": ["/reports/stock_crew/AAPL.html"],
-            "etf_crew": ["/reports/etf_crew/SPY.html"],
-        }
-
         state = FinwizState(
-            crew_export_paths=crew_paths,
-            crew_html_paths=crew_paths,
             consolidated_json_path="/reports/consolidated.json",
             final_report_path="/reports/final_report.html",
             crew_execution_status={
@@ -1003,7 +994,6 @@ class TestFinwizStateComplexScenarios:
             },
         )
 
-        assert "stock_crew" in state.crew_export_paths
         assert state.consolidated_json_path is not None
         assert state.final_report_path is not None
 
