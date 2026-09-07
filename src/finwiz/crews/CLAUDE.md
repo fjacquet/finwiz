@@ -18,13 +18,18 @@ crews/
 │   ├── performance_validation.py  # Performance validation logic
 │   └── tool_routing.py    # Dynamic tool selection
 └── helpers/               # Shared crew utilities
-    ├── context_preparation.py    # Context building helpers
-    ├── data_extraction_helpers.py
-    ├── data_integration_helpers.py
     ├── llm_config.py      # LLM configuration utilities
     ├── performance_validation.py
     └── tool_routing.py
 ```
+
+`context_preparation.py`, `data_extraction_helpers.py`, and `data_integration_helpers.py`
+were deleted — their only consumer, `report_crew/report_crew.py`, was deleted along with
+the rest of the crew subsystem (see `../../CLAUDE.md`). `llm_config.py` stays live
+(`get_crew_model_string()` backs `infrastructure/resilience/crew_execution.py`'s cost
+tracker); `tool_routing.py` and `performance_validation.py` here are stale duplicates of
+`deep_analysis/tool_routing.py` / `deep_analysis/performance_validation.py` — dead since
+before the crew subsystem was removed, tracked separately on issue #194.
 
 ## Major Entry Points
 
@@ -38,7 +43,6 @@ crews/
 
 | File | Function | Purpose |
 |------|----------|---------|
-| `helpers/context_preparation.py` | `prepare_crew_context()` | Build context for crew execution |
 | `helpers/llm_config.py` | `get_crew_llm()` | Build the `LLM` instance for crew agents |
 | `helpers/llm_config.py` | `get_crew_model_string()` | Model identifier as a string |
 | `helpers/tool_routing.py` | `get_tools_for_asset_class()` | Dynamic tool selection by asset class |
