@@ -79,7 +79,7 @@ class DataCache:
                             },
                         )
                 else:
-                    self.logger.warning(f"No data available for {crew_name} crew")
+                    self.logger.warning(f"No data available for {crew_name} source")
 
             self.logger.info(f"Consolidated data from {len(consolidated)} sources", extra={"sources": list(consolidated.keys())})
 
