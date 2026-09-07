@@ -7,7 +7,7 @@ HTML report generation using Python/Jinja2 templates. All rendering is 100% Pyth
 ```
 reporting/
 ├── __init__.py                          # Package exports
-├── base_report_generator.py             # BaseReportGenerator (abstract base, 14 methods)
+├── base_report_generator.py             # create_report_jinja_env() — shared Jinja2 env factory
 ├── python_report_generator.py           # PythonReportGenerator, generate_python_report()
 │
 ├── deep_analysis_report_generator.py    # DeepAnalysisReportGenerator
@@ -58,11 +58,14 @@ after the crew subsystem was removed, see #187). The live per-holding HTML
 path is `enriched_analysis_report_generator.py` via
 `ReportingOrchestrator.generate_enriched_html_reports()`.
 
+`BaseReportGenerator`, the abstract base those five generators subclassed, was
+itself deleted from `base_report_generator.py` once its last subclass was
+gone — `create_report_jinja_env()` in the same file is unrelated and stays live.
+
 ## Entry Points
 
 | File | Class/Function | Purpose |
 |------|---------------|---------|
-| `base_report_generator.py` | `BaseReportGenerator` | Abstract base class |
 | `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
 | `enriched_analysis_report_generator.py` | `EnrichedAnalysisReportGenerator` | Live per-holding HTML generator |

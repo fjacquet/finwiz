@@ -56,8 +56,9 @@ with open(f"output/reports/{session_id}/portfolio_review.html", "w") as f:
 for the per-crew templates below; those subclasses were deleted along with
 `crew_reports/{stock,etf,crypto,discovery,rebalancing}_report.html` and
 `crew_reports/final_report.html` — the crew subsystem that produced their
-JSON inputs was removed and nothing else loaded them (see #187). No
-subclass of `BaseReportGenerator` currently exists.
+JSON inputs was removed and nothing else loaded them (see #187).
+`BaseReportGenerator` itself was later deleted once its last subclass was
+gone; `create_report_jinja_env()` in the same file is unrelated and stays live.
 
 ## Template Inheritance
 
@@ -85,6 +86,6 @@ Templates are ALWAYS rendered by Python (Jinja2), NEVER by AI agents:
 
 ## Related Modules
 
-- `finwiz.reporting.base_report_generator` - `create_report_jinja_env()`, `BaseReportGenerator`
+- `finwiz.reporting.base_report_generator` - `create_report_jinja_env()`
 - `finwiz.tools.html_report_generator` - HTML generation tool
 - `finwiz.reporting` - Report generation logic
