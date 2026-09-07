@@ -42,7 +42,6 @@ reporting/
 │   └── javascript_code.py              # get_rebalancing_javascript()
 │
 └── rebalancing/                         # Rebalancing report builders
-    ├── rebalancing_html_builders.py     # RebalancingHTMLBuilder
     ├── template_builders.py             # TemplateBuilder
     └── template_renderers.py            # TemplateRenderer
 ```
