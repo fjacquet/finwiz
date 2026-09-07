@@ -152,7 +152,10 @@ class FinwizState(BaseModel):
     core_analysis_status: dict[str, Any] | None = None
 
     # Written by ValidationOrchestrator from the consolidated reporter input.
-    portfolio_allocation_updates: dict[str, Any] | None = None
+    # A list, not a mapping: DataCache._generate_portfolio_allocation_updates
+    # returns list[dict[str, Any]]. The annotation said dict and Pydantic warned
+    # on every run that populated it.
+    portfolio_allocation_updates: list[dict[str, Any]] | None = None
 
     # Investment discovery data
     investment_discovery_available: bool = Field(default=False)
