@@ -42,23 +42,20 @@ A single, unified `DeepAnalysisCrew` shall be created to handle in-depth analysi
 
 The main execution flow shall be re-architected to follow the logical business sequence.
 
-- **3.2.1. Correct Sequence:** The flow executes in the following order —
-  note that Phases 2 and 3 below are reversed from the original requirement
-  text: `analyze_and_update_portfolio` (`@listen("validate_data_integration")`)
-  runs *before* `check_portfolio` (`@listen("analyze_and_update_portfolio")`),
-  not after:
+- **3.2.1. Correct Sequence:** `run_sequential_workflow` executes the phases
+  in this order:
     1. **Phase 1: Validation**: `validate_data_integration`
-    2. **Phase 2: Deep Analysis & Update**: `analyze_and_update_portfolio` (Grade holdings, find needs)
-    3. **Phase 3: Portfolio Analysis**: `check_portfolio` (Analyze what you own)
-    4. **Phase 4: Discovery**: `check_stock`, `check_etf`, `check_crypto` -> `check_investment_discovery` (Find A+ solutions)
-    5. **Phase 5: Reporting**: `report` (Present final recommendations)
+    2. **Phase 2: Portfolio Review**: `check_portfolio` (loads holdings from CSV)
+    3. **Phase 3: Deep Analysis & Update**: `analyze_and_update_portfolio` (grade holdings, find needs), followed by stress testing (3.5) and the gap profile (3.6)
+    4. **Phase 4: Discovery**: `check_crypto`, `check_stock`, `check_etf` → `check_investment_discovery` (find A+ solutions)
+    5. **Phase 5: Alternative Matching**: `match_alternatives_after_discovery`
+    6. **Phase 6: Reporting**: `pre_validate_reporter_input` → `report`
 - **3.2.2. Atomic Portfolio Update:** `analyze_and_update_portfolio()`
   performs deep analysis and updates the portfolio review, but it does
   **not** match underperforming holdings with alternatives — alternative
-  matching is a separate step, `match_alternatives_after_discovery`
-  (`@listen("check_investment_discovery")`), that runs much later, after
-  discovery completes. This prevents the portfolio from being generated
-  twice.
+  matching is a separate step, `match_alternatives_after_discovery`, that
+  runs much later, after discovery completes. This prevents the portfolio
+  from being generated twice.
 - **3.2.3. Logical Dependency:** Discovery must run *after* portfolio analysis to ensure it can find A+ alternatives for identified needs, and alternative matching must run *after* discovery so it can draw on the opportunities discovery found. Discovery is Python scoring, not a crew — see the note at the top of this document.
 
 ---
