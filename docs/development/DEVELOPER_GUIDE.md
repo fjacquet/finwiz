@@ -388,7 +388,12 @@ FinWiz uses CrewAI Flow for orchestration with Pydantic state management.
 
 `FinwizFlow` has exactly one `@start()` method, `run_sequential_workflow()`,
 which drives all six phases by calling orchestrator methods directly and
-imperatively — there is no `@listen(...)` chain:
+imperatively — there is no `@listen(...)` chain. The snippet below elides
+Phase 3.5 (stress testing, fail-soft, wrapped in its own try/except) since
+it is optional scaffolding around the pipeline rather than part of it; every
+other phase and call — including the `check_crypto` / `check_stock` /
+`check_etf` discovery scans that precede `check_investment_discovery` — is
+shown as it actually runs:
 
 ```python
 from crewai.flow.flow import Flow, start
@@ -414,6 +419,13 @@ class FinwizFlow(Flow[FinwizState]):
         await self.validation_orch.check_portfolio()
         await self.deep_analysis_orch.analyze_and_update_portfolio()
 
+        # Phase 3.5 (stress testing) omitted here -- see orchestrator.py.
+
+        self.gap_profile_orch.build_gap_profile()
+
+        self.discovery_orch.check_crypto()
+        self.discovery_orch.check_stock()
+        self.discovery_orch.check_etf()
         discovery_data = self.discovery_orch.check_investment_discovery() or {}
         self.alternatives_orch.match_alternatives_after_discovery(discovery_data)
 

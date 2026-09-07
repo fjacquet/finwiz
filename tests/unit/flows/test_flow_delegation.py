@@ -1,10 +1,10 @@
 """
-Unit tests for Flow delegation to orchestrators.
+Unit tests for FinwizFlow's orchestrator properties.
 
-Tests that Flow listeners correctly delegate to appropriate orchestrators
-and that orchestrator methods are called with correct parameters.
-
-Validates Requirements 10.2: Flow listeners delegate to appropriate orchestrators.
+Asserts that `FinwizFlow` exposes each lazily-loaded orchestrator property
+(`error_handler_orch`, `progress_orch`, etc.). It does not exercise delegation
+between the flow and the orchestrators -- that is covered by
+`tests/unit/flows/test_run_sequential_workflow.py`.
 """
 
 import pytest

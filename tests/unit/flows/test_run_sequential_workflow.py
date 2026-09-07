@@ -90,6 +90,20 @@ def flow_with_recording_orchestrators(mocker):
     return flow, parent
 
 
+class TestFlowShape:
+    """Pins the flow's method graph shut.
+
+    Issue #193 removed ten `@listen` methods whose root trigger had no
+    producer, so they could never fire -- `run_sequential_workflow`, the only
+    `@start()` method, already did all their work imperatively. Nothing
+    stops a new unreachable listener from reappearing except this test: it
+    asserts CrewAI's own view of the flow contains exactly one method.
+    """
+
+    def test_flow_has_exactly_one_method(self):
+        assert set(FinwizFlow.flow_definition().methods) == {"run_sequential_workflow"}
+
+
 class TestRunSequentialWorkflowPhases:
     """The six phases run, in order, through the orchestrators."""
 
