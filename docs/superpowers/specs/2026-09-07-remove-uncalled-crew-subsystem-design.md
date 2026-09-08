@@ -14,8 +14,8 @@ This was not a mistake at the time. Discovery moved from AI crews to Python
 scoring — the repository's own **AI Minimalism** rule, applied correctly. What
 went wrong is that nothing was deleted afterwards and the documentation kept
 describing the old flow, so the dead code went on looking alive for months.
-`CLAUDE.md` still asserted `Phase 4: Discovery (crypto/stock/etf crews)` until
-#190 corrected it.
+`CLAUDE.md` still asserted `Phase 4: Discovery (crypto/stock/etf crews)`
+until #190 corrected it.
 
 The cost is not disk space. It is that a reader cannot tell which parts of this
 codebase run. `stock_crew` rotted until it could no longer be instantiated at
