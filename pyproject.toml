@@ -194,7 +194,6 @@ max-complexity = 10
 "src/finwiz/integration/config.py" = ["C901"]
 "src/finwiz/orchestrators/deep_analysis_data_collector.py" = ["C901"]
 "src/finwiz/orchestrators/discovery/aplus_discovery_integrator.py" = ["C901"]
-"src/finwiz/orchestrators/error_handling/recovery.py" = ["C901"]
 "src/finwiz/orchestrators/extraction/engine.py" = ["C901"]
 "src/finwiz/orchestrators/extraction/market_context.py" = ["C901"]
 "src/finwiz/orchestrators/extraction/parsers.py" = ["C901"]
