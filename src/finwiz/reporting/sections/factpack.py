@@ -77,17 +77,51 @@ def _fact_pack_body(fact_pack: FactPack) -> str:
     return f'<div class="small muted fact-pack-body">{" · ".join(parts)}</div>'
 
 
-def _sources_label(fact_pack: FactPack) -> str:
-    """Truthful, short label for the pill's provenance claim.
+# Reader-facing names for the internal source identifiers in FactPack.sources_used.
+# The tooltip reads "Vérifié via {label}", so these are prose, not keys: a reader
+# seeing "yfinance.funds_data" in a financial report reads it as leaked debug output.
+#
+# Both yfinance.info and yfinance.funds_data map to the same name on purpose — the
+# source really is Yahoo Finance either way, and the endpoint split is our concern,
+# not the reader's. _sources_label de-duplicates, so a fund pack drawing on both
+# says "Yahoo Finance" once.
+#
+# composer.schema_fallback is deliberately absent. It marks a pack the exception
+# backstop assembled: a diagnostic about how the pack was built, not a place any
+# fact came from. Rendering it as provenance told the reader the pack was
+# "verified via composer.schema_fallback", which is both meaningless and false.
+_SOURCE_LABELS: dict[str, str] = {
+    "yfinance.info": "Yahoo Finance",
+    "yfinance.funds_data": "Yahoo Finance",
+    "yfinance.sec_filings": "dépôts SEC",
+    "yfinance.news": "presse financière",
+    "perplexity.gap_fill": "Perplexity",
+    "etf_expense_ratios.yaml": "table de frais interne",
+}
 
-    Names the pack's real ``sources_used`` (e.g. "yfinance.info") when known;
-    falls back to a generic phrase rather than naming a source that may not
-    have run. Packs are built from yfinance and a curated table, with
-    Perplexity demoted to an optional gap-filler that may never fire — the
-    pill must not claim Perplexity verification unconditionally.
+
+def _sources_label(fact_pack: FactPack) -> str:
+    """Truthful, reader-facing label for the pill's provenance claim.
+
+    Translates the pack's ``sources_used`` identifiers into names a reader can
+    act on, de-duplicated and in first-seen order, and falls back to a generic
+    phrase rather than naming a source that may not have run. Packs are built
+    from yfinance and a curated table, with Perplexity demoted to an optional
+    gap-filler that may never fire — the pill must not claim Perplexity
+    verification unconditionally.
+
+    An identifier with no entry in ``_SOURCE_LABELS`` is omitted rather than
+    printed raw, so adding a source without adding its label degrades to the
+    generic phrase instead of leaking an internal name into a report. If you add
+    a source, add it above.
     """
-    if fact_pack.sources_used:
-        return ", ".join(fact_pack.sources_used)
+    seen: list[str] = []
+    for identifier in fact_pack.sources_used:
+        label = _SOURCE_LABELS.get(identifier)
+        if label is not None and label not in seen:
+            seen.append(label)
+    if seen:
+        return ", ".join(seen)
     return "sources structurées"
 
 
