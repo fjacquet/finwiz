@@ -12,7 +12,6 @@ reporting/
 │
 ├── deep_analysis_report_generator.py    # DeepAnalysisReportGenerator
 ├── enriched_analysis_report_generator.py # EnrichedAnalysisReportGenerator — live per-holding HTML producer
-├── individual_report_generator.py       # generate_individual_report_html()
 │
 ├── # HTML infrastructure
 ├── section_generators.py                # Facade only — re-exports from sections/

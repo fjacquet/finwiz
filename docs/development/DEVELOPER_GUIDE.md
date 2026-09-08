@@ -201,7 +201,6 @@ src/finwiz/
 ├── flows/                          # CrewAI Flow Orchestration
 │   ├── orchestrator.py            # FinwizFlow — main workflow coordination
 │   ├── orchestrator_registry.py
-│   └── hybrid_analysis_synthesizer.py
 │
 ├── orchestrators/                  # Business Logic Coordination
 │   ├── portfolio_review_orchestrator.py  # module-level async run()
@@ -274,7 +273,7 @@ src/finwiz/
 │   └── static/                    # CSS, JavaScript
 │
 ├── infrastructure/                 # Cross-cutting infrastructure
-│   ├── decorators/                # agent_validators.py (@final_reporter),
+│   ├── decorators/                # task_decorators.py (@async_task/@sync_task)
 │   │                              #   task_decorators.py
 │   ├── caching/                   # manager.py, ttl_config.py
 │   ├── resilience/                # retry, Perplexity throttle
@@ -528,30 +527,7 @@ than a per-asset-type crew.
 
 ## Core Patterns
 
-### 1. Final Reporter Pattern
-
-Final reporters MUST have empty tools and only consume upstream context.
-
-```python
-from finwiz.infrastructure.decorators.agent_validators import final_reporter
-
-
-@final_reporter  # Enforces NO tools
-@agent
-def reporter(self) -> Agent:
-    return Agent(
-        config=self.agents_config["reporter"],
-        tools=[],  # Required
-        reasoning=False,
-        verbose=True,
-    )
-
-
-# The decorator will raise an error if tools are provided:
-# ValidationError: Final reporter must have empty tools list
-```
-
-### 2. Task Execution Pattern
+### 1. Task Execution Pattern
 
 Use decorators to make async/sync execution explicit.
 
@@ -759,7 +735,6 @@ mkdir -p src/finwiz/crews/my_custom_crew/config
 ```python
 from crewai import Agent, Crew, Task, agent, crew, task
 from finwiz.tools.tool_factories import get_stock_crew_tools
-from finwiz.infrastructure.decorators.agent_validators import final_reporter
 from finwiz.infrastructure.decorators.task_decorators import async_task, sync_task
 from finwiz.infrastructure.logging.helpers import CrewLogger
 
