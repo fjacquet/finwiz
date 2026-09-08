@@ -115,37 +115,3 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, Enric
                 "success": False,
                 "error": str(e),
             }
-
-    def generate_final_report(
-        self,
-        consolidated_data: dict[str, Any],
-    ) -> str:
-        """
-        Generate final HTML report from consolidated data.
-
-        Args:
-            consolidated_data: Consolidated report data from all crews
-
-        Returns:
-            Path to generated HTML report
-
-        """
-        try:
-            self.logger.info("Generating final HTML report")
-
-            # Extract portfolio review from consolidated data
-            portfolio_review = self._extract_portfolio_review(consolidated_data)
-
-            # Extract deep analysis results
-            deep_analysis = self._extract_deep_analysis(consolidated_data)
-
-            # Generate HTML report
-            report_path = self._generate_python_report(portfolio_review, deep_analysis)
-
-            self.logger.info(f"Final report generated: {report_path}")
-
-            return report_path
-
-        except Exception as e:
-            self.logger.error(f"Final report generation failed: {e}", exc_info=True)
-            raise
