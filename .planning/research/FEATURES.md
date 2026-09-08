@@ -30,7 +30,7 @@ Features that set FinWiz apart. Not expected, but create high value.
 | **Market regime detection with real data** | Current `assess_market_regime()` uses hardcoded VIX default of 20.0 and hardcoded inflation of 3.0. Real FRED data enables actual regime classification. Already sketched in `get_dynamic_criteria()` but not connected to `DeepAnalysisScorer`. | Medium | Replace `_estimate_interest_rate()` returning 5.0/4.5/5.5 with actual Fed Funds Rate from FRED (`FEDFUNDS` series). Wire VIX + yield curve into `assess_market_regime()`. Feed regime into scorer's adaptive weights. |
 | **Multi-source news deduplication** | Avoids counting the same story from 3 sources as 3x the signal. Without deduplication, aggregate sentiment is biased toward widely-syndicated stories. | Medium | Existing `_is_duplicate_article()` in enhanced sentiment tool uses Jaccard similarity. Extend to cross-source dedup across Finnhub + gnews + RSS. |
 | **Sentiment trend direction** | Not just "what is sentiment now" but "is it improving or deteriorating?" A 7/14/30-day trend line is far more useful than a snapshot. | Medium | Requires storing or fetching historical sentiment data points and computing a simple moving average or slope. Can use Alpha Vantage's `time_from` parameter for historical ranges. |
-| **Macro dashboard in report** | A dedicated "Market Environment" section in the HTML report showing VIX, yield curve, GDP trend, inflation, unemployment, Fear and Greed -- all in one visual panel with traffic-light indicators. | Medium | Extends `ReportSectionBuilder`. Needs HTML/CSS template work. Color-coded gauges (green/yellow/red). `ReportSectionBuilder` already supports adding arbitrary sections and has `EMOJI_MAP` for visual cues. |
+| **Macro dashboard in report** | A dedicated "Market Environment" section in the HTML report showing VIX, yield curve, GDP trend, inflation, unemployment, Fear and Greed -- all in one visual panel with traffic-light indicators. | Medium | **Blocked**: was planned to extend `ReportSectionBuilder`, which was deleted in #194 (dead code, no reachable caller). Needs a new home in the live reporting path before this can proceed -- pick that when this feature is taken up. |
 | **Economic calendar awareness** | Flag upcoming FOMC meetings, jobs reports, CPI releases. These events cause volatility and should be noted in analysis. | Medium | Finnhub free tier includes `economic_calendar` endpoint. Display as "upcoming events" in report. Forward-looking context that no current source provides. |
 | **Earnings surprise integration** | Earnings beats/misses are high-signal sentiment events. A stock that just beat estimates by 20% is materially different from one that missed. | Medium | Finnhub provides `earnings_surprises` endpoint on free tier. Quantitative signal, not AI. Feeds directly into fundamental score modifier. |
 | **Source reliability weighting** | Not all news sources are equal signal quality. Reuters/Bloomberg carry more weight than random blogs. | Low | Existing `get_source_reliability_score()` has tier system. Extend to weight VADER scores by source reliability. |
@@ -106,7 +106,7 @@ Prioritize:
 ### Phase 3 -- Report Enrichment (display in HTML)
 
 Prioritize:
-10. **Sentiment section in report** -- Article count, score, trend direction, top headlines. Use existing `ReportSectionBuilder`. The `FRENCH_SECTIONS` dict already has `sentiment_marche`.
+10. **Sentiment section in report** -- Article count, score, trend direction, top headlines. **Blocked**: was planned to use `ReportSectionBuilder`, deleted in #194 -- needs a new home in the live reporting path. The `FRENCH_SECTIONS` dict already has `sentiment_marche`.
 11. **Macro dashboard section** -- Traffic-light indicators for VIX, yield curve, GDP, CPI. One-glance market environment summary with color-coded gauges.
 12. **Fear and Greed display** -- Single gauge/number in the macro dashboard.
 13. **Economic calendar** -- Upcoming FOMC/CPI/jobs dates from Finnhub.
@@ -132,7 +132,7 @@ Prioritize:
 | `MacroIndicators` + `MarketContextExtractor` | Fill existing schema fields with real FRED data instead of hardcoded estimates. Replaces `_extract_gdp_growth()` etc. | **MEDIUM** -- Changes data values but schema already exists. |
 | `assess_market_regime()` in `scoring_criteria.py` | Wire real VIX + yield curve data. Replace `vix_level = market_context.get("vix", 20.0)` with actual value. | **MEDIUM** -- Threshold logic already exists, just needs real inputs. |
 | `SentimentAnalyzer` (existing) | Optionally replaced by VADER-based scorer. Keep as fallback when feature flag disabled. | **MEDIUM** -- Must not break existing flows. Feature-flag gated. |
-| `ReportSectionBuilder` | Add new section types for sentiment and macro. `FRENCH_SECTIONS` already has `sentiment_marche`. | **LOW** -- Purely additive. |
+| `ReportSectionBuilder` | **Blocked**: this class was deleted in #194 (dead code, no reachable caller). Adding sentiment/macro sections needs a new home in the live reporting path (`finwiz.reporting`) -- a design decision for whoever picks this up. `FRENCH_SECTIONS` already has `sentiment_marche`. | **LOW** -- Purely additive, once retargeted. |
 | `tool_factories.py` | Register new tools (FRED data, enhanced sentiment, Fear and Greed). | **LOW** -- Additive. Follows existing pattern. |
 | `config/endpoints.py` | Add `FINNHUB_BASE`, `FRED_BASE` URLs. | **LOW** -- Additive. |
 | `config/features/flags.py` | Add new feature flags for sentiment, macro, smart scoring. | **LOW** -- Follows existing pattern. |
@@ -148,7 +148,7 @@ Prioritize:
 | Composite scoring rebalance | MEDIUM | Academic literature confirms sentiment has limited standalone predictive power (R-squared ~0.01). As a *modifier* on existing scores, it adds value, but weight calibration requires backtesting. Feature-flag gating is essential. |
 | Market regime detection | MEDIUM | VIX + yield curve approach supported by academic research (ScienceDirect 2023). Practical implementation straightforward but threshold tuning is empirical. |
 | Anti-features assessment | HIGH | Based on FinWiz's stated philosophy (AI Minimalism, Python wins, $0 deterministic scoring) and academic evidence on sentiment limitations (ACM Computing Surveys, 2024). |
-| Report enrichment | HIGH | `ReportSectionBuilder` is well-architected for adding new sections. Existing patterns are clear. Low risk. |
+| Report enrichment | MEDIUM | `ReportSectionBuilder`, which this assumed, was deleted in #194 (dead code, no reachable caller). Existing patterns are clear, but a new integration point in the live reporting path (`finwiz.reporting`) needs to be chosen first. |
 
 ## Sources
 

@@ -41,24 +41,9 @@ tools/
 ├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
 ├── # Rebalancing report subsystem
-├── rebalancing_calculations.py      # RebalancingCalculations (pre-existing dead code, issue #194 — not this closure)
-│
-├── # Scenario report subsystem — pre-existing dead code, issue #194, not this closure.
-├── #   Verified via git grep at merge-base 171b8145: none of the three was ever
-├── #   imported by any crew, directly or via the CREW_GENERATORS registry — only
-├── #   by their own test and by each other's docstrings. Only its own test
-├── #   (tests/unit/tools/test_scenario_comparison_report_generator.py) keeps this
-├── #   trio's imports alive.
-├── scenario_comparison_report_generator.py # ScenarioComparisonReportGenerator(HTMLReportGenerator)
-├── scenario_report_renderer.py      # render_scenario_report_template()
-├── scenario_report_sections.py      # create_summary_sections()/create_comparison_tables()
+├── rebalancing_calculations.py      # RebalancingCalculations (dead: only consumer is its own test; unowned, no issue yet)
 │
 ├── # Reporting infrastructure
-├── html_report_generator.py         # HTMLReportGenerator base class
-├── #   Coupled to the scenario trio above: scenario_comparison_report_generator.py
-├── #   is its only remaining consumer now that orchestrators/portfolio_rebalancing.py
-├── #   and rebalancing_report_generator.py are gone. When #194 clears the scenario
-├── #   trio, delete HTMLReportGenerator in the same pass — it becomes a true orphan then.
 ├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
 ├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # RobustToolWrapper / make_tools_robust()
@@ -76,12 +61,9 @@ tools/
 ├── analysis/                        # Analysis coordination
 │   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
 │   └── holding_processors.py        # HoldingProcessor
-├── etf/                             # ETF data fetchers/analyzers
-│   ├── etf_analyzers.py             # ETFAnalyzer
-│   └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
-└── reporting/                       # Report formatters
-    ├── report_formatters.py         # HTMLReportFormatter
-    └── report_sections.py           # ReportSectionBuilder
+└── etf/                             # ETF data fetchers/analyzers
+    ├── etf_analyzers.py             # ETFAnalyzer
+    └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
 ```
 
 The `tools/rebalancing/` re-export shim (`__init__.py`, re-exporting

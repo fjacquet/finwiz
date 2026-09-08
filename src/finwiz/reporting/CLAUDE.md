@@ -26,7 +26,6 @@ reporting/
 │   ├── macro.py
 │   ├── portfolio_summary.py
 │   └── sentiment.py
-├── html_auto_generator.py               # auto_generate_html()
 └── css_styles.py                        # get_report_css() — reads assets/report_styles.css
 ```
 
@@ -66,7 +65,6 @@ gone — `create_report_jinja_env()` in the same file is unrelated and stays liv
 | `base_report_generator.py` | `create_report_jinja_env()` | Shared Jinja2 env factory (autoescape on) — use for any new generator |
 | `python_report_generator.py` | `PythonReportGenerator` | Main report engine |
 | `enriched_analysis_report_generator.py` | `EnrichedAnalysisReportGenerator` | Live per-holding HTML generator |
-| `html_auto_generator.py` | `auto_generate_html()` | Auto-generate from crew exports |
 
 ## Usage
 

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FinwizFlow`'s ten `@listen` methods. The chain's root trigger had no
   producer, so none of them could fire; every body duplicated a call
   `run_sequential_workflow` already makes. No behavior change. ([#193](https://github.com/fjacquet/finwiz/issues/193))
+- The dead HTML template chain: sixteen Jinja templates outside
+  `crew_reports/`, `JsonToHtmlConverter` and its `TEMPLATE_MAPPING`,
+  `auto_generate_html` / `auto_generate_html_for_crew`, and the report-generator
+  island behind them (`HTMLReportGenerator`, `HTMLReportFormatter`, the scenario
+  report trio, and `tools/reporting/`). None had a reachable caller; the live
+  reporting path in `finwiz.reporting` is unaffected. ([#194](https://github.com/fjacquet/finwiz/issues/194))
 
 ## [5.15.0] - 2026-09-07
 
