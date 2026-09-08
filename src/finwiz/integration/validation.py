@@ -56,11 +56,11 @@ class DataValidator:
                     IntegrationError(
                         error_type=IntegrationErrorType.MISSING_DATA,
                         crew_name=crew_name,
-                        error_message=f"No data found for {crew_name} crew",
+                        error_message=f"No data found for {crew_name}",
                         expected_path=str(self.integration_manager.output_dir / crew_name),
                         recovery_suggestions=[
-                            f"Run {crew_name} crew to generate initial data",
-                            f"Check if {crew_name} crew execution completed successfully",
+                            f"Run the pipeline to populate output/{crew_name}",
+                            f"Check whether the {crew_name} phase completed successfully",
                         ],
                         timestamp=freshness_report.check_timestamp,
                     )
@@ -71,10 +71,10 @@ class DataValidator:
                     IntegrationError(
                         error_type=IntegrationErrorType.STALE_DATA,
                         crew_name=crew_name,
-                        error_message=f"Stale data detected for {crew_name} crew",
+                        error_message=f"Stale data detected for {crew_name}",
                         recovery_suggestions=[
-                            f"Re-run {crew_name} crew to refresh data",
-                            "Check if crew execution schedule needs adjustment",
+                            f"Re-run the pipeline to refresh output/{crew_name}",
+                            "Check whether the run completed successfully",
                         ],
                         timestamp=freshness_report.check_timestamp,
                     )
