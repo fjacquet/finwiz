@@ -40,19 +40,17 @@ src/finwiz/templates/
 │   └── deep_analysis_report.html.j2   # the one real Jinja2 template, live
 ├── partials/
 │   └── _design_tokens.html
-├── enriched_analysis_report.html      # live — the production report path
-└── (16 further top-level .html files)
+└── enriched_analysis_report.html      # live — the production report path
 ```
 
 `deep_analysis_report.html.j2` is loaded by `DeepAnalysisReportGenerator`, and
 `enriched_analysis_report.html` backs `generate_enriched_html_reports`, the path
 that actually produces the reports a run writes to `output/`.
 
-Most of the 16 remaining top-level files have no reachable caller — they are
-reached only through a `JsonToHtmlConverter` chain whose entry point
-`auto_generate_html` has no callers, or by nothing at all. That predates #187
-and is tracked separately on issue #194; do not treat their presence here as
-evidence that they are live.
+The 16 top-level files that used to sit alongside these — reachable only
+through a `JsonToHtmlConverter` chain whose entry point `auto_generate_html`
+had no callers, or by nothing at all — were deleted in #194. The directory
+above is what remains.
 
 ### Template Inheritance
 

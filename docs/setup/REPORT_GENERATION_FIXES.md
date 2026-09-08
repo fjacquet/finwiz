@@ -141,31 +141,19 @@ def _generate_html_report(...) -> str:
     <html>...</html>"""  # ❌ Hard to maintain
 ```
 
-### ⚠️ TODO: Refactor to Jinja2 Templates
+### Refactor to Jinja2 Templates — superseded, not done as proposed
 
-We already have templates in `src/finwiz/templates/`:
-
-- `unified_portfolio_report.html`
-- `portfolio_review.html`
-- `a_plus_discovery.html`
-- `base_template.html`
-
-**Should use `TemplateRenderer`** (already exists):
-
-```python
-from finwiz.reporting.rebalancing.template_renderers import TemplateRenderer
-
-renderer = TemplateRenderer()
-html = renderer.render_portfolio_review(portfolio_data)
-```
-
-**Benefits**:
-
-- ✅ Separation of concerns (Python logic vs presentation)
-- ✅ Easier to maintain and modify layouts
-- ✅ Reusable templates
-- ✅ Better dark mode support
-- ✅ Follows existing codebase patterns
+This TODO named `unified_portfolio_report.html`, `portfolio_review.html`,
+`a_plus_discovery.html`, `base_template.html`, and a `TemplateRenderer` class
+in `finwiz.reporting.rebalancing.template_renderers`. None of that exists any
+more: those four templates and the `rebalancing/` subtree that held
+`TemplateRenderer` had no caller and were deleted (issue #194). The family
+financial plan (`python_report_generator.py`) still assembles HTML from
+f-strings, unchanged from the "What's Wrong" note above. The one place this
+TODO *did* land is per-holding HTML, which now goes through
+`EnrichedAnalysisReportGenerator` and the live `enriched_analysis_report.html`
+Jinja2 template (see `src/finwiz/reporting/CLAUDE.md`) — a different code path
+than the one this section proposed.
 
 ---
 
@@ -179,16 +167,15 @@ html = renderer.render_portfolio_review(portfolio_data)
    - Add logging to trace merge execution
 
 2. **Refactor to Jinja2 Templates** (AI Minimalism)
-   - Replace string concatenation with template rendering
-   - Use existing `TemplateRenderer` class
-   - Create/update templates as needed
+   - The family financial plan (`python_report_generator.py`) still builds
+     HTML from f-strings. `TemplateRenderer`, the class this item originally
+     proposed reusing, no longer exists (see note above).
 
 ### Medium Priority
 
-1. **Add Template for Individual Deep Analysis**
-   - Create `src/finwiz/templates/deep_analysis_individual.html`
-   - Include full metrics breakdown
-   - Add charts/visualizations
+1. ~~**Add Template for Individual Deep Analysis**~~ — done, via
+   `enriched_analysis_report.html` and `EnrichedAnalysisReportGenerator`,
+   not the `deep_analysis_individual.html` name this item proposed.
 
 2. **Enhance Discovery Section**
    - Add comparison vs current holdings

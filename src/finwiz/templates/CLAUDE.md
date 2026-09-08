@@ -6,16 +6,13 @@ This directory contains Jinja2 HTML templates for report generation. Templates a
 
 ```
 templates/
+├── CLAUDE.md
 ├── crew_reports/                    # Per-crew report templates
 │   ├── base.html                   # Base template with common styles
 │   └── deep_analysis_report.html.j2 # Deep analysis report (live)
-├── base_template.html              # Global base template
-├── portfolio_review.html           # Portfolio review template
-├── a_plus_discovery.html           # A+ discovery template
-├── backtesting_results.html        # Backtesting results
-├── optimization_report.html        # Portfolio optimization
-├── validation_report.html          # Data validation report
-└── [other specialized templates]
+├── partials/
+│   └── _design_tokens.html         # Included by crew_reports/base.html
+└── enriched_analysis_report.html   # Live per-holding report template
 ```
 
 ## Major Entry Points
@@ -23,10 +20,7 @@ templates/
 | Template | Purpose |
 |----------|---------|
 | `crew_reports/base.html` | Base layout with CSS, JS, navigation |
-| `portfolio_review.html` | Complete portfolio review with recommendations |
-| `a_plus_discovery.html` | A+ investment opportunities |
-| `deep_analysis_consolidated.html` | Per-holding deep analysis |
-| `rebalancing_template.html` | Rebalancing trades and allocations |
+| `enriched_analysis_report.html` | Live per-holding report, rendered by `EnrichedAnalysisReportGenerator` |
 
 ## Usage Pattern
 
@@ -37,7 +31,7 @@ Templates are rendered through a shared Jinja2 environment — there is no
 from finwiz.reporting.base_report_generator import create_report_jinja_env
 
 env = create_report_jinja_env(template_dir)  # autoescape=True, trim/lstrip_blocks
-template = env.get_template("portfolio_review.html")
+template = env.get_template("enriched_analysis_report.html")
 
 html = template.render(
     session_id=session_id,
@@ -47,7 +41,7 @@ html = template.render(
 )
 
 # Save report
-with open(f"output/reports/{session_id}/portfolio_review.html", "w") as f:
+with open(f"output/reports/{session_id}/enriched_analysis_report.html", "w") as f:
     f.write(html)
 ```
 
@@ -87,5 +81,4 @@ Templates are ALWAYS rendered by Python (Jinja2), NEVER by AI agents:
 ## Related Modules
 
 - `finwiz.reporting.base_report_generator` - `create_report_jinja_env()`
-- `finwiz.tools.html_report_generator` - HTML generation tool
 - `finwiz.reporting` - Report generation logic
