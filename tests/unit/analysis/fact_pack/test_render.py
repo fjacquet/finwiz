@@ -57,6 +57,49 @@ class TestLabels:
         assert "21" in supply
 
 
+class TestPreviouslyUnrenderedFields:
+    """turnover, sector_weights and volume_24h_market_cap_pct were collected on
+    every run, stored in every cached pack, and read by nothing — neither scored
+    nor rendered, so they reached neither the model nor the reader. That was the
+    worst of the available states: the data was paid for and thrown away. See #186.
+
+    All three are fractions at source, verified against real cached packs
+    (a fund at turnover 1.1228, BTC at 0.0145), so _pct is the correct formatter.
+    """
+
+    def test_a_funds_turnover_is_rendered_as_a_percentage(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", turnover=1.1228))
+        assert ("Rotation annuelle", "112,28 %") in to_rows(pack)
+
+    def test_a_zero_turnover_is_shown_rather_than_treated_as_missing(self):
+        """0.0 is a real fact — an index fund that did not trade all year.
+        The same `is not None` distinction the expense ratio already makes."""
+        pack = _pack("etf", FundFacts(issuer="iShares", turnover=0.0))
+        assert ("Rotation annuelle", "0,00 %") in to_rows(pack)
+
+    def test_sector_weights_render_as_a_list_largest_first(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", sector_weights={"realestate": 0.02, "technology": 0.41, "basic_materials": 0.09}))
+        sectors = next(value for label, value in to_rows(pack) if label == "Secteurs")
+        assert sectors == ["Technology 41,00 %", "Basic materials 9,00 %", "Realestate 2,00 %"]
+
+    def test_sector_weights_are_capped_so_the_tail_does_not_pad_the_prompt(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", sector_weights={f"sector_{i}": (20 - i) / 100 for i in range(11)}))
+        sectors = next(value for label, value in to_rows(pack) if label == "Secteurs")
+        assert len(sectors) == 5
+
+    def test_a_crypto_liquidity_ratio_is_rendered(self):
+        pack = _pack("crypto", CryptoFacts(description="Bitcoin", circulating_supply=19_000_000.0, volume_24h_market_cap_pct=0.014470552))
+        assert ("Volume 24 h / capitalisation", "1,45 %") in to_rows(pack)
+
+    def test_the_new_rows_reach_the_model_not_just_the_report(self):
+        """to_prompt_block is built from to_rows, so rendering reaches both
+        consumers. This asserts the half that is easy to forget."""
+        pack = _pack("etf", FundFacts(issuer="iShares", turnover=1.1228, sector_weights={"technology": 0.41}))
+        block = to_prompt_block(pack)
+        assert "Rotation annuelle : 112,28 %" in block
+        assert "Technology 41,00 %" in block
+
+
 class TestRowValueContract:
     """A row's value is a plain str for prose and a list[str] for a
     genuinely list-shaped fact (holdings, recent events, allocation

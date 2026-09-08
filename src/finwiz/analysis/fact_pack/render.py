@@ -10,9 +10,19 @@ from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, F
 
 _MAX_HOLDINGS_SHOWN = 5
 
+# Sector weights arrive with ~11 buckets. Concentration is the fact worth
+# reading, and it lives in the largest few -- the tail adds length to a prompt
+# block and a report cell without changing what either says.
+_MAX_SECTORS_SHOWN = 5
+
 
 def _pct(value: float | None) -> str:
     return "—" if value is None else f"{value * 100:.2f}".replace(".", ",") + " %"
+
+
+def _sector_label(key: str) -> str:
+    """Yfinance sector keys are snake_case ("consumer_cyclical"); make them readable."""
+    return key.replace("_", " ").strip().capitalize()
 
 
 def _supply(facts: CryptoFacts) -> str:
@@ -48,6 +58,14 @@ def _fund_rows(facts: FundFacts) -> list[Row]:
         buckets = [f"{k} {_pct(v)}" for k, v in sorted(facts.asset_mix.items(), key=lambda kv: -kv[1]) if v > 0]
         if buckets:
             rows.append(("Allocation", buckets))
+    if facts.sector_weights:
+        sectors = [f"{_sector_label(k)} {_pct(v)}" for k, v in sorted(facts.sector_weights.items(), key=lambda kv: -kv[1]) if v > 0]
+        if sectors:
+            rows.append(("Secteurs", sectors[:_MAX_SECTORS_SHOWN]))
+    # `is not None`, not truthiness: 0.0 is a real and notable fact -- an index
+    # fund that did not trade all year. The same distinction the expense ratio makes.
+    if facts.turnover is not None:
+        rows.append(("Rotation annuelle", _pct(facts.turnover)))
     return rows
 
 
@@ -58,6 +76,10 @@ def _crypto_rows(facts: CryptoFacts) -> list[Row]:
     rows.append(("Offre", _supply(facts)))
     if facts.market_cap is not None:
         rows.append(("Capitalisation", f"{facts.market_cap:,.0f}".replace(",", " ")))
+    # Daily traded value against total value: the asset's liquidity, and the
+    # difference between a position you can exit and one you are holding.
+    if facts.volume_24h_market_cap_pct is not None:
+        rows.append(("Volume 24 h / capitalisation", _pct(facts.volume_24h_market_cap_pct)))
     return rows
 
 
