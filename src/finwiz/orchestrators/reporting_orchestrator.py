@@ -14,12 +14,11 @@ from typing import Any
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.reporting.data_loading import ReportDataLoadingMixin
-from finwiz.orchestrators.reporting.enriched_html import EnrichedHtmlMixin
 from finwiz.orchestrators.reporting.enrichment import ReportEnrichmentMixin
 from finwiz.tools.logger import get_logger
 
 
-class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, EnrichedHtmlMixin):
+class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin):
     """Generates consolidated reports and final HTML output."""
 
     def __init__(self, state: FinwizState, **dependencies: Any) -> None:
@@ -80,12 +79,6 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, Enric
 
             # Generate Python-based report
             report_path = self._generate_python_report(portfolio_review, deep_analysis_results)
-
-            # Generate individual HTML reports from enriched JSON files
-            enriched_html_paths = self.generate_enriched_html_reports()
-            enriched_count = sum(len(paths) for paths in enriched_html_paths.values())
-            if enriched_count > 0:
-                self.logger.info(f"✅ Generated {enriched_count} individual HTML reports from enriched data")
 
             # Update state with success
             self.state.report_generation_success = True
