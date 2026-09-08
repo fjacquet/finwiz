@@ -8,6 +8,7 @@ instead of raising: a shape change must cost one field, never a holding.
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, date, datetime
 from typing import Any
 
@@ -21,6 +22,144 @@ logger = get_logger(__name__)
 
 _MAX_OFFICERS = 6
 _SOURCES = ("yfinance.info",)
+
+# Legal-form suffixes stripped before matching a company name against a headline.
+# "Mercedes-Benz Group AG" must match a headline saying "Mercedes-Benz"; leaving
+# the suffix on would require the wire to spell the legal entity, which it never does.
+_LEGAL_SUFFIXES = frozenset(
+    {
+        "ag",
+        "sa",
+        "sas",
+        "nv",
+        "bv",
+        "plc",
+        "inc",
+        "inc.",
+        "corp",
+        "corp.",
+        "co",
+        "co.",
+        "ltd",
+        "ltd.",
+        "llc",
+        "spa",
+        "se",
+        "oyj",
+        "ab",
+        "as",
+        "asa",
+        "holding",
+        "holdings",
+        "group",
+        "the",
+        "company",
+    }
+)
+
+# A token shorter than this is too generic to establish that a headline is about
+# the holding -- "EL" (EssilorLuxottica) matches "EL NINO", and a two-letter root
+# matches something in almost any sentence. Such a holding can still qualify
+# through the keyword arm; it just cannot qualify on its name alone.
+_MIN_NAME_TOKEN_CHARS = 4
+_MIN_TICKER_ROOT_CHARS = 3
+
+# Words that make a headline a corporate event regardless of whether it names the
+# company: a wire writing "Q3 profit beats estimates" under a ticker is reporting on
+# that ticker. Deliberately narrow -- every entry here is a hole through which
+# syndicated noise can pass, so only unambiguous corporate-finance vocabulary
+# qualifies. Anything arguable (an "outlook", a "report", a "deal") is left out.
+_CORPORATE_EVENT_KEYWORDS = frozenset(
+    {
+        "earnings",
+        "revenue",
+        "profit",
+        "profits",
+        "loss",
+        "losses",
+        "dividend",
+        "buyback",
+        "guidance",
+        "forecast",
+        "merger",
+        "acquisition",
+        "acquires",
+        "acquire",
+        "takeover",
+        "divest",
+        "divests",
+        "spinoff",
+        "ipo",
+        "bankruptcy",
+        "restructuring",
+        "layoffs",
+        "recall",
+        "lawsuit",
+        "settlement",
+        "probe",
+        "downgrade",
+        "downgrades",
+        "upgrade",
+        "upgrades",
+        "ceo",
+        "cfo",
+        "chairman",
+        "quarterly",
+        "shareholders",
+        "shares",
+        "stake",
+    }
+)
+
+
+def _name_tokens(company_name: str) -> set[str]:
+    """Distinctive lowercase tokens of a company name, legal forms removed."""
+    raw = "".join(ch if ch.isalnum() or ch in "-&" else " " for ch in company_name.lower())
+    return {tok for tok in raw.split() if len(tok) >= _MIN_NAME_TOKEN_CHARS and tok not in _LEGAL_SUFFIXES}
+
+
+def _ticker_root(symbol: str) -> str:
+    """The symbol without its exchange or quote suffix: MCHA.F -> MCHA, BTC-USD -> BTC."""
+    return symbol.split(".")[0].split("-")[0].strip().lower()
+
+
+def _is_relevant_headline(title: str, ticker: str, company_name: str) -> bool:
+    """Is this headline plausibly about the holding, rather than syndicated noise?
+
+    Yahoo's ticker stream is loosely associated: a live run surfaced
+    "2026-08-09 This City May Be the South's Most Underrated Getaway" as MCHA.F's
+    only recent_event, which then reached the qualitative prompt inside the block
+    it labels AUTORITAIRE. The provider allowlist screens *who published*, never
+    *what about* -- a reputable wire syndicates travel copy under a ticker just as
+    readily. See #169.
+
+    Two independent ways to qualify, because either alone is wrong:
+
+    - The headline names the holding (ticker root or a distinctive name token).
+      Catches company-specific news whatever it is about.
+    - The headline carries unambiguous corporate-event vocabulary. Catches the
+      wire style that omits the name it is already filed under -- "Q3 profit beats
+      estimates" -- which a name-only gate would discard.
+
+    Neither is sufficient alone: name-only drops real events, keyword-only lets
+    through any syndicated piece that happens to use a financial word. Requiring
+    both would be stricter than the evidence justifies.
+    """
+    haystack = title.lower()
+
+    # Match at a word start, not anywhere: a bare substring test let "el"
+    # (EssilorLuxottica) match "EL NINO", and would equally match "shell" or
+    # "held". Prefix-at-word-start still catches the common case where a wire
+    # writes the name and the ticker is its stem -- AIR.PA against "Airbus".
+    root = _ticker_root(ticker)
+    candidates = _name_tokens(company_name)
+    if len(root) >= _MIN_TICKER_ROOT_CHARS:
+        candidates = candidates | {root}
+    if any(re.search(rf"\b{re.escape(token)}", haystack) for token in candidates):
+        return True
+
+    words = {"".join(ch for ch in w if ch.isalnum()) for w in haystack.split()}
+    return bool(words & _CORPORATE_EVENT_KEYWORDS)
 
 
 def _ticker(symbol: str) -> Any:
@@ -140,8 +279,13 @@ def _extract_filing_event(filing: Any, now: datetime) -> tuple[str | None, str |
     return event, url
 
 
-def _extract_news_event(item: Any, now: datetime) -> tuple[str | None, str | None]:
-    """Extract a news event and URL from a raw item, or return (None, None)."""
+def _extract_news_event(item: Any, now: datetime, ticker: str = "", company_name: str = "") -> tuple[str | None, str | None]:
+    """Extract a news event and URL from a raw item, or return (None, None).
+
+    Screens relevance as well as provider: see _is_relevant_headline. The ticker
+    and company_name default to empty so an unrelated caller still gets the old
+    provider/date/title behaviour, but the live path always passes both.
+    """
     if not isinstance(item, dict):
         return None, None
     content = item.get("content") or {}
@@ -157,6 +301,9 @@ def _extract_news_event(item: Any, now: datetime) -> tuple[str | None, str | Non
         return None, None
     title = _safe_str(content.get("title"))
     if not title:
+        return None, None
+    if (ticker or company_name) and not _is_relevant_headline(title, ticker, company_name):
+        logger.debug(f"fact_pack: {ticker} dropped an off-topic headline: {title!r}")
         return None, None
     event = f"{published.date().isoformat()} {title}"[:_EVENT_MAX_CHARS]
     url = (content.get("canonicalUrl") or {}).get("url")
@@ -207,8 +354,13 @@ def filing_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
         return FactPackFragment()
 
 
-def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
-    """Wire-service headlines in the last 12 months. Weaker than filings, still cited."""
+def news_events(ticker: str, company_name: str = "", now: datetime | None = None) -> FactPackFragment:
+    """Wire-service headlines in the last 12 months. Weaker than filings, still cited.
+
+    Headlines are screened for relevance to the holding, not merely for a
+    reputable provider -- Yahoo's ticker stream syndicates unrelated copy under a
+    symbol, and a thin pack is exactly where one bogus "fact" carries most weight.
+    """
     now = now or datetime.now(UTC)
     try:
         items = _ticker(ticker).news or []
@@ -221,7 +373,7 @@ def news_events(ticker: str, now: datetime | None = None) -> FactPackFragment:
             # must cost that item, not every good headline and citation
             # gathered before it.
             try:
-                event, url = _extract_news_event(item, now)
+                event, url = _extract_news_event(item, now, ticker, company_name)
             except Exception as e:
                 logger.warning(f"fact_pack: {ticker} skipped a malformed news item: {e}")
                 continue

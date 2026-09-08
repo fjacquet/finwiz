@@ -80,7 +80,7 @@ def _equity_details(
     fragment = merge_fragments(
         yfinance_source.equity_fragment(query_symbol, info),
         yfinance_source.filing_events(query_symbol),
-        yfinance_source.news_events(query_symbol),
+        yfinance_source.news_events(query_symbol, company_name),
     )
     recent_events = fragment.recent_events
     events_from_filings = fragment.events_from_filings

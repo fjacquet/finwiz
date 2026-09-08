@@ -100,6 +100,54 @@ class TestNewsEvents:
         assert fragment.citations == ("https://example.com/reuters/1",)
         assert fragment.events_from_filings is False
 
+    def test_the_travel_article_that_reached_a_live_prompt_is_dropped(self, mocker):
+        """MCHA.F's only recent_event on a live run was a travel headline.
+
+        It reached the qualitative prompt inside the block that prompt labels
+        AUTORITAIRE, presented as a recent corporate event about the holding.
+        The provider allowlist screens who published, never what about — a
+        reputable wire syndicates travel copy under a ticker just as readily.
+
+        This is the exact string from that run. It had no fixture before, which
+        is why it shipped. See #169.
+        """
+        news = [self._item("This City May Be the South's Most Underrated Getaway", "Reuters", "https://example.com/travel/1")]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+
+        assert src.news_events("MCHA.F", "Mercedes-Benz Group AG", now=NOW).recent_events == ()
+
+    def test_a_headline_naming_the_company_is_kept(self, mocker):
+        """The legal suffix is stripped: a wire writes "Mercedes-Benz", never "Mercedes-Benz Group AG"."""
+        news = [self._item("Mercedes-Benz opens a battery plant", "Reuters", "https://example.com/mb/1")]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+
+        assert src.news_events("MCHA.F", "Mercedes-Benz Group AG", now=NOW).recent_events == ("2026-09-05 Mercedes-Benz opens a battery plant",)
+
+    def test_a_corporate_event_headline_is_kept_even_without_the_company_name(self, mocker):
+        """Wires omit the name they have already filed the story under.
+
+        A name-only gate would discard this, which is why the keyword arm exists.
+        """
+        news = [self._item("Q3 profit beats estimates", "Reuters", "https://example.com/q3/1")]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+
+        assert src.news_events("MCHA.F", "Mercedes-Benz Group AG", now=NOW).recent_events == ("2026-09-05 Q3 profit beats estimates",)
+
+    def test_a_headline_matching_the_ticker_root_is_kept(self, mocker):
+        """MCHA.F -> MCHA: the exchange suffix must not defeat the match."""
+        news = [self._item("MCHA halted pending announcement", "Reuters", "https://example.com/t/1")]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+
+        assert src.news_events("MCHA.F", "", now=NOW).recent_events == ("2026-09-05 MCHA halted pending announcement",)
+
+    def test_a_short_name_token_does_not_match_an_unrelated_word(self, mocker):
+        """ "EL" (EssilorLuxottica) must not match "EL NINO"; tokens under four
+        characters are too generic to establish relevance."""
+        news = [self._item("EL NINO expected to persist into spring", "Reuters", "https://example.com/w/1")]
+        mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
+
+        assert src.news_events("EL.PA", "EL", now=NOW).recent_events == ()
+
     def test_opinion_providers_are_excluded_entirely(self, mocker):
         news = [self._item("Prediction: Amazon Will Join Nvidia", "Motley Fool", "https://example.com/fool/1")]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
@@ -111,9 +159,13 @@ class TestNewsEvents:
         assert src.news_events("AAPL", now=NOW).recent_events == ()
 
     def test_event_text_is_truncated_to_two_hundred_chars(self, mocker):
-        news = [self._item("x" * 400, "Reuters", "https://example.com/r/long")]
+        news = [self._item("AAPL " + "x" * 400, "Reuters", "https://example.com/r/long")]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
-        assert all(len(e) <= 200 for e in src.news_events("AAPL", now=NOW).recent_events)
+        events = src.news_events("AAPL", now=NOW).recent_events
+        # Assert non-empty first: the relevance gate made this vacuous once, and
+        # `all()` over an empty tuple is True. See #169.
+        assert events
+        assert all(len(e) <= 200 for e in events)
 
     def test_news_raising_exception_degrades_the_field_and_does_not_raise(self, mocker):
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=RuntimeError("HTTP Error 404")))
@@ -135,7 +187,7 @@ class TestEventCaps:
         assert len(src.filing_events("AAPL", now=NOW).recent_events) == 10
 
     def test_news_events_cap_at_ten_items(self, mocker):
-        news = [self._news_item(f"News {i}", "Reuters") for i in range(15)]
+        news = [self._news_item(f"AAPL quarterly earnings note {i}", "Reuters") for i in range(15)]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
         assert len(src.news_events("AAPL", now=NOW).recent_events) == 10
 
@@ -167,10 +219,17 @@ class TestMalformedData:
 
     def test_news_events_skips_non_dict_entries(self, mocker):
         news = [
-            {"content": {"title": "Good", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/1"}}},
+            {"content": {"title": "Good earnings", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/1"}}},
             None,
             "not a dict",
-            {"content": {"title": "Also good", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/2"}}},
+            {
+                "content": {
+                    "title": "Also good dividend news",
+                    "pubDate": "2026-09-05T19:40:00Z",
+                    "provider": {"displayName": "Reuters"},
+                    "canonicalUrl": {"url": "https://example.com/2"},
+                }
+            },
         ]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
         fragment = src.news_events("AAPL", now=NOW)
@@ -219,9 +278,16 @@ class TestPerItemContainment:
         """
         news = [
             {"content": {"title": "Bad", "pubDate": "2026-09-05T19:40:00Z", "provider": "Reuters", "canonicalUrl": {"url": "https://example.com/bad"}}},
-            {"content": {"title": "Good headline", "pubDate": "2026-09-05T19:40:00Z", "provider": {"displayName": "Reuters"}, "canonicalUrl": {"url": "https://example.com/good"}}},
+            {
+                "content": {
+                    "title": "Good earnings headline",
+                    "pubDate": "2026-09-05T19:40:00Z",
+                    "provider": {"displayName": "Reuters"},
+                    "canonicalUrl": {"url": "https://example.com/good"},
+                }
+            },
         ]
         mocker.patch.object(src, "_ticker", return_value=_FakeTicker(news=news))
         fragment = src.news_events("AAPL", now=NOW)
-        assert fragment.recent_events == ("2026-09-05 Good headline",)
+        assert fragment.recent_events == ("2026-09-05 Good earnings headline",)
         assert fragment.citations == ("https://example.com/good",)
