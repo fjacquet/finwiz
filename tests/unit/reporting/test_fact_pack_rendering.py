@@ -8,7 +8,7 @@ from finwiz.reporting.section_generators import _fact_pack_provenance_footer
 from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
 
 
-def _build_fp(days_old: float = 0, citations: list[str] | None = None) -> FactPack:
+def _build_fp(days_old: float = 0, citations: list[str] | None = None, sources_used: list[str] | None = None) -> FactPack:
     fetched = datetime.now(UTC) - timedelta(days=days_old)
     return FactPack(
         asset_class="stock",
@@ -17,7 +17,50 @@ def _build_fp(days_old: float = 0, citations: list[str] | None = None) -> FactPa
         freshness=FactPack.derive_freshness(fetched),
         confidence=0.85,
         source_citations=citations or [],
+        sources_used=sources_used or [],
     )
+
+
+class TestSourcesLabel:
+    """The pill tooltip reads "Vérifié via {label}" — it is prose for a reader.
+
+    sources_used holds internal identifiers. Rendering them raw put strings like
+    "yfinance.funds_data" into a financial report, and put
+    "composer.schema_fallback" there as if the exception backstop were a place
+    facts came from. See #174.
+    """
+
+    def test_internal_identifiers_are_not_shown_to_the_reader(self) -> None:
+        html = _fact_pack_provenance_footer(_build_fp(sources_used=["yfinance.info", "yfinance.sec_filings"]))
+        assert "Yahoo Finance" in html
+        assert "dépôts SEC" in html
+        assert "yfinance" not in html
+
+    def test_the_schema_fallback_marker_is_not_rendered_as_provenance(self) -> None:
+        """It marks a pack the exception backstop assembled — a diagnostic, not a source."""
+        html = _fact_pack_provenance_footer(_build_fp(sources_used=["yfinance.info", "composer.schema_fallback"]))
+        assert "Yahoo Finance" in html
+        assert "schema_fallback" not in html
+        assert "composer" not in html
+
+    def test_a_pack_built_only_by_the_backstop_falls_back_to_the_generic_phrase(self) -> None:
+        """Dropping the diagnostic must not leave an empty "Vérifié via" claim."""
+        html = _fact_pack_provenance_footer(_build_fp(sources_used=["composer.schema_fallback"]))
+        assert "sources structurées" in html
+        assert "schema_fallback" not in html
+
+    def test_the_same_provider_is_named_once(self) -> None:
+        """A fund pack draws on yfinance.info and yfinance.funds_data; the reader
+        should see "Yahoo Finance", not it twice."""
+        label = _fact_pack_provenance_footer(_build_fp(sources_used=["yfinance.info", "yfinance.funds_data"]))
+        assert label.count("Yahoo Finance") == 1
+
+    def test_an_unlabelled_identifier_is_omitted_rather_than_leaked(self) -> None:
+        """Adding a source without adding its label degrades to the generic
+        phrase; it must never print the raw identifier into a report."""
+        html = _fact_pack_provenance_footer(_build_fp(sources_used=["some.new_source_nobody_labelled"]))
+        assert "some.new_source" not in html
+        assert "sources structurées" in html
 
 
 class TestProvenanceFooter:
