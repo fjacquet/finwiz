@@ -27,10 +27,6 @@ help:
 	@echo "  make docs-clean  - Clean documentation artifacts"
 	@echo ""
 	@echo "HTML Reports:"
-	@echo "  make html-reports - Generate HTML reports from all JSON files"
-	@echo "  make html-convert - Convert all JSON output files to HTML"
-	@echo "  make html-report FILE=path/to/file.json TYPE=template_type - Generate specific HTML report"
-	@echo "  make html-demo   - Generate HTML template demo file"
 	@echo ""
 	@echo "Quality Assurance:"
 	@echo "  make all         - Full PR-ready validation (lint + tests + mypy + docs build --strict + complexity + deadcode + duplication)"
@@ -248,41 +244,6 @@ docs-clean:
 	@rm -rf site/
 	@echo "✅ Documentation artifacts cleaned"
 
-# HTML Report Generation
-html-reports:
-	@echo "📊 Generating HTML reports from all JSON files..."
-	python scripts/generate_html_reports.py --all
-	@echo "✅ HTML reports generated"
-
-html-convert:
-	@echo "🔄 Converting all JSON output files to HTML..."
-	uv run python scripts/generate_html_reports.py
-	@echo "✅ HTML conversion complete"
-
-html-report:
-	@if [ -z "$(FILE)" ] || [ -z "$(TYPE)" ]; then \
-		echo "❌ Error: Both FILE and TYPE must be specified"; \
-		echo "Usage: make html-report FILE=path/to/file.json TYPE=template_type"; \
-		echo ""; \
-		echo "Supported template types:"; \
-		echo "  - backtesting_results"; \
-		echo "  - portfolio_review"; \
-		echo "  - a_plus_discovery"; \
-		echo "  - deep_analysis_consolidated"; \
-		echo "  - optimization_report"; \
-		echo "  - validation_report"; \
-		echo "  - discovery_latest"; \
-		echo "  - portfolio_processing_summary"; \
-		exit 1; \
-	fi
-	@echo "📊 Generating HTML report for $(FILE)..."
-	python scripts/generate_html_reports.py --file "$(FILE)" --type "$(TYPE)"
-	@echo "✅ HTML report generated"
-
-html-demo:
-	@echo "🎨 Generating HTML template demo..."
-	python scripts/generate_demo.py
-	@echo "✅ Demo generated - open demo.html in your browser"
 
 lint-complexity:
 	@echo "🧠 Checking complexity (C901/PLR0915) — grandfathered files in pyproject per-file-ignores; shrink-only, never add entries"
