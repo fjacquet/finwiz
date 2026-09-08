@@ -7,7 +7,6 @@ CrewAI Flow orchestration — coordinates the multi-crew financial analysis pipe
 ```
 flows/
 ├── orchestrator.py                  # MAIN: FinwizFlow, OrchestratorDependencies, plot()
-├── hybrid_analysis_synthesizer.py   # HybridAnalysisSynthesizer
 └── utils.py                         # get_output_dir(), run_crew_with_caching()
 ```
 
@@ -20,7 +19,6 @@ flows/
 | `orchestrator.py` | `FinwizFlow` | Main flow — 6-phase pipeline via orchestrator delegation |
 | `orchestrator.py` | `OrchestratorDependencies` | Dependency injection container |
 | `orchestrator.py` | `plot()` | Visualize flow structure |
-| `hybrid_analysis_synthesizer.py` | `HybridAnalysisSynthesizer` | Synthesis utilities |
 | `utils.py` | `run_crew_with_caching()` | Execute crew with cache check |
 
 ## Flow Phases

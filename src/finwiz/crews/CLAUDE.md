@@ -77,5 +77,4 @@ uv run pytest tests/unit/crews/ -v
 
 - `finwiz.tools.tool_factories` - Tool initialization
 - `finwiz.schemas.crew_exports` - Pydantic export schemas
-- `finwiz.infrastructure.decorators.agent_validators` - Decorators for agents
 - `finwiz.infrastructure.decorators.task_decorators` - Decorators for tasks
