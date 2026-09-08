@@ -277,6 +277,37 @@ class TestDeepAnalysisOrchestrator:
         assert pending.recommendation == "WAIT"
         assert "crew dépassé 900s" in pending.rationale
 
+    def test_unrecognised_asset_class_never_reaches_analysis(self, mocker):
+        """asset_class arrives as a bare dict value off the portfolio CSV.
+
+        It used to be checked only for truthiness, so any string travelled as a
+        plain str the whole way down and AssetClass never got a say. Deep in the
+        fact pack composer that became a guess, and a guessed class prices a
+        different instrument -- a coin routed as equity is queried without the
+        "-USD" suffix, and bare BTC is the Grayscale trust. See #177.
+
+        Asserts the strong version: analyze_holding is never called, so no
+        network work happens on a holding whose class we cannot trust.
+        """
+        from finwiz.orchestrators.deep_analysis_orchestrator import _analyze_single_sync
+
+        analyze = mocker.patch("finwiz.analysis.analyze_holding")
+
+        ticker, result, enriched = _analyze_single_sync(
+            {"ticker": "BTC", "asset_class": "digital_asset", "name": "Bitcoin"},
+            prefetched_data=None,
+            ledger=mocker.MagicMock(),
+            logger=mocker.MagicMock(),
+            make_synthetic_pending=DeepAnalysisOrchestrator._make_synthetic_pending,
+        )
+
+        analyze.assert_not_called()
+        assert ticker == "BTC"
+        assert enriched is None
+        assert result is not None, "the holding must stay visible, not vanish"
+        assert result.grade == "N/A"
+        assert "digital_asset" in result.rationale
+
     @pytest.mark.integration
     def test_should_skip_invalid_holdings(self, mocker, orchestrator, mock_deep_analysis_result, mock_enriched_analysis):
         """Test that holdings without ticker or asset_class are skipped."""

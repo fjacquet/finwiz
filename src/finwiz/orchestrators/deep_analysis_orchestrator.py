@@ -26,6 +26,7 @@ from finwiz.analysis.stages._ledger import RunLedger
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.infrastructure.resilience.crew_execution import CREW_TIMEOUT
 from finwiz.orchestrators.deep_analysis_data_collector import DeepAnalysisDataCollector
+from finwiz.schemas.common import AssetClass
 from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
@@ -70,6 +71,23 @@ def _analyze_single_sync(
 
     if not ticker or not asset_class:
         return (ticker or "unknown", None, None)
+
+    # Validate the class at the boundary, where a human can act on it. It arrives
+    # as a bare dict value off the portfolio CSV and used to be checked only for
+    # truthiness, so any string -- "bond", "commodity", a typo -- travelled as a
+    # plain str the whole way down; AssetClass never got a say. Deep in the fact
+    # pack composer that produced a guess, and a wrong guess prices a different
+    # instrument (see #177). A synthetic pending rather than (ticker, None, None):
+    # the renderer shows the reason, so the CSV row can be fixed, instead of the
+    # holding quietly vanishing behind a generic placeholder.
+    if asset_class not in {c.value for c in AssetClass}:
+        logger.error(f"Holding {ticker} has unrecognised asset_class={asset_class!r}; expected one of {[c.value for c in AssetClass]}")
+        pending = make_synthetic_pending(
+            ticker=ticker,
+            asset_class=asset_class,
+            rationale=f"Classe d'actif inconnue : {asset_class!r} — corriger le CSV du portefeuille",
+        )
+        return (ticker, pending, None)
 
     try:
         result, enriched = analyze_holding(
