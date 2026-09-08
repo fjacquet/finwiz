@@ -74,9 +74,11 @@
 ## Task 1: Capture the acceptance baseline
 
 **Files:**
+
 - Create: `/tmp/crew-removal-baseline/run_summary.before.json` (outside the repo — never commit it)
 
 **Interfaces:**
+
 - Produces: a `run_summary.json` from unmodified `main`, the yardstick every later task is measured against.
 
 This task runs **before any deletion**. The unit suite passes today with this whole subsystem already dead, so it cannot tell you whether a deletion broke something. Only a live run can.
@@ -136,11 +138,13 @@ This task produces no repository change. Report the baseline numbers and the eig
 ## Task 2: Delete the six crew packages
 
 **Files:**
+
 - Delete: `src/finwiz/crews/{stock,etf,crypto,investment_discovery,portfolio_rebalancing,report}_crew/` (whole directories)
 - Delete: `tests/validation/stock_crew_validation.py`
 - Modify: `src/finwiz/main.py`
 
 **Interfaces:**
+
 - Consumes: nothing.
 - Produces: `src/finwiz/crews/` containing only `deep_analysis/` and `helpers/`.
 
@@ -195,10 +199,12 @@ git commit -m "refactor: delete the six crews nothing calls"
 ## Task 3: Delete CrewFactory and its injection wiring
 
 **Files:**
+
 - Delete: `src/finwiz/crew_factory.py`, `tests/unit/test_crew_factory.py`, `tests/unit/crews/test_crew_output_parsing.py`
 - Modify: `src/finwiz/flows/orchestrator.py`, `src/finwiz/flows/orchestrator_registry.py`, `src/finwiz/orchestrators/deep_analysis_orchestrator.py`, `src/finwiz/orchestrators/alternatives_matching_orchestrator.py`, `src/finwiz/orchestrators/error_handling_orchestrator.py`
 
 **Interfaces:**
+
 - Consumes: Task 2's deleted crews.
 - Produces: three orchestrators whose constructors no longer accept `crew_factory`.
 
@@ -264,10 +270,12 @@ git commit -m "refactor: delete CrewFactory, constructed at startup and never in
 ## Task 4: Delete the zero-importer reporting modules
 
 **Files:**
+
 - Delete: `src/finwiz/reporting/consolidator.py`, `src/finwiz/reporting/export_loaders.py`, `src/finwiz/reporting/html_collector.py`, `src/finwiz/reporting/final_report_generator.py`
 - Delete: the tests whose only subject is those modules
 
 **Interfaces:**
+
 - Produces: a `reporting/` package with no crew-export consolidation path.
 
 `consolidator.py` and `export_loaders.py` have zero importers anywhere in `src/` or `tests/`. `html_collector.py` is imported only by `consolidator.py`; `final_report_generator.py` only by its own test. They fall as a group.
@@ -326,10 +334,12 @@ git commit -m "refactor: delete the reporting modules nothing imports"
 ## Task 5: Delete the per-crew report generators and their registry
 
 **Files:**
+
 - Delete: `src/finwiz/reporting/{stock,etf,crypto,rebalancing,discovery}_report_generator.py`
 - Modify: `src/finwiz/reporting/__init__.py`, `src/finwiz/orchestrators/reporting/crew_html.py`, `src/finwiz/orchestrators/reporting_orchestrator.py`
 
 **Interfaces:**
+
 - Consumes: Task 4's deletions.
 - Produces: `crew_html.py` retaining only `generate_enriched_html_reports`.
 
@@ -395,9 +405,11 @@ git commit -m "refactor: delete the per-crew report generators and their registr
 ## Task 6: Trim the export schemas
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/crew_exports.py`
 
 **Interfaces:**
+
 - Consumes: Tasks 4 and 5.
 - Produces: `crew_exports.py` exporting `CrewExportBase` and `DeepAnalysisCrewExport` only, plus whatever `ConsolidatedReportExport` still needs.
 
@@ -453,9 +465,11 @@ git commit -m "refactor: keep only the export schemas that still have a producer
 ## Task 7: Delete the crew state fields and their readers
 
 **Files:**
+
 - Modify: `src/finwiz/flow_state_models.py:130-148`, `src/finwiz/flow_state_utils.py:51-53,64-74`, `src/finwiz/orchestrators/validation_orchestrator.py:275-276,394-396`
 
 **Interfaces:**
+
 - Produces: a `FinwizState` with no `{stock,etf,crypto}_analysis_*` field.
 
 Fifteen fields — five each for stock, ETF and crypto. Nothing has written them since the executors lost their callers, so every reader has been reading defaults.
@@ -517,9 +531,11 @@ git commit -m "refactor: delete the crew analysis state fields and their readers
 ## Task 8: Delete the feature flags and the crew-data queries
 
 **Files:**
+
 - Modify: `src/finwiz/config/features/definitions.py:157-176`, `src/finwiz/orchestrators/registry/registry_data_retrieval.py`, `src/finwiz/integration/cache.py`
 
 **Interfaces:**
+
 - Produces: no `stock_analysis` / `etf_analysis` / `crypto_analysis` flag, and no query that consolidates crew data for those three names.
 
 This is the spec's **risk 3**. `registry_data_retrieval.py:173` logged `Consolidated <asset> crew data: 0 ticker analyses, avg score: 0.000` three times in a real run, and `cache.py:98` logged `Consolidated data from 5 crews`. These are live calls querying producers that no longer exist. The producers are already gone by this task; the queries must follow, or the deletion trades a dead subsystem for a live one searching for nothing.
@@ -592,9 +608,11 @@ git commit -m "refactor: delete the crew feature flags and the queries with no p
 ## Task 9: Documentation and live acceptance
 
 **Files:**
+
 - Modify: `CLAUDE.md`, `CHANGELOG.md`, `src/finwiz/analysis/CLAUDE.md` if it mentions the deleted crews
 
 **Interfaces:**
+
 - Consumes: every prior task.
 - Produces: the merged branch's PR.
 
