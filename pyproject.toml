@@ -171,7 +171,6 @@ max-complexity = 10
 "src/finwiz/analysis/stages/_resilience.py" = ["C901", "PLR0915"]
 "src/finwiz/analysis/stages/_synthesize_helpers.py" = ["C901", "PLR0915"]
 "src/finwiz/analysis/stages/synthesize.py" = ["C901", "PLR0915"]
-"src/finwiz/infrastructure/json/to_html_converter.py" = ["C901", "PLR0915"]
 "src/finwiz/integration/backtesting_pipeline_connector.py" = ["C901", "PLR0915"]
 "src/finwiz/integration/transformation.py" = ["C901", "PLR0915"]
 "src/finwiz/orchestrators/alternatives_matching_orchestrator.py" = ["C901", "PLR0915"]
@@ -232,7 +231,6 @@ max-complexity = 10
 "src/finwiz/integration/batch_data_prefetcher.py" = ["PLR0915"]
 "src/finwiz/orchestrators/portfolio_review/merge.py" = ["PLR0915"]
 "src/finwiz/quantitative/optimization_algorithms.py" = ["PLR0915"]
-"src/finwiz/tools/reporting/report_formatters.py" = ["PLR0915"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

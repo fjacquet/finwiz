@@ -41,7 +41,7 @@ tools/
 ├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
 ├── # Rebalancing report subsystem
-├── rebalancing_calculations.py      # RebalancingCalculations (pre-existing dead code, issue #194 — not this closure)
+├── rebalancing_calculations.py      # RebalancingCalculations (dead: only consumer is its own test; unowned, no issue yet)
 │
 ├── # Reporting infrastructure
 ├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
