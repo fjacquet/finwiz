@@ -13,25 +13,22 @@ validation/
 ├── contract.py              # ContractValidator
 ├── enums.py                 # ValidationMode, Strictness
 ├── result.py                # ValidationResult, ValidationError, ValidationWarning
-│
-├── # Specialized validators
 ├── ai_output.py             # validate_ai_output_structure(), validate_qualitative_insights()
-├── report.py                # ReportValidator, validate_report_file()
 ├── template.py              # TemplateVariableValidator, validate_template_variables_at_startup()
-├── rules.py                 # ValidationRules
-├── pipeline_stages.py       # PipelineStages, CrossCrewValidationResult
-├── tool_restrictions.py     # Tool usage enforcement
-│
-├── # Supporting infrastructure
-├── int_pipeline.py          # Integration validation pipeline
-├── url.py                   # URL validation
-├── freshness.py             # Data freshness checks
 ├── quality_metrics.py       # Data quality metrics
-├── consolidation.py         # Consolidation validation
-├── report_data.py           # Report data validation
-├── sec_citation.py          # SEC citation validation
-└── scripts.py               # Validation scripts
+└── url.py                   # URL validation
 ```
+
+Ten orphaned modules — `rules.py`, `pipeline_stages.py`, `tool_restrictions.py`,
+`int_pipeline.py`, `freshness.py`, `consolidation.py`, `report.py`,
+`report_data.py`, `sec_citation.py`, `scripts.py` — were deleted as unreachable
+from any entry point
+([#200](https://github.com/fjacquet/finwiz/issues/200)). Two of them,
+`consolidation.py` (`DataConsolidationValidator`) and `report_data.py`
+(`ReportDataValidator`), had already stopped running silently in `4600d1a7`
+(November 2025); see [#202](https://github.com/fjacquet/finwiz/issues/202)
+for whether either should be reinstated. `schemas/report.py` (`ReporterInput`)
+is a different, unrelated, and still-live module.
 
 ## Entry Points
 
@@ -42,7 +39,6 @@ validation/
 | `contract.py` | `ContractValidator` | Validate against Pydantic schemas |
 | `ai_output.py` | `validate_ai_output_structure()` | Validate LLM output structure |
 | `template.py` | `validate_template_variables_at_startup()` | Validate Jinja2 template vars |
-| `report.py` | `validate_report_file()` | Validate generated reports |
 
 ## Usage
 

@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scripts under `bin/`. None had a reachable caller. The six `*_crew` availability
   labels now name the Python discovery scanners that actually produce the data.
   ([#195](https://github.com/fjacquet/finwiz/issues/195))
+- Seventeen modules unreachable from any entry point: five `orchestrators/error_handling/`
+  helpers that were never wired in, ten orphaned `validation/` modules, and the two dead
+  roots in `integration/` holding that subtree up. Two of the validation modules had
+  stopped running silently in 4600d1a7 — see [#202](https://github.com/fjacquet/finwiz/issues/202).
+  ([#200](https://github.com/fjacquet/finwiz/issues/200))
 
 ## [5.15.0] - 2026-09-07
 

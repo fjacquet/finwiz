@@ -15,12 +15,14 @@ integration/
 ├── cache.py                          # DataCache
 ├── validation.py                     # DataValidator
 ├── availability.py                   # DataAvailabilityTracker, SourceStatus
-├── middleware.py                     # CrewIntegrationMiddleware (pre/post execution)
 ├── transformation.py                 # Data consolidation & serialization helpers
 ├── batch_data_prefetcher.py          # BatchDataPreFetcher (bulk data loading)
-├── backtesting_pipeline_connector.py # connect_backtesting_to_discovery_results()
-└── cli.py                            # CLI commands: health, validate, status, analyze
+└── backtesting_pipeline_connector.py # connect_backtesting_to_discovery_results()
 ```
+
+`middleware.py` (`CrewIntegrationMiddleware`) and `cli.py` (`main()`,
+`cmd_health`, `cmd_validate`, `cmd_status`) were deleted as unreachable from
+any entry point ([#200](https://github.com/fjacquet/finwiz/issues/200)).
 
 ## Entry Points
 
@@ -30,9 +32,7 @@ integration/
 | `accessor.py` | `CrewDataAccessor` | Read-only access to crew data |
 | `extractor.py` | `CrewDataExtractor` | Parse and extract crew output |
 | `config.py` | `get_integration_config()` | Get integration settings |
-| `middleware.py` | `CrewIntegrationMiddleware` | Pre/post crew execution hooks |
 | `batch_data_prefetcher.py` | `BatchDataPreFetcher` | Prefetch data in bulk before crew execution |
-| `cli.py` | `main()` | CLI entry (`cmd_health`, `cmd_validate`, `cmd_status`) |
 
 ## Usage
 

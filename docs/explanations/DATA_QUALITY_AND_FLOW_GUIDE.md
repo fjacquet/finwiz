@@ -95,9 +95,9 @@ The system follows a strict data flow from generation to report:
 flowchart TD
     A["1. DATA GENERATION<br/>Crews generate rich analysis with proper grades and scores"]
     A --> B["2. DATA STORAGE<br/>Crew outputs stored in output/{crew_name}/ directories<br/>- stock_output_*.json<br/>- etf_output_*.json<br/>- crypto_output_*.json<br/>- portfolio_review.json"]
-    B --> C["3. DATA RETRIEVAL<br/>DataConsolidationValidator ensures data can be retrieved<br/>- Validates crew data exists<br/>- Checks data structure integrity<br/>- Fails fast if data missing or corrupted"]
+    B --> C["3. DATA RETRIEVAL<br/>Crew data is loaded from output/{crew_name}/ before processing"]
     C --> D["4. DATA CONSOLIDATION<br/>ReportConsolidator merges crew exports into one report<br/>- Loads deep analysis exports<br/>- Validates export structure<br/>- Tracks per-crew execution status<br/>- Records validation errors in the report"]
-    D --> E["5. REPORT GENERATION<br/>ReportDataValidator ensures complete inputs<br/>- Validates all required fields present<br/>- Detects 'NOT PROVIDED' placeholders<br/>- Checks for fallback Grade D patterns<br/>- Refuses to generate report if data incomplete"]
+    D --> E["5. REPORT GENERATION<br/>ReportingOrchestrator ensures complete inputs before rendering"]
 ```
 
 ### Data Generation Phase
@@ -138,50 +138,22 @@ output/
 
 ### Data Retrieval Phase
 
-**Component**: `DataConsolidationValidator`
-**Purpose**: Ensure crew data can be retrieved before processing
-
-```python
-from finwiz.validation.consolidation import DataConsolidationValidator
-
-validator = DataConsolidationValidator(registry_manager)  # RegistryManager is required
-
-try:
-    # Validate all expected crew data exists
-    crew_data = validator.validate_crew_data_retrieval(["stock", "etf", "crypto"])
-
-    # Data successfully retrieved
-    for crew_name, data in crew_data.items():
-        print(f"✅ {crew_name}: {len(data)} records")
-
-except DataRetrievalError as e:
-    # Fail fast - data missing or corrupted
-    logger.error(f"❌ Data retrieval failed: {e}")
-    raise
-```
+Crew data is loaded from `output/{crew_name}/` before processing. The
+`DataConsolidationValidator` that used to gate this step stopped running
+silently in `4600d1a7` (November 2025) and was deleted as unreachable dead
+code in [#200](https://github.com/fjacquet/finwiz/issues/200); whether a
+replacement gate should exist is tracked in
+[#202](https://github.com/fjacquet/finwiz/issues/202).
 
 ### Report Generation Phase
 
-**Component**: `ReportDataValidator`
-**Purpose**: Ensure report crew receives complete, validated data
-
-```python
-from finwiz.validation.report_data import ReportDataValidator
-
-validator = ReportDataValidator()
-
-try:
-    # ReportDataValidator has exactly one public method.
-    insights = validator.validate_qualitative_insights(crew_inputs["insights"])
-
-    # Generate report with validated data
-    report = generate_report(crew_inputs)
-
-except ReportValidationError as e:
-    # Fail fast - refuse to generate report with bad data
-    logger.error(f"❌ Report validation failed: {e}")
-    raise
-```
+Report inputs are validated by `ValidationOrchestrator.pre_validate_reporter_input()`
+in Phase 6 (`orchestrators/validation_orchestrator.py`), not by a standalone
+validator. The `ReportDataValidator` this section used to document stopped
+running silently in `4600d1a7` (November 2025) and was deleted as unreachable
+dead code in [#200](https://github.com/fjacquet/finwiz/issues/200); see
+[#202](https://github.com/fjacquet/finwiz/issues/202) for whether it should be
+reinstated.
 
 ---
 
@@ -197,11 +169,8 @@ Users must be able to trust that if they receive a report, it contains accurate 
 
 #### 1. Data Retrieval Validation
 
-```python
-# Fails if crew data missing or corrupted
-validator.validate_crew_data_retrieval(["stock", "etf", "crypto"])
-# Raises: DataRetrievalError with detailed diagnostics
-```
+The standalone retrieval-gate validator described here was removed as
+unreachable dead code; see the "Data Retrieval Phase" note above.
 
 #### 2. Data Merge Validation
 
@@ -214,12 +183,17 @@ merger.merge_deep_analysis_into_holdings(holdings, deep_analysis)
 #### 3. Report Input Validation
 
 ```python
-# Fails if required fields are missing or contain placeholders
-validator.validate_qualitative_insights(insights)  # -> QualitativeInsights
-# Raises: ReportValidationError with field-level details
+# Fails if required fields are missing or malformed
+from finwiz.validation.ai_output import validate_qualitative_insights
+
+insights = validate_qualitative_insights(result)  # -> QualitativeInsights
+# Raises: ValidationError (pydantic) on malformed input
 ```
 
-`validate_report_inputs()` and `validate_portfolio_review_data()` do not exist.
+The standalone `ReportDataValidator` this section used to document was
+removed as unreachable dead code; see the "Report Generation Phase" note
+above. `validate_report_inputs()` and `validate_portfolio_review_data()` do
+not exist.
 
 ### Error Messages
 
@@ -467,15 +441,8 @@ cat output/stock/stock_output_*.json | jq '.ticker, .grade, .composite_score'
 
 #### Step 3: Verify Data Retrieval
 
-```bash
-# Check retrieval logs
-grep "DataConsolidationValidator" logs/finwiz.log
-
-# Expected output:
-# ✅ Successfully retrieved data for stock
-# ✅ Successfully retrieved data for etf
-# ✅ Successfully retrieved data for crypto
-```
+There is no standalone retrieval-log validator to grep for; confirm instead
+that the expected `output/{crew_name}/` files from Step 2 exist and parse.
 
 #### Step 4: Verify Data Consolidation
 
@@ -489,14 +456,9 @@ grep "Deep analysis consolidation" logs/finwiz.log
 
 #### Step 5: Verify Report Generation
 
-```bash
-# Check report validation logs
-grep "ReportDataValidator" logs/finwiz.log
-
-# Expected output:
-# ✅ Report inputs validation passed
-# ✅ Portfolio review validation passed: 5 holdings with actual analysis data
-```
+There is no standalone report-validation log line to grep for; check
+`ValidationOrchestrator.pre_validate_reporter_input()` (Phase 6) output and
+the generated report itself for completeness instead.
 
 ### Common Issues and Fixes
 
@@ -561,10 +523,9 @@ print(f"Missing analysis for: {missing}")
 **Diagnosis**:
 
 ```bash
-# Check validation error details
-grep "ReportValidationError" logs/finwiz.log
-
-# Check for missing fields
+# ReportValidationError no longer exists (the ReportDataValidator that
+# raised it was removed as unreachable dead code) — check for missing
+# fields directly instead
 cat output/portfolio/portfolio_review.json | jq 'keys'
 ```
 
