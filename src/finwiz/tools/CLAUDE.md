@@ -52,7 +52,6 @@ tools/
 ├── perplexity_analysis_integration.py
 ├── perplexity_feature_utils.py
 ├── perplexity_performance.py
-├── perplexity_performance_benchmark.py
 │
 ├── # Subdirectories
 ├── analysis/                        # Analysis coordination

@@ -114,7 +114,7 @@ def perform_comprehensive_analysis(
         return f"Comprehensive analysis error: {message}"
 
     try:
-        recommendation = generate_recommendation(input_data.symbol, tech_result, backtest_result, metrics)
+        recommendation = generate_recommendation(input_data.symbol, tech_result, backtest_result)
 
         # Add ETF-specific metrics if applicable
         etf_specific_data = {}
@@ -298,7 +298,7 @@ def _build_risk_metrics(max_drawdown: float | None, volatility: float | None, sh
     return risk_metrics
 
 
-def generate_recommendation(symbol: str, tech_result: Any | None, backtest_result: Any | None, perf_metrics: Any | None) -> QuantitativeRecommendation:
+def generate_recommendation(symbol: str, tech_result: Any | None, backtest_result: Any | None) -> QuantitativeRecommendation:
     """
     Generate investment recommendation based on quantitative analysis.
 
@@ -306,18 +306,18 @@ def generate_recommendation(symbol: str, tech_result: Any | None, backtest_resul
         symbol: Asset symbol
         tech_result: Technical analysis result, or None if that sub-analysis failed
         backtest_result: Backtesting result, or None if refused (short series) or failed
-        perf_metrics: Performance metrics, or None if that sub-analysis failed (currently
-            unused here -- see note below; kept in the signature for API stability)
 
     Returns:
         QuantitativeRecommendation with buy/hold/sell signal
 
-    Any of the three inputs may be None -- each of the three sub-analyses in
-    perform_comprehensive_analysis is now independent, so the recommendation
+    Either input may be None -- each of the three sub-analyses in
+    perform_comprehensive_analysis is independent, so the recommendation
     degrades gracefully to whichever subset succeeded rather than crashing.
 
-    Risk figures (drawdown/volatility/sharpe/VaR) are read from backtest_result
-    ONLY, never from perf_metrics: BacktestResult.volatility/max_drawdown are
+    A third input, the PerformanceMetrics object, is deliberately NOT taken:
+    risk figures (drawdown/volatility/sharpe/VaR) are read from backtest_result
+    ONLY. Do not add PerformanceMetrics back as a source --
+    BacktestResult.volatility/max_drawdown are
     percent-scaled (backtesting_performance.py:246) while
     PerformanceMetrics.volatility/max_drawdown are fractional
     (performance_metrics.py:90). volatility has a sanctioned normalizer
