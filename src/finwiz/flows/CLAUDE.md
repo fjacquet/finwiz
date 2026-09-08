@@ -7,7 +7,7 @@ CrewAI Flow orchestration — coordinates the multi-crew financial analysis pipe
 ```
 flows/
 ├── orchestrator.py                  # MAIN: FinwizFlow, OrchestratorDependencies, plot()
-└── utils.py                         # get_output_dir(), run_crew_with_caching()
+└── orchestrator_registry.py         # create_orchestrator() — the string-keyed lazy registry
 ```
 
 **Note:** No `__init__.py` exists. Import directly from files.
@@ -19,7 +19,6 @@ flows/
 | `orchestrator.py` | `FinwizFlow` | Main flow — 6-phase pipeline via orchestrator delegation |
 | `orchestrator.py` | `OrchestratorDependencies` | Dependency injection container |
 | `orchestrator.py` | `plot()` | Visualize flow structure |
-| `utils.py` | `run_crew_with_caching()` | Execute crew with cache check |
 
 ## Flow Phases
 

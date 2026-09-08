@@ -1144,11 +1144,12 @@ Complete guide for FinWiz system operations including feedback learning, knowled
 
 ## Feedback Learning System — NOT IMPLEMENTED
 
-This subsystem does not exist. `src/finwiz/services/` contains only an
-`__init__.py` holding a one-line docstring; there is no `feedback_service`
-module, no `get_feedback_service()`, and none of the documented
-`submit_feedback()` / `track_performance()` / `get_learning_insights()`
-methods appear anywhere in the tree.
+This subsystem does not exist. `src/finwiz/services/` was an empty package —
+an `__init__.py` holding a one-line docstring and nothing else — and was
+removed in #200. There is no `feedback_service` module, no
+`get_feedback_service()`, and none of the documented `submit_feedback()` /
+`track_performance()` / `get_learning_insights()` methods appear anywhere in
+the tree.
 
 The section previously described feedback collection, performance tracking
 and an adaptive learning engine in full working detail — API surface,
