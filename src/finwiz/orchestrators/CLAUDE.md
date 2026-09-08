@@ -41,12 +41,7 @@ orchestrators/
 │       └── crypto_extractor.py
 │
 ├── error_handling/                      # Error handling subsystem
-│   ├── handlers.py                      # ErrorHandlers, ValidationErrorReport
-│   ├── recovery.py
-│   ├── fallback.py
-│   ├── core_analysis_error_handler.py
-│   ├── missing_data.py
-│   └── validation_recovery.py
+│   └── core_analysis_error_handler.py   # imported by flows/orchestrator.py
 │
 ├── extraction/                          # Data extraction pipeline
 │   ├── engine.py
