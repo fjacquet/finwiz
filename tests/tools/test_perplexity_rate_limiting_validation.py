@@ -13,9 +13,6 @@ from finwiz.tools.perplexity_analysis_integration import (
     PerplexityFallbackManager,
     PerplexityPerformanceMonitor,
 )
-from finwiz.tools.perplexity_performance_benchmark import (
-    PerplexityBenchmarkResult,
-)
 
 
 @pytest.mark.skip(reason="Performance validation tests - testing internal retry mechanics, not core business logic")
@@ -177,29 +174,6 @@ class TestPerplexityPerformanceValidation:
         expected_compliance = compliant_count / len(response_times)
         assert abs(summary["compliance_rate"] - expected_compliance) < 0.001
 
-    @pytest.mark.anyio
-    async def test_should_validate_failure_rate_threshold(self, mocker):
-        """Test that failure rate validation works correctly."""
-        # Arrange - Test the benchmark result tracking directly
-        benchmark_result = PerplexityBenchmarkResult("test_validation")
-
-        # Add mostly successful results (96% success rate)
-        for i in range(24):
-            if i == 23:  # Last one fails (1/24 = 4.17% failure rate)
-                benchmark_result.add_result(1000, False, "API error")
-            else:
-                benchmark_result.add_result(1000, True)
-
-        benchmark_result.finalize()
-
-        # Act
-        summary = benchmark_result.get_performance_summary()
-
-        # Assert
-        assert summary["failure_rate"] <= 5.0  # Should be 4.17%
-        assert summary["success_rate"] >= 95.0  # Should be 95.83%
-        assert summary["total_requests"] == 24
-
     def test_should_generate_fallback_results_on_failures(self):
         """Test fallback result generation."""
         # Test fallback creation
@@ -229,61 +203,6 @@ class TestPerplexityPerformanceValidation:
 
         assert info["is_rate_limit"] is False
         assert "retry_after" not in info
-
-
-class TestPerplexityBenchmarkResults:
-    """Test benchmark result tracking and analysis."""
-
-    def test_should_track_benchmark_results_correctly(self):
-        """Test benchmark result tracking."""
-        result = PerplexityBenchmarkResult("performance_test")
-
-        # Add mixed results
-        result.add_result(1000, True)
-        result.add_result(1500, True)
-        result.add_result(2000, False, "timeout")
-        result.add_result(800, True)
-        result.finalize()
-
-        # Verify tracking
-        assert result.total_requests == 4
-        assert result.success_count == 3
-        assert result.failure_count == 1
-        assert abs(result.success_rate - 75.0) < 0.01
-        assert abs(result.failure_rate - 25.0) < 0.01
-        assert len(result.response_times) == 4
-        assert "timeout" in result.errors
-
-    def test_should_generate_performance_summary(self):
-        """Test performance summary generation."""
-        result = PerplexityBenchmarkResult("test")
-
-        # Add response times
-        times = [500, 1000, 1500, 2000]
-        for i, time_ms in enumerate(times):
-            result.add_result(time_ms, True)
-
-        result.finalize()
-        summary = result.get_performance_summary()
-
-        # Verify summary content
-        assert summary["test_name"] == "test"
-        assert summary["total_requests"] == 4
-        assert summary["success_count"] == 4
-        assert summary["failure_count"] == 0
-        assert summary["avg_response_time_ms"] == approx(1250.0)
-        assert "compliance_rate" in summary
-        assert "meets_2x_baseline_requirement" in summary
-
-    def test_should_handle_empty_benchmark_results(self):
-        """Test handling of empty results."""
-        result = PerplexityBenchmarkResult("empty")
-        result.finalize()
-
-        summary = result.get_performance_summary()
-
-        assert summary["total_requests"] == 0
-        assert "error" in summary
 
 
 class TestPerplexityCircuitBreakerBehavior:

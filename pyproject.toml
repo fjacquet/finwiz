@@ -396,7 +396,6 @@ omit = [
     "src/finwiz/tools/perplexity_feature_utils.py",
     "src/finwiz/tools/perplexity_logging.py",
     "src/finwiz/tools/perplexity_performance.py",
-    "src/finwiz/tools/perplexity_performance_benchmark.py",
     # litellm telemetry — LLM-specific, not deterministic.
     "src/finwiz/infrastructure/monitoring/litellm_callback.py",
 ]
