@@ -40,9 +40,6 @@ tools/
 ├── alternative_finder_tool.py       # Alternative investments
 ├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
-├── # Rebalancing report subsystem
-├── rebalancing_calculations.py      # RebalancingCalculations (dead: only consumer is its own test; unowned, no issue yet)
-│
 ├── # Reporting infrastructure
 ├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
 ├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes

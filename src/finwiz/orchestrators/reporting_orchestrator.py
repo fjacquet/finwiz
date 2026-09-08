@@ -6,7 +6,7 @@ This module provides HTML report generation:
 - Final HTML report generation
 
 The implementation is split across cohesive mixins under
-``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, enriched-file HTML);
+``finwiz.orchestrators.reporting`` (data loading/merge, enrichment);
 ``ReportingOrchestrator`` composes them so behavior is unchanged.
 """
 

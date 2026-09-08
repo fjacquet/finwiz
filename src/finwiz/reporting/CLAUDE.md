@@ -51,8 +51,10 @@ The five per-crew report generators (`stock_report_generator.py`,
 were reachable only from `generate_all_crew_html_reports`, which a live run
 never called (`crew_export_paths` was always empty — nothing populated it
 after the crew subsystem was removed, see #187). The live per-holding HTML
-path is `enriched_analysis_report_generator.py` via
-`ReportingOrchestrator.generate_enriched_html_reports()`.
+path is `enriched_analysis_report_generator.py`, rendered at analysis time by
+`DeepAnalysisOrchestrator._store_enriched_analysis()`. A second, redundant
+reporting-phase render (`ReportingOrchestrator.generate_enriched_html_reports()`,
+producing byte-identical `{ticker}_enriched.html` files) was deleted; see #195.
 
 `BaseReportGenerator`, the abstract base those five generators subclassed, was
 itself deleted from `base_report_generator.py` once its last subclass was
@@ -72,7 +74,7 @@ gone — `create_report_jinja_env()` in the same file is unrelated and stays liv
 from finwiz.reporting.enriched_analysis_report_generator import EnrichedAnalysisReportGenerator
 
 generator = EnrichedAnalysisReportGenerator()
-generator.generate_and_save_report(data={...}, output_path="output/stock/AAPL_enriched.html")
+generator.generate_and_save_report(data={...}, output_path="output/stock/AAPL_report.html")
 ```
 
 ## Related Modules

@@ -23,12 +23,7 @@ quantitative/
 ├── backtesting_utils.py             # Backtest utilities
 │
 ├── # Portfolio management
-├── rebalancing_engine.py            # RebalancingEngine
 ├── rebalancing_history_tracker.py   # RebalancingHistoryTracker
-├── trade_recommendation_system.py   # TradeRecommendationSystem
-├── trade_generation.py              # TradeGenerator
-├── execution_engine.py              # ExecutionEngine
-├── monitoring_engine.py             # MonitoringEngine
 ├── scenario_analysis.py             # ScenarioAnalysisEngine
 │
 ├── # Risk, performance, screening
@@ -69,7 +64,6 @@ quantitative/
 | `cost_analyzer.py` | `CostAnalyzer` | Trading cost analysis |
 | `performance.py` | `PerformanceAnalyzer` | Performance attribution |
 | `technical/engine.py` | `TechnicalAnalysisEngine` | Technical indicator calculation |
-| `rebalancing_engine.py` | `RebalancingEngine` | Portfolio rebalancing |
 | `scenario_analysis.py` | `ScenarioAnalysisEngine` | What-if analysis |
 
 ## Usage
