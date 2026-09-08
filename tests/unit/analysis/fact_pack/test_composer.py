@@ -56,6 +56,28 @@ class TestUnresolvable:
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"trailingPegRatio": None})
         assert composer.compose_fact_pack("ZZZZNOTREAL", "Nothing", None, None, "stock") is None
 
+    def test_an_unrecognised_asset_class_returns_none_without_resolving(self, mocker, caplog):
+        """An unknown class used to be normalised to "stock" and routed anyway.
+
+        That is how a coin gets priced as an equity: to_yfinance_symbol only
+        appends "-USD" for crypto, so a bare BTC reaches yfinance, where it is
+        the Grayscale trust -- a different, tradeable instrument whose numbers
+        look plausible in a report. The quoteType cross-check cannot catch it,
+        because it compares against the guessed class and EQUITY matches "stock".
+
+        Asserts the strong version: nothing is resolved at all, so no wrong
+        instrument can be fetched. See #177.
+        """
+        resolve = mocker.patch.object(composer.yfinance_source, "resolve")
+
+        with caplog.at_level("ERROR"):
+            pack = composer.compose_fact_pack("BTC", "Bitcoin", None, None, "digital_asset")
+
+        assert pack is None
+        resolve.assert_not_called()
+        assert "digital_asset" in caplog.text
+        assert "refusing to guess" in caplog.text
+
 
 class TestPackConstruction:
     def test_filings_outrank_news_for_recent_events(self, mocker):
@@ -311,28 +333,35 @@ class TestPerClassComposition:
 
 
 class TestUnknownAssetClass:
-    """An unenumerated asset_class must degrade to a labelled 'stock' pack, never kill the holding.
+    """An unenumerated asset_class must halt the pack, never be guessed at.
 
-    Before the entry-point normalisation, an unknown value reached the
-    backstop's _FALLBACK_DETAILS[asset_class] lookup unnormalised: the main
-    FactPack(...) call correctly rejected it (Literal validation), the except
-    caught that, and then the fallback line raised KeyError -- uncaught,
-    inside the one code path whose entire purpose is that a holding never
-    dies.
+    This class previously asserted the opposite -- that an unknown value
+    degraded to a labelled "stock" pack -- which was the right call for the
+    problem then in view (the backstop's _FALLBACK_DETAILS[asset_class] lookup
+    raised KeyError from inside the one code path whose purpose is that a
+    holding never dies) and the wrong call for the problem behind it.
+
+    Degrading to "stock" is not a neutral default. to_yfinance_symbol appends
+    the "-USD" quote suffix only for crypto, so a coin routed as equity is
+    queried bare -- and yfinance's bare BTC is the Grayscale trust, a real and
+    tradeable *different* asset. The pack would be complete, plausible, and
+    about the wrong instrument.
+
+    Refusing reaches the same KeyError-free outcome by never letting an unknown
+    class reach the backstop, and leaves the holding's missing pack visible to
+    the run gate's fact_pack.missing check. See #177.
     """
 
-    def test_an_unknown_asset_class_degrades_to_stock_with_a_warning(self, mocker, caplog):
+    def test_an_unknown_asset_class_returns_none_rather_than_guessing_stock(self, mocker, caplog):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
 
-        with caplog.at_level("WARNING"):
+        with caplog.at_level("ERROR"):
             pack = composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "bond")
 
-        assert pack is not None
-        assert pack.asset_class == "stock"
-        assert pack.details.kind == "equity"
-        assert any("unknown asset_class='bond'" in r.message for r in caplog.records)
+        assert pack is None
+        assert any("asset_class='bond'" in r.message for r in caplog.records)
 
     @pytest.mark.parametrize("asset_class", ["stock", "etf", "crypto"])
     def test_the_backstop_still_returns_a_valid_pack_for_each_real_class(self, mocker, asset_class):

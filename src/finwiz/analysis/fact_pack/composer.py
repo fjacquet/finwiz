@@ -131,22 +131,37 @@ def _clamp_citations(ticker: str, citations: tuple[str, ...]) -> list[str]:
 def compose_fact_pack(ticker: str, company_name: str, sector: str | None, industry: str | None, asset_class: str) -> FactPack | None:
     """Build a pack from free structured sources.
 
-    Returns None ONLY when the ticker resolves to nothing. Every other outcome is
-    a pack, however thin -- one provider must never be able to halt a holding,
-    which is exactly what happened on 2026-09-06 when a quota error took all 64.
+    Returns None when the ticker resolves to nothing, and when asset_class is not
+    one of the three enumerated values. Every other outcome is a pack, however thin
+    -- one provider must never be able to halt a holding, which is exactly what
+    happened on 2026-09-06 when a quota error took all 64.
     """
-    # Normalise here, once, so every downstream use -- routing, the main
-    # FactPack construction, the exception backstop, the Literal cast, and
-    # the asset_class/details.kind pairing validator -- only ever sees one of
-    # the three enumerated classes. An unrecognised value used to reach the
-    # backstop's _FALLBACK_DETAILS[asset_class] lookup unnormalised and raise
-    # KeyError from inside the one code path whose entire purpose is that a
-    # holding never dies. Falling back to "stock" preserves the behaviour
-    # routing's `else` branch already gave an unknown class; this just says
-    # so in a log line instead of doing it silently.
+    # Refuse an unrecognised asset_class rather than guessing one.
+    #
+    # This used to normalise to "stock", which kept the backstop's
+    # _FALLBACK_DETAILS[asset_class] lookup from raising KeyError but bought that
+    # safety with a wrong answer: to_yfinance_symbol only appends the "-USD" quote
+    # suffix for crypto, so a coin routed as equity is queried bare, and yfinance's
+    # bare BTC is the Grayscale trust -- a real, tradeable, *different* instrument
+    # whose numbers look entirely plausible in a report.
+    #
+    # The quoteType cross-check below cannot catch it. It compares yfinance's
+    # answer against the *declared* class, and the declared class is the guess:
+    # guess "stock", fetch the trust, get quoteType EQUITY, match. The guard is
+    # silent exactly when the guess is wrong in the way that matters.
+    #
+    # Returning None here reaches the same KeyError-free outcome by never letting
+    # an unknown class reach _FALLBACK_DETAILS at all. The holding's fact_pack
+    # stage then fails and the run gate's fact_pack.missing check surfaces it --
+    # machinery that already exists, unlike any means of surfacing "this pack may
+    # describe a different asset". See #177.
     if asset_class not in _FALLBACK_DETAILS:
-        logger.warning(f"fact_pack: {ticker} has unknown asset_class={asset_class!r}; routing as 'stock'")
-        asset_class = "stock"
+        logger.error(
+            f"fact_pack: {ticker} has unrecognised asset_class={asset_class!r} "
+            f"(expected one of {sorted(_FALLBACK_DETAILS)}); refusing to guess a "
+            f"routing, because a wrong guess silently prices a different instrument"
+        )
+        return None
 
     # Domain-model tickers stay bare (BTC, AAVE); yfinance needs the query form
     # (BTC-USD). Without this, yfinance's own `BTC` resolves to a Grayscale
