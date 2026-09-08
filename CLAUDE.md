@@ -29,6 +29,10 @@ make mypy                              # uv run mypy src/finwiz
 make coverage
 ```
 
+`ruff format` (via `make lint`) formats fenced `python` blocks **inside Markdown**.
+A code *fragment* in a python fence gets rewritten on every lint, dirtying the working
+tree of whatever branch is checked out. Fence fragments as `text` instead.
+
 ## Project Overview
 
 FinWiz is an AI-powered financial analysis platform built with CrewAI. It analyzes portfolios of stocks, ETFs, and crypto using a hybrid approach: deterministic Python scoring ($0, <100ms) for quantitative analysis, and AI crews for qualitative insights only.
@@ -116,6 +120,29 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 - Markers: `integration`, `unit`, `slow`, `asyncio`, `performance`, `benchmark`, `crew`, `flow`
 - Default pytest run excludes integration tests (`-m "not integration"`)
 - Coverage reports to `htmlcov/`, minimum 65%
+- `@pytest.mark.anyio` tests are collected **twice** (asyncio + trio backends). When
+  reconciling a test-count change, multiply anyio tests by 2 before comparing.
+- A class-level `@pytest.mark.skip` can be hiding a *broken fixture*, not a deferred
+  judgement. Before trusting one, delete the marker and run: 20 "skipped" Perplexity
+  tests were erroring at setup (PR #215).
+
+## Deleting code
+
+- **Prove it dead first.** Module-level unreachability is necessary, not sufficient.
+  Run `git log -S'<symbol>' --oneline --all`, find the commit that removed the last
+  reader, and *read it*. A present-tense grep returning nothing is not proof.
+- **Sweep all call surfaces**, not just `src/`: `tests`, `scripts`, `bin`, Makefile
+  recipe bodies, `pyproject.toml`, `.pre-commit-config.yaml`, `.github/workflows/`,
+  `mkdocs.yml`.
+- **Grep both forms** — `scripts/foo.py` *and* dotted `scripts.foo`. `Makefile:165`
+  wires a gate as `python -m scripts.check_stage_contract`, invisible to a path grep.
+- **Run `uvx vulture src/finwiz --min-confidence 80` before pushing a deletion.**
+  Vulture matches names *globally*, so deleting a module can unmask an unused-variable
+  warning in a file your diff never touched, failing the CI `extra` job.
+- **`ls` lies after a deletion** — stale `__pycache__` leaves the directory listed.
+  Check `git ls-files`.
+- `pyproject.toml`'s `[tool.ruff.lint.per-file-ignores]` collects deletion residue:
+  ruff drops unmatched rows **silently**, so lint stays green while they rot.
 
 ## Environment Variables
 
