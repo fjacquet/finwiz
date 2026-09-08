@@ -1132,16 +1132,15 @@ export CACHE_BACKEND=file
 
 # Advanced System Operations
 
-Complete guide for FinWiz system operations including feedback learning, portfolio monitoring, knowledge base, and integration configuration.
+Complete guide for FinWiz system operations including feedback learning, knowledge base, caching, and integration configuration.
 
 ## Table of Contents
 
 1. [Feedback Learning System](#feedback-learning-system)
-2. [Portfolio Monitoring](#portfolio-monitoring)
-3. [Knowledge Base Strategy](#knowledge-base-strategy)
-4. [Intelligent Caching System](#intelligent-caching-system)
-5. [Feature Flags & Configuration](#feature-flags--configuration)
-6. [Integration Configuration](#integration-configuration)
+2. [Knowledge Base Strategy](#knowledge-base-strategy)
+3. [Intelligent Caching System](#intelligent-caching-system)
+4. [Feature Flags & Configuration](#feature-flags--configuration)
+5. [Integration Configuration](#integration-configuration)
 
 ## Feedback Learning System — NOT IMPLEMENTED
 
@@ -1154,88 +1153,6 @@ methods appear anywhere in the tree.
 The section previously described feedback collection, performance tracking
 and an adaptive learning engine in full working detail — API surface,
 parameters and all. None of it was ever built.
-
-## Portfolio Monitoring
-
-### Overview
-
-Real-time portfolio monitoring with drift detection and alert generation.
-
-### Components
-
-**1. Portfolio Monitor**:
-
-- Continuous drift monitoring
-- Health dashboard (1-10 scale)
-- Alert generation with configurable rules
-- Alert lifecycle management
-
-**2. Alert System**:
-
-- Multiple urgency levels (LOW, MEDIUM, HIGH, CRITICAL)
-- Configurable thresholds
-- Automated monitoring loops
-- Error recovery
-
-### Configuration
-
-**Monitoring Rules**:
-
-```python
-from finwiz.quantitative.portfolio_monitor import MonitoringRule
-
-rule = MonitoringRule(
-    rule_id="portfolio_monitor",
-    rule_name="Standard Portfolio Monitoring",
-    max_deviation_threshold=0.08,  # 8% threshold
-    min_check_interval_hours=1,  # 1-168
-    alert_on_deviation=True,
-    alert_on_multiple_positions=True,
-    min_positions_for_alert=2,
-)
-```
-
-`MonitoringRule` is declared `extra="forbid"`, so any field name not listed
-above raises a `ValidationError` rather than being ignored. There is no
-`check_frequency_minutes` and no `alert_urgency`. Only `rule_id` and
-`rule_name` are required; everything else has a default.
-
-### Usage
-
-**Start Monitoring**:
-
-```python
-from finwiz.quantitative.portfolio_monitor import PortfolioMonitor
-
-monitor = PortfolioMonitor()
-
-# Start monitoring — portfolio_id is required and positional-first
-await monitor.start_monitoring(
-    portfolio_id,
-    portfolio_config=config,
-    monitoring_rule=rule,
-)
-```
-
-**Get Health Dashboard**:
-
-```python
-# Get portfolio health — the method is generate_health_dashboard
-dashboard = await monitor.generate_health_dashboard(portfolio_id, portfolio_config)
-
-print(f"Health Score: {dashboard.health_score}/10")
-print(f"Status: {dashboard.status}")
-print(f"Active Alerts: {len(dashboard.active_alerts)}")
-```
-
-### Alert Levels
-
-| Level        | Threshold       | Response Time |
-| ------------ | --------------- | ------------- |
-| **CRITICAL** | >10% deviation  | Immediate     |
-| **HIGH**     | 8-10% deviation | 1 hour        |
-| **MEDIUM**   | 5-8% deviation  | 4 hours       |
-| **LOW**      | 3-5% deviation  | 24 hours      |
 
 ## Knowledge Base Strategy
 

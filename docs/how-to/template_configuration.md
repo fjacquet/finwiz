@@ -44,7 +44,7 @@ src/finwiz/templates/
 ```
 
 `deep_analysis_report.html.j2` is loaded by `DeepAnalysisReportGenerator`, and
-`enriched_analysis_report.html` backs `generate_enriched_html_reports`, the path
+`enriched_analysis_report.html` backs `EnrichedAnalysisReportGenerator`, the path
 that actually produces the reports a run writes to `output/`.
 
 The 16 top-level files that used to sit alongside these — reachable only

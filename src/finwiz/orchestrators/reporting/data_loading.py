@@ -244,36 +244,6 @@ class ReportDataLoadingMixin:
             result: dict[str, Any] = json.load(f)
             return result
 
-    def _extract_portfolio_review(
-        self,
-        consolidated_data: dict[str, Any],
-    ) -> PortfolioReview:
-        """Extract portfolio review from consolidated data, falling back to state."""
-        # Prefer an explicit portfolio review carried in the consolidated payload;
-        # only fall back to state when it isn't present.
-        portfolio_review_data: dict[str, Any] | PortfolioReview | None = None
-        if isinstance(consolidated_data, dict):
-            portfolio_review_data = consolidated_data.get("portfolio_review")
-        if not portfolio_review_data:
-            portfolio_review_data = self._get_portfolio_review_from_state()
-        if not portfolio_review_data:
-            raise ValueError("No portfolio review in consolidated data or state")
-
-        return self._convert_to_portfolio_review(portfolio_review_data)
-
-    def _extract_deep_analysis(
-        self,
-        consolidated_data: dict[str, Any],
-    ) -> dict[str, Any] | None:
-        """Extract deep analysis results from consolidated data."""
-        # Check if deep analysis is in consolidated data
-        if "deep_analysis" in consolidated_data:
-            result: dict[str, Any] | None = consolidated_data["deep_analysis"]
-            return result
-
-        # Otherwise read from files
-        return self._read_deep_analysis_from_files()
-
     def _save_merged_portfolio_review(self, portfolio_review: PortfolioReview) -> None:
         """Save the merged portfolio review back to disk."""
         try:

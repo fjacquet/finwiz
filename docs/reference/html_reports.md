@@ -27,8 +27,8 @@ Key entry points:
 - `finwiz.reporting.python_report_generator.PythonReportGenerator` — main
   report engine.
 - `finwiz.reporting.enriched_analysis_report_generator.EnrichedAnalysisReportGenerator` —
-  live per-holding HTML generator, invoked via
-  `ReportingOrchestrator.generate_enriched_html_reports()`.
+  live per-holding HTML generator, invoked by `DeepAnalysisOrchestrator`
+  (`_store_enriched_analysis()`) at analysis time.
 - `finwiz.reporting.css_styles.get_report_css()` — shared stylesheet.
 
 See [`docs/reference/integration/python_pipeline_integration.md`](integration/python_pipeline_integration.md)

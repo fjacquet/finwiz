@@ -6,7 +6,7 @@ This module provides HTML report generation:
 - Final HTML report generation
 
 The implementation is split across cohesive mixins under
-``finwiz.orchestrators.reporting`` (data loading/merge, enrichment, enriched-file HTML);
+``finwiz.orchestrators.reporting`` (data loading/merge, enrichment);
 ``ReportingOrchestrator`` composes them so behavior is unchanged.
 """
 
@@ -14,12 +14,11 @@ from typing import Any
 
 from finwiz.flow_state import FinwizState
 from finwiz.orchestrators.reporting.data_loading import ReportDataLoadingMixin
-from finwiz.orchestrators.reporting.enriched_html import EnrichedHtmlMixin
 from finwiz.orchestrators.reporting.enrichment import ReportEnrichmentMixin
 from finwiz.tools.logger import get_logger
 
 
-class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, EnrichedHtmlMixin):
+class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin):
     """Generates consolidated reports and final HTML output."""
 
     def __init__(self, state: FinwizState, **dependencies: Any) -> None:
@@ -81,12 +80,6 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, Enric
             # Generate Python-based report
             report_path = self._generate_python_report(portfolio_review, deep_analysis_results)
 
-            # Generate individual HTML reports from enriched JSON files
-            enriched_html_paths = self.generate_enriched_html_reports()
-            enriched_count = sum(len(paths) for paths in enriched_html_paths.values())
-            if enriched_count > 0:
-                self.logger.info(f"✅ Generated {enriched_count} individual HTML reports from enriched data")
-
             # Update state with success
             self.state.report_generation_success = True
             self.state.report_path = report_path
@@ -115,37 +108,3 @@ class ReportingOrchestrator(ReportDataLoadingMixin, ReportEnrichmentMixin, Enric
                 "success": False,
                 "error": str(e),
             }
-
-    def generate_final_report(
-        self,
-        consolidated_data: dict[str, Any],
-    ) -> str:
-        """
-        Generate final HTML report from consolidated data.
-
-        Args:
-            consolidated_data: Consolidated report data from all crews
-
-        Returns:
-            Path to generated HTML report
-
-        """
-        try:
-            self.logger.info("Generating final HTML report")
-
-            # Extract portfolio review from consolidated data
-            portfolio_review = self._extract_portfolio_review(consolidated_data)
-
-            # Extract deep analysis results
-            deep_analysis = self._extract_deep_analysis(consolidated_data)
-
-            # Generate HTML report
-            report_path = self._generate_python_report(portfolio_review, deep_analysis)
-
-            self.logger.info(f"Final report generated: {report_path}")
-
-            return report_path
-
-        except Exception as e:
-            self.logger.error(f"Final report generation failed: {e}", exc_info=True)
-            raise

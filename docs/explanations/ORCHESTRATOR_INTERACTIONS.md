@@ -215,7 +215,6 @@ sequenceDiagram
     Rep->>FS: Save merged portfolio review
 
     Rep->>Rep: _generate_python_report(portfolio_review, deep_analysis_results)
-    Rep->>Rep: generate_enriched_html_reports()
 
     Rep->>FS: Write HTML report(s)
     Rep->>State: Store report_path, report_generation_success, report_generation_method

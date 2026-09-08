@@ -85,9 +85,6 @@ from finwiz.tools.logger import get_logger
 - Use custom exceptions from `finwiz.exceptions`:
   - `DataQualityError` - Data validation issues
   - `MissingRequiredFieldError` - Required fields missing
-  - `PortfolioRebalancingError` - Rebalancing failures
-  - `InsufficientPriceDataError` - Price data unavailable
-  - `OptimizationFailedError` - Optimization failures
 - Always log errors before raising: `self.logger.error(f"Error: {e}", exc_info=True)`
 - Wrap external API calls in try/except
 - Return error dictionaries for graceful degradation: `{"error": str(e), "success": False}`

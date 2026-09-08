@@ -24,17 +24,14 @@ output/
 ├── stock/
 │   ├── AAPL_enriched.json          # deep-analysis result (written once, at analysis time)
 │   ├── AAPL_report.html            # HTML for this holding (written once, same time as the .json)
-│   ├── AAPL_enriched.html          # HTML for this holding (regenerated on every run — see below)
 │   └── discovery_output_20260907_170625.json   # per-run backup snapshot (accumulates)
 ├── etf/
 │   ├── 2B7K.DE_enriched.json
 │   ├── 2B7K.DE_report.html
-│   ├── 2B7K.DE_enriched.html
 │   └── discovery_output_20260907_170625.json
 ├── crypto/
 │   ├── BTC-USD_enriched.json
 │   ├── BTC-USD_report.html
-│   ├── BTC-USD_enriched.html
 │   └── discovery_output_20260907_170625.json
 ├── discovery/
 │   ├── a_plus_stocks.json          # per-asset-class A+ opportunity list
@@ -60,18 +57,13 @@ output/
 
 - **`{ticker}_enriched.json`** and **`{ticker}_report.html`** are written together, once
   per holding, by `DeepAnalysisOrchestrator` during Phase 3 (`src/finwiz/orchestrators/
-  deep_analysis_orchestrator.py`). `_report.html` is a snapshot of the report as it looked
-  at analysis time.
-- **`{ticker}_enriched.html`** is written by `EnrichedAnalysisReportGenerator`
-  (`src/finwiz/reporting/enriched_analysis_report_generator.py`), called from
-  `ReportingOrchestrator.generate_enriched_html_reports()` during Phase 6. This step
-  re-renders HTML for **every** `*_enriched.json` it finds in `output/stock/`,
-  `output/etf/`, and `output/crypto/` — not just the holdings this run analyzed. In the
-  observed run, 3 holdings were analyzed but 93 HTML reports were regenerated, because
-  the directories held `*_enriched.json` files accumulated from prior runs going back to
-  2026-09-05. `{ticker}_enriched.html` and `{ticker}_report.html` are byte-identical
-  except for the "Rapport généré par FinWiz le …" timestamp in the footer, for any
-  holding this run actually re-analyzed.
+  deep_analysis_orchestrator.py`), via `EnrichedAnalysisReportGenerator`
+  (`src/finwiz/reporting/enriched_analysis_report_generator.py`). `_report.html` is a
+  snapshot of the report as it looked at analysis time, and it is the only per-holding
+  HTML render — a second, reporting-phase pass
+  (`ReportingOrchestrator.generate_enriched_html_reports()`) used to re-render every
+  `*_enriched.json` a second time into a byte-identical `{ticker}_enriched.html`; it was
+  deleted as redundant (#195).
 - **`discovery_output_{timestamp}.json`** (one per asset class, written into
   `output/stock/`, `output/etf/`, `output/crypto/`, and `output/discovery/`) is a backup
   snapshot written by `DiscoveryOrchestrator` (`src/finwiz/orchestrators/
@@ -104,8 +96,8 @@ output/
 
 - Tickers appear as given by the data source (e.g. `AAPL`, `2B7K.DE`, `BTC-USD`) — not
   normalized to a single case or suffix convention.
-- `_enriched.json` / `_report.html` / `_enriched.html` are fixed suffixes; there is no
-  timestamp embedded in a per-ticker filename.
+- `_enriched.json` / `_report.html` are fixed suffixes; there is no timestamp embedded in
+  a per-ticker filename.
 - `discovery_output_{YYYYMMDD_HHMMSS}.json` is the one filename pattern that does embed a
   timestamp, because it's a backup snapshot rather than a per-holding artifact.
 
@@ -113,7 +105,7 @@ output/
 
 There is no session concept and no cleanup. Every run adds to `output/stock/`,
 `output/etf/`, `output/crypto/`, and `output/discovery/` rather than writing into an
-isolated directory; `{ticker}_enriched.json`/`{ticker}_report.html`/`{ticker}_enriched.html`
+isolated directory; `{ticker}_enriched.json`/`{ticker}_report.html`
 are overwritten in place for a holding that gets re-analyzed, but nothing removes files for
 holdings that drop out of the portfolio, and the `discovery_output_*.json` backups are
 never pruned. A directory that has been run against repeatedly over multiple days (as
@@ -134,9 +126,13 @@ observed run's output:
   the crew subsystem.
 - **`manifest.json`** — no manifest of any kind exists or ever existed; `manifest` does
   not appear anywhere in `src/` or `tests/`.
+- **`{ticker}_enriched.html`** — this document's version 2.0 observed 93 of these per run,
+  written by a reporting-phase pass that re-rendered every `*_enriched.json` a second
+  time. That pass produced files byte-identical to `{ticker}_report.html` (save the
+  footer timestamp) and was deleted as redundant (#195).
 
 ---
 
-**Version**: 2.0 — rewritten from an observed run, replacing the fictional
-`output/reports/{session_id}/{crew}/` layout documented in version 1.0.
-**Last Updated**: 2026-09-07
+**Version**: 2.1 — removed `{ticker}_enriched.html` and the reporting-phase render pass
+that produced it (#195).
+**Last Updated**: 2026-09-08

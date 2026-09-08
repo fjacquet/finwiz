@@ -84,7 +84,7 @@ class DiscoveryOrchestrator:
             # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
-                    source="crypto_crew",
+                    source="crypto_discovery",
                     status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(crypto_results.get("opportunities", [])),
@@ -111,7 +111,7 @@ class DiscoveryOrchestrator:
             self._update_state_from_dict(result_data)
 
             if self.availability_tracker:
-                self.availability_tracker.track_data_source(source="crypto_crew", status="unavailable", error_message=str(e))
+                self.availability_tracker.track_data_source(source="crypto_discovery", status="unavailable", error_message=str(e))
 
             return {"crypto_analysis_complete": True, "crypto_result": result_data.get("crypto_result", "")}
 
@@ -163,7 +163,7 @@ class DiscoveryOrchestrator:
             # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
-                    source="stock_crew",
+                    source="stock_discovery",
                     status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(stock_results.get("opportunities", [])),
@@ -190,7 +190,7 @@ class DiscoveryOrchestrator:
             self._update_state_from_dict(result_data)
 
             if self.availability_tracker:
-                self.availability_tracker.track_data_source(source="stock_crew", status="unavailable", error_message=str(e))
+                self.availability_tracker.track_data_source(source="stock_discovery", status="unavailable", error_message=str(e))
 
             return {"stock_analysis_complete": True, "stock_result": result_data.get("stock_result", "")}
 
@@ -242,7 +242,7 @@ class DiscoveryOrchestrator:
             # Track actual Python execution outcome (never mark a broken run "available")
             if self.availability_tracker:
                 self.availability_tracker.track_data_source(
-                    source="etf_crew",
+                    source="etf_discovery",
                     status="unavailable" if pipeline_failed else "available",
                     last_updated=datetime.now().isoformat(),
                     record_count=len(etf_results.get("opportunities", [])),
@@ -265,7 +265,7 @@ class DiscoveryOrchestrator:
             self._update_state_from_dict(result_data)
 
             if self.availability_tracker:
-                self.availability_tracker.track_data_source(source="etf_crew", status="unavailable", error_message=str(e))
+                self.availability_tracker.track_data_source(source="etf_discovery", status="unavailable", error_message=str(e))
 
             return {"etf_analysis_complete": True, "etf_result": result_data.get("etf_result", "")}
 

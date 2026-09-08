@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   island behind them (`HTMLReportGenerator`, `HTMLReportFormatter`, the scenario
   report trio, and `tools/reporting/`). None had a reachable caller; the live
   reporting path in `finwiz.reporting` is unaffected. ([#194](https://github.com/fjacquet/finwiz/issues/194))
+- The orphan quantitative rebalancing island (eleven modules, ~1,200 statements),
+  `ReportingOrchestrator.generate_final_report()`, the duplicate enriched-HTML
+  render pass, `validation/flow.py`, `RebalancingCalculations`, and two dead
+  scripts under `bin/`. None had a reachable caller. The six `*_crew` availability
+  labels now name the Python discovery scanners that actually produce the data.
+  ([#195](https://github.com/fjacquet/finwiz/issues/195))
 
 ## [5.15.0] - 2026-09-07
 

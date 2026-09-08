@@ -16,7 +16,6 @@ validation/
 │
 ├── # Specialized validators
 ├── ai_output.py             # validate_ai_output_structure(), validate_qualitative_insights()
-├── flow.py                  # DataFlowValidator, CrewDataContract, ReporterContextValidator
 ├── report.py                # ReportValidator, validate_report_file()
 ├── template.py              # TemplateVariableValidator, validate_template_variables_at_startup()
 ├── rules.py                 # ValidationRules
@@ -42,7 +41,6 @@ validation/
 | `registry.py` | `SchemaRegistry` | Schema registration and lookup |
 | `contract.py` | `ContractValidator` | Validate against Pydantic schemas |
 | `ai_output.py` | `validate_ai_output_structure()` | Validate LLM output structure |
-| `flow.py` | `DataFlowValidator` | Validate data between pipeline stages |
 | `template.py` | `validate_template_variables_at_startup()` | Validate Jinja2 template vars |
 | `report.py` | `validate_report_file()` | Validate generated reports |
 

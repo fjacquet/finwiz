@@ -92,9 +92,9 @@ The top section shows your portfolio overview:
 
 There is no "Portfolio Health Score" tile in the report — the report
 generator emits no such field. A 0-100 health score does not exist anywhere
-in the codebase; the only "health score" concept belongs to the separate
-rebalancing/monitoring subsystem, and it's on a 0-10 scale
-(`quantitative/portfolio_monitor.py`), not 0-100.
+in the codebase; the only "health score" concept belonged to the
+rebalancing/monitoring subsystem, deleted along with the rest of the orphan
+quantitative rebalancing island — it was never wired into the flow (#195).
 
 ### Grade System
 
