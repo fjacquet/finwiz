@@ -7,7 +7,7 @@ Provides factory functions to create valid Pydantic model instances.
 from datetime import datetime
 from typing import Any
 
-from finwiz.schemas.crew_exports import RiskAssessmentStandardized
+from finwiz.schemas.common import RiskAssessmentStandardized
 from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 

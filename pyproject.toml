@@ -176,7 +176,6 @@ max-complexity = 10
 "src/finwiz/scoring/technical_scorer.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/enhanced_sec_tool.py" = ["C901", "PLR0915"]
 "src/finwiz/tools/perplexity_analysis_integration.py" = ["C901", "PLR0915"]
-"src/finwiz/tools/portfolio_holdings_html_generator.py" = ["C901", "PLR0915"]
 # Files with ONLY C901 (cyclomatic complexity):
 "src/finwiz/analysis/fact_pack_research.py" = ["C901"]
 "src/finwiz/analysis/stages/qualify.py" = ["C901"]
