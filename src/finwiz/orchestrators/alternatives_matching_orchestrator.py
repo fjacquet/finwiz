@@ -9,6 +9,70 @@ from finwiz.tools.logger import get_logger
 logger = get_logger(__name__)
 
 
+# A fund whose largest sector is below this weight is treated as having no single
+# sector: a broad world index peaks around 0.24 in Technology, which is a
+# composition fact, not a sector thesis.
+_MIN_DOMINANT_SECTOR_WEIGHT = 0.40
+
+
+def _fact_pack_details(analysis: Any) -> dict[str, Any]:
+    """Return the fact pack's ``details`` mapping, or an empty one."""
+    fact_pack = getattr(analysis, "fact_pack", None)
+    if fact_pack is None:
+        return {}
+    details = fact_pack.get("details") if isinstance(fact_pack, dict) else getattr(fact_pack, "details", None)
+    return details if isinstance(details, dict) else {}
+
+
+def _extract_sector(analysis: Any) -> str | None:
+    """Best available sector label for a holding, or None.
+
+    An equity has one sector. A fund does not -- it has ``sector_weights`` -- so
+    its dominant sector is used, which is what makes "same sector" mean anything
+    for a fund at all. Below ``_MIN_DOMINANT_SECTOR_WEIGHT`` the fund is too
+    diversified for a single label to describe it (a world index would otherwise
+    be filed under Technology at ~24%), and None is returned so the sector step
+    skips rather than pairing a broad fund with a sector fund.
+    """
+    details = _fact_pack_details(analysis)
+
+    sector = details.get("sector")
+    if isinstance(sector, str) and sector.strip():
+        return sector.strip()
+
+    weights = details.get("sector_weights")
+    if isinstance(weights, dict) and weights:
+        numeric = {k: float(v) for k, v in weights.items() if isinstance(v, (int, float))}
+        if numeric:
+            top, weight = max(numeric.items(), key=lambda kv: kv[1])
+            if weight >= _MIN_DOMINANT_SECTOR_WEIGHT:
+                return top.replace("_", " ").strip()
+
+    return None
+
+
+def _extract_expense_ratio(analysis: Any) -> float | None:
+    """Expense ratio as a fraction (0.0015 = 0.15%), or None when unknown."""
+    details = _fact_pack_details(analysis)
+    candidates = [details.get("expense_ratio")]
+
+    fundamentals = getattr(analysis, "fundamental_details", None)
+    if isinstance(fundamentals, dict):
+        candidates.append(fundamentals.get("expense_ratio"))
+
+    for value in candidates:
+        if value is None:
+            continue
+        try:
+            ratio = float(value)
+        except (TypeError, ValueError):
+            continue
+        if 0.0 <= ratio < 1.0:
+            return ratio
+
+    return None
+
+
 class AlternativesMatchingOrchestrator:
     """Finds and matches A+ alternatives for underperforming holdings."""
 
@@ -86,6 +150,8 @@ class AlternativesMatchingOrchestrator:
                 composite_score = holding.get("composite_score")
                 name = holding.get("name", ticker)
                 asset_class = holding.get("asset_class", "stock")
+                sector = holding.get("sector")
+                expense_ratio = holding.get("expense_ratio")
             else:
                 grade = getattr(holding, "grade", "D")
                 # Try risk_score directly first (DeepAnalysisResult), then fall back to risk.score (legacy)
@@ -96,6 +162,8 @@ class AlternativesMatchingOrchestrator:
                 composite_score = getattr(holding, "composite_score", None)
                 name = getattr(holding, "name", ticker)
                 asset_class = getattr(holding, "asset_class", "stock")
+                sector = getattr(holding, "sector", None)
+                expense_ratio = getattr(holding, "expense_ratio", None)
 
             # Only find alternatives for grades C, D, or F (Requirement 4.1)
             if grade not in ["C", "D", "F"]:
@@ -120,6 +188,8 @@ class AlternativesMatchingOrchestrator:
                     grade=grade,
                     composite_score=composite_score,
                     risk_score=risk_score,
+                    sector=sector,
+                    expense_ratio=expense_ratio,
                 )
 
                 # Find alternatives using existing tool (Requirement 4.2)
@@ -226,10 +296,15 @@ class AlternativesMatchingOrchestrator:
                 "risk": {"score": analysis.risk_score} if analysis.risk_score is not None else {},
                 "name": getattr(analysis, "name", ticker),
                 "asset_class": analysis.asset_class,
+                # Sector and expense ratio drive the sector-match and cheaper-ETF
+                # searches. Without them those two steps are blind and return
+                # empty regardless of what the candidate universe holds.
+                "sector": _extract_sector(analysis),
+                "expense_ratio": _extract_expense_ratio(analysis),
             }
             holdings.append(holding_dict)
 
-        # Match alternatives using discovery crew output
+        # Match alternatives using the Python discovery output
         alternatives_data = self.match_alternatives_for_holdings(holdings, discovery_data)
 
         # Update structured Flow state

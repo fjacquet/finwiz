@@ -1,6 +1,7 @@
 """Unit tests for AlternativesMatchingOrchestrator."""
 
 import os
+from types import SimpleNamespace
 
 import pytest
 from hypothesis import given, settings
@@ -9,6 +10,8 @@ from hypothesis import strategies as st
 from finwiz.flow_state import DeepAnalysisResult, FinwizState
 from finwiz.orchestrators.alternatives_matching_orchestrator import (
     AlternativesMatchingOrchestrator,
+    _extract_expense_ratio,
+    _extract_sector,
 )
 
 
@@ -448,3 +451,38 @@ def test_property_alternative_structure_validation_with_mocker(mocker):
 
         # Reset mock for next iteration
         mocker.stop(mock_finder)
+
+
+class TestHoldingProfileEnrichment:
+    """Sector and expense-ratio extraction feeding the sector/cost searches."""
+
+    def _analysis(self, details=None, fundamentals=None):
+        return SimpleNamespace(fact_pack={"details": details or {}}, fundamental_details=fundamentals or {})
+
+    def test_should_read_equity_sector_directly(self):
+        assert _extract_sector(self._analysis({"sector": " Healthcare "})) == "Healthcare"
+
+    def test_should_use_dominant_sector_for_a_concentrated_fund(self):
+        analysis = self._analysis({"sector_weights": {"technology": 0.62, "financial_services": 0.20, "realestate": 0.18}})
+        assert _extract_sector(analysis) == "technology"
+
+    def test_should_refuse_a_single_label_for_a_diversified_fund(self):
+        """A world index peaking at 24% Technology is not a technology fund."""
+        analysis = self._analysis({"sector_weights": {"technology": 0.24, "financial_services": 0.18, "healthcare": 0.15, "industrials": 0.14}})
+        assert _extract_sector(analysis) is None
+
+    def test_should_return_none_without_a_fact_pack(self):
+        assert _extract_sector(SimpleNamespace(fact_pack=None)) is None
+
+    def test_should_read_expense_ratio_from_fact_pack(self):
+        assert _extract_expense_ratio(self._analysis({"expense_ratio": 0.0015})) == 0.0015
+
+    def test_should_fall_back_to_fundamental_details(self):
+        assert _extract_expense_ratio(self._analysis({}, {"expense_ratio": 0.0022})) == 0.0022
+
+    def test_should_reject_percent_scaled_expense_ratio(self):
+        """0.15 meaning 15% would invert every cost comparison against fractions."""
+        assert _extract_expense_ratio(self._analysis({"expense_ratio": 1.5})) is None
+
+    def test_should_return_none_when_expense_ratio_absent(self):
+        assert _extract_expense_ratio(self._analysis({})) is None

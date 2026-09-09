@@ -15,6 +15,8 @@ import pytest
 from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 
 def count_lines(file_path: Path) -> int:
     """Count non-empty lines in a file."""
@@ -24,7 +26,7 @@ def count_lines(file_path: Path) -> int:
 
 def get_orchestrator_files() -> list[Path]:
     """Get all Python files in the orchestrators directory."""
-    orchestrators_dir = Path("src/finwiz/orchestrators")
+    orchestrators_dir = _REPO_ROOT / "src/finwiz/orchestrators"
     if not orchestrators_dir.exists():
         return []
     return list(orchestrators_dir.glob("*.py"))
@@ -32,7 +34,7 @@ def get_orchestrator_files() -> list[Path]:
 
 def get_flow_orchestrator_files() -> list[Path]:
     """Get flow orchestrator files."""
-    flows_dir = Path("src/finwiz/flows")
+    flows_dir = _REPO_ROOT / "src/finwiz/flows"
     if not flows_dir.exists():
         return []
 
@@ -288,7 +290,7 @@ class TestSingleResponsibility:
 
         **Validates: Requirements 1.3**
         """
-        orchestrators_dir = Path("src/finwiz/orchestrators")
+        orchestrators_dir = _REPO_ROOT / "src/finwiz/orchestrators"
         if not orchestrators_dir.exists():
             pytest.skip("Orchestrators directory not found")
 

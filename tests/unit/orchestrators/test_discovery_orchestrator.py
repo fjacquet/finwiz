@@ -18,6 +18,18 @@ from finwiz.orchestrators.discovery_orchestrator import DiscoveryOrchestrator
 class TestDiscoveryOrchestrator:
     """Test suite for DiscoveryOrchestrator."""
 
+    @pytest.fixture(autouse=True)
+    def _isolate_output_dir(self, monkeypatch, tmp_path):
+        """Keep discovery writes inside tmp_path.
+
+        The orchestrator writes to a relative ``output/`` path, so without this
+        every test here overwrote the repository's real run artefacts
+        (`output/discovery/consolidated_discovery.json` and friends) with Faker
+        fixtures. Two tests below already chdir'd for their own assertions; this
+        covers the rest of the class.
+        """
+        monkeypatch.chdir(tmp_path)
+
     @pytest.fixture
     def state(self):
         """Create a FinwizState instance for testing."""

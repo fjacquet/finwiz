@@ -26,6 +26,32 @@ ENRICHMENT_SCORE_THRESHOLD = 0.80
 MAX_ENRICHMENT_CANDIDATES = 10
 
 
+def _cost_and_size_fields(candidate: Any) -> dict[str, Any]:
+    """Expense ratio and market cap for a candidate, omitting what is unknown.
+
+    Carried so the alternatives matcher can prove one fund is cheaper than
+    another: the screener already fetches the ratio
+    (``discovery/fundamentals_adapter.py`` reads ``annualReportExpenseRatio``),
+    and dropping it here is what left the cheaper-ETF search comparing against
+    fabricated defaults.
+
+    Absent keys, never explicit ``None``: downstream readers distinguish "field
+    not produced" from "produced as null", and writing null drops the whole
+    opportunity.
+    """
+    fields: dict[str, Any] = {}
+
+    expense_ratio = (getattr(candidate, "metadata", None) or {}).get("expense_ratio")
+    if expense_ratio is not None:
+        fields["expense_ratio"] = expense_ratio
+
+    market_cap = getattr(candidate, "market_cap", None)
+    if market_cap is not None:
+        fields["market_cap"] = market_cap
+
+    return fields
+
+
 class NewcomerDiscoveryPipeline:
     """Orchestrates newcomer discovery for a single asset class."""
 
@@ -488,6 +514,7 @@ class NewcomerDiscoveryPipeline:
                 "sector": getattr(c, "sector", None),
                 "asset_class": getattr(c, "asset_class", self.asset_class),
             }
+            | _cost_and_size_fields(c)
             for c in result.candidates
         ]
         return {

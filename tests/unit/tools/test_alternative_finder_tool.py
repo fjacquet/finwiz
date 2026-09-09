@@ -544,7 +544,7 @@ class TestAlternativeFinder:
         assert len(alternatives) > 0
         for alt in alternatives:
             assert alt.is_a_plus_candidate is True
-            assert alt.discovery_source == "investment_discovery_crew"
+            assert alt.discovery_source == "python_discovery_a_band"
             assert alt.confidence_level is not None
             assert alt.confidence_level > 0.0
 
@@ -669,3 +669,188 @@ class TestAlternativeFinder:
 
         # Assert
         assert alternatives == []
+
+
+class TestSectorAlternatives:
+    """Step 2: same-sector candidates graded strictly better than the holding."""
+
+    @pytest.fixture
+    def finder(self, tmp_path):
+        return AlternativeFinder(output_dir=tmp_path)
+
+    def _write_opportunities(self, tmp_path, opportunities):
+        discovery_dir = tmp_path / "discovery"
+        discovery_dir.mkdir(exist_ok=True)
+        (discovery_dir / "consolidated_discovery.json").write_text(
+            json.dumps({"timestamp": "2026-09-08T00:00:00", "total_opportunities": len(opportunities), "opportunities": opportunities})
+        )
+
+    def _holding(self, **kwargs):
+        base = {
+            "ticker": "BAD.PA",
+            "name": "Underperformer",
+            "asset_class": "stock",
+            "grade": "D",
+            "composite_score": 0.30,
+            "risk_score": 3.0,
+            "sector": "Healthcare",
+        }
+        base.update(kwargs)
+        return HoldingProfile(**base)
+
+    def test_should_match_same_sector_candidate_graded_better(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "GOOD.PA", "name": "Better", "grade": "B", "composite_score": 0.75, "sector": "Healthcare", "asset_class": "stock"}],
+        )
+
+        alternatives = finder._find_sector_alternatives(self._holding())
+
+        assert [a.ticker for a in alternatives] == ["GOOD.PA"]
+        assert alternatives[0].discovery_source == "sector_match"
+        # B is not A-band, so this must not be advertised as an A+ pick.
+        assert alternatives[0].is_a_plus_candidate is False
+
+    def test_should_reject_candidate_graded_no_better_than_holding(self, finder, tmp_path):
+        """A same-grade swap is churn, not an improvement."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "SAME.PA", "name": "Same", "grade": "D", "composite_score": 0.31, "sector": "Healthcare", "asset_class": "stock"}],
+        )
+
+        assert finder._find_sector_alternatives(self._holding()) == []
+
+    def test_should_reject_other_sector_and_other_asset_class(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [
+                {"ticker": "TECH.PA", "name": "Tech", "grade": "A", "composite_score": 0.9, "sector": "Technology", "asset_class": "stock"},
+                {"ticker": "HEALTH.L", "name": "Health ETF", "grade": "A", "composite_score": 0.9, "sector": "Healthcare", "asset_class": "etf"},
+            ],
+        )
+
+        assert finder._find_sector_alternatives(self._holding()) == []
+
+    def test_should_skip_when_holding_sector_unknown(self, finder, tmp_path):
+        """Never pair on a guessed sector — a wrong pairing swaps unrelated assets."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "GOOD.PA", "name": "Better", "grade": "A", "composite_score": 0.9, "sector": "Healthcare", "asset_class": "stock"}],
+        )
+
+        assert finder._find_sector_alternatives(self._holding(sector=None)) == []
+
+    def test_should_match_sector_case_insensitively(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "GOOD.PA", "name": "Better", "grade": "B", "composite_score": 0.75, "sector": "  healthcare ", "asset_class": "stock"}],
+        )
+
+        assert [a.ticker for a in finder._find_sector_alternatives(self._holding())] == ["GOOD.PA"]
+
+    def test_should_rank_best_grade_first(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [
+                {"ticker": "OK.PA", "name": "Ok", "grade": "C+", "composite_score": 0.60, "sector": "Healthcare", "asset_class": "stock"},
+                {"ticker": "BEST.PA", "name": "Best", "grade": "A", "composite_score": 0.92, "sector": "Healthcare", "asset_class": "stock"},
+            ],
+        )
+
+        assert [a.ticker for a in finder._find_sector_alternatives(self._holding())] == ["BEST.PA", "OK.PA"]
+
+
+class TestLowerCostEtfAlternatives:
+    """Step 3: ETFs that are strictly cheaper and no worse graded."""
+
+    @pytest.fixture
+    def finder(self, tmp_path):
+        return AlternativeFinder(output_dir=tmp_path)
+
+    def _write_opportunities(self, tmp_path, opportunities):
+        discovery_dir = tmp_path / "discovery"
+        discovery_dir.mkdir(exist_ok=True)
+        (discovery_dir / "consolidated_discovery.json").write_text(
+            json.dumps({"timestamp": "2026-09-08T00:00:00", "total_opportunities": len(opportunities), "opportunities": opportunities})
+        )
+
+    def _etf(self, **kwargs):
+        base = {
+            "ticker": "PRICEY.L",
+            "name": "Expensive fund",
+            "asset_class": "etf",
+            "grade": "D",
+            "composite_score": 0.30,
+            "risk_score": 3.0,
+            "expense_ratio": 0.0050,  # 0.50%, a fraction
+        }
+        base.update(kwargs)
+        return HoldingProfile(**base)
+
+    def test_should_find_cheaper_etf_of_equal_grade(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "CHEAP.L", "name": "Cheap", "grade": "D", "composite_score": 0.31, "asset_class": "etf", "expense_ratio": 0.0007}],
+        )
+
+        alternatives = finder._find_lower_cost_etf_alternatives(self._etf())
+
+        assert [a.ticker for a in alternatives] == ["CHEAP.L"]
+        assert alternatives[0].discovery_source == "lower_cost_etf"
+        # 0.0050 - 0.0007, on one consistent fraction scale.
+        assert alternatives[0].expense_ratio_savings == pytest.approx(0.0043)
+
+    def test_should_reject_more_expensive_fund(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "WORSE.L", "name": "Dearer", "grade": "A", "composite_score": 0.9, "asset_class": "etf", "expense_ratio": 0.0080}],
+        )
+
+        assert finder._find_lower_cost_etf_alternatives(self._etf()) == []
+
+    def test_should_reject_cheaper_but_worse_graded_fund(self, finder, tmp_path):
+        """Cheapness never buys a downgrade."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "CHEAPBAD.L", "name": "Cheap but worse", "grade": "F", "composite_score": 0.1, "asset_class": "etf", "expense_ratio": 0.0001}],
+        )
+
+        assert finder._find_lower_cost_etf_alternatives(self._etf()) == []
+
+    def test_should_skip_candidate_with_unknown_expense_ratio(self, finder, tmp_path):
+        """An unpriced candidate is never assumed cheap."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "UNKNOWN.L", "name": "No ratio", "grade": "B", "composite_score": 0.7, "asset_class": "etf"}],
+        )
+
+        assert finder._find_lower_cost_etf_alternatives(self._etf()) == []
+
+    def test_should_skip_when_holding_expense_ratio_unknown(self, finder, tmp_path):
+        """Without the held fund's own cost there is nothing to prove cheaper than."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "CHEAP.L", "name": "Cheap", "grade": "B", "composite_score": 0.7, "asset_class": "etf", "expense_ratio": 0.0007}],
+        )
+
+        assert finder._find_lower_cost_etf_alternatives(self._etf(expense_ratio=None)) == []
+
+    def test_should_rank_cheapest_first(self, finder, tmp_path):
+        self._write_opportunities(
+            tmp_path,
+            [
+                {"ticker": "MID.L", "name": "Mid", "grade": "B", "composite_score": 0.7, "asset_class": "etf", "expense_ratio": 0.0020},
+                {"ticker": "CHEAPEST.L", "name": "Cheapest", "grade": "B", "composite_score": 0.7, "asset_class": "etf", "expense_ratio": 0.0005},
+            ],
+        )
+
+        assert [a.ticker for a in finder._find_lower_cost_etf_alternatives(self._etf())] == ["CHEAPEST.L", "MID.L"]
+
+    def test_should_reject_percent_scaled_ratio_as_unusable(self, finder, tmp_path):
+        """A value >= 1.0 is not a fraction; treating 7.0 as 700% must not pass as cheap."""
+        self._write_opportunities(
+            tmp_path,
+            [{"ticker": "BADSCALE.L", "name": "Percent scaled", "grade": "B", "composite_score": 0.7, "asset_class": "etf", "expense_ratio": 7.0}],
+        )
+
+        assert finder._find_lower_cost_etf_alternatives(self._etf()) == []
