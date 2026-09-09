@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.16.0] - 2026-09-09
+
+### Added
+
+- Same-sector and cheaper-ETF alternative matching. Two of the finder's three
+  search steps were `return []` placeholders and the third only accepts A-band
+  candidates, so the run gate's `alternatives` check could not pass by
+  construction: a real run graded 2 of 17 opportunities A-band, both stocks,
+  leaving a portfolio of underperforming ETFs unmatchable by any path. Sector
+  matching now accepts any grade strictly above the holding's; the cheaper-ETF
+  search requires a known expense ratio on both sides and never trades a lower
+  cost for a worse grade. A fund's sector is the dominant `sector_weights`
+  entry, used only above 40% so a world index is not filed under Technology.
+- The three fact-pack fields that were collected and discarded: `sector_weights`,
+  `turnover`, and `volume_24h_market_cap_pct` now render in the report.
+  ([#186](https://github.com/fjacquet/finwiz/issues/186))
+
+### Fixed
+
+- Fact packs no longer normalise an unrecognised `asset_class` to `"stock"`. The
+  guess routed BTC through the equity path, which fetched a Grayscale trust and
+  priced a different instrument; the existing quote-type cross-check could not
+  catch it, because it compares against the guessed class. Unknown classes are
+  now refused with a log line naming the ticker.
+  ([#177](https://github.com/fjacquet/finwiz/issues/177))
+- News headlines are screened for relevance to the holding, not merely for an
+  allowlisted provider. A travel article about "EL NINO" was reaching the model
+  as a corporate event for `EL.PA`. Matching is now word-initial against company
+  name tokens and the ticker root.
+  ([#169](https://github.com/fjacquet/finwiz/issues/169))
+- Report tooltips name fact-pack sources in the reader's language instead of
+  leaking internal identifiers such as `composer.schema_fallback`.
+  ([#174](https://github.com/fjacquet/finwiz/issues/174))
+- Alternative comparisons no longer fabricate financial figures. Expense-ratio
+  savings were computed from substituted defaults (0.50 held, 0.10 candidate) on
+  the wrong scale — real ratios are fractions — publishing a 0.40 "saving" where
+  a genuine gap is ~0.005; a missing crypto market cap always produced exactly
+  +900% "liquidity improvement". Both are now reported only when both sides are
+  known.
+- Discovery persists the expense ratio it already fetches. The screener reads
+  `annualReportExpenseRatio` but the writer dropped it, which is why the
+  cheaper-ETF search had nothing to compare against.
+- The unit suite no longer writes into the real `output/` directory. Production
+  writers resolve paths relative to the working directory, so a `make test` run
+  overwrote the repository's own run artefacts — `consolidated_discovery.json`
+  and friends — with test fixtures. Non-integration tests now run in a scratch
+  directory.
+
+### Changed
+
+- Alternative matching and discovery no longer refer to deleted crews. The
+  `investment_discovery_crew` source label and "discovery crew" log lines date
+  from before [#187](https://github.com/fjacquet/finwiz/issues/187); discovery
+  is Python scoring.
+
 ### Removed
 
 - `FinwizFlow`'s ten `@listen` methods. The chain's root trigger had no
@@ -29,6 +84,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   roots in `integration/` holding that subtree up. Two of the validation modules had
   stopped running silently in 4600d1a7 — see [#202](https://github.com/fjacquet/finwiz/issues/202).
   ([#200](https://github.com/fjacquet/finwiz/issues/200))
+- Twenty further modules unreachable from any entry point, cleared by a history
+  pass rather than a present-tense grep: fifteen infrastructure orphans, the
+  discovery/integration chain, and `tools/perplexity_performance_benchmark.py`.
+  ([#213](https://github.com/fjacquet/finwiz/issues/213))
+- Vacuous tests that asserted nothing about the codebase, including three
+  flow-delegation property tests and a "circuit breaker" test that incremented a
+  local counter and checked its own arithmetic.
+  ([#201](https://github.com/fjacquet/finwiz/issues/201))
+- The broken Perplexity retry suites. Twenty-two tests sat behind class-level
+  skips that were hiding a fixture error, not deferring scope: their fixture
+  builds a real client, which now refuses to construct without an API key. Two
+  tests in those classes were sound and are revived.
+- `generate_recommendation`'s unused `perf_metrics` parameter, kept "for API
+  stability" that no longer existed.
+
 
 ## [5.15.0] - 2026-09-07
 
