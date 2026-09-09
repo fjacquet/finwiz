@@ -19,7 +19,7 @@ FinWiz emphasizes **AI Minimalism** - using Python for deterministic tasks and A
 - **Python Scoring Engine**: 100% deterministic calculations with 10-20x speedup
 - **Portfolio Management**: Review, rebalancing, and optimization
 - **A+ Investment Discovery**: Proactive opportunity discovery
-- **Quantitative Analysis**: Professional-grade libraries (Backtrader, TA-Lib, QuantLib)
+- **Quantitative Analysis**: Professional-grade libraries (Backtrader, TA-Lib)
 
 ## Quick Start
 
@@ -175,7 +175,6 @@ Professional-grade quantitative analysis framework:
 - **Backtesting**: Backtrader-based strategy testing
 - **Technical Analysis**: TA-Lib indicators (50+ indicators)
 - **Portfolio Optimization**: PyPortfolioOpt integration
-- **Derivatives Pricing**: QuantLib integration
 - **Risk Management**: VaR, CVaR, stress testing
 
 ## Documentation Features

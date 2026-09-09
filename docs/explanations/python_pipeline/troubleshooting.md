@@ -442,7 +442,7 @@ Memory usage increases significantly during analysis.
        export_result(result)
    ```
 
-3. **Monitor memory**:
+3. **Monitor memory** (requires `psutil`, which FinWiz does not install):
 
    ```python
    import psutil

@@ -544,6 +544,8 @@ os.environ["ENABLE_ALPHA_VANTAGE"] = "false"  # Disable for speed
 
 **Issue**: High memory usage during batch processing
 
+> `psutil` is not a FinWiz dependency — install it separately (`uv pip install psutil`) to run this snippet.
+
 ```python
 # Diagnosis
 import psutil

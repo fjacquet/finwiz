@@ -253,6 +253,8 @@ DEEP_ANALYSIS_BATCH_SIZE=10   # default
 
 The system monitors memory usage and adjusts batch sizes:
 
+> `psutil` is not a FinWiz dependency — install it separately (`uv pip install psutil`) to run this snippet.
+
 ```python
 import psutil
 from finwiz.infrastructure.monitoring.memory_manager import MemoryManager

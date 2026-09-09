@@ -224,7 +224,6 @@ src/finwiz/
 │   │   └── engine.py
 │   ├── backtesting.py             # Backtrader integration
 │   ├── optimization.py            # Portfolio optimization
-│   ├── derivatives.py             # QuantLib derivatives
 │   ├── screening_criteria.py      # Screening criteria
 │   ├── screening_filters.py       # Screening filters
 │   └── portfolio_*.py             # Portfolio management
