@@ -15,6 +15,7 @@ from typing import Any, Literal, cast
 
 from pydantic import BaseModel, Field
 
+from finwiz.quantitative.etf.etf_expense_fallback import get_fallback_expense_ratio
 from finwiz.schemas.portfolio_review import Alternative, AssetClass, Grade
 from finwiz.tools.logger import get_logger
 
@@ -30,6 +31,25 @@ logger = get_logger(__name__)
 # Broader than "A+ only" so this isn't perpetually empty: A+ alone requires a >=95%
 # composite score, which is rare in practice.
 _A_BAND_GRADES: frozenset[str] = frozenset({"A+", "A"})
+
+
+def _coerce_expense_ratio(value: Any) -> float | None:
+    """Return an expense ratio as a fraction, or None when absent or unusable.
+
+    Discovery items carry no expense ratio today, so this mostly guards the
+    ``None`` case. It also refuses a negative or absurd value rather than letting
+    it flow into a comparison: anything at or above 1.0 is not a fraction, and
+    silently treating 0.07 (a percent) as 7% would invert every comparison.
+    """
+    if value is None:
+        return None
+    try:
+        ratio = float(value)
+    except (TypeError, ValueError):
+        return None
+    if ratio < 0.0 or ratio >= 1.0:
+        return None
+    return ratio
 
 
 class HoldingProfile(BaseModel):
@@ -190,20 +210,11 @@ class AlternativeFinder:
         """
         alternatives = []
 
-        discovery_file = self.discovery_output_dir / "consolidated_discovery.json"
-        if not discovery_file.exists():
-            self.logger.warning(f"No discovery output found at {discovery_file}; A-band alternatives unavailable for this run.")
+        opportunities = self._load_opportunities()
+        if not opportunities:
             return alternatives
 
         try:
-            with open(discovery_file) as f:
-                discovery_data = json.load(f)
-
-            opportunities = discovery_data.get("opportunities", [])
-            if not opportunities:
-                self.logger.warning(f"Discovery output exists but has no opportunities. File: {discovery_file}")
-                return alternatives
-
             aplus_items = [item for item in opportunities if isinstance(item, dict) and item.get("asset_class") == holding.asset_class and item.get("grade") in _A_BAND_GRADES]
 
             if not aplus_items:
@@ -232,19 +243,57 @@ class AlternativeFinder:
 
         except Exception as e:
             self.logger.error(
-                f"Error reading discovery output from {discovery_file}: {e}",
-                extra={"error": str(e), "file": str(discovery_file)},
+                f"Error building A-band alternatives for {holding.ticker}: {e}",
+                extra={"error": str(e), "ticker": holding.ticker},
                 exc_info=True,
             )
 
         return alternatives
 
+    def _load_opportunities(self) -> list[dict]:
+        """Read the flat ``opportunities`` list from ``consolidated_discovery.json``.
+
+        This is the single candidate universe behind all three search steps. It is
+        read once per step rather than cached, because a run writes it during
+        discovery and reads it during matching, in that order.
+        """
+        discovery_file = self.discovery_output_dir / "consolidated_discovery.json"
+        if not discovery_file.exists():
+            self.logger.warning(f"No discovery output found at {discovery_file}; no alternatives can be sourced this run.")
+            return []
+
+        try:
+            with open(discovery_file) as f:
+                discovery_data = json.load(f)
+        except Exception as e:
+            self.logger.error(
+                f"Error reading discovery output from {discovery_file}: {e}",
+                extra={"error": str(e), "file": str(discovery_file)},
+                exc_info=True,
+            )
+            return []
+
+        opportunities = discovery_data.get("opportunities", [])
+        if not opportunities:
+            self.logger.warning(f"Discovery output exists but has no opportunities. File: {discovery_file}")
+            return []
+
+        return [item for item in opportunities if isinstance(item, dict)]
+
     def _create_alternative_from_aplus(
         self,
         item: dict,
         holding: HoldingProfile,
+        *,
+        is_a_plus: bool = True,
+        discovery_source: str = "python_discovery_a_band",
     ) -> Alternative | None:
-        """Create Alternative object from A+ discovery item."""
+        """Build an ``Alternative`` from one discovery opportunity.
+
+        Shared by all three search steps; ``is_a_plus`` and ``discovery_source``
+        record which step produced the candidate so the report can distinguish an
+        A-band pick from a same-sector or cheaper-fund one.
+        """
         from finwiz.exceptions.data_quality import MissingRequiredFieldError
 
         try:
@@ -292,10 +341,18 @@ class AlternativeFinder:
             liquidity_improvement = None
 
             if holding.asset_class == "etf":
-                # Calculate expense ratio savings
-                current_expense = holding.expense_ratio or 0.50
-                alternative_expense = item.get("expense_ratio", 0.10)
-                expense_ratio_savings = current_expense - alternative_expense
+                # Report a saving only when BOTH sides are known. The previous
+                # defaults (0.50 held / 0.10 alternative) were fabricated AND on
+                # the wrong scale: real expense ratios here are fractions
+                # (data/etf_expense_ratios.yaml stores 0.0007 for 0.07%), so the
+                # substituted numbers produced a "saving" of 0.40 -- a 40-point
+                # fiction on a scale where a real gap is ~0.005. An omitted
+                # saving reads as unknown; a fabricated one reads as measured.
+                alternative_expense = _coerce_expense_ratio(item.get("expense_ratio"))
+                if alternative_expense is None:
+                    alternative_expense = get_fallback_expense_ratio(ticker)
+                if holding.expense_ratio is not None and alternative_expense is not None:
+                    expense_ratio_savings = holding.expense_ratio - alternative_expense
 
             elif holding.asset_class == "stock":
                 # Fundamental improvements
@@ -305,10 +362,12 @@ class AlternativeFinder:
                 }
 
             elif holding.asset_class == "crypto":
-                # Liquidity improvement (if available)
-                current_market_cap = holding.market_cap or 1000000
-                alternative_market_cap = item.get("market_cap", 10000000)
-                liquidity_improvement = (alternative_market_cap - current_market_cap) / current_market_cap
+                # Same rule as expense ratios: an unknown market cap is left
+                # unknown. The old 1e6 / 1e7 substitutes always yielded exactly
+                # +900% "liquidity improvement" for any pair with missing data.
+                alternative_market_cap = item.get("market_cap")
+                if holding.market_cap and alternative_market_cap:
+                    liquidity_improvement = (alternative_market_cap - holding.market_cap) / holding.market_cap
 
             return Alternative(
                 ticker=ticker,
@@ -321,9 +380,9 @@ class AlternativeFinder:
                 risk_score_standardized=item.get("risk_score", 2.0),
                 key_metrics=item.get("key_metrics", {}),
                 thesis_bullets=item.get("thesis_bullets", []),
-                citations=item.get("citations", ["Discovery Crew A+ Analysis"]),
-                is_a_plus_candidate=True,
-                discovery_source="investment_discovery_crew",
+                citations=item.get("citations", ["Python discovery scoring (A-band)"]),
+                is_a_plus_candidate=is_a_plus,
+                discovery_source=discovery_source,
                 confidence_level=item.get("confidence_level", 0.85),
                 expected_annual_benefit=item.get("expected_annual_benefit"),
                 transition_strategy=transition_strategy,
@@ -342,24 +401,141 @@ class AlternativeFinder:
             return None
 
     def _find_sector_alternatives(self, holding: HoldingProfile) -> list[Alternative]:
-        """Find alternatives in the same sector (placeholder for future implementation)."""
-        # This would integrate with sector/industry databases
-        # For now, return empty list
-        self.logger.info(
-            "Sector matching not yet implemented",
-            extra={"ticker": holding.ticker},
+        """Find same-sector candidates graded strictly better than the holding.
+
+        Reads the same discovery opportunities as step 1 but without the A-band
+        filter. That filter is why step 1 is usually empty: a real run graded only
+        2 of 17 opportunities A-band, and both were stocks, so a portfolio of
+        underperforming ETFs could never be matched. Here any grade above the
+        holding's own qualifies -- swapping a D for a B is a real improvement.
+
+        Requires ``holding.sector``. For an ETF that is the dominant sector of its
+        fact-pack ``sector_weights``; when it is absent the step is skipped rather
+        than matched on a guess, because a wrong sector pairs unrelated funds.
+        """
+        if not holding.sector:
+            self.logger.info(
+                f"No sector known for {holding.ticker}; skipping sector matching rather than pairing on a guess",
+                extra={"ticker": holding.ticker, "asset_class": holding.asset_class},
+            )
+            return []
+
+        opportunities = self._load_opportunities()
+        if not opportunities:
+            return []
+
+        held_grade_value = self.grade_values.get(holding.grade, 0)
+        target_sector = holding.sector.strip().casefold()
+
+        candidates = [
+            item
+            for item in opportunities
+            if item.get("asset_class") == holding.asset_class
+            and item.get("ticker")
+            and item.get("ticker") != holding.ticker
+            and str(item.get("sector") or "").strip().casefold() == target_sector
+            and self.grade_values.get(str(item.get("grade")), 0) > held_grade_value
+        ]
+
+        if not candidates:
+            self.logger.info(
+                f"No {holding.asset_class} in sector {holding.sector!r} graded above {holding.grade} for {holding.ticker}",
+                extra={"ticker": holding.ticker, "sector": holding.sector, "grade": holding.grade},
+            )
+            return []
+
+        # Best grade first, then best score, so the strongest swap leads.
+        candidates.sort(
+            key=lambda i: (self.grade_values.get(str(i.get("grade")), 0), i.get("composite_score") or 0.0),
+            reverse=True,
         )
-        return []
+
+        alternatives = []
+        for item in candidates:
+            alternative = self._create_alternative_from_aplus(
+                item=item,
+                holding=holding,
+                is_a_plus=str(item.get("grade")) in _A_BAND_GRADES,
+                discovery_source="sector_match",
+            )
+            if alternative:
+                alternatives.append(alternative)
+
+        self.logger.info(
+            f"Found {len(alternatives)} same-sector alternatives for {holding.ticker} in {holding.sector}",
+            extra={"ticker": holding.ticker, "sector": holding.sector, "count": len(alternatives)},
+        )
+        return alternatives
 
     def _find_lower_cost_etf_alternatives(self, holding: HoldingProfile) -> list[Alternative]:
-        """Find lower-cost ETF alternatives (placeholder for future implementation)."""
-        # This would integrate with ETF databases to find similar exposure with lower fees
-        # For now, return empty list
+        """Find ETFs that are strictly cheaper and no worse graded.
+
+        Both sides must have a *known* expense ratio. Candidate ratios come from
+        the discovery item when present, else the curated table
+        (``data/etf_expense_ratios.yaml``); a candidate with no ratio is skipped,
+        never assumed cheap. All ratios here are fractions (0.0007 = 0.07%), the
+        same scale on both sides of the comparison.
+
+        The curated table is small, so this step is often legitimately empty. That
+        is reported as missing data, not as "no cheaper fund exists".
+        """
+        if holding.expense_ratio is None:
+            self.logger.info(
+                f"No expense ratio known for {holding.ticker}; cannot prove another fund is cheaper",
+                extra={"ticker": holding.ticker},
+            )
+            return []
+
+        opportunities = self._load_opportunities()
+        if not opportunities:
+            return []
+
+        held_grade_value = self.grade_values.get(holding.grade, 0)
+        priced: list[tuple[dict, float]] = []
+        unpriced = 0
+
+        for item in opportunities:
+            ticker = item.get("ticker")
+            if item.get("asset_class") != "etf" or not ticker or ticker == holding.ticker:
+                continue
+            if self.grade_values.get(str(item.get("grade")), 0) < held_grade_value:
+                continue
+            ratio = _coerce_expense_ratio(item.get("expense_ratio"))
+            if ratio is None:
+                ratio = get_fallback_expense_ratio(ticker)
+            if ratio is None:
+                unpriced += 1
+                continue
+            if ratio < holding.expense_ratio:
+                priced.append((item, ratio))
+
+        if not priced:
+            self.logger.info(
+                f"No cheaper ETF found for {holding.ticker} (its ratio {holding.expense_ratio:.4f}); "
+                f"{unpriced} candidate(s) had no expense ratio in the discovery item or the curated table",
+                extra={"ticker": holding.ticker, "unpriced_candidates": unpriced},
+            )
+            return []
+
+        # Cheapest first -- this step exists to cut cost.
+        priced.sort(key=lambda pair: pair[1])
+
+        alternatives = []
+        for item, _ratio in priced:
+            alternative = self._create_alternative_from_aplus(
+                item=item,
+                holding=holding,
+                is_a_plus=str(item.get("grade")) in _A_BAND_GRADES,
+                discovery_source="lower_cost_etf",
+            )
+            if alternative:
+                alternatives.append(alternative)
+
         self.logger.info(
-            "ETF cost comparison not yet implemented",
-            extra={"ticker": holding.ticker},
+            f"Found {len(alternatives)} cheaper ETF alternatives for {holding.ticker}",
+            extra={"ticker": holding.ticker, "count": len(alternatives)},
         )
-        return []
+        return alternatives
 
     def _create_transition_strategy(
         self,

@@ -25,6 +25,7 @@ import pytest
 from finwiz.orchestrators.extraction.aplus import APlusDataExtractor
 from finwiz.schemas.newcomer_discovery import NewcomerCandidate, NewcomerDiscoveryResult
 from finwiz.scoring.discovery.pipeline import NewcomerDiscoveryPipeline
+from finwiz.tools.alternative_finder_tool import AlternativeFinder, HoldingProfile
 
 _FILENAMES = {"stock": "a_plus_stocks.json", "etf": "a_plus_etfs.json", "crypto": "a_plus_crypto.json"}
 
@@ -177,3 +178,52 @@ class TestDiscoveryWriterReaderContract:
             rationale = " | ".join(opportunities[0].rationale)
             assert "derived from grade" in rationale, f"confidence provenance missing from {rationale}"
             assert "is a default, not measured" in rationale, f"risk_score provenance missing from {rationale}"
+
+
+def test_writer_carries_expense_ratio_so_the_cheaper_etf_search_can_use_it(mocker, tmp_path):
+    """The cheaper-ETF search needs a candidate ratio; the writer must not drop it.
+
+    The screener already fetches ``annualReportExpenseRatio``
+    (discovery/fundamentals_adapter.py) onto the candidate's metadata. Before this
+    contract existed the writer dropped it, so the matcher had nothing to compare
+    and fell back to fabricated defaults.
+    """
+    mocker.patch.object(NewcomerDiscoveryPipeline, "_load_portfolio_tickers")
+
+    candidate = _make_candidate("VWCE", "Vanguard FTSE All-World", "etf")
+    candidate.metadata = {"expense_ratio": 0.0022}
+
+    pipeline = NewcomerDiscoveryPipeline("etf")
+    payload = pipeline._to_legacy_format(
+        NewcomerDiscoveryResult(
+            asset_class="etf",
+            session_id="s1",
+            timestamp="2026-01-01T00:00:00",
+            candidates=[candidate],
+            total_candidates=1,
+            summary="test",
+        ),
+        time.time(),
+    )
+
+    assert payload["opportunities"][0]["expense_ratio"] == 0.0022
+
+    # And the reader turns it into a real, correctly scaled saving.
+    discovery_dir = tmp_path / "discovery"
+    discovery_dir.mkdir()
+    (discovery_dir / "consolidated_discovery.json").write_text(json.dumps(payload, default=str))
+
+    finder = AlternativeFinder(output_dir=tmp_path)
+    holding = HoldingProfile(
+        ticker="PRICEY.L",
+        name="Expensive",
+        asset_class="etf",
+        grade="D",
+        composite_score=0.3,
+        risk_score=3.0,
+        expense_ratio=0.0050,
+    )
+
+    alternatives = finder._find_lower_cost_etf_alternatives(holding)
+    assert [a.ticker for a in alternatives] == ["VWCE"]
+    assert alternatives[0].expense_ratio_savings == pytest.approx(0.0028)
