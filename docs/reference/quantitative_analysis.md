@@ -9,7 +9,6 @@ The quantitative analysis framework consists of several interconnected modules:
 - **Backtesting Engine**: Strategy development and backtesting using Backtrader
 - **Technical Analysis**: Technical indicator calculation and signal generation using TA-Lib
 - **Performance Analytics**: Risk-adjusted performance metrics and portfolio optimization
-- **Derivatives Pricing**: Options and bond pricing using QuantLib
 - **Portfolio Optimization**: Modern portfolio theory implementation
 - **Stock Screening**: Multi-criteria stock filtering and ranking
 
@@ -33,7 +32,6 @@ src/finwiz/quantitative/
 ├── data.py                      # Historical data management
 ├── backtesting.py               # Backtrader-based backtesting engine
 ├── performance.py               # Performance analytics
-├── derivatives.py                # QuantLib derivatives pricing
 ├── optimization.py              # Portfolio optimization algorithms
 ├── screening_criteria.py        # Stock screening criteria
 ├── screening_filters.py         # Stock screening filters
@@ -375,7 +373,6 @@ which is quantitative-specific.
 
 ### Optional Dependencies
 
-- **QuantLib**: Advanced derivatives pricing
 - **PyPortfolioOpt**: Portfolio optimization
 - **plotly**: Interactive visualizations
 - **scipy**: Statistical functions
@@ -387,7 +384,7 @@ which is quantitative-specific.
 uv pip install backtrader ta-lib numpy pandas yfinance
 
 # Install optional dependencies
-uv pip install QuantLib PyPortfolioOpt plotly scipy
+uv pip install PyPortfolioOpt plotly scipy
 
 # Note: TA-Lib may require system-level installation
 # macOS: brew install ta-lib

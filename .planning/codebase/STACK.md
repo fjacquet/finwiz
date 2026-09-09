@@ -38,16 +38,12 @@
 
 **AI/LLM:**
 
-- LangChain >=0.3.27 - LLM orchestration
-- LangChain OpenAI >=1.0.3 - OpenAI integration
-- LangChain Community >=0.3.29 - Community integrations
 - LiteLLM >=1.80.0 - Multi-provider LLM gateway
 
 **Financial Analysis:**
 
 - Backtrader >=1.9.78.123 - Backtesting framework
 - TA-Lib >=0.6.6 - Technical analysis indicators
-- QuantLib >=1.39 - Quantitative finance library
 - PyPortfolioOpt >=1.5.5 - Portfolio optimization
 - Empyrical-Reloaded >=0.5.12 - Performance metrics
 
@@ -122,7 +118,6 @@
 **Utilities:**
 
 - plotly >=6.3.0 - Interactive charts
-- nest-asyncio >=1.6.0 - Nested event loops
 - trio >=0.31.0 - Async I/O
 - cryptography >=46.0.3 - Encryption utilities
 
