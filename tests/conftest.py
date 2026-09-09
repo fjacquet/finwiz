@@ -20,6 +20,7 @@ os.environ.setdefault("CREWAI_TOOLS_RATE_LIMIT_DISABLED", "1")
 os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -96,6 +97,31 @@ _EXTRA_CONFIG_ENV_VARS = (
     "PERPLEXITY_API_KEY",
     "PPLX_API_KEY",
 )
+
+
+@pytest.fixture(autouse=True)
+def _isolate_output_dir(monkeypatch, tmp_path, request):
+    """Run every unit test in a scratch cwd so nothing writes into the real ``output/``.
+
+    Production writers resolve their destinations relative to the current working
+    directory (``Path("output")``), so a unit test that exercised one of them
+    overwrote the repository's real run artefacts. That is how a `make test` run
+    replaced `output/discovery/consolidated_discovery.json` with Faker fixtures.
+
+    Integration tests keep the repository root: they are meant to produce real
+    artefacts. A test that needs the repo root can request ``repo_root``.
+    """
+    if request.node.get_closest_marker("integration"):
+        yield
+        return
+    monkeypatch.chdir(tmp_path)
+    yield
+
+
+@pytest.fixture
+def repo_root() -> Path:
+    """Absolute path to the repository root, valid despite the scratch cwd."""
+    return Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(autouse=True)

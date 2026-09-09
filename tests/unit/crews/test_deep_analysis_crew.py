@@ -11,6 +11,8 @@ CrewAI framework and LLM calls, which is not practical for unit tests.
 
 from pathlib import Path
 
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 class TestDeepAnalysisCrew:
     """Test cases for DeepAnalysisCrew - focused on tool routing and configuration."""
@@ -20,7 +22,7 @@ class TestDeepAnalysisCrew:
         import yaml
 
         # Load the actual YAML file
-        config_path = Path("src/finwiz/crews/deep_analysis/config/agents.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/agents.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -37,7 +39,7 @@ class TestDeepAnalysisCrew:
         import yaml
 
         # Load the actual YAML file
-        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -136,8 +138,8 @@ class TestDeepAnalysisCrew:
 
     def test_configuration_files_exist(self):
         """Test that configuration files exist."""
-        agents_config = Path("src/finwiz/crews/deep_analysis/config/agents.yaml")
-        tasks_config = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        agents_config = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/agents.yaml"
+        tasks_config = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
 
         assert agents_config.exists(), "agents.yaml configuration file not found"
         assert tasks_config.exists(), "tasks.yaml configuration file not found"
@@ -236,7 +238,7 @@ class TestAssetAnalystToolless:
     def test_tasks_yaml_has_no_perplexity_instruction(self) -> None:
         # The prompt must not contradict reality by telling the LLM it has a
         # Perplexity tool when it doesn't.
-        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
         text = config_path.read_text(encoding="utf-8")
         assert "OUTIL DE VÉRIFICATION" not in text
         assert "Perplexity Sonar Search" not in text
@@ -251,7 +253,7 @@ class TestCrewMaxIter:
     def test_crew_source_uses_max_iter_2(self) -> None:
         # Source-level check (rather than instantiating the Crew, which the
         # other tests in this file deliberately avoid).
-        path = Path("src/finwiz/crews/deep_analysis/deep_analysis.py")
+        path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/deep_analysis.py"
         text = path.read_text(encoding="utf-8")
         assert "max_iter=2" in text
         assert "max_iter=5" not in text
@@ -265,14 +267,14 @@ class TestPerHoldingTimeoutDefault:
 
     def test_crew_execution_uses_crew_timeout_var(self) -> None:
         """crew_execution.py must read FINWIZ_CREW_TIMEOUT (not FINWIZ_HOLDING_TIMEOUT)."""
-        path = Path("src/finwiz/infrastructure/resilience/crew_execution.py")
+        path = _REPO_ROOT / "src/finwiz/infrastructure/resilience/crew_execution.py"
         text = path.read_text(encoding="utf-8")
         assert 'os.getenv("FINWIZ_CREW_TIMEOUT", "600")' in text
         assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT"' not in text
 
     def test_orchestrator_holding_timeout_default_is_900s(self) -> None:
         """The orchestrator outer holding budget defaults to 900 s."""
-        path = Path("src/finwiz/orchestrators/deep_analysis_orchestrator.py")
+        path = _REPO_ROOT / "src/finwiz/orchestrators/deep_analysis_orchestrator.py"
         text = path.read_text(encoding="utf-8")
         assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "900")' in text
         assert 'os.getenv("FINWIZ_HOLDING_TIMEOUT", "600")' not in text

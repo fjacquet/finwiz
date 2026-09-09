@@ -19,6 +19,11 @@ from finwiz.scoring.grading_system import count_grade_distribution
 class TestReportingOrchestrator:
     """Test suite for ReportingOrchestrator."""
 
+    @pytest.fixture(autouse=True)
+    def _isolate_output_dir(self, monkeypatch, tmp_path):
+        """Keep report writes inside tmp_path rather than the real ``output/``."""
+        monkeypatch.chdir(tmp_path)
+
     @pytest.fixture
     def state(self):
         """Create a FinwizState instance for testing."""

@@ -6,7 +6,9 @@ from pathlib import Path
 
 import yaml
 
-TASKS_YAML = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
+TASKS_YAML = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
 
 
 def test_tasks_yaml_includes_fact_pack_section() -> None:

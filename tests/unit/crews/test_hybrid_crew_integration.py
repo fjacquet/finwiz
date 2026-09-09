@@ -9,13 +9,15 @@ from pathlib import Path
 
 import yaml
 
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 class TestHybridDeepAnalysisCrewIntegration:
     """Test hybrid architecture for Deep Analysis Crew."""
 
     def test_should_load_qualitative_focused_agent_configurations(self):
         """Test that Deep Analysis Crew agents are configured for qualitative analysis."""
-        config_path = Path("src/finwiz/crews/deep_analysis/config/agents.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/agents.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -36,7 +38,7 @@ class TestHybridDeepAnalysisCrewIntegration:
 
     def test_should_load_qualitative_focused_task_configurations(self):
         """Test that Deep Analysis Crew tasks are configured for qualitative analysis."""
-        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -63,7 +65,7 @@ class TestHybridDeepAnalysisCrewIntegration:
 
     def test_should_use_hybrid_analysis_schemas(self):
         """Test that tasks reference hybrid analysis Pydantic schemas in expected_output."""
-        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -80,7 +82,7 @@ class TestHybridDeepAnalysisCrewIntegration:
 
     def test_should_pass_python_context_to_tasks(self):
         """Test that tasks receive Python-calculated metrics as context."""
-        config_path = Path("src/finwiz/crews/deep_analysis/config/tasks.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/tasks.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 
@@ -203,7 +205,7 @@ class TestHybridCrewNoCalculationTools:
 
     def test_deep_analysis_crew_agents_should_focus_on_qualitative_analysis(self):
         """Test that Deep Analysis Crew agents focus on qualitative analysis (not calculations)."""
-        config_path = Path("src/finwiz/crews/deep_analysis/config/agents.yaml")
+        config_path = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config/agents.yaml"
         with open(config_path) as f:
             config = yaml.safe_load(f)
 

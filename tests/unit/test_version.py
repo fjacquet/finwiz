@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
 # Match the [5.X.Y] - YYYY-MM-DD format used in Keep-a-Changelog
 _CHANGELOG_HEADER = re.compile(r"^## \[(\d+\.\d+\.\d+)\] - \d{4}-\d{2}-\d{2}", re.MULTILINE)
 _PYPROJECT_VERSION = re.compile(r'^version = "(\d+\.\d+\.\d+)"', re.MULTILINE)
@@ -15,8 +17,8 @@ def test_pyproject_version_matches_latest_changelog_release() -> None:
 
     Pins v5.2.0+ alignment: the SemVer tag, pyproject, and CHANGELOG must agree.
     """
-    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
-    changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
+    pyproject = (_REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    changelog = (_REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
     pp_match = _PYPROJECT_VERSION.search(pyproject)
     assert pp_match is not None, "pyproject.toml has no version line"
@@ -31,7 +33,7 @@ def test_pyproject_version_matches_latest_changelog_release() -> None:
 
 def test_version_is_5_2_0_or_later() -> None:
     """Pin the v5.2.0 alignment epoch -- versions <5.2.0 are now historical."""
-    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    pyproject = (_REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
     pp_match = _PYPROJECT_VERSION.search(pyproject)
     assert pp_match is not None
     parts = tuple(int(p) for p in pp_match.group(1).split("."))
