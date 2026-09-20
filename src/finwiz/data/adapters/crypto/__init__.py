@@ -12,11 +12,13 @@ from finwiz.data.adapters.crypto.base import (
     positive_or_none,
 )
 from finwiz.data.adapters.crypto.coingecko_adapter import CoinGeckoAdapter
+from finwiz.data.adapters.crypto.kraken_adapter import KrakenAdapter
 
 __all__ = [
     "BaseCryptoAdapter",
     "CoinGeckoAdapter",
     "CryptoMarketData",
+    "KrakenAdapter",
     "normalize_crypto_symbol",
     "positive_or_none",
 ]
