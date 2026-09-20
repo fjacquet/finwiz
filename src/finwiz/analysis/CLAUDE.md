@@ -9,7 +9,7 @@ analysis/
 ├── __init__.py                   # Module exports
 ├── deep_analysis_pipeline.py     # Backwards-compatible facade only
 ├── _helpers.py                   # Shared helpers
-├── fact_pack_research.py         # Perplexity gap-fill support (see analysis/fact_pack/)
+├── fact_pack_research.py         # Research gap-fill support (see analysis/fact_pack/)
 ├── strategic_research.py         # Strategic framework research
 ├── fact_pack/                    # Deterministic fact pack, one shape per asset class
 │   ├── __init__.py               # compose_fact_pack() — the only entry point
@@ -23,7 +23,7 @@ analysis/
 │       ├── yfinance_source.py    # Equity: summary, officers, SEC filings, news
 │       ├── fund_source.py        # Fund: issuer, legal form, TER, asset mix, top holdings
 │       ├── crypto_source.py      # Crypto: description, supply policy (maxSupply==0 is uncapped)
-│       └── perplexity_source.py  # Equity gap-fill only, behind FF_PERPLEXITY_RESEARCH
+│       └── research_source.py    # Equity gap-fill only (OpenRouter web research, Perplexity fallback), behind FF_PERPLEXITY_RESEARCH
 └── stages/                       # WHERE THE PIPELINE ACTUALLY LIVES
     ├── __init__.py               # run_pipeline() — the real orchestrator
     ├── collect.py                # 1. collect

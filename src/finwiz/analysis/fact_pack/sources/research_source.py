@@ -1,8 +1,9 @@
-"""Perplexity, narrowed to the one field structured data cannot supply.
+"""Web research, narrowed to the one field structured data cannot supply.
 
 Funds and crypto are complete without it. Equities are too, when the company
 files with the SEC or a wire service covered it. What remains is a company with
-neither — measured at 6 of 67 holdings.
+neither — measured at 6 of 67 holdings. The call goes through
+``research_with_retry`` (OpenRouter web plugin, Perplexity as fallback).
 """
 
 from __future__ import annotations
@@ -19,7 +20,7 @@ def fetch_missing_events(ticker: str, company_name: str, sector: str | None, ind
     """Material events for one company. Any failure returns empty; never raises."""
     from finwiz.analysis._helpers import _today_french
     from finwiz.analysis.fact_pack_research import _SYSTEM_FR, _FactPackRaw, _run_coroutine_sync
-    from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
+    from finwiz.infrastructure.resilience.research_retry import research_with_retry
 
     prompt = (
         f"Date du jour : {_today_french()}.\n\n"
@@ -31,14 +32,14 @@ def fetch_missing_events(ticker: str, company_name: str, sector: str | None, ind
     )
 
     try:
-        raw = _run_coroutine_sync(
-            perplexity_with_retry(prompt=prompt, schema=_FactPackRaw, system=_SYSTEM_FR, search_recency_filter="month", timeout=timeout),
+        result = _run_coroutine_sync(
+            research_with_retry(prompt=prompt, schema=_FactPackRaw, system=_SYSTEM_FR, search_recency_filter="month", timeout=timeout, kind="factpack"),
             timeout=timeout,
         )
     except Exception as e:
         logger.warning(f"fact_pack gap-fill failed for {ticker}: {e}")
         return ()
 
-    if raw is None:
+    if result is None:
         return ()
-    return tuple(event[:_EVENT_MAX_CHARS] for event in raw.recent_events[:_MAX_EVENTS])
+    return tuple(event[:_EVENT_MAX_CHARS] for event in result.data.recent_events[:_MAX_EVENTS])

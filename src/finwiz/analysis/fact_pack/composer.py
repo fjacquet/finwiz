@@ -8,7 +8,7 @@ from typing import Literal, cast
 
 from finwiz.analysis.fact_pack.confidence import score
 from finwiz.analysis.fact_pack.fragment import PLACEHOLDER, merge_fragments
-from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, perplexity_source, yfinance_source
+from finwiz.analysis.fact_pack.sources import crypto_source, fund_source, research_source, yfinance_source
 from finwiz.config.features.flags import is_feature_enabled
 from finwiz.discovery.ticker_utils import to_yfinance_symbol
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts
@@ -70,7 +70,7 @@ def _equity_details(
 ) -> tuple[EquityFacts, tuple[str, ...], tuple[str, ...]]:
     """The equity path keeps fragments: three sources genuinely merge here.
 
-    Perplexity is consulted only when filings and news both left
+    Web research is consulted only when filings and news both left
     `recent_events` empty -- funds and crypto never reach this function, so
     they never ask. Measured at 6 of 67 holdings. A failure here (quota,
     timeout, malformed response) must never take down an otherwise-complete
@@ -89,14 +89,14 @@ def _equity_details(
         try:
             # The bare ticker, not query_symbol -- this is a research prompt
             # about the company, not a yfinance query.
-            gap_filled = perplexity_source.fetch_missing_events(ticker, company_name, sector, industry)
+            gap_filled = research_source.fetch_missing_events(ticker, company_name, sector, industry)
         except Exception as e:
             logger.warning(f"fact_pack: {ticker} gap-fill failed: {e}")
             gap_filled = ()
         if gap_filled:
             recent_events = gap_filled
             events_from_filings = False
-            sources = (*sources, "perplexity.gap_fill")
+            sources = (*sources, "research.gap_fill")
 
     facts = EquityFacts(
         business_summary=_clamp_text(ticker, "business_summary", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS),

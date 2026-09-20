@@ -95,7 +95,7 @@ _SOURCE_LABELS: dict[str, str] = {
     "yfinance.funds_data": "Yahoo Finance",
     "yfinance.sec_filings": "dépôts SEC",
     "yfinance.news": "presse financière",
-    "perplexity.gap_fill": "Perplexity",
+    "research.gap_fill": "recherche web",
     "etf_expense_ratios.yaml": "table de frais interne",
 }
 
