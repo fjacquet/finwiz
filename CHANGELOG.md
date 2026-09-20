@@ -7,8 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- OpenRouter web-grounded research provider. SWOT/Porter, portfolio posture,
+  equity fact-pack gap-fill and sentiment news now run on
+  `google/gemini-3.8-flash` through OpenRouter's `web` plugin (Exa, 8 results)
+  with a strict `json_schema` response, via `research_with_retry`
+  (`infrastructure/resilience/research_retry.py`). Each call's exact
+  `usage.cost` is recorded under `research_swot`, `research_porter`,
+  `research_posture`, `research_factpack` and `research_news` in
+  `output/run_summary.json`, where Perplexity spend was invisible before.
+  Perplexity is kept as a one-attempt fallback when a PPLX key is set. New env:
+  `RESEARCH_MODEL`, `RESEARCH_CONCURRENCY`, `RESEARCH_WEB_MAX_RESULTS`,
+  `RESEARCH_BASE_URL`. See ADR-012.
+
 ### Changed
 
+- Fact-pack provenance tag `perplexity.gap_fill` is now `research.gap_fill`
+  and renders as "recherche web". `PPLX_API_KEY` is optional.
 - Deep-analysis crew prompt reordered for implicit prompt caching. The agent
   goal no longer carries the ticker, and the task description puts every
   static rule before a `---` separator, with the date, holding, fact pack,

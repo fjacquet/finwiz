@@ -145,7 +145,7 @@ def create_default_flags() -> dict[str, FeatureFlagConfig]:
             circuit_breaker_threshold=get_env_int("FF_PERPLEXITY_BREAKER_THRESHOLD", 5),
             circuit_breaker_timeout=get_env_int("FF_PERPLEXITY_BREAKER_TIMEOUT", 300),
             fallback_strategy=FallbackStrategy.DISABLE,
-            description=("Perplexity Sonar Search integration for enhanced research capabilities across sentiment, technical, and fundamental analysis"),
+            description=("Web research (OpenRouter web plugin, Perplexity fallback) for sentiment news and equity fact-pack gap-fill; flag name kept for env stability"),
         ),
         # --- v4 Data Intelligence flags ---
         "finnhub_news": FeatureFlagConfig(

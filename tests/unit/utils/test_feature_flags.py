@@ -328,7 +328,7 @@ class TestFeatureFlags:
         assert config.fallback_strategy == FallbackStrategy.DISABLE
         assert config.circuit_breaker_threshold == 5  # Default threshold
         assert config.circuit_breaker_timeout == 300  # Default timeout
-        assert "Perplexity Sonar Search integration" in config.description
+        assert "Web research" in config.description
 
     def test_should_load_perplexity_research_flag_from_environment(self, mocker):
         """Test loading perplexity_research flag configuration from environment variables."""

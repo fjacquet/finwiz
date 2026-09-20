@@ -1,6 +1,6 @@
 # ADR-002: Perplexity Research Integration
 
-- **Status:** Accepted
+- **Status:** Accepted; provider choice superseded by ADR-012 (2026-09-20). Perplexity remains the fallback provider.
 - **Date:** 2025-02-01
 - **Deciders:** FinWiz Core Team
 

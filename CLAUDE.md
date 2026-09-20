@@ -150,16 +150,23 @@ Each crew lives in `crews/<name>/` with `config/agents.yaml`, `config/tasks.yaml
 OPENAI_API_KEY=...              # Required
 SERPER_API_KEY=...              # Required
 # Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ALPHA_VANTAGE_API_KEY, etc.
+# Web-grounded research (SWOT/Porter, posture, fact-pack gap-fill, sentiment
+#   news) runs on OpenRouter's web plugin via
+#   infrastructure/resilience/research_retry.py (RESEARCH_MODEL,
+#   RESEARCH_CONCURRENCY, RESEARCH_WEB_MAX_RESULTS). Exact cost is recorded
+#   under research_<kind> in output/run_summary.json. PERPLEXITY_API_KEY /
+#   PPLX_API_KEY only enable a one-attempt Perplexity fallback (ADR-012).
 # Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
 #   (full registry: config/features/definitions.py)
 # FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: they are
 #   built entirely from structured sources (yfinance, curated expense-ratio
-#   table), with no Perplexity call at all. stages/fact_pack.py calls
+#   table), with no research call at all. The flag name predates the provider
+#   swap and is kept for env stability. stages/fact_pack.py calls
 #   analysis/fact_pack/composer.py's compose_fact_pack(), which consults this
 #   flag itself, narrowly, in the equity path only (analysis/fact_pack/
-#   sources/perplexity_source.py) — funds and crypto never call Perplexity
+#   sources/research_source.py) — funds and crypto never call research
 #   regardless of the flag. Fact packs never fail a holding for want of
-#   Perplexity either way — it is a gap-filler for equity recent_events when
+#   research either way — it is a gap-filler for equity recent_events when
 #   neither SEC filings nor allowlisted wire news covered the company
 #   (measured at 6 of 67 holdings), not a dependency.
 # Investment Discovery (Phase 4) runs unconditionally; the

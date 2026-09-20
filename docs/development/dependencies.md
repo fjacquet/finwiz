@@ -30,7 +30,7 @@ automatically by osv-scanner) with a written justification, and mirrored to
 
 ## Centralized tools package
 
-Generic CrewAI tools (Yahoo Finance, Perplexity search, ticker validation,
+Generic CrewAI tools (Yahoo Finance, Perplexity search (fallback only since ADR-012), ticker validation,
 Kraken, AlphaVantage news sentiment, ChartImg, DeFi metrics, the A+
 scoring/screening cluster, `ValuationTool`, `ETFAnalysisTool`, etc.) were
 migrated out of `src/finwiz/tools/` into the separate
