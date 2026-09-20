@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import importlib
 import threading
+import time
 
 import pytest
 from pydantic import BaseModel
@@ -211,14 +212,19 @@ def test_a_cap_of_one_serialises_two_threads_on_independent_loops(mocker, monkey
 async def test_a_cap_of_one_serialises_two_coroutines_on_the_same_loop(mocker, monkeypatch):
     """RESEARCH_CONCURRENCY=1: the asyncio.gather shape gather_strategic_analysis
     uses -- two coroutines contending for one slot on the SAME event loop --
-    must not deadlock or let both run at once. Single-threaded, so the shared
-    state needs no lock (unlike the cross-thread test above)."""
+    must not deadlock, and the second call must not enter until the first has
+    exited (serialised, not interleaved). Single-threaded, so the shared
+    state needs no lock (unlike the cross-thread test above). Wrapped in
+    asyncio.wait_for so a `threading.BoundedSemaphore` blocking the loop
+    fails the test with a TimeoutError instead of hanging the suite."""
     monkeypatch.setattr(research_retry, "RESEARCH_CONCURRENCY", 1)
     monkeypatch.setattr(research_retry, "_throttle", None)
 
+    events: list[tuple[str, float]] = []
     state = {"in_flight": 0, "max_in_flight": 0}
 
     async def fake_call(**_kwargs):
+        events.append(("enter", time.monotonic()))
         state["in_flight"] += 1
         state["max_in_flight"] = max(state["max_in_flight"], state["in_flight"])
         try:
@@ -226,6 +232,7 @@ async def test_a_cap_of_one_serialises_two_coroutines_on_the_same_loop(mocker, m
             return _result()
         finally:
             state["in_flight"] -= 1
+            events.append(("exit", time.monotonic()))
 
     mocker.patch.object(research_retry, "openrouter_structured", new=fake_call)
 
@@ -239,3 +246,9 @@ async def test_a_cap_of_one_serialises_two_coroutines_on_the_same_loop(mocker, m
 
     assert all(r is not None for r in results)
     assert state["max_in_flight"] == 1
+    # Serialised, not interleaved: enter/exit/enter/exit, with the second
+    # call's "enter" no earlier than the first call's "exit".
+    assert [kind for kind, _ in events] == ["enter", "exit", "enter", "exit"]
+    first_exit_at = events[1][1]
+    second_enter_at = events[2][1]
+    assert second_enter_at >= first_exit_at

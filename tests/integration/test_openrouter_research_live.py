@@ -16,7 +16,11 @@ from finwiz.schemas.hybrid_analysis.strategic import SwotAnalysis
 # load_dotenv() -- this module is imported at COLLECTION time on every
 # default `make test` (marker deselection happens after import), so a
 # load_dotenv() here loaded the whole .env into every test's environment.
-_KEY = os.getenv("OPENROUTER_API_KEY") or dotenv_values(Path(__file__).resolve().parents[2] / ".env").get("OPENROUTER_API_KEY")
+# The .env file is checked first (the source of truth for local dev),
+# os.getenv as a fallback for CI/shell-exported keys; either way _KEY is
+# captured once here, at collection time, before tests/conftest.py's
+# autouse isolation fixture clears OPENROUTER_API_KEY per test.
+_KEY = dotenv_values(Path(__file__).resolve().parents[2] / ".env").get("OPENROUTER_API_KEY") or os.getenv("OPENROUTER_API_KEY")
 
 pytestmark = [pytest.mark.integration, pytest.mark.skipif(not _KEY, reason="OPENROUTER_API_KEY not set")]
 
