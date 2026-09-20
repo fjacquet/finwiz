@@ -265,28 +265,21 @@ class DeepAnalysisCrew:
         # truncation -- a cap set below real output loses a holding's analysis silently,
         # which is the failure this pipeline refuses.
         #
-        # force_json_object: this crew is tool-less and single-task, so every turn is a JSON
-        # emission — provider JSON mode kills the markdown-fenced / malformed output that
-        # otherwise drops a holding's qualitative section. Coercion validators on
-        # _QualitativeInsightsRaw + the json-repair patch handle any residual shape variance.
+        # No provider "json_object" mode: CrewAI already sends the task's response_model as
+        # a strict json_schema response_format, which wins over any extra_body override
+        # (verified on the outbound request, 2026-09-20).
         deep_model = os.getenv("LLM_MODEL_DEEP_ANALYSIS", "").strip() or None
         if self.perf_config.should_use_mini_model():
-            return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=_get_deep_analysis_max_tokens(), force_json_object=True)
-        return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=_get_deep_analysis_max_tokens(), force_json_object=True)
+            return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=_get_deep_analysis_max_tokens())
+        return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=_get_deep_analysis_max_tokens())
 
     @agent
     def asset_analyst(self) -> Agent:
-        """Qualitative analyst with bounded fact-verification access.
+        """Qualitative analyst. No tools: answers from the prompt only.
 
-        Has access to PerplexitySearchTool ONLY — no other tools. Used to verify
-        current corporate structure (acquisitions, divestitures, partnerships)
-        before mentioning them in the narrative, since the model's training data
-        is often outdated for corporate facts. The tasks.yaml prompt caps usage
-        to 2-3 calls per holding to keep token cost bounded.
-
-        When PPLX_API_KEY is not set (CI, local dev without Perplexity key),
-        the agent falls back to zero-tool mode and the prompt's anti-hallucination
-        rules become the only safeguard.
+        The fact pack and the strategic block are interpolated into the task
+        description by ``analysis/_helpers._build_crew_inputs``; there is nothing
+        left for a tool to verify (see ``_build_asset_analyst_tools``).
         """
         return Agent(
             config=self.agents_config["asset_analyst"],
@@ -308,11 +301,13 @@ class DeepAnalysisCrew:
         """
         return Task(
             config=self.tasks_config["deep_qualitative_analysis_task"],
-            # Use the bridging schema (no fact_pack, no analysis_timestamp).
-            # Python promotes the raw payload back to QualitativeInsights in
-            # qualify._extract_qualitative — the LLM never has to satisfy
-            # FactPack's freshness model_validator or its 200/1000-char caps.
-            output_pydantic=self.QualitativeInsightsRaw,
+            # response_model, not output_pydantic: CrewAI sends the schema as a strict
+            # json_schema response_format either way, but output_pydantic ALSO appends the
+            # pretty-printed schema (9 kB) plus "Preserve the original content exactly
+            # as-is" converter boilerplate to the user prompt
+            # (crewai.agent.utils.build_task_prompt_with_schema). qualify._extract_qualitative
+            # reads the raw JSON, so the empty `pydantic` slot costs nothing.
+            response_model=self.QualitativeInsightsRaw,
         )
 
     @crew
@@ -391,14 +386,10 @@ class DeepAnalysisCrew:
         performance_monitor.start_ticker_analysis(ticker, asset_class)
 
         try:
-            # ⚡ MINIMAL-TOOL MODE: Python pre-summarizes the bulk of inputs to keep
-            # the prompt under the 262K context window. The asset_analyst agent
-            # additionally has PerplexitySearchTool for bounded fact verification
-            # (max 2 calls per holding, capped via the tasks.yaml prompt) — used
-            # only to validate current corporate facts the model might hallucinate.
-            # Tool outputs were previously causing 288K-381K token overflow when
-            # unbounded tool sets were attached; the cap above prevents regression.
-            logger.info("⚡ MINIMAL-TOOL MODE: Python summarizes inputs; agent has PerplexitySearchTool for bounded fact verification (≤2 calls).")
+            # Python pre-summarizes the bulk of inputs to keep the prompt small. The
+            # asset_analyst agent has no tools (see _build_asset_analyst_tools): every
+            # fact it may use is already in the prompt.
+            logger.info("No tools: the analyst answers from the prompt, the fact pack and the strategic block only.")
 
             # Log performance targets
             logger.info(
