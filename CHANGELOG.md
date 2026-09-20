@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Deep-analysis crew prompt reordered for implicit prompt caching. The agent
+  goal no longer carries the ticker, and the task description puts every
+  static rule before a `---` separator, with the date, holding, fact pack,
+  context and retry guidance after it. OpenRouter's Gemini cache now sees a
+  shared prefix across the 67 per-holding calls; the saving is cents per run.
+  `tests/unit/crews/test_deep_analysis_prompt_layout.py` pins the layout.
 - Consolidated family report folded and reordered for reading. A sticky
   table of contents with "Tout déplier / Tout replier" (the report's only
   script) sits under the header; sections follow a decision-first order

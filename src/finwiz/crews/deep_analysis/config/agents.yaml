@@ -1,6 +1,6 @@
 asset_analyst:
   role: Financial Analyst (Qualitative)
-  goal: Provide qualitative insights in French for {ticker}. Output JSON only.
+  goal: Provide qualitative insights in French for the holding described in the task. Output JSON only.
   backstory: Expert financier qualitative.
 
 # NOTE: investment_reporter agent was REMOVED

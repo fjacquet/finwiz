@@ -3,56 +3,36 @@
 
 deep_qualitative_analysis_task:
   description: >
-    Qualitative analysis for {ticker} ({asset_class}).
-
-    📅 DATE D'ANALYSE : {current_date} ({current_date_iso}).
-    Tes données d'entraînement peuvent être périmées : la structure corporate
-    et la direction (action), l'émetteur (fonds), ou le protocole (crypto) de
-    ce holding, ainsi que ses événements récents, ont pu changer depuis ton
-    cutoff. Le FACT PACK ci-dessous est ta source de vérité sur son état
-    actuel — pas tes souvenirs d'entraînement. Tous tes constats doivent être
-    cohérents avec la date {current_date}.
+    Analyse qualitative d'un holding.
 
     LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
-    ---
-    {fact_pack_block}
-
-    Le FACT PACK est AUTORITAIRE pour les faits qu'il contient (structure
-    corporate et direction pour une action, émetteur et frais pour un fonds,
-    protocole et offre pour une crypto), ainsi que pour les événements
-    récents. Tu ne dois JAMAIS le contredire. Si tes souvenirs divergent du
-    FACT PACK, le FACT PACK gagne.
-    ---
-
-    CONTEXT (Python-calculated - DO NOT recalculate):
-    - Company: {company_name} | Sector: {sector} | Industry: {industry}
-    - Description: {company_description}
-    - Grade: {grade}, Score: {composite_score}, Recommendation: {preliminary_recommendation}
-    - Scores: Fundamental {fundamental_score}, Technical {technical_score}, Risk {risk_score}
-    - Metrics: {fundamental_metrics}
-    - Indicators: {technical_indicators}
-    - Risk: {risk_metrics}
-
     🚨 ANTI-HALLUCINATION 🚨
-    - Le FACT PACK ci-dessus est ta source PRIMAIRE pour les faits propres à
-      la classe d'actif (structure corporate et direction pour une action,
-      émetteur et frais pour un fonds, protocole et offre pour une crypto)
-      ainsi que pour les événements récents (12 derniers mois). Le champ
-      Description est secondaire.
+    - Tes données d'entraînement peuvent être périmées : la structure corporate
+      et la direction (action), l'émetteur (fonds), ou le protocole (crypto) du
+      holding, ainsi que ses événements récents, ont pu changer depuis ton
+      cutoff. Le FACT PACK fourni en fin de prompt est ta source de vérité sur
+      son état actuel — pas tes souvenirs d'entraînement. Tous tes constats
+      doivent être cohérents avec la DATE D'ANALYSE indiquée en fin de prompt.
+    - Le FACT PACK est ta source PRIMAIRE pour les faits propres à la classe
+      d'actif (structure corporate et direction pour une action, émetteur et
+      frais pour un fonds, protocole et offre pour une crypto) ainsi que pour
+      les événements récents (12 derniers mois). Le champ Description du
+      CONTEXT est secondaire.
     - N'invente JAMAIS de filiales, partenariats, ou intégrations non mentionnés
-      dans le FACT PACK ou la `Description` ci-dessus.
+      dans le FACT PACK ou la `Description`.
     - Si tu te souviens d'une structure différente (acquisition, joint-venture,
       filiale) connue avant ton cutoff de formation et NON présente dans le
-      FACT PACK ou la `Description`, considère-la comme OBSOLÈTE en {current_date} et ignore-la.
+      FACT PACK ou la `Description`, considère-la comme OBSOLÈTE à la DATE
+      D'ANALYSE indiquée en fin de prompt et ignore-la.
     - Quand tu cites des évolutions "récentes", elles doivent dater des 12 mois
-      précédant {current_date}, pas d'années antérieures.
+      précédant la DATE D'ANALYSE indiquée en fin de prompt, pas d'années
+      antérieures.
 
-    🛠️ AUCUN OUTIL EXTERNE — tu n'as accès à aucun tool. Le FACT PACK
-    ci-dessus est déjà le résultat de sources structurées vérifiées par
-    Python avant cette tâche, donc toute vérification supplémentaire est
-    redondante. Réponds directement à partir du FACT PACK et du CONTEXT
-    fournis ; n'émets aucun appel d'outil.
+    🛠️ AUCUN OUTIL EXTERNE — tu n'as accès à aucun tool. Le FACT PACK est déjà
+    le résultat de sources structurées vérifiées par Python avant cette tâche,
+    donc toute vérification supplémentaire est redondante. Réponds directement
+    à partir du FACT PACK et du CONTEXT fournis ; n'émets aucun appel d'outil.
 
     PROVIDE QUALITATIVE ANALYSIS ONLY:
     1. SEC Insights: Business model (100+ words), competitive advantages, risk factors
@@ -67,14 +47,14 @@ deep_qualitative_analysis_task:
     déterministes ; les inclure dans ta réponse n'a AUCUN effet et déclenche
     des cycles de validation inutiles :
     - `fact_pack` (et tous ses sous-champs : les faits propres à la classe
-      d'actif affichés ci-dessus — structure/direction pour une action,
+      d'actif affichés dans le FACT PACK — structure/direction pour une action,
       émetteur/frais/lignes pour un fonds, protocole/offre pour une crypto —
       plus `fetched_at`, `freshness`, `confidence`, `source_citations`)
     - `analysis_timestamp`
 
-    Le FACT PACK affiché en haut de ce prompt est en lecture seule pour toi —
-    cite-le si nécessaire dans tes narratifs (sec_insights, fundamental_context,
-    contextual_risks), mais ne le ré-émets PAS comme champ JSON.
+    Le FACT PACK est en lecture seule pour toi — cite-le si nécessaire dans
+    tes narratifs (sec_insights, fundamental_context, contextual_risks), mais
+    ne le ré-émets PAS comme champ JSON.
 
     REQUIRED investment_synthesis structure (all fields mandatory):
     "investment_synthesis": {
@@ -97,6 +77,29 @@ deep_qualitative_analysis_task:
     - analysis_timestamp: ISO 8601 format
 
     NO trailing commas. NO text outside JSON.
+
+    ---
+
+    📅 DATE D'ANALYSE : {current_date} ({current_date_iso}).
+
+    HOLDING : {ticker} ({asset_class})
+
+    {fact_pack_block}
+
+    Le FACT PACK ci-dessus est AUTORITAIRE pour les faits qu'il contient
+    (structure corporate et direction pour une action, émetteur et frais pour
+    un fonds, protocole et offre pour une crypto), ainsi que pour les
+    événements récents. Tu ne dois JAMAIS le contredire. Si tes souvenirs
+    divergent du FACT PACK, le FACT PACK gagne.
+
+    CONTEXT (Python-calculated - DO NOT recalculate):
+    - Company: {company_name} | Sector: {sector} | Industry: {industry}
+    - Description: {company_description}
+    - Grade: {grade}, Score: {composite_score}, Recommendation: {preliminary_recommendation}
+    - Scores: Fundamental {fundamental_score}, Technical {technical_score}, Risk {risk_score}
+    - Metrics: {fundamental_metrics}
+    - Indicators: {technical_indicators}
+    - Risk: {risk_metrics}
 
     {retry_guidance}
 
