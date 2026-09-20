@@ -79,13 +79,20 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
     quant = enriched.quantitative
     # result.fundamental_score and quant.fundamental_score can both be None now
     # (crypto only, when no fundamental component survived — see C1/ADR-014).
-    # recompute_with_strategic takes a fixed float, not Optional, so the final
-    # `or 0.5` here is a neutral centering value for its fixed 35/25/25/15
-    # weighting — not a claim that 0.5 was measured. Renormalizing this
-    # recompute the way the primary composite does is a larger change than
-    # this fix warrants; tracked as follow-up.
-    _fundamental_or_none = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else None)
-    fundamental = _fundamental_or_none if _fundamental_or_none is not None else 0.5
+    # recompute_with_strategic takes a fixed float and has no renormalization
+    # path for a missing component the way the primary composite does.
+    # Substituting a neutral 0.5 would plug an unmeasured value into its
+    # 35%-weighted term and publish the result as the holding's final,
+    # authoritative composite/grade/recommendation (via the model_copy below)
+    # — the same harm ADR-014 removes elsewhere, just milder than the 0.0
+    # case, and reachable far more often since it fires whenever a strategic
+    # score exists, not only on failure paths. Skip the recompute and keep
+    # the primary composite score, which _compute_weighted_score already
+    # renormalized over the components that survived — matching the guards
+    # above for a missing qual/strategic_score.
+    fundamental = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else None)
+    if fundamental is None:
+        return result
     technical = result.technical_score if result.technical_score is not None else (quant.technical_score if quant else 0.5)
     raw_risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 2.5)
     # Risk is stored on a 0-5 scale where lower = better; convert to 0-1 favorability.

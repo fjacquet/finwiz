@@ -48,6 +48,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `float | None`, and every consumer that formats it (`ai_output.py`,
   `_synthesize_helpers.py`, `_qualify_fallbacks.py`) renders "unavailable"
   instead of a number.
+- `synthesize.py`'s `_apply_strategic_recompute` substituted a neutral `0.5`
+  for a missing fundamental score before plugging it into
+  `recompute_with_strategic`'s fixed 35/25/25/15 weighting. Unlike the
+  display-string fixes above, this recompute's result — via `model_copy` —
+  *replaces* `composite_score`, `grade` and `recommendation` as the
+  holding's final, authoritative values whenever an AI strategic analysis
+  exists, which is the common case, not a failure path. Now skipped
+  entirely when the fundamental score is unavailable, keeping the primary
+  composite score, which `_compute_weighted_score` already renormalized
+  over the components that survived.
 - XRP was scored as three years old. Ages now derive from a curated genesis-year
   table (XRP 2012), and an uncurated symbol yields no age instead of a default.
 
