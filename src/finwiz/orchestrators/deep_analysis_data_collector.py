@@ -203,6 +203,21 @@ class DeepAnalysisDataCollector:
             "price_divergence_pct": resolved.price_divergence_pct,
         }
 
+        # flatten_collected_data() only keeps top-level scalars and a fixed list of
+        # nested sections — "crypto_info" is neither, so it never reached any
+        # consumer (scorer, export, report). Mirror the fields an operator needs
+        # as scalars too. None of this replaces a real measurement; it only
+        # records where each measurement came from.
+        collected_data["crypto_confidence"] = resolved.confidence
+        collected_data["crypto_price_divergence_pct"] = resolved.price_divergence_pct
+        collected_data["crypto_price_source"] = resolved.lineage.price_source
+        collected_data["crypto_market_cap_source"] = resolved.lineage.market_cap_source
+        collected_data["crypto_volume_24h_source"] = resolved.lineage.volume_24h_source
+        collected_data["crypto_supply_source"] = resolved.lineage.supply_source
+        collected_data["crypto_sources_succeeded"] = ",".join(resolved.sources_succeeded) if resolved.sources_succeeded else None
+        collected_data["crypto_sources_failed"] = ",".join(resolved.sources_failed) if resolved.sources_failed else None
+        collected_data["crypto_warnings"] = "; ".join(resolved.warnings) if resolved.warnings else None
+
         self.logger.info(
             f"✅ Crypto data for {ticker}: market_cap={resolved.market_cap}, volume_24h={resolved.volume_24h}, "
             f"age_years={collected_data['age_years']}, confidence={resolved.confidence:.2f}"

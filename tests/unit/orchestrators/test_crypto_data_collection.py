@@ -93,13 +93,22 @@ def test_yfinance_price_is_handed_to_the_orchestrator(mocker):
 
 
 def test_lineage_and_confidence_are_carried_for_the_report(mocker):
+    """Regression for I1: crypto_info is a nested dict that flatten_collected_data()
+    silently dropped (not a top-level scalar, not in the nested-section allowlist).
+    Assert on the production path — collect through flatten — not the pre-flatten
+    private dict, which passed even while the flattened output lost everything.
+    """
     collector = _collector(mocker)
     mocker.patch.object(collector, "_crypto_orchestrator", **{"fetch.return_value": _resolved()}, create=True)
 
-    result = collector._collect_crypto_data("BTC-USD", {})
+    raw = collector._collect_crypto_data("BTC-USD", {})
+    flattened = collector.flatten_collected_data(raw)
 
-    assert result["crypto_info"]["confidence"] == 1.0
-    assert result["crypto_info"]["lineage"]["market_cap"] == "coingecko"
+    assert flattened["crypto_confidence"] == 1.0
+    assert flattened["crypto_market_cap_source"] == "coingecko"
+    assert flattened["crypto_price_source"] == "coingecko"
+    assert flattened["crypto_volume_24h_source"] == "coingecko"
+    assert flattened["crypto_supply_source"] == "coingecko"
 
 
 def test_orchestrator_failure_does_not_crash_the_holding(mocker):
