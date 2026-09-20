@@ -24,12 +24,13 @@ from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config"
 
-# The static block runs to ~970 tokens at roughly 3.5 chars/token for French
-# text, which together with the static system prompt clears Gemini Flash's
-# 1 024-token implicit-cache minimum. 3 400 chars leaves ~330 chars of
-# headroom below the actual first-placeholder position for wording edits,
-# without letting a reorder pass.
-_MIN_STATIC_PREFIX_CHARS = 3400
+# Measured 2026-09-20: the first placeholder sits at char 3980 (`yaml.safe_load`
+# + the interpolation regex below, run against tasks.yaml). The static block
+# runs to well over 1 024 tokens at roughly 3.5 chars/token for French text,
+# clearing Gemini Flash's implicit-cache minimum together with the static
+# system prompt. 3 600 chars leaves ~380 chars of headroom below the actual
+# first-placeholder position for wording edits, without letting a reorder pass.
+_MIN_STATIC_PREFIX_CHARS = 3600
 
 # Matches CrewAI's own interpolation pattern (`interpolate_only`:
 # [A-Za-z_][A-Za-z0-9_-]*) so this test can never be more permissive than
@@ -84,3 +85,19 @@ def test_every_placeholder_is_a_crew_input_key() -> None:
     placeholders = set(_PLACEHOLDER.findall(_task_description()))
     assert placeholders, "no placeholder found; the regex or the template is wrong"
     assert placeholders <= set(inputs), f"placeholders without a crew input: {placeholders - set(inputs)}"
+
+
+def test_dynamic_block_carries_asset_focus_and_strategic_block() -> None:
+    description = _task_description()
+    static, _, dynamic = description.partition("\n---\n")
+    assert "{asset_focus}" in dynamic and "{strategic_block}" in dynamic
+    assert dynamic.index("{fact_pack_block}") < dynamic.index("{strategic_block}") < dynamic.index("{retry_guidance}")
+    assert "{" not in static
+
+
+def test_static_block_has_no_contradiction_and_no_inline_schema() -> None:
+    description = _task_description()
+    assert "analysis_timestamp: ISO" not in description
+    assert '"investment_synthesis": {' not in description
+    assert "SEC Insights" not in description
+    assert "strategic_analysis" in description  # listed as Python-controlled

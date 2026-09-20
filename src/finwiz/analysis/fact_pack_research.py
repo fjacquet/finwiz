@@ -50,13 +50,65 @@ class _FactPackRaw(BaseModel):
     schema keeps strict validation; this bridging schema is lenient.
     """
 
-    corporate_structure: str = Field(default=_PLACEHOLDER, max_length=_CORPORATE_STRUCTURE_MAX_CHARS)
-    recent_events: list[str] = Field(default_factory=list, max_length=10)
-    leadership: str = Field(default=_PLACEHOLDER, max_length=_LEADERSHIP_MAX_CHARS)
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
-    source_citations: list[str] = Field(default_factory=list, max_length=20)
+    corporate_structure: str = Field(
+        default=_PLACEHOLDER,
+        max_length=_CORPORATE_STRUCTURE_MAX_CHARS,
+        description=(
+            "Structure corporate actuelle en 2000 caractères maximum : maison mère, filiales, acquisitions et cessions des "
+            "24 derniers mois, vérifiées sur le web. Écris « Information indisponible » si aucune source fiable."
+        ),
+    )
+    recent_events: list[str] = Field(
+        default_factory=list,
+        max_length=10,
+        description="Au plus 10 événements des 12 derniers mois, une phrase de 200 caractères maximum chacun, datés, tirés de pages web consultées.",
+    )
+    leadership: str = Field(
+        default=_PLACEHOLDER,
+        max_length=_LEADERSHIP_MAX_CHARS,
+        description=(
+            "Dirigeants actuels (PDG, directeur financier, président du conseil) avec leur date de prise de fonction, "
+            "1000 caractères maximum. Écris « Information indisponible » si aucune source fiable."
+        ),
+    )
+    confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confiance entre 0 et 1 fondée sur la qualité et la fraîcheur des sources consultées.",
+    )
+    source_citations: list[str] = Field(
+        default_factory=list,
+        max_length=20,
+        description="URLs http(s) exactes des pages consultées, au plus 20.",
+    )
 
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
+    @staticmethod
+    def _normalize_prose_field(data: dict[str, Any], field: str, max_chars: int) -> None:
+        """Map a null / non-string / empty / overlong prose value in-place.
+
+        A non-string value (including ``None``) or a blank string becomes the
+        French placeholder rather than raising; an overlong one is truncated
+        with a warning. Shared by ``leadership`` and ``corporate_structure``,
+        which the LLM sometimes returns as ``null`` when it found no source
+        (2026-09-20 run: 8 validation failures, 39 field errors, all retried).
+        """
+        value = data.get(field)
+        if not isinstance(value, str):
+            if value is not None:
+                logger.debug(f"{field} was {type(value).__name__}, using placeholder")
+            data[field] = _PLACEHOLDER
+            return
+        stripped = value.strip()
+        if not stripped:
+            data[field] = _PLACEHOLDER
+        elif len(stripped) > max_chars:
+            logger.warning(f"{field} truncated from {len(stripped)} to {max_chars} chars")
+            data[field] = stripped[:max_chars].rstrip()
+        else:
+            data[field] = stripped
 
     @model_validator(mode="before")
     @classmethod
@@ -68,7 +120,8 @@ class _FactPackRaw(BaseModel):
         - Truncates ``leadership`` to 1000 chars and ``corporate_structure``
           to 2000 chars.
         - Drops non-http(s) URLs from ``source_citations``.
-        - Substitutes a French placeholder when prose fields are empty.
+        - Substitutes a French placeholder when prose fields are null, a
+          non-string, or empty.
         """
         if not isinstance(data, dict):
             return data
@@ -90,31 +143,8 @@ class _FactPackRaw(BaseModel):
                 normalized.append(stripped)
             data["recent_events"] = normalized
 
-        leadership = data.get("leadership")
-        if isinstance(leadership, str):
-            stripped = leadership.strip()
-            if not stripped:
-                data["leadership"] = _PLACEHOLDER
-            elif len(stripped) > _LEADERSHIP_MAX_CHARS:
-                logger.warning(
-                    f"leadership truncated from {len(stripped)} to {_LEADERSHIP_MAX_CHARS} chars",
-                )
-                data["leadership"] = stripped[:_LEADERSHIP_MAX_CHARS].rstrip()
-            else:
-                data["leadership"] = stripped
-
-        corporate = data.get("corporate_structure")
-        if isinstance(corporate, str):
-            stripped = corporate.strip()
-            if not stripped:
-                data["corporate_structure"] = _PLACEHOLDER
-            elif len(stripped) > _CORPORATE_STRUCTURE_MAX_CHARS:
-                logger.warning(
-                    f"corporate_structure truncated from {len(stripped)} to {_CORPORATE_STRUCTURE_MAX_CHARS} chars",
-                )
-                data["corporate_structure"] = stripped[:_CORPORATE_STRUCTURE_MAX_CHARS].rstrip()
-            else:
-                data["corporate_structure"] = stripped
+        cls._normalize_prose_field(data, "leadership", _LEADERSHIP_MAX_CHARS)
+        cls._normalize_prose_field(data, "corporate_structure", _CORPORATE_STRUCTURE_MAX_CHARS)
 
         citations = data.get("source_citations")
         if isinstance(citations, list):

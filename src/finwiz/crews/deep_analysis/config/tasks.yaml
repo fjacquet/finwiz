@@ -5,7 +5,7 @@ deep_qualitative_analysis_task:
   description: >
     Analyse qualitative d'un holding.
 
-    LANGUE: Rédigez en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
+    LANGUE : rédige en FRANÇAIS. Noms de champs JSON en anglais, contenu en français.
 
     🚨 ANTI-HALLUCINATION 🚨
     - Tes données d'entraînement peuvent être périmées : la structure corporate
@@ -14,75 +14,76 @@ deep_qualitative_analysis_task:
       cutoff. Le FACT PACK fourni en fin de prompt est ta source de vérité sur
       son état actuel — pas tes souvenirs d'entraînement. Tous tes constats
       doivent être cohérents avec la DATE D'ANALYSE indiquée en fin de prompt.
-    - Le FACT PACK est ta source PRIMAIRE pour les faits propres à la classe
-      d'actif (structure corporate et direction pour une action, émetteur et
-      frais pour un fonds, protocole et offre pour une crypto) ainsi que pour
-      les événements récents (12 derniers mois). Le champ Description du
-      CONTEXT est secondaire.
     - N'invente JAMAIS de filiales, partenariats, ou intégrations non mentionnés
-      dans le FACT PACK ou la `Description`.
+      dans le FACT PACK, la RECHERCHE STRATÉGIQUE ou la Description.
     - Si tu te souviens d'une structure différente (acquisition, joint-venture,
       filiale) connue avant ton cutoff de formation et NON présente dans le
-      FACT PACK ou la `Description`, considère-la comme OBSOLÈTE à la DATE
-      D'ANALYSE indiquée en fin de prompt et ignore-la.
+      FACT PACK ou la Description, considère-la comme OBSOLÈTE à la DATE
+      D'ANALYSE et ignore-la.
     - Quand tu cites des évolutions "récentes", elles doivent dater des 12 mois
-      précédant la DATE D'ANALYSE indiquée en fin de prompt, pas d'années
-      antérieures.
+      précédant la DATE D'ANALYSE, pas d'années antérieures.
 
-    🛠️ AUCUN OUTIL EXTERNE — tu n'as accès à aucun tool. Le FACT PACK est déjà
-    le résultat de sources structurées vérifiées par Python avant cette tâche,
-    donc toute vérification supplémentaire est redondante. Réponds directement
-    à partir du FACT PACK et du CONTEXT fournis ; n'émets aucun appel d'outil.
+    🛠️ AUCUN OUTIL EXTERNE — tu n'as accès à aucun tool. Réponds directement à
+    partir du prompt ; n'émets aucun appel d'outil.
 
-    PROVIDE QUALITATIVE ANALYSIS ONLY:
-    1. SEC Insights: Business model (100+ words), competitive advantages, risk factors
-    2. Fundamental Context: Industry analysis (100+ words), growth drivers, positioning
-    3. Technical Strategy: Chart patterns, support/resistance, entry/exit strategy
-    4. Contextual Risks: Regulatory, geopolitical, competitive, operational
-    5. Investment Synthesis: Thesis (200+ words), bull/base/bear cases (100+ words each),
-       scenario probabilities as floats summing to 1.0, and a concrete action plan.
+    📚 SOURCES, par ordre de priorité :
+    1. Le FACT PACK (faits structurés vérifiés par Python) et la RECHERCHE
+       STRATÉGIQUE (SWOT et cinq forces, issus d'une recherche web datée),
+       tous deux en fin de prompt : sources primaires, à ne jamais contredire.
+    2. Le CONTEXT calculé par Python (scores, métriques, indicateurs) : source
+       secondaire, à citer sans recalculer.
+    3. Ta mémoire d'entraînement : en dernier recours, uniquement pour des
+       mécanismes généraux, jamais pour des faits datés.
 
     🔒 CHAMPS PYTHON-CONTRÔLÉS — NE PAS INCLURE DANS TA SORTIE :
-    Python alimente lui-même les champs suivants à partir de sources
-    déterministes ; les inclure dans ta réponse n'a AUCUN effet et déclenche
-    des cycles de validation inutiles :
-    - `fact_pack` (et tous ses sous-champs : les faits propres à la classe
-      d'actif affichés dans le FACT PACK — structure/direction pour une action,
-      émetteur/frais/lignes pour un fonds, protocole/offre pour une crypto —
-      plus `fetched_at`, `freshness`, `confidence`, `source_citations`)
-    - `analysis_timestamp`
+    Python alimente lui-même `fact_pack`, `strategic_analysis` et
+    `analysis_timestamp` ; les inclure n'a aucun effet et déclenche des cycles
+    de validation inutiles. Cite le FACT PACK et la RECHERCHE STRATÉGIQUE dans
+    tes narratifs, mais ne les ré-émets pas comme champs JSON.
 
-    Le FACT PACK est en lecture seule pour toi — cite-le si nécessaire dans
-    tes narratifs (sec_insights, fundamental_context, contextual_risks), mais
-    ne le ré-émets PAS comme champ JSON.
+    📏 BUDGET : respecte la longueur indiquée dans la description de chaque
+    champ du schéma (thèse 150-250 mots ; scénarios bull, base et bear 80-120
+    mots chacun ; modèle économique 120-180 mots ; listes de 1 à 5 éléments selon le champ).
+    Ne remplis pas pour remplir : un champ sans fait solide reste court.
 
-    REQUIRED investment_synthesis structure (all fields mandatory):
-    "investment_synthesis": {
-      "investment_thesis": "...",
-      "bull_case": "...",
-      "base_case": "...",
-      "bear_case": "...",
-      "scenario_probabilities": {"bull": 0.30, "base": 0.50, "bear": 0.20},
-      "final_recommendation": "BUY|HOLD|SELL",
-      "recommendation_confidence": "LOW|MEDIUM|HIGH",
-      "action_plan": {
-        "immediate_actions": ["action 1", "action 2"],
-        "monitoring_points": ["metric to watch 1", "metric to watch 2"],
-        "exit_triggers": ["condition 1", "condition 2"]
-      }
-    }
+    🧩 STRUCTURE ATTENDUE (cinq sections, toutes obligatoires) :
+    - sec_insights : modèle économique, avantages concurrentiels durables,
+      facteurs de risque avec gravité, initiatives des 12 derniers mois.
+    - fundamental_context : secteur et tendances, moteurs de croissance,
+      positionnement concurrentiel appuyé sur les cinq forces, direction ou
+      émetteur ou gouvernance selon la classe d'actif.
+    - technical_strategy : configurations lisibles dans les indicateurs
+      fournis, niveaux de support et de résistance, plan d'entrée et de
+      sortie, lecture du momentum.
+    - contextual_risks : risques réglementaires, géopolitiques, concurrentiels
+      et opérationnels propres au holding, puis scénarios de stress.
+    - investment_synthesis : thèse, scénarios bull, base et bear avec leurs
+      probabilités (somme 1.0), recommandation BUY, HOLD ou SELL avec sa
+      confiance, plan d'action (actions immédiates, points de surveillance,
+      déclencheurs de sortie).
 
-    OUTPUT: Valid JSON matching QualitativeInsights schema.
-    - ai_confidence: 0.0-1.0
-    - analysis_timestamp: ISO 8601 format
+    ✅ QUALITÉ :
+    - Chaque affirmation datée nomme son année ou son mois ; chaque acteur
+      cité (concurrent, fournisseur, régulateur) est nommé, jamais « certains
+      acteurs ».
+    - Ne recopie pas les chiffres du CONTEXT : cite-les une fois si utile,
+      puis interprète-les.
+    - Pas de phrase générique valable pour n'importe quel holding ; si tu
+      n'as pas de fait précis, dis-le en une phrase et passe au champ suivant.
+    - Nombres au format français dans le texte (virgule décimale, espace des
+      milliers), pourcentages avec le signe %.
 
-    NO trailing commas. NO text outside JSON.
+    OUTPUT : un objet JSON valide conforme au schéma fourni, sans texte hors
+    JSON, sans balise markdown, sans virgule finale. ai_confidence entre 0.0 et
+    1.0.
 
     ---
 
     📅 DATE D'ANALYSE : {current_date} ({current_date_iso}).
 
     HOLDING : {ticker} ({asset_class})
+
+    {asset_focus}
 
     {fact_pack_block}
 
@@ -91,6 +92,8 @@ deep_qualitative_analysis_task:
     un fonds, protocole et offre pour une crypto), ainsi que pour les
     événements récents. Tu ne dois JAMAIS le contredire. Si tes souvenirs
     divergent du FACT PACK, le FACT PACK gagne.
+
+    {strategic_block}
 
     CONTEXT (Python-calculated - DO NOT recalculate):
     - Company: {company_name} | Sector: {sector} | Industry: {industry}

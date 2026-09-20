@@ -132,13 +132,3 @@ class TestGetConfiguredLlmReasoningEffort:
 
         kwargs = mock_llm.call_args.kwargs
         assert kwargs["extra_body"]["reasoning"] == {"effort": "low"}
-
-    def test_should_combine_with_force_json_object_in_same_extra_body(self, mocker, monkeypatch):
-        monkeypatch.setenv("LLM_REASONING_EFFORT", "low")
-        mock_llm = _capture_llm_kwargs(mocker)
-
-        llm_config.get_configured_llm(model_override="openrouter/z-ai/glm-5.2", force_json_object=True)
-
-        extra_body = mock_llm.call_args.kwargs["extra_body"]
-        assert extra_body["reasoning"] == {"effort": "low"}
-        assert extra_body["response_format"] == {"type": "json_object"}

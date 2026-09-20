@@ -167,13 +167,38 @@ Intensity = Literal["LOW", "MEDIUM", "HIGH"]
 class SwotAnalysis(BaseModel):
     """SWOT analysis (Strengths/Weaknesses/Opportunities/Threats)."""
 
-    strengths: list[str] = Field(default_factory=list, description="Internal strengths")
-    weaknesses: list[str] = Field(default_factory=list, description="Internal weaknesses")
-    opportunities: list[str] = Field(default_factory=list, description="External opportunities")
-    threats: list[str] = Field(default_factory=list, description="External threats")
-    strategic_assessment: str = Field(default="", description="AI's narrative summary tying SWOT together")
-    strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall SWOT favorability (S+O vs W+T)")
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's confidence in this assessment")
+    strengths: list[str] = Field(
+        default_factory=list,
+        description=f"Au plus {MAX_BULLETS_SWOT} forces internes, une phrase chacune, avec un fait vérifié par la recherche web.",
+    )
+    weaknesses: list[str] = Field(
+        default_factory=list,
+        description=f"Au plus {MAX_BULLETS_SWOT} faiblesses internes, une phrase chacune, avec un fait vérifié.",
+    )
+    opportunities: list[str] = Field(
+        default_factory=list,
+        description=f"Au plus {MAX_BULLETS_SWOT} opportunités externes datées des 12 derniers mois, une phrase chacune.",
+    )
+    threats: list[str] = Field(
+        default_factory=list,
+        description=f"Au plus {MAX_BULLETS_SWOT} menaces externes actuelles, une phrase chacune, avec l'acteur ou l'événement concerné.",
+    )
+    strategic_assessment: str = Field(
+        default="",
+        description=f"Synthèse en {MAX_PROSE_CHARS} caractères maximum qui pèse forces et opportunités contre faiblesses et menaces.",
+    )
+    strategic_score: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Favorabilité stratégique entre 0 et 1 : 0 = défavorable, 1 = très favorable (S+O contre W+T).",
+    )
+    confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confiance entre 0 et 1 fondée sur la qualité et la fraîcheur des sources consultées.",
+    )
 
     @field_validator("strengths", "weaknesses", "opportunities", "threats", mode="before")
     @classmethod
@@ -196,8 +221,11 @@ class SwotAnalysis(BaseModel):
 class ForceRating(BaseModel):
     """Single Porter force: intensity + rationale."""
 
-    intensity: Intensity = Field(default="MEDIUM", description="LOW = favorable for the company, HIGH = unfavorable")
-    rationale: str = Field(default="", description="Evidence-grounded rationale for the intensity rating")
+    intensity: Intensity = Field(default="MEDIUM", description="LOW = favorable au holding, MEDIUM = neutre, HIGH = défavorable.")
+    rationale: str = Field(
+        default="",
+        description=f"Justification en {MAX_RATIONALE_CHARS} caractères maximum avec des acteurs nommés et des chiffres récents vérifiés.",
+    )
 
     @field_validator("rationale", mode="before")
     @classmethod
@@ -222,14 +250,42 @@ class ForceRating(BaseModel):
 class FiveForcesAnalysis(BaseModel):
     """Porter's Five Forces competitive position analysis."""
 
-    threat_of_new_entrants: ForceRating = Field(default_factory=ForceRating, description="Barriers to entry")
-    bargaining_power_suppliers: ForceRating = Field(default_factory=ForceRating, description="Supplier leverage")
-    bargaining_power_customers: ForceRating = Field(default_factory=ForceRating, description="Customer leverage")
-    threat_of_substitutes: ForceRating = Field(default_factory=ForceRating, description="Substitute products/services")
-    competitive_rivalry: ForceRating = Field(default_factory=ForceRating, description="Industry rivalry intensity")
-    competitive_position_summary: str = Field(default="", description="AI's narrative on overall moat strength")
-    strategic_score: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's overall moat strength (1 = wide moat, 0 = no moat)")
-    confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="AI's confidence in this assessment")
+    threat_of_new_entrants: ForceRating = Field(
+        default_factory=ForceRating,
+        description="Barrières à l'entrée : intensité et justification.",
+    )
+    bargaining_power_suppliers: ForceRating = Field(
+        default_factory=ForceRating,
+        description="Pouvoir de négociation des fournisseurs (ou du fournisseur d'indice, des validateurs) : intensité et justification.",
+    )
+    bargaining_power_customers: ForceRating = Field(
+        default_factory=ForceRating,
+        description="Pouvoir de négociation des clients (ou des investisseurs, des plateformes) : intensité et justification.",
+    )
+    threat_of_substitutes: ForceRating = Field(
+        default_factory=ForceRating,
+        description="Menace des produits, fonds ou protocoles de substitution : intensité et justification.",
+    )
+    competitive_rivalry: ForceRating = Field(
+        default_factory=ForceRating,
+        description="Intensité de la rivalité entre acteurs, émetteurs ou protocoles : intensité et justification.",
+    )
+    competitive_position_summary: str = Field(
+        default="",
+        description=f"Position concurrentielle et solidité du moat en {MAX_PROSE_CHARS} caractères maximum.",
+    )
+    strategic_score: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Solidité du moat entre 0 et 1 : 1 = moat large, 0 = aucun moat.",
+    )
+    confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confiance entre 0 et 1 fondée sur la qualité et la fraîcheur des sources consultées.",
+    )
 
     @field_validator("competitive_position_summary", mode="before")
     @classmethod
@@ -279,13 +335,34 @@ class PortfolioPostureNarrative(BaseModel):
     the chance to add it.
     """
 
-    portfolio_strengths: list[str] = Field(default_factory=list, description="Concentration of moats, structural advantages")
-    portfolio_weaknesses: list[str] = Field(default_factory=list, description="Concentration risks, weak moats, exposure gaps")
-    portfolio_opportunities: list[str] = Field(default_factory=list, description="Cross-cutting tailwinds the holdings can ride")
-    portfolio_threats: list[str] = Field(default_factory=list, description="Systemic risks affecting multiple holdings")
-    competitive_landscape_summary: str = Field(default="", description="Cross-holding Porter synthesis (industries with strongest/weakest moats)")
-    dominant_themes: list[str] = Field(default_factory=list, description="Top 3-5 strategic themes recurring across the portfolio")
-    overall_assessment: str = Field(default="", description="AI's narrative on the portfolio's strategic posture")
+    portfolio_strengths: list[str] = Field(
+        default_factory=list,
+        description="Forces agrégées du portefeuille : concentration de moats, avantages structurels, une phrase chacune.",
+    )
+    portfolio_weaknesses: list[str] = Field(
+        default_factory=list,
+        description="Faiblesses agrégées : risques de concentration, moats faibles, lacunes d'exposition.",
+    )
+    portfolio_opportunities: list[str] = Field(
+        default_factory=list,
+        description="Vents porteurs transversaux dont plusieurs lignes peuvent profiter.",
+    )
+    portfolio_threats: list[str] = Field(
+        default_factory=list,
+        description="Risques systémiques qui touchent plusieurs lignes à la fois.",
+    )
+    competitive_landscape_summary: str = Field(
+        default="",
+        description=(f"Synthèse Porter inter-lignes (industries aux moats les plus forts et les plus faibles), {MAX_PORTFOLIO_PROSE_CHARS} caractères maximum."),
+    )
+    dominant_themes: list[str] = Field(
+        default_factory=list,
+        description="3 à 5 thèmes stratégiques récurrents dans le portefeuille.",
+    )
+    overall_assessment: str = Field(
+        default="",
+        description=f"Narratif final sur la posture stratégique du portefeuille, {MAX_PORTFOLIO_PROSE_CHARS} caractères maximum.",
+    )
 
     # One-sentence verdicts, requested from the model rather than extracted
     # from prose by Python — first-sentence extraction is how a markdown
@@ -293,11 +370,17 @@ class PortfolioPostureNarrative(BaseModel):
     # fail loudly) but clamped rather than max_length-constrained: an
     # over-long sentence must not cost the whole posture — this is the
     # single most expensive call in the run.
-    competitive_verdict: str = Field(..., description="One sentence on the competitive landscape")
-    swot_verdict: str = Field(..., description="One sentence on the aggregated SWOT")
+    competitive_verdict: str = Field(
+        ...,
+        description=f"Une phrase sur le paysage concurrentiel, {MAX_VERDICT_CHARS} caractères maximum, lisible par un non-financier.",
+    )
+    swot_verdict: str = Field(
+        ...,
+        description=f"Une phrase sur le SWOT agrégé, {MAX_VERDICT_CHARS} caractères maximum, lisible par un non-financier.",
+    )
 
-    strategic_score: float = Field(..., ge=0.0, le=1.0, description="AI's overall portfolio strategic favorability")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="AI's confidence in this synthesis")
+    strategic_score: float = Field(..., ge=0.0, le=1.0, description="Favorabilité stratégique globale du portefeuille entre 0 et 1.")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confiance entre 0 et 1 dans cette synthèse.")
 
     @field_validator("competitive_landscape_summary", "overall_assessment", mode="before")
     @classmethod

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from finwiz.analysis.fact_pack.render import to_prompt_block, to_rows
+from finwiz.analysis.fact_pack.render import to_prompt_block, to_research_facts, to_rows
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts, FundHolding
 
 
@@ -164,3 +164,56 @@ class TestPromptBlock:
         assert lines[label_idx + 2] == "  - NVDA (NVIDIA) 6,00 %"
         # Neither holding is a top-level fact sitting alongside "- Émetteur".
         assert not any(line.startswith("- MSFT") or line.startswith("- NVDA") for line in lines)
+
+
+class TestResearchFacts:
+    """to_research_facts feeds the SWOT/Porter research prompts, which are
+    hard-capped. Unlike to_prompt_block (read in full by the qualitative
+    crew, so it keeps row order as-is), this renderer must survive a cap: a
+    real AAPL pack renders at 2771 chars against a 1500-char slice that used
+    to cut "distr|ibutes" mid-word and drop the leadership row and every
+    dated event. Rows are ranked (lists, then short facts, then previewed
+    prose) before any truncation runs. See final-review-report.md Important 1.
+    """
+
+    def test_events_and_leadership_survive_a_long_business_summary(self):
+        events = [f"2026-0{i % 9 + 1}-01 8-K: Filing detail number {i}" for i in range(10)]
+        summary = ("Designs, manufactures and markets smartphones, tablets and services worldwide. " * 30)[:1900]
+        pack = _pack("stock", EquityFacts(business_summary=summary, leadership="Tim Cook (CEO)", recent_events=events, events_from_filings=True))
+
+        block = to_research_facts(pack, 2000)
+
+        assert len(block) < 2000
+        for event in events:
+            assert event in block
+        assert "- Direction : Tim Cook (CEO)" in block
+        assert "- Structure : " in block
+        # The 1900-char summary was previewed, not carried whole.
+        assert "…" in block
+        assert summary not in block
+
+    def test_a_short_pack_carries_the_same_content_as_to_prompt_block(self):
+        pack = _pack("etf", FundFacts(issuer="iShares", expense_ratio=0.002, turnover=1.1228))
+        block = to_research_facts(pack, 2000)
+        for label, value in to_rows(pack):
+            assert label in block
+            if isinstance(value, list):
+                for item in value:
+                    assert item in block
+            else:
+                assert value in block
+
+    def test_over_cap_cut_lands_on_a_line_boundary_with_a_marker(self):
+        events = [f"Event {i} " + "x" * 40 for i in range(10)]
+        pack = _pack("stock", EquityFacts(business_summary="Short summary.", leadership="Tim Cook (CEO)", recent_events=events, events_from_filings=False))
+
+        block = to_research_facts(pack, 200)
+
+        assert block.endswith("\n- (suite tronquée)")
+        uncapped = to_research_facts(pack, 100_000)
+        body = block[: -len("\n- (suite tronquée)")]
+        # The cut body is a strict line-boundary prefix of the untruncated
+        # render -- never a line sliced mid-way.
+        assert uncapped.startswith(body)
+        assert body.endswith("\n") is False  # rfind("\n") strips the trailing newline before the marker is appended
+        assert len(block) <= 200 + len("\n- (suite tronquée)")

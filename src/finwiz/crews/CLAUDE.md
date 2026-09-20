@@ -72,16 +72,29 @@ the agent `goal` into the system prompt and the task `description` into the user
 turn, so:
 
 - the `goal` must contain no `{placeholder}`;
-- every static rule (language, anti-hallucination, no-tools, the five sections,
-  Python-controlled fields, required structure, output rules) comes first in the
-  `description`, then a `---` line, then the per-holding data (date, holding,
-  `{fact_pack_block}`, CONTEXT, `{retry_guidance}`).
+- every static rule (language, anti-hallucination, no-tools, sources,
+  Python-controlled fields, budget, structure attendue, qualité, output rules)
+  comes first in the `description`, then a `---` line, then the per-holding
+  data (date, holding, `{asset_focus}`, `{fact_pack_block}`,
+  `{strategic_block}`, CONTEXT, `{retry_guidance}`).
 
-`tests/unit/crews/test_deep_analysis_prompt_layout.py` pins this: the first
-placeholder in the description must sit after 3 400 characters of static text. When editing
-the prompt, add rules to the top block and data to the bottom block. Holdings run
-in parallel, so the first wave of a run misses the cache; the gain is cents per
-run, and the layout costs nothing to keep.
+Three rules that are easy to break:
+
+- The task uses `Task(response_model=...)`, **never** `output_pydantic`. With
+  `output_pydantic` CrewAI appends the whole pretty-printed schema plus a
+  "preserve the original content" converter instruction to every prompt
+  (`crewai.agent.utils.build_task_prompt_with_schema`); with `response_model`
+  it sends the schema once, as a strict `json_schema` response format.
+- Field descriptions in `schemas/hybrid_analysis/qualitative.py` travel inside
+  that `json_schema`. They are the model's per-field instructions: French, with
+  a length target. `tests/unit/schemas/test_prompt_descriptions.py` enforces it.
+- `{asset_focus}` (one paragraph per asset class) and `{strategic_block}`
+  (rendered by `analysis/strategic_render.py`) are per-holding data and belong
+  after the `---` line.
+
+`tests/unit/crews/test_deep_analysis_prompt_layout.py` pins the layout: the
+first placeholder must sit after the measured static prefix. When editing the
+prompt, add rules to the top block and data to the bottom block.
 
 ## Testing
 

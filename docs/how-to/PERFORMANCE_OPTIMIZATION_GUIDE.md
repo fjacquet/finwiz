@@ -81,10 +81,18 @@ risk_assessment_use_mini = os.getenv("RISK_ASSESSMENT_USE_MINI", "true").lower()
 
 ```python
 # In src/finwiz/crews/deep_analysis/deep_analysis.py
+deep_model = os.getenv("LLM_MODEL_DEEP_ANALYSIS", "").strip() or None
 if self.perf_config.should_use_mini_model():
-    return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=40960, force_json_object=True)
-return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=61440, force_json_object=True)
+    return get_configured_llm(model_override=deep_model, model_type="mini", max_tokens=_get_deep_analysis_max_tokens())
+return get_configured_llm(model_override=deep_model, model_type="standard", max_tokens=_get_deep_analysis_max_tokens())
 ```
+
+`get_configured_llm` no longer takes a `force_json_object` parameter. The task's
+schema is enforced by CrewAI's own strict `json_schema` `response_format`
+(`Task(response_model=...)`, see ADR-013), which wins over any provider
+`extra_body` override; there is no separate "JSON mode" to request. `max_tokens`
+is resolved by `_get_deep_analysis_max_tokens()` (`LLM_MAX_TOKENS_DEEP_ANALYSIS`,
+default 8192 -- see the source comment for how that default was measured).
 
 ### When to Disable
 

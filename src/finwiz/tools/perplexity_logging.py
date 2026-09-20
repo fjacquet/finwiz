@@ -77,7 +77,7 @@ class PerplexityOperationLogger:
     def log_search_request(ticker: str, analysis_type: str, query_length: int) -> None:
         """Log Perplexity search request with redacted content."""
         logger.info(
-            "Perplexity search initiated",
+            "Web research initiated",
             extra={
                 "operation": "perplexity_search",
                 "ticker": ticker,
@@ -91,7 +91,7 @@ class PerplexityOperationLogger:
     def log_search_success(ticker: str, analysis_type: str, latency_ms: int, result_count: int, http_status: int = 200) -> None:
         """Log successful Perplexity search with performance metrics."""
         logger.info(
-            "Perplexity search completed successfully",
+            "Web research completed",
             extra={
                 "operation": "perplexity_search_success",
                 "ticker": ticker,

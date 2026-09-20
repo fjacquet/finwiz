@@ -59,8 +59,8 @@ class TestDeepAnalysisCrew:
 
         assert hasattr(DeepAnalysisCrew, "get_tools_for_asset_class")
 
-    def test_configured_llm_forces_json_and_honors_model_override(self, mocker, monkeypatch):
-        """_get_configured_llm requests provider JSON mode and respects LLM_MODEL_DEEP_ANALYSIS."""
+    def test_configured_llm_honors_model_override(self, mocker, monkeypatch):
+        """_get_configured_llm respects LLM_MODEL_DEEP_ANALYSIS and no longer asks for json_object mode."""
         import finwiz.crews.deep_analysis.deep_analysis as da
 
         # Bypass the heavy @CrewBase __init__; only perf_config is needed by the method.
@@ -73,7 +73,7 @@ class TestDeepAnalysisCrew:
         crew._get_configured_llm()
 
         kwargs = mock_get.call_args.kwargs
-        assert kwargs["force_json_object"] is True
+        assert "force_json_object" not in kwargs
         assert kwargs["model_override"] == "openrouter/mistralai/mistral-large-2512"
 
     def test_configured_llm_override_unset_falls_back(self, mocker, monkeypatch):
@@ -90,7 +90,25 @@ class TestDeepAnalysisCrew:
 
         kwargs = mock_get.call_args.kwargs
         assert kwargs["model_override"] is None
-        assert kwargs["force_json_object"] is True
+        assert "force_json_object" not in kwargs
+
+    def test_task_uses_response_model_not_output_pydantic(self, monkeypatch):
+        """CrewAI appends a 9 kB schema text + converter boilerplate to the prompt when a
+        Task carries output_pydantic. response_model keeps the strict json_schema
+        response_format and appends nothing (crewai.agent.utils.build_task_prompt_with_schema)."""
+        # CrewBase resolves the task's agent at init, which builds the LLM and validates keys.
+        monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
+        from crewai.agent.utils import build_task_prompt_with_schema
+
+        from finwiz.analysis.stages.qualify import _QualitativeInsightsRaw
+        from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
+
+        task = DeepAnalysisCrew().deep_qualitative_analysis_task()
+
+        assert task.response_model is _QualitativeInsightsRaw
+        assert task.output_pydantic is None
+        assert build_task_prompt_with_schema(task, "PROMPT") == "PROMPT"
 
     def test_should_validate_asset_class_parameter(self):
         """Test that get_tools_for_asset_class validates asset_class parameter."""
@@ -226,6 +244,21 @@ class TestAssetAnalystToolless:
     """
 
     def test_build_asset_analyst_tools_returns_empty_list(self) -> None:
+        from finwiz.crews.deep_analysis.deep_analysis import _build_asset_analyst_tools
+
+        assert _build_asset_analyst_tools() == []
+
+    def test_asset_analyst_has_no_tools(self) -> None:
+        """Pin the empty tool list itself, not just the builder that returns it.
+
+        CrewAI's agent executor sets ``effective_response_model = None if
+        self.original_tools else self.response_model``
+        (``crewai/experimental/agent_executor.py``): attaching any tool to
+        ``asset_analyst`` would silently drop the schema everywhere -- not
+        just from the prompt text (``output_pydantic`` is already gone), but
+        also from the strict ``response_format`` this branch relies on to
+        constrain the crew's JSON output at all.
+        """
         from finwiz.crews.deep_analysis.deep_analysis import _build_asset_analyst_tools
 
         assert _build_asset_analyst_tools() == []

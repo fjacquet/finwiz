@@ -68,6 +68,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB
 ### Task 1: Task wiring — schema once, `force_json_object` removed
 
 **Files:**
+
 - Modify: `src/finwiz/crews/deep_analysis/deep_analysis.py:255-320`, `:396-401`
 - Modify: `src/finwiz/config/llm/llm_config.py:266-300`, `:373-380`
 - Delete: `tests/unit/config/test_llm_config_json_mode.py`
@@ -76,6 +77,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB
 - Test: `tests/unit/crews/test_deep_analysis_crew.py`
 
 **Interfaces:**
+
 - Consumes: `crewai.Task(response_model=...)` (CrewAI 1.15.22, `task.py:195`);
   `crewai.agent.utils.build_task_prompt_with_schema(task, prompt)` appends the
   schema text only when `output_pydantic` is set and `response_model` is not.
@@ -202,11 +204,13 @@ always won over the extra_body json_object override."
 ### Task 2: Qualitative field descriptions are the field prompt
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/qualitative.py` (every `Field(... description=...)`)
 - Modify: `src/finwiz/analysis/stages/qualify.py:66-71` (`_QualitativeInsightsRaw` field descriptions)
 - Create: `tests/unit/schemas/test_prompt_descriptions.py`
 
 **Interfaces:**
+
 - Produces: French descriptions on every model-filled field; Task 3 extends the same test to three more modules.
 
 - [ ] **Step 1: Write the failing test**
@@ -348,6 +352,7 @@ the model's per-field instructions."
 ### Task 3: Research schema descriptions and a null-tolerant `_FactPackRaw`
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/hybrid_analysis/strategic.py:163-300` (descriptions only)
 - Modify: `src/finwiz/analysis/fact_pack_research.py:53-57`, `:93-104` (and the `corporate_structure` branch)
 - Modify: `src/finwiz/schemas/perplexity.py:140-155`
@@ -355,6 +360,7 @@ the model's per-field instructions."
 - Test: `tests/unit/analysis/test_fact_pack_research.py`
 
 **Interfaces:**
+
 - Consumes: constants `MAX_BULLETS_SWOT = 4`, `MAX_PROSE_CHARS = 400`, `MAX_RATIONALE_CHARS = 250`, `MAX_VERDICT_CHARS = 200`, `MAX_PORTFOLIO_PROSE_CHARS = 800` from `strategic.py:98-112`.
 - Produces: nothing new; `_FactPackRaw(leadership=None)` validates.
 
@@ -530,10 +536,12 @@ placeholder instead of failing validation and burning retries."
 ### Task 4: `analysis/strategic_render.py` — the strategic block
 
 **Files:**
+
 - Create: `src/finwiz/analysis/strategic_render.py`
 - Create: `tests/unit/analysis/test_strategic_render.py`
 
 **Interfaces:**
+
 - Consumes: `StrategicAnalysis`, `SwotAnalysis`, `FiveForcesAnalysis`, `MAX_BULLETS_SWOT` from `finwiz.schemas.hybrid_analysis.strategic`.
 - Produces: `to_prompt_block(strategic: StrategicAnalysis | None, current_date: str) -> str`; constants `STRATEGIC_BLOCK_MAX_CHARS = 2000`, `RATIONALE_PREVIEW_CHARS = 160`, `UNAVAILABLE = "Recherche stratégique non disponible."`.
 
@@ -722,12 +730,14 @@ rtk git commit -m "feat(analysis): render the strategic research as a capped pro
 ### Task 5: `tasks.yaml` rewrite and the new crew inputs
 
 **Files:**
+
 - Modify: `src/finwiz/crews/deep_analysis/config/tasks.yaml` (description replaced in full)
 - Modify: `src/finwiz/analysis/_helpers.py:154-221`
 - Modify: `tests/unit/crews/test_deep_analysis_prompt_layout.py`
 - Modify: `tests/unit/analysis/test_helpers.py`
 
 **Interfaces:**
+
 - Consumes: `to_prompt_block` from Task 4.
 - Produces: `_build_crew_inputs(ctx, quant, raw_data=None, *, fact_pack=None, strategic=None)` with keys `asset_focus` and `strategic_block`; constant `ASSET_FOCUS: dict[str, str]` in `_helpers.py`.
 
@@ -956,6 +966,7 @@ analysis_timestamp contradiction and the inline JSON example are gone."
 ### Task 6: Strategic research before the crew, grounded by the fact pack
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/strategic_research.py:107-113`, `:152-157`, `:195-300`
 - Modify: `src/finwiz/analysis/stages/qualify.py:118-140`, `:211-215`, `:256-270`
 - Modify: `src/finwiz/analysis/stages/__init__.py:88-108`
@@ -963,6 +974,7 @@ analysis_timestamp contradiction and the inline JSON example are gone."
 - Modify: `tests/unit/analysis/stages/test_pipeline.py`
 
 **Interfaces:**
+
 - Consumes: `to_prompt_block(fact_pack)` from `finwiz.analysis.fact_pack.render`; `_build_crew_inputs(..., strategic=)` from Task 5.
 - Produces: `gather_strategic_analysis(..., facts: str = "")`, `gather_strategic_analysis_sync(..., facts: str = "")`, `_swot_prompt(..., asset_class="stock", facts="")`, `_porter_prompt(..., asset_class="stock", facts="")`, `_safe_strategic(ticker, sector, industry, description, *, asset_class="stock", facts="")`, `_try_ai_qualify(ctx, quant, raw_data=None, fact_pack=None, strategic=None)`; `stage_ctx.extras["strategic"]`.
 
@@ -1169,6 +1181,7 @@ fact pack as verified facts."
 ### Task 7: JSON-repair patch scoped to registered classes, log hygiene
 
 **Files:**
+
 - Modify: `src/finwiz/infrastructure/json/crewai_json_patch.py`
 - Modify: `src/finwiz/crews/deep_analysis/deep_analysis.py:114`, `:172-177`
 - Modify: `src/finwiz/tools/perplexity_logging.py:74-100`
@@ -1177,6 +1190,7 @@ fact pack as verified facts."
 - Modify: `tests/tools/test_perplexity_performance_validation.py` (delete `test_should_validate_response_time_requirement_correctly`, lines 30-39, and the `meets_2x_requirement` / `EXCEEDS 2x BASELINE REQUIREMENT` assertions at lines 79 and 90-91; the warning-path test becomes an info-path test asserting `"Web research latency"` in the message) and `tests/tools/test_perplexity_rate_limiting_validation.py` (delete `test_should_validate_response_time_requirements`, lines 64-74).
 
 **Interfaces:**
+
 - Produces: `register_repairable(cls: type[BaseModel]) -> None`, `is_repairable(cls) -> bool` in `crewai_json_patch.py`.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1290,6 +1304,7 @@ rtk git commit -m "fix(infra): repair JSON only for registered crew schemas, ret
 ### Task 8: Docs, prose-length script, verification run
 
 **Files:**
+
 - Create: `docs/adr/ADR-013-schema-as-prompt-and-strategic-first-qualify.md`
 - Create: `scripts/prose_lengths.py`
 - Modify: `src/finwiz/crews/CLAUDE.md:66-85`
@@ -1298,6 +1313,7 @@ rtk git commit -m "fix(infra): repair JSON only for registered crew schemas, ret
 - Test: `tests/unit/scripts/test_prose_lengths.py` (create; mirror the layout of the nearest existing test under `tests/unit/scripts/`, or create the directory with an empty `__init__.py` if none exists)
 
 **Interfaces:**
+
 - Produces: `scripts/prose_lengths.py` with `summarise(paths: Iterable[Path]) -> dict[str, float]` (field → median words) and a `main()` printing one line per field.
 
 - [ ] **Step 1: Write the failing test**

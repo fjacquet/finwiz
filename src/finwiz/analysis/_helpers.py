@@ -7,13 +7,27 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from finwiz.analysis.fact_pack.render import to_prompt_block
+from finwiz.analysis.strategic_render import to_prompt_block as strategic_to_prompt_block
 from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
 from finwiz.schemas.hybrid_analysis.fact_pack import FactPack
 
 if TYPE_CHECKING:
     from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+    from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis
 
 logger = logging.getLogger(__name__)
+
+# One paragraph per asset class, interpolated as {asset_focus} in the dynamic
+# block of tasks.yaml. The static block stays asset-neutral so it caches.
+ASSET_FOCUS: dict[str, str] = {
+    "stock": ("Analyse une action : modèle économique, avantages concurrentiels, direction, initiatives des 12 derniers mois, risques réglementaires et opérationnels."),
+    "etf": (
+        "Analyse un fonds indiciel : émetteur, indice suivi, réplication, frais, concentration "
+        "sectorielle et géographique, liquidité, risques de contrepartie. "
+        "Ne décris pas un émetteur comme une entreprise à analyser."
+    ),
+    "crypto": ("Analyse un actif crypto : protocole, utilité, offre et émission, activité des développeurs, gouvernance, garde et réglementation par juridiction."),
+}
 
 
 def _build_sentiment_summary(raw_data: dict[str, Any]) -> dict[str, Any] | None:
@@ -151,7 +165,14 @@ def _today_french() -> str:
     return f"{today.day} {_FR_MONTHS[today.month]} {today.year}"
 
 
-def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_data: dict[str, Any] | None = None, *, fact_pack: FactPack | None = None) -> dict[str, Any]:
+def _build_crew_inputs(
+    ctx: AnalysisContext,
+    quant: QuantitativeAnalysis,
+    raw_data: dict[str, Any] | None = None,
+    *,
+    fact_pack: FactPack | None = None,
+    strategic: StrategicAnalysis | None = None,
+) -> dict[str, Any]:
     """Build inputs dict for crew kickoff.
 
     IMPORTANT: We pass SUMMARIZED metrics, not full dictionaries.
@@ -163,13 +184,15 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
     """
     # Build inputs with None-safe defaults and size limits
     today = datetime.now()
+    asset_class = ctx.asset_class or "stock"
+    current_date = _today_french()
     inputs = {
         "ticker": ctx.ticker or "UNKNOWN",
-        "asset_class": ctx.asset_class or "stock",
+        "asset_class": asset_class,
         "company_name": ctx.company_name or ctx.ticker or "Unknown",
         # Anchor the AI to today's date so it stops citing pre-training corporate
         # structure (e.g. DELL/VMware integration that ended in Nov 2021).
-        "current_date": _today_french(),
+        "current_date": current_date,
         "current_date_iso": today.strftime("%Y-%m-%d"),
         # Numeric defaults prevent "unsupported format string passed to NoneType"
         "grade": quant.grade or "C",
@@ -207,6 +230,11 @@ def _build_crew_inputs(ctx: AnalysisContext, quant: QuantitativeAnalysis, raw_da
         inputs["fact_pack_block"] = to_prompt_block(fact_pack)
     else:
         inputs["fact_pack_block"] = "Fact pack non disponible."
+
+    inputs["asset_focus"] = ASSET_FOCUS.get(asset_class, ASSET_FOCUS["stock"])
+    # Strategic research (SWOT/Porter) now runs before the crew (stages/__init__.py)
+    # and is rendered by one renderer so the prompt cannot drift from the report.
+    inputs["strategic_block"] = strategic_to_prompt_block(strategic, current_date)
 
     # Retry guidance is empty on the first attempt. The qualify-stage retry
     # callback overrides this with explicit JSON format instructions when the
