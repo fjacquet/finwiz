@@ -38,9 +38,11 @@
 ### Task 1: Layout test (red)
 
 **Files:**
+
 - Create: `tests/unit/crews/test_deep_analysis_prompt_layout.py`
 
 **Interfaces:**
+
 - Consumes: `src/finwiz/crews/deep_analysis/config/agents.yaml` (`asset_analyst.goal`), `src/finwiz/crews/deep_analysis/config/tasks.yaml` (`deep_qualitative_analysis_task.description`), `finwiz.analysis._helpers._build_crew_inputs(ctx, quant, raw_data=None, *, fact_pack=None) -> dict[str, Any]`.
 - Produces: three tests that Task 2 and Task 3 turn green.
 
@@ -155,10 +157,12 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 2: Agent goal without the ticker
 
 **Files:**
+
 - Modify: `src/finwiz/crews/deep_analysis/config/agents.yaml:3`
 - Test: `tests/unit/crews/test_deep_analysis_prompt_layout.py::test_agent_goal_has_no_placeholder`
 
 **Interfaces:**
+
 - Produces: system prompt `You are Financial Analyst (Qualitative). Expert financier qualitative.\nYour personal goal is: Provide qualitative insights in French for the holding described in the task. Output JSON only.` identical for every holding.
 
 - [ ] **Step 1: Edit the goal**
@@ -205,10 +209,12 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 3: Reorder the task description
 
 **Files:**
+
 - Modify: `src/finwiz/crews/deep_analysis/config/tasks.yaml:4-107`
 - Test: `tests/unit/crews/test_deep_analysis_prompt_layout.py`, `tests/unit/crews/test_deep_analysis_prompt.py`
 
 **Interfaces:**
+
 - Consumes: the 20 placeholder names listed in Global Constraints.
 - Produces: a description whose first `{` sits after ≥ 3 000 characters of static text.
 
@@ -216,7 +222,7 @@ The rule text is moved, not rewritten, with two exceptions the spec requires: th
 
 - [ ] **Step 1: Replace the `deep_qualitative_analysis_task` block**
 
-Replace everything from line 4 (`deep_qualitative_analysis_task:`) through line 107 (`  agent: asset_analyst`) with:
+Replace everything from line 4 (`deep_qualitative_analysis_task:`) through line 107 (the indented `agent: asset_analyst` line) with:
 
 ```yaml
 deep_qualitative_analysis_task:
@@ -367,6 +373,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 4: Docs and changelog
 
 **Files:**
+
 - Modify: `src/finwiz/crews/CLAUDE.md` (insert a section after "Critical Rules", before "## Testing" at line 66)
 - Modify: `CHANGELOG.md:9-11` (Unreleased / Changed)
 

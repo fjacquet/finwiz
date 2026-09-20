@@ -94,22 +94,27 @@ class TokenMonitorCallback(CustomLogger):
         model = kwargs.get("model", "unknown")
         logger.info(f"LLM call #{self.call_count} ({crew_name}): {model} cost=${cost:.4f} ({prompt_tokens}+{completion_tokens} tokens)")
 
-    def record_usage(self, crew_name: str, token_usage: Any, model: str | None = None) -> None:
-        """Record authoritative CrewAI usage metrics for one crew kickoff.
+    def record_usage(self, crew_name: str, token_usage: Any, model: str | None = None, *, cost_usd: float | None = None) -> None:
+        """Record authoritative usage metrics for one crew kickoff or research call.
 
         This is the source of truth for the cost summary. CrewAI populates
         ``CrewOutput.token_usage`` directly, which survives thread boundaries and
         CrewAI's own clobbering of ``litellm.callbacks`` (the reason
         ``log_success_event`` never fires for crews). Cost is an ESTIMATE derived
-        from token counts and the crew's model via litellm pricing; when the
-        model is unknown/unpriced we count tokens but mark cost unknown rather
-        than recording a misleading $0.
+        from token counts and the crew's model via litellm pricing, unless the
+        caller passes ``cost_usd`` -- the exact figure OpenRouter returns in
+        ``usage.cost`` for direct research calls -- in which case that figure is
+        recorded as is. When neither is available we count tokens but mark cost
+        unknown rather than recording a misleading $0.
 
         Args:
-            crew_name: Crew attribution key (e.g. ``deep_analysis_stock``).
-            token_usage: CrewAI ``UsageMetrics`` (``prompt_tokens``,
+            crew_name: Crew attribution key (e.g. ``deep_analysis_stock``,
+                ``research_swot``).
+            token_usage: CrewAI ``UsageMetrics``-shaped object (``prompt_tokens``,
                 ``completion_tokens``, ``successful_requests``).
             model: litellm model id for price lookup (e.g. ``openai/gpt-4o-mini``).
+                Ignored when ``cost_usd`` is given.
+            cost_usd: Exact cost reported by the provider, when known.
         """
         prompt_tokens = int(getattr(token_usage, "prompt_tokens", 0) or 0)
         completion_tokens = int(getattr(token_usage, "completion_tokens", 0) or 0)
@@ -120,7 +125,9 @@ class TokenMonitorCallback(CustomLogger):
         calls = requests if requests > 0 else 1
 
         cost: float | None = None
-        if model:
+        if cost_usd is not None:
+            cost = float(cost_usd)
+        elif model:
             for candidate in _price_candidates(model):
                 try:
                     prompt_cost, completion_cost = litellm.cost_per_token(

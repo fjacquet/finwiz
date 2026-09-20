@@ -90,12 +90,14 @@ def _block_remote_network(request):
 # real key in) and silently exercises nothing in CI. That difference produced a
 # green local suite and a red CI on this branch. Clearing them here makes the
 # dependency explicit — a test that needs a key sets its own, as the docstring
-# below describes.
+# below describes. OPENROUTER_API_KEY is cleared for the same reason:
+# research_with_retry skips the primary provider without it.
 _EXTRA_CONFIG_ENV_VARS = (
     "PORTFOLIO_PARALLEL_LIMIT",
     "DEEP_ANALYSIS_PARALLEL_LIMIT",
     "PERPLEXITY_API_KEY",
     "PPLX_API_KEY",
+    "OPENROUTER_API_KEY",
 )
 
 

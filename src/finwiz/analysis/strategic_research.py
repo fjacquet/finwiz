@@ -1,14 +1,14 @@
 """Strategic analysis research orchestrator.
 
-Two independent Perplexity calls (SWOT/Porter's Five Forces) per
+Two independent web-grounded research calls (SWOT/Porter's Five Forces) per
 holding, plus a portfolio-level synthesis call. Every asset class — stock,
 ETF, crypto — gets both frameworks; each prompt builder takes an
 ``asset_class`` and asks a question that actually fits the asset (moats and
 competitors for stocks, fees and concentration for ETFs, protocol economics
 and regulatory posture for crypto) while requesting the exact same output
-caps in every branch. All run via direct Perplexity Sonar Pro with native
-``response_format: json_schema`` — no CrewAI agent layer (single provider
-call + native structured output = no reasoning needed).
+caps in every branch. All run via ``research_with_retry`` (OpenRouter web plugin +
+native ``response_format: json_schema``, Perplexity as fallback) — no CrewAI agent
+layer (single provider call + native structured output = no reasoning needed).
 
 Each framework is asked to self-rate its ``strategic_score`` and ``confidence``;
 Python only averages them into a composite — no item-counting heuristics.
@@ -21,7 +21,7 @@ import json
 import logging
 from typing import Any
 
-from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
+from finwiz.infrastructure.resilience.research_retry import research_with_retry
 from finwiz.schemas.hybrid_analysis.strategic import (
     MAX_BULLETS_SWOT,
     MAX_PORTFOLIO_PROSE_CHARS,
@@ -220,23 +220,29 @@ async def gather_strategic_analysis(
     rather than its training cutoff (defaults to today in long French form).
     """
     date_anchor = current_date or _today_french()
-    swot_coro = perplexity_with_retry(
+    swot_coro = research_with_retry(
         prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=SwotAnalysis,
         system=SYSTEM_FR,
         search_recency_filter="month",
         timeout=timeout,
         max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
+        kind="swot",
     )
-    porter_coro = perplexity_with_retry(
+    porter_coro = research_with_retry(
         prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
         schema=FiveForcesAnalysis,
         system=SYSTEM_FR,
         search_recency_filter="month",
         timeout=timeout,
         max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
+        kind="porter",
     )
-    swot, porter = await asyncio.gather(swot_coro, porter_coro)
+    swot_result, porter_result = await asyncio.gather(swot_coro, porter_coro)
+    # Citations are ignored here for now: SwotAnalysis / FiveForcesAnalysis have
+    # no field for them and adding one is a report change (spec: out of scope).
+    swot = swot_result.data if swot_result is not None else None
+    porter = porter_result.data if porter_result is not None else None
 
     if swot is None and porter is None:
         # The absence of data must be representable. Returning
@@ -328,15 +334,17 @@ async def synthesize_portfolio_posture(
 
     payload = _serialize_holdings(holdings_strategic)
     date_anchor = current_date or _today_french()
-    narrative = await perplexity_with_retry(
+    research = await research_with_retry(
         prompt=_portfolio_prompt(payload, date_anchor),
         schema=PortfolioPostureNarrative,
         system=SYSTEM_FR,
         search_recency_filter="week",
         timeout=timeout,
+        kind="posture",
     )
-    if narrative is None:
+    if research is None:
         return None
+    narrative = research.data
 
     merged = narrative.model_dump()
     merged.update(

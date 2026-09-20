@@ -95,7 +95,12 @@ _SOURCE_LABELS: dict[str, str] = {
     "yfinance.funds_data": "Yahoo Finance",
     "yfinance.sec_filings": "dépôts SEC",
     "yfinance.news": "presse financière",
-    "perplexity.gap_fill": "Perplexity",
+    "research.gap_fill": "recherche web",
+    # Legacy key: a prior-run *_enriched.json cache may still carry the old
+    # "perplexity.gap_fill" identifier from before the OpenRouter provider
+    # swap (ADR-012). Mapped to the same label so a re-rendered report doesn't
+    # silently drop the pill for a cached holding that failed re-analysis.
+    "perplexity.gap_fill": "recherche web",
     "etf_expense_ratios.yaml": "table de frais interne",
 }
 

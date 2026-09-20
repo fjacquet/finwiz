@@ -23,12 +23,14 @@ def _keys(monkeypatch):
 
 
 class TestLLMInstanceIsolation:
-    def test_two_crews_do_not_share_an_llm_object(self) -> None:
+    def test_two_crews_do_not_share_an_llm_object(self, monkeypatch) -> None:
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
         a = DeepAnalysisCrew().asset_analyst().llm
         b = DeepAnalysisCrew().asset_analyst().llm
         assert a is not b, "two crews share one LLM object; CrewAI's token counter will bleed across them"
 
-    def test_usage_recorded_on_one_crew_is_invisible_to_another(self) -> None:
+    def test_usage_recorded_on_one_crew_is_invisible_to_another(self, monkeypatch) -> None:
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
         first, second = DeepAnalysisCrew(), DeepAnalysisCrew()
         llm_first = first.asset_analyst().llm
 

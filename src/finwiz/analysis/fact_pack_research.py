@@ -4,13 +4,13 @@ Until Task 8, this module was the sole source of a fact pack: ``fetch_fact_pack`
 built a flat ``FactPack`` from a single Perplexity call. `compose_fact_pack`
 (``analysis/fact_pack/composer.py``) replaced that: facts now come from free
 structured sources (yfinance, a curated expense-ratio table), and Perplexity is
-consulted only as ``analysis.fact_pack.sources.perplexity_source.fetch_missing_events``
+consulted only as ``analysis.fact_pack.sources.research_source.fetch_missing_events``
 — a narrow gap-filler for equities with neither SEC filings nor allowlisted wire
 news. `fetch_fact_pack`/`fetch_fact_pack_sync` are gone: they built a shape
 (top-level `corporate_structure`/`leadership`/... kwargs) the current
 discriminated-union `FactPack` schema rejects outright (`extra="forbid"`).
 
-What remains here is what `perplexity_source` still needs: the retry-wrapped
+What remains here is what `research_source` still needs: the retry-wrapped
 request schema (`_FactPackRaw`), the system prompt (`_SYSTEM_FR`), and
 the sync/async bridge (`_run_coroutine_sync`) extracted from the old
 `fetch_fact_pack_sync` body.
@@ -36,7 +36,7 @@ _PLACEHOLDER = "Information indisponible"
 
 
 class _FactPackRaw(BaseModel):
-    """Subset of FactPack returned by Perplexity (Python adds freshness + fetched_at).
+    """Subset of FactPack returned by the research provider (Python adds freshness + fetched_at).
 
     Mirrors FactPack but excludes Python-controlled fields. AI cannot supply
     `fetched_at` or `freshness` — Python is authoritative.
@@ -137,8 +137,8 @@ class _FactPackRaw(BaseModel):
 
 _SYSTEM_FR = (
     "Tu es un assistant de recherche financière strict. Tu réponds UNIQUEMENT "
-    "au format JSON conforme au schéma fourni. Tu cites tes sources via URLs "
-    "Perplexity. Tu auto-évalues ta confidence dans [0.0, 1.0]. Tu ne dois "
+    "au format JSON conforme au schéma fourni. Tu cites tes sources via les URLs "
+    "des pages web consultées. Tu auto-évalues ta confidence dans [0.0, 1.0]. Tu ne dois "
     "JAMAIS inventer des faits ; si tu n'as pas de source fiable, dis-le."
 )
 
@@ -147,7 +147,7 @@ def _run_coroutine_sync[T](coro: Coroutine[Any, Any, T], *, timeout: float) -> T
     """Run a coroutine from sync code. Inside a running loop, use a worker thread.
 
     Extracted from the old `fetch_fact_pack_sync` body (Task 8) so
-    `perplexity_source.fetch_missing_events` can share the same event-loop
+    `research_source.fetch_missing_events` can share the same event-loop
     juggling without depending on the fetcher it replaced.
     """
     try:

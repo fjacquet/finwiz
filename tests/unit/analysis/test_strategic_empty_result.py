@@ -17,7 +17,12 @@ from __future__ import annotations
 
 import pytest
 
+from finwiz.infrastructure.research.openrouter_structured import ResearchResult
 from finwiz.schemas.hybrid_analysis.strategic import SwotAnalysis
+
+
+def _wrap(model):
+    return ResearchResult(data=model, citations=(), cost_usd=None, prompt_tokens=0, completion_tokens=0)
 
 
 @pytest.fixture
@@ -34,14 +39,14 @@ def _swot() -> SwotAnalysis:
 class TestAllFrameworksFailed:
     async def test_gather_returns_none_when_both_frameworks_fail(self, strategic_research, mocker):
         """No evidence at all must not be dressed up as a StrategicAnalysis."""
-        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "research_with_retry", new=mocker.AsyncMock(return_value=None))
 
         result = await strategic_research.gather_strategic_analysis(ticker="AAPL")
 
         assert result is None
 
     def test_gather_sync_returns_none_when_both_frameworks_fail(self, strategic_research, mocker):
-        mocker.patch.object(strategic_research, "perplexity_with_retry", new=mocker.AsyncMock(return_value=None))
+        mocker.patch.object(strategic_research, "research_with_retry", new=mocker.AsyncMock(return_value=None))
 
         assert strategic_research.gather_strategic_analysis_sync(ticker="AAPL") is None
 
@@ -69,8 +74,8 @@ class TestPartialResultsSurvive:
         # makes the await order an implementation detail.
         mocker.patch.object(
             strategic_research,
-            "perplexity_with_retry",
-            new=mocker.AsyncMock(side_effect=lambda **kwargs: swot if kwargs["schema"] is SwotAnalysis else None),
+            "research_with_retry",
+            new=mocker.AsyncMock(side_effect=lambda **kwargs: _wrap(swot) if kwargs["schema"] is SwotAnalysis else None),
         )
 
         result = await strategic_research.gather_strategic_analysis(ticker="AAPL")

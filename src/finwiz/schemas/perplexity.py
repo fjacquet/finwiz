@@ -135,3 +135,21 @@ class PerplexityConfig(BaseModel):
         description="Filters for financial news searches",
     )
     sec_filing_filters: dict[str, str] = Field(default_factory=lambda: {"site": "sec.gov", "filetype": "pdf,html"}, description="Filters for SEC filing searches")
+
+
+class NewsHeadline(BaseModel):
+    """One headline the research model found on the web."""
+
+    title: str
+    url: str
+    one_line_summary: str = ""
+
+
+class NewsDigest(BaseModel):
+    """Minimal structured reply for the sentiment news search.
+
+    No Field constraints: this model is sent as a strict ``json_schema`` and a
+    rejected keyword would fail every call. Clamping happens in Python.
+    """
+
+    headlines: list[NewsHeadline] = []

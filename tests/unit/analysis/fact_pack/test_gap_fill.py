@@ -2,11 +2,11 @@
 
 from finwiz.analysis.fact_pack import composer
 from finwiz.analysis.fact_pack.fragment import FactPackFragment
-from finwiz.analysis.fact_pack.sources import perplexity_source
+from finwiz.analysis.fact_pack.sources import research_source
 
 
 class TestGapFillScope:
-    def test_an_equity_without_events_asks_perplexity(self, mocker):
+    def test_an_equity_without_events_asks_for_research(self, mocker):
         mocker.patch.object(
             composer.yfinance_source,
             "resolve",
@@ -15,7 +15,7 @@ class TestGapFillScope:
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
-        fetch = mocker.patch.object(perplexity_source, "fetch_missing_events", return_value=("Airbus wins order",))
+        fetch = mocker.patch.object(research_source, "fetch_missing_events", return_value=("Airbus wins order",))
 
         pack = composer.compose_fact_pack("AIR.PA", "Airbus SE", None, None, "stock")
 
@@ -36,7 +36,7 @@ class TestGapFillScope:
         )
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
-        fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
+        fetch = mocker.patch.object(research_source, "fetch_missing_events")
 
         composer.compose_fact_pack("AAPL", "Apple Inc.", None, None, "stock")
 
@@ -53,7 +53,7 @@ class TestGapFillScope:
         # real 3-tuple shape; flagged in the Task 8 report as a brief defect.
         mocker.patch.object(composer.fund_source, "fund_facts", return_value=(None, (), ()))
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
-        fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
+        fetch = mocker.patch.object(research_source, "fetch_missing_events")
 
         composer.compose_fact_pack("XXXX.DE", "Unknown fund", None, None, "etf")
 
@@ -68,7 +68,7 @@ class TestGapFillScope:
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=False)
-        fetch = mocker.patch.object(perplexity_source, "fetch_missing_events")
+        fetch = mocker.patch.object(research_source, "fetch_missing_events")
 
         composer.compose_fact_pack("AIR.PA", "Airbus SE", None, None, "stock")
 
@@ -84,10 +84,25 @@ class TestGapFillScope:
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
         mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
         mocker.patch.object(composer, "is_feature_enabled", return_value=True)
-        mocker.patch.object(perplexity_source, "fetch_missing_events", side_effect=RuntimeError("Perplexity HTTP 401 insufficient_quota"))
+        mocker.patch.object(research_source, "fetch_missing_events", side_effect=RuntimeError("Perplexity HTTP 401 insufficient_quota"))
 
         pack = composer.compose_fact_pack("AIR.PA", "Airbus SE", None, None, "stock")
 
         assert pack is not None
         assert pack.details.business_summary == "Builds planes."
         assert pack.details.recent_events == []
+
+    def test_gap_filled_events_are_tagged_as_research(self, mocker):
+        mocker.patch.object(
+            composer.yfinance_source,
+            "resolve",
+            return_value={"quoteType": "EQUITY", "longBusinessSummary": "Builds planes.", "companyOfficers": [{"name": "G. Faury", "title": "CEO"}]},
+        )
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+        mocker.patch.object(composer, "is_feature_enabled", return_value=True)
+        mocker.patch.object(research_source, "fetch_missing_events", return_value=("Airbus wins order",))
+
+        pack = composer.compose_fact_pack("AIR.PA", "Airbus SE", None, None, "stock")
+
+        assert "research.gap_fill" in pack.sources_used

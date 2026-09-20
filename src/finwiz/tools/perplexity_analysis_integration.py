@@ -1,22 +1,25 @@
 """
-Perplexity Analysis Integration Wrapper.
+Financial news search for sentiment, technical and fundamental analysis.
 
-Provides a wrapper class that uses the existing PerplexitySearchTool to perform
-different types of financial analysis (sentiment, technical, fundamental) with
-structured data parsing and error handling.
+Historically a wrapper over ``PerplexitySearchTool``; the class and module
+names are kept because four tool modules import them. The search itself now
+goes through ``research_with_retry`` (OpenRouter web plugin with a small
+``NewsDigest`` schema, Perplexity as fallback) and the reply is fed through
+the same citation parser as before, so ``SonarArticle`` / ``SonarSearchResult``
+and their consumers are untouched.
 """
 
 from __future__ import annotations
 
-import asyncio
 import os
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
-from crewai_custom_tools import PerplexitySearchTool
 from crewai_custom_tools.core.results import ToolResultError, ok, parse_tool_result
 
-from finwiz.config.endpoints import PERPLEXITY_SEARCH
+from finwiz.infrastructure.research.openrouter_structured import ResearchResult
+from finwiz.infrastructure.resilience.research_retry import has_openrouter_key, has_perplexity_key, research_with_retry
 from finwiz.schemas.perplexity import (
+    NewsDigest,
     PerplexityConfig,
     SonarArticle,
     SonarSearchResult,
@@ -38,6 +41,12 @@ AssetType = Literal["stock", "etf", "crypto"]
 AnalysisType = Literal["sentiment", "technical", "fundamental", "general"]
 ContentType = Literal["news", "filing", "analysis", "earnings", "regulatory"]
 
+_NEWS_SYSTEM = (
+    "Tu es un assistant de veille financière. Tu réponds UNIQUEMENT en JSON conforme au schéma fourni. "
+    "Chaque titre doit provenir d'une page web réelle que tu as consultée, avec son URL exacte. "
+    "Aucun titre inventé ; si tu ne trouves rien de fiable, renvoie une liste vide."
+)
+
 
 class PerplexityAnalysisIntegration:
     """
@@ -50,20 +59,15 @@ class PerplexityAnalysisIntegration:
 
     def __init__(self, config: PerplexityConfig | None = None) -> None:
         """Initialize the integration wrapper."""
-        try:
-            self.perplexity_tool = PerplexitySearchTool()
-        except ValueError:
-            self.perplexity_tool = None  # type: ignore[assignment]
-
         self.config = config or self._create_default_config()
 
-        # Availability derives from successful tool construction, which already
-        # validates PERPLEXITY_API_KEY (primary) or PPLX_API_KEY (fallback).
-        if self.perplexity_tool is None:
-            logger.warning("PERPLEXITY_API_KEY/PPLX_API_KEY not found, Perplexity integration will be disabled")
-            self._api_available = False
-        else:
-            self._api_available = True
+        # Available when either research provider has a key configured -- the
+        # same key-presence rule research_with_retry itself uses to decide
+        # whether to call OpenRouter first or go straight to the Perplexity
+        # fallback. No tool construction needed just to probe for a key.
+        self._api_available = has_openrouter_key() or has_perplexity_key()
+        if not self._api_available:
+            logger.warning("Neither OPENROUTER_API_KEY nor PERPLEXITY_API_KEY/PPLX_API_KEY found; news research will be disabled")
 
     def _create_default_config(self) -> PerplexityConfig:
         """Create default configuration."""
@@ -105,19 +109,30 @@ class PerplexityAnalysisIntegration:
         start_time = PerplexityPerformanceMonitor.start_operation_timer()
 
         try:
-            # Create enhanced query based on analysis type
             enhanced_query = self._create_enhanced_query(query, ticker, asset_type, analysis_type)
-
-            # Log search request with redacted content
             PerplexityOperationLogger.log_search_request(ticker, analysis_type, len(enhanced_query))
-
-            # Get search filters for the analysis type
             search_filters = self._get_search_filters(analysis_type)
 
-            # Execute search with retry logic
-            raw_response, retry_count = await self._execute_search_with_retry(enhanced_query, max_results, search_filters)
+            research = await research_with_retry(
+                prompt=self._news_prompt(enhanced_query, max_results, search_filters),
+                schema=NewsDigest,
+                system=_NEWS_SYSTEM,
+                search_recency_filter="week",
+                timeout=self.config.timeout_seconds,
+                max_attempts=self.config.max_retries + 1,
+                kind="news",
+            )
+            if research is None:
+                raise PerplexityAPIError(None, "web research returned no result")
 
-            # Parse response into structured articles
+            citations = self._citations_from_research(research, max_results)
+            if not citations:
+                raise PerplexityAPIError(None, "web research returned no headlines")
+
+            # Same envelope the parser always consumed, so _create_sonar_article
+            # and everything downstream stay untouched.
+            raw_response = ok({"citations": citations, "results": []})
+            retry_count = 0
             articles = self._parse_perplexity_response(raw_response, analysis_type, ticker)
 
             # Calculate performance metrics
@@ -185,123 +200,34 @@ class PerplexityAnalysisIntegration:
         else:
             return self.config.financial_news_filters.copy()
 
-    async def _execute_search_with_retry(self, query: str, max_results: int, search_filters: dict[str, str]) -> tuple[str, int]:
-        """Execute Perplexity search with comprehensive retry and fallback logic."""
-        ticker = self._extract_ticker_from_query(query)
-        last_exception = None
+    def _news_prompt(self, enhanced_query: str, max_results: int, search_filters: dict[str, str]) -> str:
+        preferred = search_filters.get("site", "").replace(",", ", ")
+        wanted = max(1, min(max_results, 10))
+        lines = [
+            f"Recherche les actualités récentes pour : {enhanced_query}.",
+            f"Retourne au plus {wanted} titres, chacun avec son URL source exacte et un résumé d'une phrase.",
+        ]
+        if preferred:
+            lines.append(f"Privilégie ces sources : {preferred}.")
+        return "\n".join(lines)
 
-        for attempt in range(self.config.max_retries + 1):
-            try:
-                # Prepare search parameters
-                search_params = {
-                    "query": query,
-                    "model": "sonar-small-chat",
-                    "top_k": min(max_results, 10),  # Perplexity API limit
-                }
-
-                # Add filters if available
-                if "site" in search_filters:
-                    search_params["search_domain_filter"] = search_filters["site"].split(",")
-
-                if "date" in search_filters:
-                    search_params["search_recency"] = search_filters["date"]
-
-                # Execute search using Perplexity Search API (not chat completions)
-                import json
-
-                import requests
-
-                api_key = os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY")
-                if not api_key:
-                    raise PerplexityAPIError(401, "PERPLEXITY_API_KEY/PPLX_API_KEY not set")
-
-                headers = {
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                }
-
-                # Use the /search endpoint for structured results
-                top_k = cast(int, search_params.get("top_k", 10))
-                payload = {
-                    "query": search_params["query"],
-                    "max_results": min(top_k, 20),  # API max is 20
-                    "max_tokens_per_page": 10240,
-                }
-
-                # Add country filter if available
-                if "country" in search_filters:
-                    payload["country"] = search_filters["country"]
-
-                http_response = requests.post(PERPLEXITY_SEARCH, headers=headers, data=json.dumps(payload, default=str), timeout=30)
-                http_response.raise_for_status()
-
-                # Convert search results to the format expected by the parser
-                search_data = http_response.json()
-
-                # Transform search results into citation format for compatibility
-                citations = []
-                for result in search_data.get("results", []):
-                    citations.append(
-                        {
-                            "title": result.get("title", ""),
-                            "url": result.get("url", ""),
-                            "snippet": result.get("snippet", ""),
-                            "date": result.get("date", ""),
-                            "last_updated": result.get("last_updated", ""),
-                        }
-                    )
-
-                # Create response in the canonical ToolResult envelope, matching what
-                # _parse_perplexity_response now expects (parse_tool_result-compatible).
-                response_data = {"citations": citations, "results": search_data.get("results", [])}
-                response = ok(response_data)
-
-                return response, attempt
-
-            except Exception as e:
-                last_exception = e
-
-                # Extract rate limit information
-                rate_limit_info = PerplexityFallbackManager.extract_rate_limit_info(e)
-
-                # Log rate limit warnings
-                if rate_limit_info["is_rate_limit"] and ticker:
-                    retry_after = rate_limit_info.get("retry_after")
-                    PerplexityOperationLogger.log_rate_limit_warning(ticker, retry_after)
-
-                # Check if we should retry
-                if not PerplexityFallbackManager.should_retry_error(e, attempt, self.config.max_retries):
-                    if ticker:
-                        PerplexityOperationLogger.log_api_failure(ticker, str(e), attempt + 1)
-                    break
-
-                # Calculate backoff delay
-                if rate_limit_info["is_rate_limit"] and "retry_after" in rate_limit_info:
-                    # Use server-provided retry-after value
-                    wait_time = rate_limit_info["retry_after"] + self.config.rate_limit_buffer
-                else:
-                    # Use exponential backoff
-                    wait_time = PerplexityFallbackManager.calculate_backoff_delay(attempt, self.config.backoff_factor, 60.0)
-
-                logger.warning(f"Perplexity search attempt {attempt + 1} failed, retrying in {wait_time:.2f}s: {e!s}")
-                await asyncio.sleep(wait_time)
-
-        # All retries exhausted, raise the last exception
-        if ticker:
-            PerplexityOperationLogger.log_api_failure(ticker, str(last_exception), self.config.max_retries + 1)
-
-        raise last_exception or Exception("Max retries exceeded for Perplexity search")
-
-    def _extract_ticker_from_query(self, query: str) -> str | None:
-        """Extract ticker symbol from query for logging context."""
-        import re
-
-        # Look for ticker-like patterns (1-5 uppercase letters, possibly with numbers/dashes)
-        ticker_match = re.search(r"\b([A-Z]{1,5}(?:-[A-Z]{1,3})?)\b", query)
-        if ticker_match:
-            return ticker_match.group(1)
-
-        return None
+    @staticmethod
+    def _citations_from_research(research: ResearchResult[NewsDigest], max_results: int) -> list[dict[str, Any]]:
+        """Digest headlines first, then annotation citations not already named; URL-deduplicated."""
+        seen: set[str] = set()
+        out: list[dict[str, Any]] = []
+        for headline in research.data.headlines:
+            url = headline.url.strip()
+            if not url or url in seen:
+                continue
+            seen.add(url)
+            out.append({"title": headline.title, "url": url, "snippet": headline.one_line_summary})
+        for cite in research.citations:
+            if not cite.url or cite.url in seen:
+                continue
+            seen.add(cite.url)
+            out.append({"title": cite.title or cite.url, "url": cite.url, "snippet": cite.content})
+        return out[: max(1, max_results)]
 
     def _classify_error(self, error: Exception) -> str:
         """Classify error type for structured logging."""

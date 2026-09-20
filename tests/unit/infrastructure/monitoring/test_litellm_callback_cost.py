@@ -239,3 +239,39 @@ class TestOpenRouterPricingFallback:
 
         assert cb.crew_cost_known["x"] is False
         assert spy.call_count == 1
+
+
+class TestExactProviderCost:
+    """OpenRouter returns ``usage.cost``; record it instead of estimating."""
+
+    def test_exact_cost_is_accumulated_and_marks_the_crew_priced(self):
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("research_swot", _usage(3282, 1985), cost_usd=0.0169)
+        cb.record_usage("research_swot", _usage(3000, 1500), cost_usd=0.0150)
+
+        summary = cb.get_cost_summary()
+        assert summary["per_crew"]["research_swot"]["cost"] == pytest.approx(0.0319)
+        assert summary["per_crew"]["research_swot"]["calls"] == 2
+        assert summary["per_crew"]["research_swot"]["cost_known"] is True
+        assert summary["total_cost"] == pytest.approx(0.0319)
+
+    def test_exact_cost_wins_over_the_model_estimate(self, mocker):
+        priced = mocker.patch("litellm.cost_per_token", return_value=(1.0, 1.0))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("research_swot", _usage(), model="openrouter/google/gemini-3.8-flash", cost_usd=0.01)
+
+        priced.assert_not_called()
+        assert cb.get_cost_summary()["per_crew"]["research_swot"]["cost"] == pytest.approx(0.01)
+
+    def test_none_cost_with_no_model_counts_tokens_but_stays_unknown(self):
+        """The Perplexity fallback path: tokens unknown, cost unknown, call counted."""
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("research_swot", _usage(0, 0, requests=1), cost_usd=None)
+
+        crew = cb.get_cost_summary()["per_crew"]["research_swot"]
+        assert crew["calls"] == 1
+        assert crew["cost_known"] is False
+        assert crew["cost"] == 0.0

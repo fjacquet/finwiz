@@ -5,7 +5,7 @@ flat `FactPack` shape the current discriminated-union schema rejects, and had
 zero production callers once `stages/fact_pack.py` switched to
 `compose_fact_pack`. Their coverage moved to
 `tests/unit/analysis/fact_pack/test_gap_fill.py`, which exercises the
-replacement (`perplexity_source.fetch_missing_events`) through the composer.
+replacement (`research_source.fetch_missing_events`) through the composer.
 What remains here is what that replacement still depends on: `_FactPackRaw`'s
 truncating validators. `_build_prompt` went with them -- it had no production
 caller once the composer owned the prompt, and survived only on these tests.

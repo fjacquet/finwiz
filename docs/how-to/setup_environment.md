@@ -101,7 +101,7 @@ These API keys enable additional features:
 CHART_IMG_API_KEY=your_chart_img_key_here
 TWELVE_DATA_API_KEY=your_twelve_data_key_here
 X-CMC_PRO_API_KEY=your_coinmarketcap_key_here
-PPLX_API_KEY=your_perplexity_api_key_here
+PPLX_API_KEY=your_perplexity_api_key_here   # optional fallback, see ADR-012
 ```
 
 ### 4. Core Configuration
@@ -358,7 +358,7 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 | `ALPHA_VANTAGE_API_KEY` | Yes      | Financial data           |
 | `TWELVE_DATA_API_KEY`   | No       | Technical indicators     |
 | `X-CMC_PRO_API_KEY` | No       | Crypto data              |
-| `PPLX_API_KEY`          | No       | Perplexity search        |
+| `PPLX_API_KEY`          | No       | Perplexity fallback for web research (primary is OpenRouter, ADR-012) |
 
 ### Performance Settings
 
@@ -374,7 +374,7 @@ FINWIZ_INTEGRATION_LOG_LEVEL=INFO
 
 | Variable                        | Default (code fallback) | Description                              |
 | ------------------------------- | ----------------------- | ---------------------------------------- |
-| `FF_PERPLEXITY_RESEARCH`        | `true`   | Perplexity Sonar integration (circuit breaker)          |
+| `FF_PERPLEXITY_RESEARCH`        | `true`   | Web research for sentiment / gap-fill (circuit breaker)          |
 | `FF_STOCK_ANALYSIS`             | `true`   | Stock analysis crew                                     |
 | `FF_ETF_ANALYSIS`               | `true`   | ETF analysis crew                                       |
 | `FF_CRYPTO_ANALYSIS`            | `true`   | Crypto analysis crew                                    |
