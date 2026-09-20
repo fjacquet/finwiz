@@ -1,21 +1,111 @@
-"""The crypto branch passes gaps through instead of inventing values."""
+"""The crypto branch passes gaps through instead of inventing values.
 
-import inspect
+I4: these tests used to assert on the *source text* of the crypto branch
+(`inspect.getsource` + string slicing), which restates the implementation
+rather than the behaviour and passes for any expression that avoids the
+exact literals checked for — including a reintroduced default. Replaced with
+behavioural tests that drive `_extract_holding_data` with a `perf_dict`
+missing `market_cap` and assert the value arrives as `None`, never a
+fabricated constant. The "still scored" half of spec §6's claim is covered
+separately, through `DeepAnalysisScorer.calculate_composite_score`, in
+`tests/unit/scoring/test_critical_fields_validation.py`
+(`test_missing_crypto_market_cap_is_scored_not_dropped`).
+"""
 
-from finwiz.scoring import portfolio_deep_analyzer
+from dataclasses import dataclass
+
+from finwiz.scoring.portfolio_deep_analyzer import PortfolioDeepAnalyzer
 
 
-def test_crypto_branch_has_no_fabricated_defaults():
-    source = inspect.getsource(portfolio_deep_analyzer)
-    crypto_branch = source.split('elif asset_class == "crypto":', 1)[1].split("# Log asset-specific data", 1)[0]
+@dataclass
+class _StubHolding:
+    """Minimal stand-in for HoldingDecision: _extract_holding_data reads only these two fields."""
 
-    for fabricated in ("100e9", "1e9", '"age_years": perf_dict.get("age_years", 5)'):
-        assert fabricated not in crypto_branch, f"{fabricated} is a fabricated default"
+    ticker: str
+    asset_class: str
 
 
-def test_crypto_branch_reads_every_field_without_a_default():
-    source = inspect.getsource(portfolio_deep_analyzer)
-    crypto_branch = source.split('elif asset_class == "crypto":', 1)[1].split("# Log asset-specific data", 1)[0]
+def _patch_quant_tool(mocker, *, performance: dict, technical: dict | None = None):
+    """Patch QuantitativeAnalysisTool._run to return the given performance/technical dicts."""
 
+    def fake_run(self, *, symbol, asset_class, analysis_type):
+        if analysis_type == "performance":
+            return performance
+        return technical or {}
+
+    mocker.patch(
+        "finwiz.tools.quantitative_analysis_tool.QuantitativeAnalysisTool._run",
+        fake_run,
+    )
+
+
+def test_missing_crypto_market_cap_arrives_as_none_not_fabricated(mocker):
+    _patch_quant_tool(
+        mocker,
+        performance={
+            "current_price": 50000.0,
+            "volatility": 0.60,
+            "max_drawdown": -0.30,
+            "beta": 1.0,
+            "volume_24h": 1e9,
+            "age_years": 5.0,
+            # market_cap deliberately absent — CoinGecko-only field
+        },
+    )
+
+    analyzer = PortfolioDeepAnalyzer()
+    data = analyzer._extract_holding_data(_StubHolding(ticker="BTC-USD", asset_class="crypto"))
+
+    assert data is not None
+    assert data["market_cap"] is None
+    # Real fields still pass through untouched
+    assert data["volume_24h"] == 1e9
+    assert data["age_years"] == 5.0
+
+
+def test_crypto_branch_never_reintroduces_a_fabricated_default(mocker):
+    """No source-fed value the branch itself could substitute — market_cap,
+    volume_24h and age_years must all come from perf_dict.get(...), which
+    returns None on absence, not from perf_dict.get(field, <constant>).
+    """
+    _patch_quant_tool(
+        mocker,
+        performance={
+            "current_price": 50000.0,
+            "volatility": 0.60,
+            "max_drawdown": -0.30,
+            "beta": 1.0,
+            # every crypto-specific field absent
+        },
+    )
+
+    analyzer = PortfolioDeepAnalyzer()
+    data = analyzer._extract_holding_data(_StubHolding(ticker="ZZZ-USD", asset_class="crypto"))
+
+    assert data is not None
     for field in ("market_cap", "volume_24h", "age_years"):
-        assert f'perf_dict.get("{field}")' in crypto_branch
+        assert data[field] is None, f"{field} was fabricated instead of staying None: {data[field]!r}"
+
+
+def test_resolved_crypto_fields_pass_through_unchanged(mocker):
+    """The happy path: real values from perf_dict reach the scorer input untouched."""
+    _patch_quant_tool(
+        mocker,
+        performance={
+            "current_price": 81114.0,
+            "volatility": 0.55,
+            "max_drawdown": -0.25,
+            "beta": 1.2,
+            "market_cap": 1_629_408_510_367.0,
+            "volume_24h": 23_900_006_504.0,
+            "age_years": 17.0,
+        },
+    )
+
+    analyzer = PortfolioDeepAnalyzer()
+    data = analyzer._extract_holding_data(_StubHolding(ticker="BTC-USD", asset_class="crypto"))
+
+    assert data is not None
+    assert data["market_cap"] == 1_629_408_510_367.0
+    assert data["volume_24h"] == 23_900_006_504.0
+    assert data["age_years"] == 17.0
