@@ -133,6 +133,34 @@ def _clamp_prose(v: object, max_chars: int) -> str:
     return _coerce_prose(v)[:max_chars].rstrip()
 
 
+def _clamp_unit_score(v: object) -> object:
+    """Coerce a numeric ``strategic_score``/``confidence`` into ``[0.0, 1.0]``.
+
+    A model sometimes answers with a 0-100 percentage instead of the 0.0-1.0
+    the schema wants: a numeric value above 1.0 and at or below 100.0 is read
+    as a percentage and divided by 100, then every numeric value is clamped
+    into range so an out-of-range score is bounded rather than rejected — the
+    same "clamp, never reject" rule ``_clamp_bullets`` follows for lists.
+    A non-numeric value passes through unchanged so the field's own
+    ``ge``/``le``/type validation reports it; this validator only rescues a
+    shape that's numeric but out of contract, not a genuinely wrong shape.
+    """
+    if isinstance(v, bool):
+        return v
+    if isinstance(v, int | float):
+        num = float(v)
+    elif isinstance(v, str):
+        try:
+            num = float(v)
+        except ValueError:
+            return v
+    else:
+        return v
+    if 1.0 < num <= 100.0:
+        num /= 100.0
+    return max(0.0, min(1.0, num))
+
+
 Intensity = Literal["LOW", "MEDIUM", "HIGH"]
 
 
@@ -156,6 +184,11 @@ class SwotAnalysis(BaseModel):
     @classmethod
     def _clamp_assessment(cls, v: object) -> str:
         return _clamp_prose(v, MAX_PROSE_CHARS)
+
+    @field_validator("strategic_score", "confidence", mode="before")
+    @classmethod
+    def _clamp_scores(cls, v: object) -> object:
+        return _clamp_unit_score(v)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -202,6 +235,11 @@ class FiveForcesAnalysis(BaseModel):
     @classmethod
     def _clamp_summary(cls, v: object) -> str:
         return _clamp_prose(v, MAX_PROSE_CHARS)
+
+    @field_validator("strategic_score", "confidence", mode="before")
+    @classmethod
+    def _clamp_scores(cls, v: object) -> object:
+        return _clamp_unit_score(v)
 
     model_config = {"str_strip_whitespace": True}
 
@@ -275,6 +313,11 @@ class PortfolioPostureNarrative(BaseModel):
     @classmethod
     def _coerce_lists(cls, v: object) -> list[str]:
         return _coerce_str_list(v)
+
+    @field_validator("strategic_score", "confidence", mode="before")
+    @classmethod
+    def _clamp_scores(cls, v: object) -> object:
+        return _clamp_unit_score(v)
 
     model_config = {"str_strip_whitespace": True}
 

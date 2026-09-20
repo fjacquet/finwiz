@@ -7,6 +7,9 @@ plan exists to remove.
 
 import logging
 
+import pytest
+from pydantic import ValidationError
+
 from finwiz.schemas.hybrid_analysis.strategic import (
     MAX_BULLET_CHARS,
     MAX_BULLETS_SWOT,
@@ -14,6 +17,7 @@ from finwiz.schemas.hybrid_analysis.strategic import (
     MAX_RATIONALE_CHARS,
     FiveForcesAnalysis,
     ForceRating,
+    PortfolioPostureNarrative,
     SwotAnalysis,
     _coerce_str_list,
 )
@@ -223,6 +227,47 @@ class TestMultilineCoercionRespectsMaxItemsCap:
 
         assert len(swot.strengths) == 6
         assert swot.strengths == lines[:6]
+
+
+class TestScoreFloatsAreClamped:
+    """strategic_score/confidence sometimes come back as a 0-100 percentage or
+    an out-of-range float; both are coerced into [0.0, 1.0] before the field's
+    own ge=0.0/le=1.0 bound sees it, rather than failing the whole framework.
+    """
+
+    _POSTURE_REQUIRED = {"competitive_verdict": "v", "swot_verdict": "v"}
+
+    @pytest.mark.parametrize(
+        ("schema_cls", "extra"),
+        [
+            (SwotAnalysis, {}),
+            (FiveForcesAnalysis, {}),
+            (PortfolioPostureNarrative, _POSTURE_REQUIRED),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("raw", "expected"),
+        [
+            (85, 0.85),
+            (1.0, 1.0),
+            (-0.2, 0.0),
+            ("72", 0.72),
+        ],
+    )
+    def test_numeric_and_percentage_values_are_clamped(self, schema_cls, extra, raw, expected):
+        instance = schema_cls.model_validate({**extra, "strategic_score": raw, "confidence": raw})
+
+        assert instance.strategic_score == pytest.approx(expected)
+        assert instance.confidence == pytest.approx(expected)
+
+    @pytest.mark.parametrize("schema_cls", [SwotAnalysis, FiveForcesAnalysis])
+    def test_non_numeric_value_still_raises(self, schema_cls):
+        with pytest.raises(ValidationError):
+            schema_cls.model_validate({"strategic_score": "high"})
+
+    def test_posture_non_numeric_value_still_raises(self):
+        with pytest.raises(ValidationError):
+            PortfolioPostureNarrative.model_validate({**self._POSTURE_REQUIRED, "strategic_score": "high", "confidence": 0.5})
 
 
 def test_the_posture_schema_has_no_macro_fields():

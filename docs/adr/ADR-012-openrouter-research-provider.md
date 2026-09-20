@@ -61,9 +61,12 @@ $0.017.
 - OpenRouter plugin or annotation contract changes break the client; the unit
   tests pin the request body and the response parsing, and one integration test
   (skipped without a key) exercises the live contract.
-- The strict `json_schema` mode may reject constraint keywords for some models;
-  `NewsDigest` carries none for that reason, and the strategic schemas were
-  verified live.
+- Strict mode was verified accepted on `google/gemini-3.8-flash` for
+  `SwotAnalysis` and `_FactPackRaw`, but OpenRouter does not reject
+  non-conformant schemas for this model, so the reply is validated by
+  Pydantic and the score floats are clamped before validation; other
+  providers may reject the schema outright (`RESEARCH_MODEL` overrides are
+  unverified).
 
 ## References
 
