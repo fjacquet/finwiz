@@ -55,6 +55,18 @@ class TestSourcesLabel:
         label = _fact_pack_provenance_footer(_build_fp(sources_used=["yfinance.info", "yfinance.funds_data"]))
         assert label.count("Yahoo Finance") == 1
 
+    def test_the_current_and_legacy_gap_fill_keys_both_render(self) -> None:
+        """`research.gap_fill` is the live provenance key; `perplexity.gap_fill` is
+        what a prior-run `*_enriched.json` cache still carries from before the
+        OpenRouter provider swap (ADR-012). A re-rendered report must not drop
+        the pill for a cached holding that failed re-analysis.
+        """
+        current = _fact_pack_provenance_footer(_build_fp(sources_used=["research.gap_fill"]))
+        legacy = _fact_pack_provenance_footer(_build_fp(sources_used=["perplexity.gap_fill"]))
+
+        assert "recherche web" in current
+        assert "recherche web" in legacy
+
     def test_an_unlabelled_identifier_is_omitted_rather_than_leaked(self) -> None:
         """Adding a source without adding its label degrades to the generic
         phrase; it must never print the raw identifier into a report."""

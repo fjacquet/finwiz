@@ -38,3 +38,22 @@ def test_a_raise_is_an_empty_tuple(mocker):
     mocker.patch(_SEAM, new=mocker.AsyncMock(side_effect=RuntimeError("HTTP 401")))
 
     assert research_source.fetch_missing_events("AIR.PA", "Airbus SE", None, None) == ()
+
+
+def test_outer_timeout_layers_over_max_attempts_and_backoff(mocker):
+    """The outer _run_coroutine_sync cap must exceed the inner budget: up to
+    _GAP_FILL_ATTEMPTS OpenRouter attempts at `timeout` each, plus one
+    Perplexity fallback attempt of `timeout`, plus backoff between retries
+    (the PR #66 timeout-layering lesson: an outer cap shorter than the inner
+    budget silently discards completed work while the thread keeps spending).
+    """
+    retry_mock = mocker.patch(_SEAM, new=mocker.AsyncMock(return_value=None))
+    run_sync = mocker.patch("finwiz.analysis.fact_pack_research._run_coroutine_sync", return_value=None)
+
+    research_source.fetch_missing_events("AIR.PA", "Airbus SE", None, None, timeout=15.0)
+
+    assert run_sync.call_args.kwargs["timeout"] == 70.0
+    assert retry_mock.call_args.kwargs["max_attempts"] == research_source._GAP_FILL_ATTEMPTS
+    # Close the coroutine _run_coroutine_sync was mocked out from under, so it
+    # doesn't sit un-awaited.
+    run_sync.call_args.args[0].close()

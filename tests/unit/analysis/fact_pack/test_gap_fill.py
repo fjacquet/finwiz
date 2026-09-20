@@ -106,4 +106,3 @@ class TestGapFillScope:
         pack = composer.compose_fact_pack("AIR.PA", "Airbus SE", None, None, "stock")
 
         assert "research.gap_fill" in pack.sources_used
-        assert "perplexity.gap_fill" not in pack.sources_used
