@@ -29,6 +29,10 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# The fact pack rendered for the SWOT/Porter prompts; capped so a long fund
+# holdings list cannot crowd out the research question.
+_FACTS_MAX_CHARS = 1500
+
 
 def run_pipeline(
     ctx: AnalysisContext,
@@ -86,24 +90,24 @@ def run_pipeline(
         return _emit_pending(stage_ctx, reason=fpr.provenance.reason), _pending_enriched(stage_ctx, reason=fpr.provenance.reason)
     stage_ctx.extras["fact_pack"] = fpr.payload  # FactPack with freshness in {"fresh","recent","stale"}
 
-    # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
-    # Strategic Perplexity research runs independently for every asset class (not
-    # via the legacy parallel helper, which silently swallowed qualify failures
-    # and has been removed — nothing called it).
-    qr3 = qualify(stage_ctx, quant, raw_data)
-    if qr3.payload is None:
-        return _emit_pending(stage_ctx, reason=qr3.provenance.reason), _pending_enriched(stage_ctx, reason=qr3.provenance.reason)
-    qual = qr3.payload
-    # Run strategic research for every asset class — stock, ETF, crypto all get
-    # SWOT/Porter, framed to fit the asset (see strategic_research.py).
-    # The old stock-only gate excluded 38 of 64 holdings, which made full
-    # portfolio strategic-posture coverage structurally impossible.
+    # Phase 2d: Strategic research (SWOT/Porter) for every asset class, before the
+    # crew so the qualitative prompt can carry it ({strategic_block}). Grounded by
+    # the fact pack. Non-fatal: None means "no evidence", and the crew prompt says so.
+    from finwiz.analysis.fact_pack.render import to_prompt_block as fact_pack_to_prompt_block
     from finwiz.analysis.stages.qualify import _safe_strategic
 
     sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
     industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
     description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-    strategic = _safe_strategic(ctx.ticker, sector, industry, description, asset_class=ctx.asset_class)
+    facts = fact_pack_to_prompt_block(fpr.payload)[:_FACTS_MAX_CHARS]
+    strategic = _safe_strategic(ctx.ticker, sector, industry, description, asset_class=ctx.asset_class, facts=facts)
+    stage_ctx.extras["strategic"] = strategic
+
+    # Phase 3: Qualify — any FAILED result short-circuits to AnalysePending.
+    qr3 = qualify(stage_ctx, quant, raw_data)
+    if qr3.payload is None:
+        return _emit_pending(stage_ctx, reason=qr3.provenance.reason), _pending_enriched(stage_ctx, reason=qr3.provenance.reason)
+    qual = qr3.payload
     if strategic is not None:
         qual = qual.model_copy(update={"strategic_analysis": strategic})
 

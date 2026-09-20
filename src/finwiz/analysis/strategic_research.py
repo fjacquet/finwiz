@@ -104,10 +104,18 @@ def _swot_caps_fragment(current_date: str) -> str:
     )
 
 
-def _swot_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
+def _facts_fragment(facts: str) -> str:
+    """Fact-pack facts for grounding; empty when the pipeline has none."""
+    if not facts.strip():
+        return ""
+    return "Faits vérifiés (sources structurées, à ne pas contredire ; la recherche web complète, elle ne remplace pas) :\n" + facts.strip() + "\n\n"
+
+
+def _swot_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock", facts: str = "") -> str:
     return (
         _date_preamble(current_date) + f"Analyse SWOT pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
+        f"{_facts_fragment(facts)}"
         f"{_swot_focus(asset_class)}\n\n"
         f"{_swot_caps_fragment(current_date)}"
     )
@@ -149,10 +157,11 @@ def _porter_caps_fragment(current_date: str) -> str:
     )
 
 
-def _porter_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock") -> str:
+def _porter_prompt(ticker: str, sector: str, industry: str, description: str, current_date: str, *, asset_class: str = "stock", facts: str = "") -> str:
     return (
         _date_preamble(current_date) + f"Analyse des Cinq Forces de Porter pour {ticker} ({sector} / {industry}).\n"
         f"Description: {description or 'Non fournie'}\n\n"
+        f"{_facts_fragment(facts)}"
         f"{_porter_focus(asset_class)} {_porter_caps_fragment(current_date)}"
     )
 
@@ -201,6 +210,7 @@ async def gather_strategic_analysis(
     asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
+    facts: str = "",
 ) -> StrategicAnalysis | None:
     """Run SWOT + Porter in parallel for one holding.
 
@@ -218,10 +228,13 @@ async def gather_strategic_analysis(
 
     ``current_date`` anchors the prompts so the model anchors its claims to today
     rather than its training cutoff (defaults to today in long French form).
+
+    ``facts`` is the rendered fact pack (``fact_pack.render.to_prompt_block``),
+    truncated by the caller; it grounds both prompts.
     """
     date_anchor = current_date or _today_french()
     swot_coro = research_with_retry(
-        prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
+        prompt=_swot_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class, facts=facts),
         schema=SwotAnalysis,
         system=SYSTEM_FR,
         search_recency_filter="month",
@@ -230,7 +243,7 @@ async def gather_strategic_analysis(
         kind="swot",
     )
     porter_coro = research_with_retry(
-        prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class),
+        prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class, facts=facts),
         schema=FiveForcesAnalysis,
         system=SYSTEM_FR,
         search_recency_filter="month",
@@ -268,6 +281,7 @@ def gather_strategic_analysis_sync(
     asset_class: str = "stock",
     timeout: float = 60.0,
     current_date: str | None = None,
+    facts: str = "",
 ) -> StrategicAnalysis | None:
     """Synchronous wrapper for the async gather. Safe to call from non-async code paths.
 
@@ -287,6 +301,7 @@ def gather_strategic_analysis_sync(
         asset_class=asset_class,
         timeout=timeout,
         current_date=current_date,
+        facts=facts,
     )
 
     if loop and loop.is_running():

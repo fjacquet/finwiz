@@ -149,3 +149,40 @@ class TestAssetClassThreadsThroughGatherFunctions:
         _safe_strategic("AAPL", "Sector", "Industry", "desc")
 
         assert gather_mock.call_args.kwargs["asset_class"] == "stock"
+
+
+class TestFactsGrounding:
+    """SWOT/Porter prompts carry the fact pack when the pipeline has one."""
+
+    def test_swot_prompt_inserts_verified_facts(self):
+        from finwiz.analysis.strategic_research import _swot_prompt
+
+        prompt = _swot_prompt("DELL", "Tech", "Hardware", "desc", "20 septembre 2026", asset_class="stock", facts="- Direction : Michael Dell (CEO)")
+        assert "Faits vérifiés" in prompt
+        assert "Michael Dell" in prompt
+        assert prompt.index("Faits vérifiés") < prompt.index("Sois spécifique")
+
+    def test_porter_prompt_inserts_verified_facts(self):
+        from finwiz.analysis.strategic_research import _porter_prompt
+
+        prompt = _porter_prompt("DELL", "Tech", "Hardware", "desc", "20 septembre 2026", asset_class="stock", facts="- Direction : Michael Dell (CEO)")
+        assert "Faits vérifiés" in prompt and "Michael Dell" in prompt
+
+    def test_prompts_without_facts_are_unchanged(self):
+        from finwiz.analysis.strategic_research import _porter_prompt, _swot_prompt
+
+        assert "Faits vérifiés" not in _swot_prompt("DELL", "", "", "", "20 septembre 2026")
+        assert "Faits vérifiés" not in _porter_prompt("DELL", "", "", "", "20 septembre 2026")
+
+    def test_gather_forwards_facts_to_both_prompts(self, mocker):
+        import finwiz.analysis.strategic_research as sr
+
+        seen: list[str] = []
+
+        async def fake_research(**kwargs):
+            seen.append(kwargs["prompt"])
+            return None
+
+        mocker.patch.object(sr, "research_with_retry", side_effect=fake_research)
+        assert sr.gather_strategic_analysis_sync(ticker="DELL", facts="- Direction : Michael Dell (CEO)") is None
+        assert len(seen) == 2 and all("Michael Dell" in p for p in seen)

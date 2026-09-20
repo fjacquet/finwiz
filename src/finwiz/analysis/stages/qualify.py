@@ -53,9 +53,10 @@ class _QualitativeInsightsRaw(BaseModel):
     * ``analysis_timestamp`` is dropped — Python sets it on promotion.
     * ``strategic_analysis`` is dropped — it is filled only by
       :func:`finwiz.analysis.strategic_research.gather_strategic_analysis`
-      via ``stages/__init__.py``. No agent or task config prompts the crew
-      for SWOT/Porter, but a field present in the schema handed to the
-      model gets filled anyway when the model recognizes the company. A
+      via ``stages/__init__.py``. The crew prompt now shows the researched
+      SWOT/Porter as a read-only block ({strategic_block}) and tells the
+      model the field is Python-owned; a field present in the schema handed
+      to the model would still get filled from that block or from memory. A
       model-authored strategic analysis is indistinguishable downstream from
       a researched one and would silently count as full coverage.
 
@@ -138,6 +139,7 @@ def _try_ai_qualify(
     quant: QuantitativeAnalysis,
     raw_data: dict[str, Any] | None = None,
     fact_pack: Any = None,
+    strategic: Any = None,
 ) -> QualitativeInsights | None:
     """Attempt AI-driven qualitative insights. Returns None when AI fails or returns empty.
 
@@ -153,7 +155,7 @@ def _try_ai_qualify(
     logger.info(f"Generating qualitative insights for {ctx.ticker}")
 
     crew = _get_analysis_crew(ctx.asset_class)
-    crew_inputs = _build_crew_inputs(ctx, quant, raw_data, fact_pack=fact_pack)
+    crew_inputs = _build_crew_inputs(ctx, quant, raw_data, fact_pack=fact_pack, strategic=strategic)
 
     import traceback
 
@@ -229,7 +231,8 @@ def qualify(ctx: StageContext, quant: QuantitativeAnalysis, raw: dict[str, Any])
     """Qualitative stage. Returns OK on AI success, DEGRADED on Python fallback."""
     analysis_ctx: AnalysisContext = ctx.extras["analysis_ctx"]
     fact_pack = ctx.extras.get("fact_pack")
-    ai = _try_ai_qualify(analysis_ctx, quant, raw, fact_pack=fact_pack)
+    strategic = ctx.extras.get("strategic")
+    ai = _try_ai_qualify(analysis_ctx, quant, raw, fact_pack=fact_pack, strategic=strategic)
     if ai is not None:
         # Attach the fact_pack used for grounding to the qualitative payload
         if isinstance(ai, QualitativeInsights) and fact_pack is not None:
@@ -267,7 +270,7 @@ def generate_qualitative(
     return _generate_qualitative_inner(ctx, quant, raw_data)
 
 
-def _safe_strategic(ticker: str, sector: str, industry: str, description: str, *, asset_class: str = "stock") -> Any:
+def _safe_strategic(ticker: str, sector: str, industry: str, description: str, *, asset_class: str = "stock", facts: str = "") -> Any:
     """Wrapper that swallows import-time/runtime issues with the strategic module."""
     try:
         from finwiz.analysis.strategic_research import gather_strategic_analysis_sync
@@ -278,6 +281,7 @@ def _safe_strategic(ticker: str, sector: str, industry: str, description: str, *
             industry=industry,
             description=description,
             asset_class=asset_class,
+            facts=facts,
         )
     except Exception as exc:
         logger.warning(f"Strategic research skipped for {ticker}: {exc}")

@@ -73,7 +73,7 @@ def test_three_holding_pipeline_ok_degraded_failed(tmp_path: Path, mocker: Any) 
     fake_ai_qual = QualitativeInsights.model_construct()
     fake_proxy_qual = QualitativeInsights.model_construct()
 
-    def _ai_qualify(analysis_ctx: Any, quant: Any, raw_data: Any = None, fact_pack: Any = None) -> QualitativeInsights | None:
+    def _ai_qualify(analysis_ctx: Any, quant: Any, raw_data: Any = None, fact_pack: Any = None, strategic: Any = None) -> QualitativeInsights | None:
         return None if analysis_ctx.ticker == "DEGRADED_TKR" else fake_ai_qual
 
     mocker.patch("finwiz.analysis.stages.qualify._try_ai_qualify", side_effect=_ai_qualify)
@@ -258,3 +258,55 @@ def test_strategic_research_runs_for_every_asset_class(tmp_path: Path, mocker: A
     assert safe_strategic_mock.call_count == 3
     called_asset_classes = {call.kwargs.get("asset_class") for call in safe_strategic_mock.call_args_list}
     assert called_asset_classes == {"etf", "crypto", "stock"}
+
+
+def test_strategic_research_runs_before_the_crew_and_reaches_its_inputs(tmp_path: Path, mocker: Any) -> None:
+    """Strategic research must run before qualify so the crew prompt can carry it,
+    and it must receive the fact pack as `facts`."""
+    mocker.patch("finwiz.analysis.stages.collect._collect_raw_data_inner", return_value={"price_history": [1, 2, 3], "sector": "Tech"})
+    fake_partial = DeepAnalysisResult.model_construct(ticker="X", asset_class="stock", grade="B", composite_score=0.7, recommendation="HOLD")
+    fake_quant = QuantitativeAnalysis.model_construct()
+    mocker.patch("finwiz.analysis.stages.quantify._calculate_quantitative_inner", return_value=(fake_partial, fake_quant))
+    mocker.patch("finwiz.analysis.stages._compute_options_probabilities", return_value=None)
+
+    from datetime import UTC, datetime
+
+    fake_fact_pack = FactPack(
+        asset_class="stock",
+        details=EquityFacts(business_summary="Test Corp — independent.", leadership="CEO Test"),
+        fetched_at=datetime.now(UTC),
+        freshness="fresh",
+        confidence=0.9,
+        source_citations=[],
+    )
+    mocker.patch("finwiz.analysis.stages.fact_pack._fact_pack_inner", return_value=fake_fact_pack)
+
+    from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis, SwotAnalysis
+
+    fake_strategic = StrategicAnalysis(swot=SwotAnalysis(strengths=["Marque forte"]), five_forces=None)
+    order: list[str] = []
+
+    def _strategic(*args: Any, **kwargs: Any) -> StrategicAnalysis:
+        order.append("strategic")
+        assert "CEO Test" in kwargs["facts"]
+        return fake_strategic
+
+    def _ai(analysis_ctx: Any, quant: Any, raw_data: Any = None, fact_pack: Any = None, strategic: Any = None) -> QualitativeInsights:
+        order.append("crew")
+        assert strategic is fake_strategic
+        return QualitativeInsights.model_construct()
+
+    mocker.patch("finwiz.analysis.stages.qualify._safe_strategic", side_effect=_strategic)
+    mocker.patch("finwiz.analysis.stages.qualify._try_ai_qualify", side_effect=_ai)
+    fake_enriched = EnrichedAnalysis.model_construct()
+    mocker.patch("finwiz.analysis.stages.synthesize._synthesize_inner", return_value=fake_enriched)
+    fake_verdict = DeepAnalysisResult.model_construct(ticker="X", asset_class="stock", grade="B", composite_score=0.7, recommendation="HOLD")
+    mocker.patch("finwiz.analysis.stages.emit._build_verdict_inner", return_value=(fake_verdict, fake_enriched))
+
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    ledger = RunLedger(run_id="strategic-first", artifact_dir=tmp_path)
+    ctx = AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Test", ledger=ledger, run_id=ledger.run_id)
+    run_pipeline(ctx)
+
+    assert order == ["strategic", "crew"]
