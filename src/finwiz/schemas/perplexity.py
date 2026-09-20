@@ -140,16 +140,20 @@ class PerplexityConfig(BaseModel):
 class NewsHeadline(BaseModel):
     """One headline the research model found on the web."""
 
-    title: str
-    url: str
-    one_line_summary: str = ""
+    title: str = Field(description="Titre exact de l'article tel qu'il apparaît sur la page consultée.")
+    url: str = Field(description="URL http(s) exacte de la page consultée, sans raccourcisseur.")
+    one_line_summary: str = Field(default="", description="Résumé factuel en une phrase de ce que l'article annonce.")
 
 
 class NewsDigest(BaseModel):
     """Minimal structured reply for the sentiment news search.
 
-    No Field constraints: this model is sent as a strict ``json_schema`` and a
-    rejected keyword would fail every call. Clamping happens in Python.
+    No numeric or length constraints: this model is sent as a strict
+    ``json_schema`` and a rejected keyword would fail every call. Clamping
+    happens in Python.
     """
 
-    headlines: list[NewsHeadline] = []
+    headlines: list[NewsHeadline] = Field(
+        default_factory=list,
+        description="Titres trouvés, du plus récent au plus ancien ; liste vide si aucune page fiable.",
+    )

@@ -145,3 +145,19 @@ class TestFactPackRawTruncatingValidators:
             },
         )
         assert raw.confidence == 0.5
+
+
+class TestFactPackRawNullProse:
+    """Gemini returns null, not "", for a prose field it could not source
+    (2026-09-20 run: 8 validation failures, 39 field errors, all retried).
+    Null and non-string prose must map to the placeholder, never raise."""
+
+    def test_null_leadership_and_structure_become_placeholder(self) -> None:
+        raw = _FactPackRaw.model_validate({"leadership": None, "corporate_structure": None, "recent_events": []})
+        assert raw.leadership == "Information indisponible"
+        assert raw.corporate_structure == "Information indisponible"
+
+    def test_non_string_prose_becomes_placeholder(self) -> None:
+        raw = _FactPackRaw.model_validate({"leadership": ["CEO"], "corporate_structure": 42})
+        assert raw.leadership == "Information indisponible"
+        assert raw.corporate_structure == "Information indisponible"

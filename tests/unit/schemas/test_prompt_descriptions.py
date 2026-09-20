@@ -10,6 +10,7 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
+from finwiz.analysis.fact_pack_research import _FactPackRaw
 from finwiz.analysis.stages.qualify import _QualitativeInsightsRaw
 from finwiz.schemas.hybrid_analysis.qualitative import (
     ActionPlan,
@@ -20,6 +21,13 @@ from finwiz.schemas.hybrid_analysis.qualitative import (
     SecAnalysisInsights,
     TechnicalStrategyInsights,
 )
+from finwiz.schemas.hybrid_analysis.strategic import (
+    FiveForcesAnalysis,
+    ForceRating,
+    PortfolioPostureNarrative,
+    SwotAnalysis,
+)
+from finwiz.schemas.perplexity import NewsDigest, NewsHeadline
 
 _ENGLISH_FILLER = ("Comprehensive", "Key ", "List of", "AI's ", "Identified")
 
@@ -32,6 +40,13 @@ MODEL_FILLED: list[type[BaseModel]] = [
     ActionPlan,
     InvestmentSynthesis,
     _QualitativeInsightsRaw,
+    SwotAnalysis,
+    ForceRating,
+    FiveForcesAnalysis,
+    PortfolioPostureNarrative,
+    _FactPackRaw,
+    NewsHeadline,
+    NewsDigest,
 ]
 
 
