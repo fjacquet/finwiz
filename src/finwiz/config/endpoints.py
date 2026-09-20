@@ -15,6 +15,10 @@ TWELVE_DATA_BASE: str = os.getenv("TD_BASE_URL", "https://api.twelvedata.com")
 # crewai_custom_tools at import time; finwiz no longer has a production consumer
 # for it, so no local PERPLEXITY_CHAT constant is kept here.
 PERPLEXITY_SEARCH: str = os.getenv("PPLX_SEARCH_URL", "https://api.perplexity.ai/search")
+# OpenRouter chat completions, used directly (httpx) by
+# infrastructure/research/openrouter_structured.py for web-grounded structured
+# research. RESEARCH_BASE_URL lets tests and proxies redirect it.
+OPENROUTER_CHAT: str = os.getenv("RESEARCH_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/") + "/chat/completions"
 OPENAI_BASE: str = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
 
 # --- SEC / Regulatory ---

@@ -154,6 +154,7 @@ class TestDeepAnalysisCrew:
         Requirements: 2.1
         """
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         # Should instantiate without KeyError
@@ -174,6 +175,7 @@ class TestDeepAnalysisCrew:
         Requirements: Token overflow fix
         """
         monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-openrouter-key")
         from finwiz.crews.deep_analysis.deep_analysis import DeepAnalysisCrew
 
         crew = DeepAnalysisCrew()
