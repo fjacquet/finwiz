@@ -238,11 +238,15 @@ class PortfolioDeepAnalyzer:
                     }
                 )
             elif asset_class == "crypto":
+                # No defaults: a fabricated market cap is indistinguishable from
+                # a real one downstream. Unlike the ETF branch above, absence
+                # does not raise either — CryptoAnalyzer renormalizes its
+                # weights over the components that survived.
                 data.update(
                     {
-                        "market_cap": perf_dict.get("market_cap", 100e9),
-                        "volume_24h": perf_dict.get("volume_24h", 1e9),
-                        "age_years": perf_dict.get("age_years", 5),
+                        "market_cap": perf_dict.get("market_cap"),
+                        "volume_24h": perf_dict.get("volume_24h"),
+                        "age_years": perf_dict.get("age_years"),
                     }
                 )
 
