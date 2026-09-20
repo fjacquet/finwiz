@@ -42,7 +42,11 @@ class QuantitativeAnalysis(BaseModel):
 
     # Core Scores
     composite_score: float = Field(..., ge=0.0, le=1.0, description="Overall composite score (0.0-1.0)")
-    fundamental_score: float = Field(..., ge=0.0, le=1.0, description="Fundamental analysis score (0.0-1.0)")
+    # None when no fundamental component survived (crypto only, since C1/ADR-014):
+    # market_cap, volume_24h and age_years can all be unresolved at once. Never
+    # coalesced to 0.0 — that would report "measured as catastrophic" for a
+    # holding whose fundamentals were never measured at all.
+    fundamental_score: float | None = Field(None, ge=0.0, le=1.0, description="Fundamental analysis score (0.0-1.0), or None if no component survived")
     technical_score: float = Field(..., ge=0.0, le=1.0, description="Technical analysis score (0.0-1.0)")
     risk_score: float = Field(..., ge=0.0, le=5.0, description="Risk assessment score (0.0-5.0, lower is better)")
 

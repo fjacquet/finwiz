@@ -77,7 +77,15 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
         return result
 
     quant = enriched.quantitative
-    fundamental = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else 0.5)
+    # result.fundamental_score and quant.fundamental_score can both be None now
+    # (crypto only, when no fundamental component survived — see C1/ADR-014).
+    # recompute_with_strategic takes a fixed float, not Optional, so the final
+    # `or 0.5` here is a neutral centering value for its fixed 35/25/25/15
+    # weighting — not a claim that 0.5 was measured. Renormalizing this
+    # recompute the way the primary composite does is a larger change than
+    # this fix warrants; tracked as follow-up.
+    _fundamental_or_none = result.fundamental_score if result.fundamental_score is not None else (quant.fundamental_score if quant else None)
+    fundamental = _fundamental_or_none if _fundamental_or_none is not None else 0.5
     technical = result.technical_score if result.technical_score is not None else (quant.technical_score if quant else 0.5)
     raw_risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 2.5)
     # Risk is stored on a 0-5 scale where lower = better; convert to 0-1 favorability.

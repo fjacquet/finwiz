@@ -225,7 +225,10 @@ class TestBetaExtraction:
         [
             ("stock", ["current_price", "roe", "debt_to_equity", "revenue_growth", "volatility", "beta"]),
             ("etf", ["current_price", "expense_ratio", "volatility"]),
-            ("crypto", ["current_price", "market_cap", "volume_24h", "volatility", "age_years"]),
+            # C1: market_cap, volume_24h and age_years moved to OPTIONAL_FIELDS —
+            # CoinGecko is a single point of failure for market_cap/volume_24h, and
+            # age_years only exists for the curated genesis-year table (ADR-014).
+            ("crypto", ["current_price", "volatility"]),
         ],
     )
     def test_required_fields_by_asset_class(self, mocker, asset_class, required_fields):

@@ -290,6 +290,11 @@ class DeepAnalysisScorer:
             remaining = weight_technical + weight_risk
             composite_score = (weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]) / remaining
             weight_fundamental = 0.0
+            # Renormalize the weights themselves too, not just the composite math —
+            # otherwise weights_used below would publish e.g. {0.0, 0.30, 0.30}
+            # (summing to 0.60) while the arithmetic above actually used 0.5/0.5.
+            weight_technical = weight_technical / remaining
+            weight_risk = weight_risk / remaining
             self.logger.warning("Fundamental score unavailable; composite renormalized over technical and risk only")
         else:
             composite_score = weight_fundamental * fundamental_score + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
