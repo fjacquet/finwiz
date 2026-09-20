@@ -106,3 +106,47 @@ def test_build_crew_inputs_without_fact_pack_substitutes_unknowns() -> None:
 
     inputs = _build_crew_inputs(ctx, quant, raw, fact_pack=None)
     assert inputs["fact_pack_block"] == "Fact pack non disponible."
+
+
+def test_build_crew_inputs_asset_focus_per_asset_class() -> None:
+    from finwiz.analysis._helpers import _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    quant = _make_quant()
+    stock = _build_crew_inputs(AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Apple"), quant, {})
+    etf = _build_crew_inputs(AnalysisContext(ticker="VUSA.L", asset_class="etf", company_name="Vanguard"), quant, {})
+    crypto = _build_crew_inputs(AnalysisContext(ticker="BTC-USD", asset_class="crypto", company_name="Bitcoin"), quant, {})
+
+    assert stock["asset_focus"].startswith("Analyse une action")
+    assert "Ne décris pas un émetteur" in etf["asset_focus"]
+    assert crypto["asset_focus"].startswith("Analyse un actif crypto")
+    assert len({stock["asset_focus"], etf["asset_focus"], crypto["asset_focus"]}) == 3
+
+
+def test_build_crew_inputs_unknown_asset_class_falls_back_to_stock_focus() -> None:
+    from finwiz.analysis._helpers import ASSET_FOCUS, _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    inputs = _build_crew_inputs(AnalysisContext(ticker="X", asset_class="bond", company_name="X"), _make_quant(), {})
+    assert inputs["asset_focus"] == ASSET_FOCUS["stock"]
+
+
+def test_build_crew_inputs_strategic_block_defaults_to_unavailable() -> None:
+    from finwiz.analysis._helpers import _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+    from finwiz.analysis.strategic_render import UNAVAILABLE
+
+    inputs = _build_crew_inputs(AnalysisContext(ticker="X", asset_class="stock", company_name="X"), _make_quant(), {})
+    assert inputs["strategic_block"] == UNAVAILABLE
+
+
+def test_build_crew_inputs_renders_strategic_block() -> None:
+    from finwiz.analysis._helpers import _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+    from finwiz.schemas.hybrid_analysis.strategic import StrategicAnalysis, SwotAnalysis
+
+    strategic = StrategicAnalysis(swot=SwotAnalysis(strengths=["Marque forte"], strategic_score=0.7), five_forces=None)
+    inputs = _build_crew_inputs(AnalysisContext(ticker="X", asset_class="stock", company_name="X"), _make_quant(), {}, strategic=strategic)
+    assert inputs["strategic_block"].startswith("🧭 RECHERCHE STRATÉGIQUE")
+    assert "Marque forte" in inputs["strategic_block"]
+    assert "Porter : non disponible" in inputs["strategic_block"]
