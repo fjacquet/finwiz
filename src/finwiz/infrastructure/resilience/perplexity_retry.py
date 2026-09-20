@@ -1,5 +1,10 @@
 """Retry-with-backoff and concurrency control for Perplexity structured calls.
 
+Fallback provider only: the primary research path is
+``infrastructure/resilience/research_retry.py`` (OpenRouter web-grounded
+research), which calls this wrapper once, with ``max_attempts=1``, when every
+OpenRouter attempt failed and a Perplexity key is configured.
+
 The vendored ``perplexity_structured`` client swallows every failure *except a
 missing API key* into a bare ``None`` return (see
 ``crewai_custom_tools/tools/web/perplexity_structured.py``), so a 429, a
