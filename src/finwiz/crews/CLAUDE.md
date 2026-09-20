@@ -77,8 +77,8 @@ turn, so:
   `description`, then a `---` line, then the per-holding data (date, holding,
   `{fact_pack_block}`, CONTEXT, `{retry_guidance}`).
 
-`tests/unit/crews/test_deep_analysis_prompt_layout.py` pins this: the first `{`
-in the description must sit after 3 000 characters of static text. When editing
+`tests/unit/crews/test_deep_analysis_prompt_layout.py` pins this: the first
+placeholder in the description must sit after 3 400 characters of static text. When editing
 the prompt, add rules to the top block and data to the bottom block. Holdings run
 in parallel, so the first wave of a run misses the cache; the gain is cents per
 run, and the layout costs nothing to keep.

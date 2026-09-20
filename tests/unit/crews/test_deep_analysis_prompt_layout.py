@@ -24,12 +24,17 @@ from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _CONFIG = _REPO_ROOT / "src/finwiz/crews/deep_analysis/config"
 
-# Static French instruction text is ~3 500 characters (~1 200 tokens), just
-# above the Flash cache threshold. Guard a little below that so a wording
-# tweak does not flap the test, but a reorder cannot pass.
-_MIN_STATIC_PREFIX_CHARS = 3000
+# The static block runs to ~970 tokens at roughly 3.5 chars/token for French
+# text, which together with the static system prompt clears Gemini Flash's
+# 1 024-token implicit-cache minimum. 3 400 chars leaves ~330 chars of
+# headroom below the actual first-placeholder position for wording edits,
+# without letting a reorder pass.
+_MIN_STATIC_PREFIX_CHARS = 3400
 
-_PLACEHOLDER = re.compile(r"\{([a-z_]+)\}")
+# Matches CrewAI's own interpolation pattern (`interpolate_only`:
+# [A-Za-z_][A-Za-z0-9_-]*) so this test can never be more permissive than
+# what CrewAI actually substitutes.
+_PLACEHOLDER = re.compile(r"\{([A-Za-z_][A-Za-z0-9_-]*)\}")
 
 
 def _agent_goal() -> str:
@@ -49,8 +54,9 @@ def test_agent_goal_has_no_placeholder() -> None:
 
 def test_task_description_starts_with_a_long_static_block() -> None:
     description = _task_description()
-    first = description.find("{")
-    assert first != -1, "the description must still interpolate per-holding data"
+    match = _PLACEHOLDER.search(description)
+    assert match is not None, "the description must still interpolate per-holding data"
+    first = match.start()
     assert first >= _MIN_STATIC_PREFIX_CHARS, f"first placeholder at char {first}; static prefix too short for the cache threshold"
 
 
