@@ -7,8 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Crypto market data was fabricated in production. `_collect_crypto_data` sent
+  the yfinance-normalized ticker (`BTC-USD`) to CoinGecko, which keys on the
+  bare symbol, and the failure was swallowed into invented defaults
+  (`market_cap 10e9`, `volume_24h 1e9`, `age_years 3.0`). Those fields carry
+  80% of the crypto fundamental score. Resolved through a new
+  `CryptoSourceOrchestrator` over CoinGecko, yfinance and Kraken, with per-field
+  lineage and confidence (ADR-014).
+- `CryptoAnalyzer` scored a missing component as the worst possible value
+  (`_safe_get_float(..., 0.0)`). It now excludes the component and renormalizes
+  the remaining weights; with no component left the score is `None` and the
+  composite renormalizes over technical and risk.
+- `data_quality.missing_fields` reported `[]` for crypto holdings whose every
+  fundamental field was fabricated. Gaps are now `None` and reported, and
+  `market_cap` was added to the crypto field list.
+- XRP was scored as three years old. Ages now derive from a curated genesis-year
+  table (XRP 2012), and an uncurated symbol yields no age instead of a default.
+
 ### Added
 
+- `data/adapters/crypto/` — CoinGecko and Kraken adapters, symbol normalization
+  and the curated genesis-year table.
+- `data/crypto_source_orchestrator.py` — multi-source resolution with lineage,
+  pinned confidence and price-divergence observation.
 - OpenRouter web-grounded research provider. SWOT/Porter, portfolio posture,
   equity fact-pack gap-fill and sentiment news now run on
   `google/gemini-3.8-flash` through OpenRouter's `web` plugin (Exa, 8 results)

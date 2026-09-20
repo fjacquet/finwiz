@@ -83,6 +83,14 @@ deletion, so it was deleted here rather than left broken for #194 to find.
 There is no discovery or deep-analysis factory here. Deep-analysis tool
 selection lives in `crews/deep_analysis/tool_routing.py`.
 
+### `enhanced_crypto_tool.py`
+
+`EnhancedCryptoAnalysisTool` does NOT raise on an unknown symbol: it returns
+invented numbers tagged `sources == ["Fallback Data"]`. Any programmatic caller
+must check that marker and treat it as a failure. `data/adapters/crypto/
+coingecko_adapter.py` is the reference consumer. It also keys on the bare
+symbol, so `BTC-USD` must be normalized to `BTC` first.
+
 ## Usage
 
 Always use factories, never instantiate tools directly:

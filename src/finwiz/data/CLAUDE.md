@@ -16,15 +16,34 @@ data/
 │   ├── fear_greed_adapter.py
 │   ├── finnhub_news_adapter.py
 │   ├── fred_adapter.py
-│   └── industry_averages.py       # Industry benchmark data
+│   ├── industry_averages.py       # Industry benchmark data
+│   └── crypto/                    # Crypto-specific adapters
+│       ├── base.py                # BaseCryptoAdapter + CryptoMarketData
+│       ├── coingecko_adapter.py   # CoinGecko (PRIMARY: price, market cap, supply)
+│       ├── kraken_adapter.py      # Kraken (price/volume cross-check + fallback)
+│       └── genesis.py             # Curated genesis-year table for age_years
 │
 ├── __init__.py
-├── data_source_orchestrator.py    # MAIN: Multi-source orchestration
+├── data_source_orchestrator.py    # MAIN: Multi-source orchestration (equities)
+├── crypto_source_orchestrator.py  # MAIN: Multi-source orchestration (crypto)
 ├── exceptions.py                  # Data-specific exceptions
 ├── fx_rates.py                    # Currency conversion
 ├── news_utils.py                  # News fetch/normalize helpers
 └── sentiment_collector.py         # Sentiment aggregation
 ```
+
+## Two source orchestrators
+
+| Module | Asset classes | Shape |
+|---|---|---|
+| `data_source_orchestrator.py` | stocks | `FundamentalData` — ROE, debt/equity, revenue growth, profit margin. Async adapters. |
+| `crypto_source_orchestrator.py` | crypto | `CryptoMarketData` — price, market cap, volume, supplies. Sync adapters. |
+
+They share a contract — per-field lineage, confidence, `None` for anything
+unresolved — and deliberately not a base class: `FundamentalData` is hardwired
+to four equity metrics with equity validation bounds. Crypto adapters are
+synchronous because both underlying tools are, and the calling collector runs
+one thread per holding. See ADR-014.
 
 ## Major Entry Points
 

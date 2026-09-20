@@ -79,6 +79,15 @@ orchestrators/
 | `error_handling_orchestrator.py` | `ErrorHandlingOrchestrator` | Error handling & recovery |
 | `registry/registry_manager.py` | `RegistryManager` | Orchestration registry |
 
+### `deep_analysis_data_collector.py`
+
+Crypto market data does not come from the collector directly: it is resolved by
+`data/crypto_source_orchestrator.py` (CoinGecko primary, yfinance then Kraken as
+price fallback, Kraken always consulted as a cross-check). Unresolved fields are
+`None` and never a constant — the collector previously wrote `market_cap 10e9`
+and `volume_24h 1e9` on every failed lookup, which silently fed 80% of the
+crypto fundamental score. See ADR-014.
+
 ## Usage
 
 Every orchestrator takes `state: FinwizState` as its first positional argument
