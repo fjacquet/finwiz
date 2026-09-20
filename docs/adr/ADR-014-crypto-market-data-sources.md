@@ -37,6 +37,13 @@ adapter, recording per-field lineage and a pinned confidence.
   missing value is excluded rather than scored as the worst observed value.
 - Ages come from a curated genesis-year table; an uncurated symbol yields
   `None`, never a default.
+- `market_cap`, `volume_24h` and `age_years` are `OPTIONAL_FIELDS` for crypto,
+  not `CRITICAL_FIELDS`; only `current_price` and `volatility` remain
+  critical. They were critical until this ADR: the fabricated defaults this
+  branch removes were the only thing that had ever satisfied that gate, so
+  simply deleting them (without this reclassification) would have turned
+  "honest degradation" into a dropped holding on every CoinGecko outage, and
+  unconditionally on any symbol outside the curated genesis-year table.
 
 ## Consequences
 
@@ -55,8 +62,17 @@ adapter, recording per-field lineage and a pinned confidence.
   `.superpowers/sdd/2026-09-20-crypto-data-sources/task-8-report.md` for the
   full verification record.
 - During a CoinGecko outage crypto scores fall instead of looking normal, and
-  the drop is visible in `missing_fields`, in confidence and in the run gate.
-  This is the intended trade: a visible gap beats an invisible fabrication.
+  the drop is visible in confidence, in `excluded_components` on the
+  fundamental-score breakdown, and in the run gate. It is **not** yet visible
+  in `data_quality.missing_fields` on the exported `*_enriched.json`:
+  `CrewExportGenerator.create_detailed_analysis`, the only code that would
+  populate it from the field list, has zero callers in `src` or `tests`, and
+  `ScoreResultBuilder.build_result` always passes `warnings=[]` — the value
+  `analysis/stages/quantify.py` sources `missing_fields` from. That field is
+  `[]` for every asset class today, gap or no gap. Declaring the gap there is
+  a known follow-up blocked on reviving or replacing that dead export path,
+  not something this change delivers. This is still the intended trade: a
+  visible gap in the score beats an invisible fabrication.
 - One extra public Kraken call per crypto holding per run (four today), so the
   cross-check exists even on the happy path.
 - The equity `DataSourceOrchestrator` is untouched. Two orchestrators now exist

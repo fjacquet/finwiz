@@ -20,9 +20,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`_safe_get_float(..., 0.0)`). It now excludes the component and renormalizes
   the remaining weights; with no component left the score is `None` and the
   composite renormalizes over technical and risk.
+- `market_cap`, `volume_24h` and `age_years` were `CRITICAL_FIELDS` for crypto,
+  so once the fabricated defaults above were removed, a `None` in any of them
+  raised `CriticalFieldError` and silently dropped the holding from the
+  report — on every CoinGecko outage, and unconditionally for any symbol
+  outside the curated genesis-year table. Reclassified as `OPTIONAL_FIELDS`
+  (only `current_price` and `volatility` remain critical for crypto), so the
+  holding is kept and scored on whatever fundamental components survived, per
+  spec. Their now-unreachable `SANITY_CHECKS` entries were also deleted.
 - `data_quality.missing_fields` reported `[]` for crypto holdings whose every
-  fundamental field was fabricated. Gaps are now `None` and reported, and
-  `market_cap` was added to the crypto field list.
+  fundamental field was fabricated, because a fabricated value counted as
+  present. Gaps are now `None` from acquisition through scoring, and
+  `CryptoAnalyzer` tracks each field's calculated/defaulted status instead of
+  silently reporting full completeness regardless of what actually resolved.
+  `market_cap` was also added to `CrewExportGenerator._identify_missing_fields`'s
+  crypto field list, but that generator has zero production callers today —
+  declaring these gaps in the *exported* quality metadata (`*_enriched.json`)
+  is a known follow-up blocked on reviving or replacing that dead export
+  path, not something this change delivers. `missing_fields` on the exported
+  JSON is `[]` for every asset class today, sourced from
+  `ScoreResultBuilder.build_result`'s hardcoded `warnings=[]`.
+- A crypto holding with no fundamental component resolved was scored
+  `fundamental_score = None` by `CryptoAnalyzer`, then coerced to a hard
+  `0.0` — the worst possible value — at the `QuantitativeAnalysis` schema
+  boundary (`fundamental_score=result.fundamental_score or 0.0`), inverting
+  "never measured" into "measured as catastrophic". The schema field is now
+  `float | None`, and every consumer that formats it (`ai_output.py`,
+  `_synthesize_helpers.py`, `_qualify_fallbacks.py`) renders "unavailable"
+  instead of a number.
 - XRP was scored as three years old. Ages now derive from a curated genesis-year
   table (XRP 2012), and an uncurated symbol yields no age instead of a default.
 
