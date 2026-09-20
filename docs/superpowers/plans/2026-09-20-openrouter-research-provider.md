@@ -1556,7 +1556,7 @@ def _digest(*headlines: tuple[str, str, str], citations: tuple[Citation, ...] = 
 
 Replace `test_should_search_financial_news_successfully` (lines 81-119) with:
 
-```python
+```text
     def test_should_search_financial_news_successfully(self, mocker):
         """Headlines from the digest become SonarArticles through the existing parser."""
         mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
@@ -1631,7 +1631,7 @@ Replace `test_should_search_financial_news_successfully` (lines 81-119) with:
 
 Replace `test_should_retry_on_rate_limit_error`, `test_should_handle_timeout_error`, `test_should_handle_connection_error` (lines 327-392) with:
 
-```python
+```text
     def test_should_handle_timeout_error(self, mocker):
         """A raise from the research seam is classified and reported, never propagated."""
         mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
@@ -1753,7 +1753,7 @@ The rest of the method (performance metrics, the success `SonarSearchResult`, th
 
 Add two helpers right after `_get_search_filters`:
 
-```python
+```text
     def _news_prompt(self, enhanced_query: str, max_results: int, search_filters: dict[str, str]) -> str:
         preferred = search_filters.get("site", "").replace(",", ", ")
         wanted = max(1, min(max_results, 10))
@@ -1863,7 +1863,7 @@ After line 292 (`# PPLX_SEARCH_URL=...`), add:
 
 `src/finwiz/config/features/definitions.py:148`:
 
-```python
+```text
             description=("Web research (OpenRouter web plugin, Perplexity fallback) for sentiment news and equity fact-pack gap-fill; flag name kept for env stability"),
 ```
 
