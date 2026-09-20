@@ -61,18 +61,6 @@ class TestPerplexityFallbackManager:
 class TestPerplexityPerformanceValidation:
     """Test performance monitoring and validation."""
 
-    def test_should_validate_response_time_requirements(self):
-        """Test response time requirement validation."""
-        # Test compliant response times
-        compliant_times = [500, 1000, 1500, 2000]  # All under 2x baseline (2000ms)
-        for time_ms in compliant_times:
-            assert PerplexityPerformanceMonitor.validate_response_time_requirement(time_ms)
-
-        # Test non-compliant response times
-        non_compliant_times = [2001, 3000, 5000]  # All over 2x baseline
-        for time_ms in non_compliant_times:
-            assert not PerplexityPerformanceMonitor.validate_response_time_requirement(time_ms)
-
     def test_should_calculate_performance_statistics_correctly(self):
         """Test performance statistics calculation."""
         response_times = [500, 1000, 1500, 2000, 2500, 3000]

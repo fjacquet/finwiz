@@ -34,7 +34,6 @@ class PerplexityPerformanceMonitor:
     def log_performance_metrics(ticker: str, analysis_type: str, latency_ms: int, result_count: int, baseline_comparison: dict[str, Any] | None = None) -> None:
         """Log performance metrics with baseline comparison."""
         performance_ratio = latency_ms / PerplexityPerformanceMonitor.BASELINE_RESPONSE_TIME_MS
-        meets_requirement = latency_ms <= PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS
 
         extra_data = {
             "operation": "perplexity_performance_metrics",
@@ -44,25 +43,13 @@ class PerplexityPerformanceMonitor:
             "result_count": result_count,
             "baseline_ms": PerplexityPerformanceMonitor.BASELINE_RESPONSE_TIME_MS,
             "performance_ratio": round(performance_ratio, 2),
-            "meets_2x_requirement": meets_requirement,
             "timestamp": time.time(),
         }
 
         if baseline_comparison:
             extra_data.update(baseline_comparison)
 
-        log_level = "info" if meets_requirement else "warning"
-        message = f"Perplexity performance: {latency_ms}ms ({performance_ratio:.2f}x baseline)"
-
-        if log_level == "info":
-            logger.info(message, extra=extra_data)
-        else:
-            logger.warning(f"{message} - EXCEEDS 2x BASELINE REQUIREMENT", extra=extra_data)
-
-    @staticmethod
-    def validate_response_time_requirement(latency_ms: int) -> bool:
-        """Validate that response time meets ≤2× baseline requirement."""
-        return latency_ms <= PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS
+        logger.info(f"Web research latency: {latency_ms}ms", extra=extra_data)
 
     @staticmethod
     def get_performance_summary(response_times: list[int]) -> dict[str, Any]:

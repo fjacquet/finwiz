@@ -27,6 +27,21 @@ _original_model_validate_json = BaseModel.model_validate_json.__func__
 _patch_lock = threading.Lock()
 _patch_applied = False
 
+# Classes that opted in to repair. Everything else goes straight to Pydantic:
+# the research client validates its own replies and logs field paths itself.
+_REPAIRABLE: set[type[BaseModel]] = set()
+
+
+def register_repairable(cls: type[BaseModel]) -> None:
+    """Opt a model class in to JSON repair on validation failure."""
+    with _patch_lock:
+        _REPAIRABLE.add(cls)
+
+
+def is_repairable(cls: type[BaseModel]) -> bool:
+    """Return whether ``cls`` opted in to JSON repair."""
+    return cls in _REPAIRABLE
+
 
 def _patched_model_validate_json(cls: type[BaseModel], json_data: str | bytes, **kwargs: Any) -> BaseModel:
     """
@@ -41,6 +56,9 @@ def _patched_model_validate_json(cls: type[BaseModel], json_data: str | bytes, *
         Validated Pydantic model instance
 
     """
+    if cls not in _REPAIRABLE:
+        return _original_model_validate_json(cls, json_data, **kwargs)
+
     try:
         # Try original validation first
         result: BaseModel = _original_model_validate_json(cls, json_data, **kwargs)

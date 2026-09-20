@@ -76,7 +76,7 @@ from finwiz.crews.deep_analysis.performance_validation import (
 from finwiz.crews.deep_analysis.tool_routing import get_tools_for_asset_class
 from finwiz.flow_state import DeepAnalysisResult
 from finwiz.infrastructure.decorators.task_decorators import async_task
-from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch
+from finwiz.infrastructure.json.crewai_json_patch import apply_json_repair_patch, register_repairable
 from finwiz.infrastructure.logging.helpers import CrewLogger
 from finwiz.infrastructure.monitoring.performance import get_performance_monitor
 from finwiz.schemas.common import RiskAssessmentStandardized
@@ -175,6 +175,7 @@ class DeepAnalysisCrew:
         # Store raw Pydantic classes for Task.output_pydantic
         self.QualitativeInsights = QualitativeInsights
         self.QualitativeInsightsRaw = _QualitativeInsightsRaw
+        register_repairable(_QualitativeInsightsRaw)
 
         # Make Pydantic models available for CrewAI resolution (wrapped versions)
         self.DeepAnalysisResult = output_pydantic(DeepAnalysisResult)

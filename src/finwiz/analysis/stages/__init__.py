@@ -127,7 +127,6 @@ def run_pipeline(
     # Phase 5: Emit — synthesize is the last writer of partial_result; do not
     # re-assign here. emit reads stage_ctx.extras["partial_result"] directly so it
     # sees the confidence downgrade that synthesize may have applied.
-    stage_ctx.extras["strategic"] = strategic
     er = emit(stage_ctx, enriched)
     if er.payload is None:
         # Emit stage failed — produce pending placeholder.

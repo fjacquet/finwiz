@@ -1,7 +1,8 @@
 """Tests for PerplexityPerformanceMonitor.
 
-Covers operation timing, the 2x-baseline response-time requirement, the
-summary statistics, and the warning logged when a call breaches the baseline.
+Covers operation timing, the summary statistics, and the info-level latency
+log emitted on every call (no warning branch: this module no longer judges
+response times against a baseline requirement).
 """
 
 import time
@@ -26,17 +27,6 @@ class TestPerplexityPerformanceMonitor:
         # Assert
         assert 90 <= operation_time <= 150  # Allow some variance for timing
         assert isinstance(operation_time, int)
-
-    def test_should_validate_response_time_requirement_correctly(self):
-        """Test response time requirement validation."""
-        # Arrange
-        baseline_ms = PerplexityPerformanceMonitor.BASELINE_RESPONSE_TIME_MS
-        max_acceptable_ms = PerplexityPerformanceMonitor.MAX_ACCEPTABLE_RESPONSE_TIME_MS
-
-        # Act & Assert
-        assert PerplexityPerformanceMonitor.validate_response_time_requirement(baseline_ms)
-        assert PerplexityPerformanceMonitor.validate_response_time_requirement(max_acceptable_ms)
-        assert not PerplexityPerformanceMonitor.validate_response_time_requirement(max_acceptable_ms + 1)
 
     def test_should_generate_performance_summary_correctly(self):
         """Test performance summary generation."""
@@ -75,17 +65,15 @@ class TestPerplexityPerformanceMonitor:
         # Assert
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args
-        assert "Perplexity performance" in call_args[0][0]
-        assert call_args[1]["extra"]["meets_2x_requirement"] is True
+        assert "Web research latency" in call_args[0][0]
 
         # Reset mock
         mock_logger.reset_mock()
 
-        # Act - Test non-compliant response time
+        # Act - Test a response time far above baseline: still logged at info level
         PerplexityPerformanceMonitor.log_performance_metrics("AAPL", "sentiment", 3000, 5)
 
         # Assert
-        mock_logger.warning.assert_called_once()
-        call_args = mock_logger.warning.call_args
-        assert "EXCEEDS 2x BASELINE REQUIREMENT" in call_args[0][0]
-        assert call_args[1]["extra"]["meets_2x_requirement"] is False
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args
+        assert "Web research latency" in call_args[0][0]
