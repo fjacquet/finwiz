@@ -14,7 +14,10 @@ from crewai_custom_tools.core.results import ok
 from pydantic import ValidationError
 from pytest import approx
 
+from finwiz.infrastructure.research.openrouter_structured import Citation, ResearchResult
 from finwiz.schemas.perplexity import (
+    NewsDigest,
+    NewsHeadline,
     PerplexityConfig,
     SonarArticle,
     SonarSearchResult,
@@ -22,6 +25,13 @@ from finwiz.schemas.perplexity import (
 from finwiz.tools.perplexity_analysis_integration import (
     PerplexityAnalysisIntegration,
 )
+
+_RESEARCH = "finwiz.tools.perplexity_analysis_integration.research_with_retry"
+
+
+def _digest(*headlines: tuple[str, str, str], citations: tuple[Citation, ...] = ()) -> ResearchResult[NewsDigest]:
+    digest = NewsDigest(headlines=[NewsHeadline(title=t, url=u, one_line_summary=s) for t, u, s in headlines])
+    return ResearchResult(data=digest, citations=citations, cost_usd=0.01, prompt_tokens=10, completion_tokens=5)
 
 
 class TestPerplexityIntegrationWrapper:
@@ -63,6 +73,13 @@ class TestPerplexityIntegrationWrapper:
         # Assert
         assert integration.is_available is False
 
+    def test_should_be_available_with_only_an_openrouter_key(self, mocker):
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"}, clear=True)
+
+        integration = PerplexityAnalysisIntegration(self.config)
+
+        assert integration.is_available is True
+
     def test_should_create_default_config_when_none_provided(self, mocker):
         """Test default configuration creation."""
         # Arrange — clear() isolates from an ambient PERPLEXITY_API_KEY (e.g. local
@@ -79,36 +96,18 @@ class TestPerplexityIntegrationWrapper:
         assert integration.config.max_retries == 3
 
     def test_should_search_financial_news_successfully(self, mocker):
-        """Test successful financial news search."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
-
-        # Mock the search API response directly
-        mock_search_response = {
-            "results": [
-                {
-                    "title": "Apple Reports Strong Q4 Earnings",
-                    "url": "https://example.com/apple-earnings",
-                    "snippet": "Apple exceeded expectations with record revenue",
-                    "date": "2024-01-01",
-                    "last_updated": "2024-01-01T12:00:00Z",
-                }
-            ]
-        }
-
-        mock_http_response = mocker.Mock()
-        mock_http_response.json.return_value = mock_search_response
-        mock_http_response.raise_for_status = mocker.Mock()
-
-        # Patch requests.post to avoid actual HTTP calls
-        mocker.patch("requests.post", return_value=mock_http_response)
+        """Headlines from the digest become SonarArticles through the existing parser."""
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        research = mocker.patch(
+            _RESEARCH,
+            new=mocker.AsyncMock(
+                return_value=_digest(("Apple Reports Strong Q4 Earnings", "https://example.com/apple-earnings", "Apple exceeded expectations with record revenue"))
+            ),
+        )
 
         integration = PerplexityAnalysisIntegration(self.config)
-
-        # Act
         result = asyncio.run(integration.search_financial_news(query="AAPL earnings analysis", ticker="AAPL", asset_type="stock", analysis_type="sentiment", max_results=10))
 
-        # Assert
         assert isinstance(result, SonarSearchResult)
         assert result.success is True
         assert result.ticker == "AAPL"
@@ -116,7 +115,58 @@ class TestPerplexityIntegrationWrapper:
         assert result.analysis_type == "sentiment"
         assert len(result.results) == 1
         assert result.results[0].title == "Apple Reports Strong Q4 Earnings"
+        assert result.results[0].summary == "Apple exceeded expectations with record revenue"
         assert result.results[0].publisher == "Example"  # Extracted from example.com domain
+        assert research.await_args.kwargs["kind"] == "news"
+        assert research.await_args.kwargs["schema"] is NewsDigest
+
+    def test_should_merge_citations_not_already_in_the_digest(self, mocker):
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(
+            _RESEARCH,
+            new=mocker.AsyncMock(
+                return_value=_digest(
+                    ("Headline A", "https://a.example.com/x", "sa"),
+                    citations=(Citation(url="https://a.example.com/x", title="dup", content="c"), Citation(url="https://b.example.com/y", title="Cited B", content="snippet b")),
+                )
+            ),
+        )
+
+        integration = PerplexityAnalysisIntegration(self.config)
+        result = asyncio.run(integration.search_financial_news(query="q", ticker="AAPL", asset_type="stock", max_results=10))
+
+        assert [a.url for a in result.results] == ["https://a.example.com/x", "https://b.example.com/y"]
+        assert result.results[1].title == "Cited B"
+        assert result.results[1].summary == "snippet b"
+
+    def test_should_cap_articles_at_max_results(self, mocker):
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(_RESEARCH, new=mocker.AsyncMock(return_value=_digest(*[(f"H{i}", f"https://example.com/{i}", "") for i in range(6)])))
+
+        integration = PerplexityAnalysisIntegration(self.config)
+        result = asyncio.run(integration.search_financial_news(query="q", ticker="AAPL", asset_type="stock", max_results=3))
+
+        assert len(result.results) == 3
+
+    def test_should_report_failure_when_research_returns_nothing(self, mocker):
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(_RESEARCH, new=mocker.AsyncMock(return_value=None))
+
+        integration = PerplexityAnalysisIntegration(self.config)
+        result = asyncio.run(integration.search_financial_news(query="q", ticker="AAPL", asset_type="stock"))
+
+        assert result.success is False
+        assert result.results == []
+
+    def test_should_report_failure_on_an_empty_digest(self, mocker):
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(_RESEARCH, new=mocker.AsyncMock(return_value=_digest()))
+
+        integration = PerplexityAnalysisIntegration(self.config)
+        result = asyncio.run(integration.search_financial_news(query="q", ticker="AAPL", asset_type="stock"))
+
+        assert result.success is False
+        assert result.results == []
 
     def test_should_handle_api_key_missing_gracefully(self, mocker):
         """Test graceful handling when API key is missing."""
@@ -324,70 +374,24 @@ class TestPerplexityIntegrationWrapper:
         sentiment_filters = integration._get_search_filters("sentiment")
         assert "bloomberg.com" in sentiment_filters.get("site", "")
 
-    def test_should_retry_on_rate_limit_error(self, mocker):
-        """Test retry logic for rate limit errors."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
-
-        integration = PerplexityAnalysisIntegration(self.config)
-
-        # Mock HTTP responses: first fails with 429, then succeeds
-        mock_error_response = mocker.Mock()
-        mock_error_response.raise_for_status.side_effect = Exception("429 Rate limit exceeded")
-
-        mock_success_response = mocker.Mock()
-        mock_success_response.json.return_value = {"results": []}
-        mock_success_response.raise_for_status = mocker.Mock()
-
-        mocker.patch("requests.post", side_effect=[mock_error_response, mock_success_response])
-
-        # Mock sleep to avoid actual delays
-        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
-
-        # Act
-        result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))
-
-        # Assert
-        assert result.success is True
-        assert result.retry_count == 1
-
     def test_should_handle_timeout_error(self, mocker):
-        """Test handling of timeout errors."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
+        """A raise from the research seam is classified and reported, never propagated."""
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(_RESEARCH, new=mocker.AsyncMock(side_effect=Exception("Request timeout")))
 
         integration = PerplexityAnalysisIntegration(self.config)
-
-        # Mock HTTP request timeout
-        mocker.patch("requests.post", side_effect=Exception("Request timeout"))
-
-        # Mock sleep to avoid actual retry delays (CRITICAL for fast tests)
-        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
-
-        # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))
 
-        # Assert
         assert result.success is False
         assert "timeout" in result.error_message.lower()
 
     def test_should_handle_connection_error(self, mocker):
-        """Test handling of connection errors."""
-        # Arrange
-        mocker.patch.dict(os.environ, {"PPLX_API_KEY": "test-key"})
+        mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})
+        mocker.patch(_RESEARCH, new=mocker.AsyncMock(side_effect=Exception("Connection failed")))
 
         integration = PerplexityAnalysisIntegration(self.config)
-
-        # Mock HTTP connection error
-        mocker.patch("requests.post", side_effect=Exception("Connection failed"))
-
-        # Mock sleep to avoid actual retry delays (CRITICAL for fast tests)
-        mocker.patch("asyncio.sleep", new_callable=mocker.AsyncMock)
-
-        # Act
         result = asyncio.run(integration.search_financial_news(query="test query", ticker="AAPL", asset_type="stock"))
 
-        # Assert
         assert result.success is False
         assert "connection" in result.error_message.lower()
 
