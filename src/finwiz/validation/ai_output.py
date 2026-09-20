@@ -163,108 +163,35 @@ def validate_qualitative_insights(result: dict) -> QualitativeInsights:
 
 def get_explicit_format_example() -> str:
     """
-    Generate explicit format instructions for retry attempts.
+    Generate the retry-attempt instruction injected as ``{retry_guidance}``.
 
     Implements Requirement 12.3: Retry with format instructions
     Implements Requirement 12.7: Include format examples
 
-    Used when initial AI output fails validation to provide clear
-    guidance on expected structure.
+    Used when initial AI output fails validation to steer a corrected
+    retry. This used to inline ~2 kB of English JSON with its own word-count
+    minimums ("200+ words", "100+ words") and an ``analysis_timestamp``
+    field -- contradicting the strict ``json_schema`` response_format the
+    task already sends (which carries the real, French, per-field length
+    budgets) and the Python-owned-fields rule (``analysis_timestamp`` is
+    Python-authored, not model-filled). The schema is the single source of
+    truth for shape and length; this instruction only points back at it and
+    names the fields the model must not re-emit
+    (see final-review-report.md Important 3).
 
     Returns:
-        Detailed format instructions with example
+        A short French retry instruction (no inline JSON example).
 
     """
-    return """
-CRITICAL: Your output MUST be a valid JSON object matching this EXACT structure:
-
-{
-  "sec_insights": {
-    "business_model": "string (minimum 100 words - required)",
-    "competitive_advantages": ["advantage 1", "advantage 2"],
-    "risk_factors": ["risk 1", "risk 2"],
-    "strategic_initiatives": ["initiative 1", "initiative 2"]
-  },
-  "fundamental_context": {
-    "industry_analysis": "string (minimum 100 words - required)",
-    "growth_drivers": ["driver 1", "driver 2"],
-    "competitive_positioning": "string (minimum 50 words - required)",
-    "management_assessment": "string (minimum 50 words - required)"
-  },
-  "technical_strategy": {
-    "chart_patterns": ["pattern 1", "pattern 2"],
-    "support_resistance": "string (minimum 50 words - required)",
-    "entry_exit_strategy": "string (minimum 100 words - required)",
-    "timing_assessment": "string (minimum 50 words - required)"
-  },
-  "contextual_risks": {
-    "regulatory_risks": ["risk 1", "risk 2"],
-    "geopolitical_risks": ["risk 1", "risk 2"],
-    "competitive_risks": ["risk 1", "risk 2"],
-    "operational_risks": ["risk 1", "risk 2"],
-    "stress_scenarios": ["scenario 1", "scenario 2"]
-  },
-  "investment_synthesis": {
-    "investment_thesis": "string (minimum 200 words - required)",
-    "bull_case": "string (minimum 100 words - required)",
-    "base_case": "string (minimum 100 words - required)",
-    "bear_case": "string (minimum 100 words - required)",
-    "scenario_probabilities": {
-      "bull": 0.25,
-      "base": 0.50,
-      "bear": 0.25
-    },
-    "final_recommendation": "BUY|HOLD|SELL (required)",
-    "recommendation_confidence": "LOW|MEDIUM|HIGH (required)",
-    "action_plan": {
-      "immediate_actions": ["action 1", "action 2"],
-      "monitoring_points": ["point 1", "point 2"],
-      "exit_triggers": ["trigger 1", "trigger 2"]
-    }
-  },
-  "analysis_timestamp": "2025-01-22T10:30:00Z",
-  "ai_confidence": 0.85
-}
-
-FIELD REQUIREMENTS:
-- business_model: Minimum 100 words describing how company makes money
-- competitive_advantages: At least 1 advantage (list of strings)
-- risk_factors: At least 1 risk factor (list of strings)
-- industry_analysis: Minimum 100 words on industry context
-- growth_drivers: At least 1 driver (list of strings)
-- competitive_positioning: Minimum 50 words on market position
-- management_assessment: Minimum 50 words on leadership quality
-- chart_patterns: At least 1 pattern (list of strings)
-- support_resistance: Minimum 50 words on key levels
-- entry_exit_strategy: Minimum 100 words with price targets
-- timing_assessment: Minimum 50 words on market timing
-- investment_thesis: Minimum 200 words comprehensive thesis
-- bull_case: Minimum 100 words optimistic scenario
-- base_case: Minimum 100 words most likely scenario
-- bear_case: Minimum 100 words pessimistic scenario
-- scenario_probabilities: Must sum to 1.0
-- final_recommendation: Must be exactly "BUY", "HOLD", or "SELL"
-- recommendation_confidence: Must be exactly "LOW", "MEDIUM", or "HIGH"
-- action_plan: Dict with 3 keys (immediate_actions, monitoring_points, exit_triggers)
-- analysis_timestamp: ISO 8601 format datetime
-- ai_confidence: Float between 0.0 and 1.0
-
-DO NOT:
-- Return tool calls or function calls
-- Return a string instead of JSON object
-- Omit any required fields
-- Use null for required fields
-- Use empty strings for text fields
-- Provide placeholder text like "TODO" or "TBD"
-
-DO:
-- Return valid JSON matching the structure above
-- Include all required fields with substantive content
-- Meet minimum word counts for text fields
-- Ensure scenario_probabilities sum to 1.0
-- Use exact values for enums (BUY/HOLD/SELL, LOW/MEDIUM/HIGH)
-- Provide actionable, specific content
-"""
+    return (
+        "Réémets UNIQUEMENT un objet JSON valide conforme au schéma transmis "
+        "en response_format : les cinq sections sec_insights, "
+        "fundamental_context, technical_strategy, contextual_risks, "
+        "investment_synthesis, plus ai_confidence. Respecte la longueur "
+        "indiquée dans la description de chaque champ. N'inclus pas "
+        "fact_pack, strategic_analysis ni analysis_timestamp. Aucun texte "
+        "hors JSON, aucune balise markdown, aucune virgule finale."
+    )
 
 
 # ============================================================================

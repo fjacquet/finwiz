@@ -622,10 +622,14 @@ class TestRealCrewExecutionWithValidation:
         Test that format instructions provided to retry callback are comprehensive.
 
         Verifies:
-        - Format instructions include all required fields
-        - Instructions include field descriptions
-        - Instructions include example structure
-        - Instructions are actionable for LLM
+        - Format instructions name every schema section
+        - Instructions point back at the schema (sent once as response_format)
+        - Instructions are actionable (an imperative French instruction) for the LLM
+
+        The instructions are now a short French pointer back at the strict
+        ``json_schema`` response_format, not an inline English example with its
+        own word-count budgets -- those would contradict the schema's own
+        per-field descriptions. See final-review-report.md Important 3.
 
         Requirements: 12.7
         """
@@ -661,8 +665,7 @@ class TestRealCrewExecutionWithValidation:
         format_instructions = get_explicit_format_example()
 
         # Assert
-        # Verify format instructions are comprehensive
-        assert len(format_instructions) > 500, "Format instructions should be detailed"
+        assert format_instructions.strip(), "Format instructions must not be empty"
 
         # Check for required field mentions
         required_fields = [
@@ -676,6 +679,8 @@ class TestRealCrewExecutionWithValidation:
         for field in required_fields:
             assert field in format_instructions, f"Format instructions should mention {field}"
 
-        # Check for structure indicators
-        assert "{" in format_instructions or "json" in format_instructions.lower()
-        assert "required" in format_instructions.lower() or "must" in format_instructions.lower()
+        # Check for structure indicators: points at response_format, no inline schema
+        assert "response_format" in format_instructions
+        assert "json" in format_instructions.lower()
+        assert "{" not in format_instructions, "No inline JSON example -- the schema is sent once as response_format"
+        assert "uniquement" in format_instructions.lower(), "Instructions must be actionable/imperative"

@@ -233,23 +233,26 @@ def test_should_reject_invalid_pydantic_data():
 
 
 def test_should_generate_format_instructions():
-    """Test generation of explicit format instructions (Requirement 12.3, 12.7)."""
+    """The retry instruction must not re-add what the branch just removed.
+
+    ``get_explicit_format_example()`` used to inline ~2 kB of English JSON
+    with "200+ words" budgets and an ``analysis_timestamp`` field --
+    contradicting the schema's own French per-field descriptions (the new
+    source of truth, sent once as a strict ``response_format``) and the
+    Python-owned-fields rule. It is now a short French pointer back at that
+    schema, so this test asserts what must be gone rather than what an
+    inline example used to contain (final-review-report.md Important 3).
+    """
     instructions = get_explicit_format_example()
 
-    # Check key elements are present
-    assert "CRITICAL" in instructions
-    assert "JSON object" in instructions
-    assert "sec_insights" in instructions
-    assert "fundamental_context" in instructions
-    assert "technical_strategy" in instructions
-    assert "contextual_risks" in instructions
-    assert "investment_synthesis" in instructions
-    assert "minimum 100 words" in instructions
-    assert "minimum 200 words" in instructions
-    assert "BUY|HOLD|SELL" in instructions
-    assert "LOW|MEDIUM|HIGH" in instructions
-    assert "DO NOT" in instructions
-    assert "DO:" in instructions
+    assert "response_format" in instructions
+    assert "ai_confidence" in instructions
+    # Named only to tell the model to exclude it -- never as a field to emit.
+    assert instructions.count("analysis_timestamp") == 1
+    for section in ("sec_insights", "fundamental_context", "technical_strategy", "contextual_risks", "investment_synthesis"):
+        assert section in instructions
+    assert "words" not in instructions
+    assert "{" not in instructions
 
 
 # ============================================================================
@@ -371,7 +374,7 @@ def test_should_retry_with_format_instructions(sample_quantitative):
 
     # Verify format instructions were provided
     assert format_instructions_received is not None
-    assert "CRITICAL" in format_instructions_received
+    assert "response_format" in format_instructions_received
 
     # Verify retry context was provided
     assert retry_context_received is not None
