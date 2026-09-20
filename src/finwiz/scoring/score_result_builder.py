@@ -204,8 +204,10 @@ class ScoreResultBuilder:
         # Start with overall assessment
         rationale_parts = [f"{ticker} receives a {grade} grade with a composite score of {composite_score:.2f}."]
 
-        # Fundamental analysis summary
-        fund_score = fundamental_details.get("fundamental_score", 0.5)
+        # Fundamental analysis summary. `.get(..., default)` only falls back when
+        # the key is absent — crypto sets "fundamental_score" to an explicit None
+        # when no component survived, so it must be handled, not defaulted away.
+        fund_score = fundamental_details.get("fundamental_score")
         rationale_parts.append(self._get_fundamental_rationale(asset_class, fund_score, fundamental_details))
 
         # Technical analysis summary
@@ -225,26 +227,35 @@ class ScoreResultBuilder:
 
         return " ".join(rationale_parts)
 
-    def _get_fundamental_rationale(self, asset_class: str, fund_score: float, fundamental_details: dict[str, Any]) -> str:
-        """Generate fundamental-specific rationale based on asset class."""
+    def _get_fundamental_rationale(self, asset_class: str, fund_score: float | None, fundamental_details: dict[str, Any]) -> str:
+        """Generate fundamental-specific rationale based on asset class.
+
+        `fund_score` and, for crypto, individual metrics may be `None` when no
+        fundamental component could be computed from available data. Rendered
+        as "unavailable" prose rather than formatted as a number — never a
+        substituted figure standing in for missing data.
+        """
+        score_str = f"{fund_score:.2f}" if fund_score is not None else "unavailable"
         if asset_class == "stock":
             roe = fundamental_details.get("roe", 0.0)
             debt_equity = fundamental_details.get("debt_to_equity", 1.0)
             growth = fundamental_details.get("revenue_growth", 0.0)
-            return f"Fundamental analysis (score: {fund_score:.2f}) shows ROE of {roe:.1%}, debt-to-equity of {debt_equity:.2f}, and revenue growth of {growth:.1%}."
+            return f"Fundamental analysis (score: {score_str}) shows ROE of {roe:.1%}, debt-to-equity of {debt_equity:.2f}, and revenue growth of {growth:.1%}."
         elif asset_class == "etf":
             expense = fundamental_details.get("expense_ratio", 1.0)
             tracking = fundamental_details.get("tracking_error", None)
             tracking_available = fundamental_details.get("tracking_error_available", False)
             if tracking_available and tracking is not None:
-                return f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}."
+                return f"Fundamental analysis (score: {score_str}) shows expense ratio of {expense:.2%} and tracking error of {tracking:.2%}."
             else:
-                return f"Fundamental analysis (score: {fund_score:.2f}) shows expense ratio of {expense:.2%}. Note: Tracking error data not available for this ETF."
+                return f"Fundamental analysis (score: {score_str}) shows expense ratio of {expense:.2%}. Note: Tracking error data not available for this ETF."
         elif asset_class == "crypto":
-            market_cap = fundamental_details.get("market_cap", 0.0)
-            volume = fundamental_details.get("volume_24h", 0.0)
-            return f"Fundamental analysis (score: {fund_score:.2f}) shows market cap of ${market_cap / 1e9:.1f}B and 24h volume of ${volume / 1e6:.0f}M."
-        return f"Fundamental analysis (score: {fund_score:.2f})."
+            market_cap = fundamental_details.get("market_cap")
+            volume = fundamental_details.get("volume_24h")
+            market_cap_str = f"${market_cap / 1e9:.1f}B" if market_cap is not None else "unavailable"
+            volume_str = f"${volume / 1e6:.0f}M" if volume is not None else "unavailable"
+            return f"Fundamental analysis (score: {score_str}) shows market cap of {market_cap_str} and 24h volume of {volume_str}."
+        return f"Fundamental analysis (score: {score_str})."
 
     def _get_recommendation_rationale(self, composite_score: float) -> str:
         """Generate recommendation-specific rationale."""
@@ -257,18 +268,27 @@ class ScoreResultBuilder:
 
     def _calculate_confidence(
         self,
-        fundamental_score: float,
+        fundamental_score: float | None,
         technical_score: float,
         risk_score: float,
         data: dict[str, Any],
     ) -> float:
-        """Calculate confidence level based on data quality and score consistency."""
-        # Base confidence from score consistency
-        scores = [fundamental_score, technical_score, risk_score]
-        score_std = (sum((s - sum(scores) / 3) ** 2 for s in scores) / 3) ** 0.5
+        """Calculate confidence level based on data quality and score consistency.
 
-        # Lower standard deviation = higher confidence
-        consistency_confidence = max(0.5, 1.0 - score_std * 2)
+        `fundamental_score` is `None` when no fundamental component survived
+        (see `CryptoAnalyzer.calculate_fundamental_score`). Consistency is
+        computed over the scores that actually exist, not over a list with a
+        substituted stand-in value.
+        """
+        # Base confidence from score consistency, over available scores only.
+        scores = [s for s in (fundamental_score, technical_score, risk_score) if s is not None]
+        if not scores:
+            consistency_confidence = 0.5
+        else:
+            mean_score = sum(scores) / len(scores)
+            score_std = (sum((s - mean_score) ** 2 for s in scores) / len(scores)) ** 0.5
+            # Lower standard deviation = higher confidence
+            consistency_confidence = max(0.5, 1.0 - score_std * 2)
 
         # Data quality confidence (check for missing key metrics)
         data_quality = 1.0
