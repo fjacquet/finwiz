@@ -25,12 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fact-pack provenance tag `perplexity.gap_fill` is now `research.gap_fill`
   and renders as "recherche web". `PPLX_API_KEY` is optional.
-- Deep-analysis crew prompt reordered for implicit prompt caching. The agent
-  goal no longer carries the ticker, and the task description puts every
-  static rule before a `---` separator, with the date, holding, fact pack,
-  context and retry guidance after it. OpenRouter's Gemini cache now sees a
-  shared prefix across the 67 per-holding calls; the saving is cents per run.
-  `tests/unit/crews/test_deep_analysis_prompt_layout.py` pins the layout.
 - Consolidated family report folded and reordered for reading. A sticky
   table of contents with "Tout déplier / Tout replier" (the report's only
   script) sits under the header; sections follow a decision-first order
@@ -43,15 +37,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no-news tickers collapsed to one line; stress-test per-holding tables
   fold per scenario. On the 67-holding run this cuts the collapsed page from
   a single ~90 000 px scroll to ~10 000 px.
-- Deep-analysis prompt revalidated. The task sends its schema once, as a
-  strict `json_schema` response format (`Task(response_model=...)`), instead
-  of also appending the 9 kB schema text and CrewAI's converter boilerplate
-  to every prompt. Every model-filled field in the qualitative, strategic,
-  fact-pack and news schemas now carries a French description with a length
-  target. `tasks.yaml` keeps static rules first and frames the task per asset
-  class (`{asset_focus}`). Strategic research (SWOT/Porter) runs before the
-  crew and is rendered into its prompt (`{strategic_block}`); the research
-  prompts carry the fact pack as verified facts. See ADR-013.
+- Deep-analysis prompt revalidated and reordered for implicit prompt caching.
+  The task sends its schema once, as a strict `json_schema` response format
+  (`Task(response_model=...)`), instead of also appending the 9 kB schema
+  text and CrewAI's converter boilerplate to every prompt. Every model-filled
+  field in the qualitative, strategic, fact-pack and news schemas now carries
+  a French description with a length target. `tasks.yaml` keeps static rules
+  first, before a `---` separator, and frames the task per asset class
+  (`{asset_focus}`); the agent goal no longer carries the ticker, so
+  OpenRouter's Gemini cache sees a shared prefix across the 67 per-holding
+  calls (cents per run saved). The date, holding, fact pack, context and
+  retry guidance sit in the dynamic block after the separator. Strategic
+  research (SWOT/Porter) runs before the crew and is rendered into its
+  prompt (`{strategic_block}`); the research prompts carry the fact pack as
+  verified facts. `tests/unit/crews/test_deep_analysis_prompt_layout.py`
+  pins the layout. See ADR-013.
 
 ### Fixed
 

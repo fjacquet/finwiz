@@ -41,6 +41,10 @@ fact pack.
   strategic block; the cacheable static prefix grows.
 - Strategic research latency now precedes the crew instead of following it;
   total per-holding time is unchanged (both were sequential).
+- Strategic research now runs before `qualify`, so a holding whose crew call
+  fails has already paid for its two research calls (about $0.04); the
+  previous crew-first order let a qualify failure short-circuit before that
+  spend.
 - A change to a schema description changes the prompt; the description test
   is the review gate.
 - `force_json_object` is gone; provider JSON mode is CrewAI's `json_schema`.

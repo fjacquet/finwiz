@@ -179,9 +179,9 @@ class ContextualRiskInsights(BaseModel):
 class ScenarioProbabilities(BaseModel):
     """Probabilities for bull/base/bear scenarios (must sum to 1.0)."""
 
-    bull: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario haussier entre 0 et 1 ; bull + base + bear = 1,0.")
-    base: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario central entre 0 et 1 ; bull + base + bear = 1,0.")
-    bear: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario baissier entre 0 et 1 ; bull + base + bear = 1,0.")
+    bull: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario haussier entre 0 et 1 ; bull + base + bear = 1.0.")
+    base: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario central entre 0 et 1 ; bull + base + bear = 1.0.")
+    bear: float = Field(..., ge=0.0, le=1.0, description="Probabilité du scénario baissier entre 0 et 1 ; bull + base + bear = 1.0.")
 
     model_config = {
         "str_strip_whitespace": True,
@@ -228,7 +228,7 @@ class InvestmentSynthesis(BaseModel):
     bear_case: str = Field(default="", description="Scénario baissier en 80-120 mots avec ses risques déclencheurs.")
     scenario_probabilities: ScenarioProbabilities | None = Field(
         default=None,
-        description="Probabilités bull, base et bear ; leur somme vaut 1,0.",
+        description="Probabilités bull, base et bear ; leur somme vaut 1.0.",
     )
     final_recommendation: Literal["BUY", "HOLD", "SELL"] = Field(
         default="HOLD",

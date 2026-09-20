@@ -248,6 +248,21 @@ class TestAssetAnalystToolless:
 
         assert _build_asset_analyst_tools() == []
 
+    def test_asset_analyst_has_no_tools(self) -> None:
+        """Pin the empty tool list itself, not just the builder that returns it.
+
+        CrewAI's agent executor sets ``effective_response_model = None if
+        self.original_tools else self.response_model``
+        (``crewai/experimental/agent_executor.py``): attaching any tool to
+        ``asset_analyst`` would silently drop the schema everywhere -- not
+        just from the prompt text (``output_pydantic`` is already gone), but
+        also from the strict ``response_format`` this branch relies on to
+        constrain the crew's JSON output at all.
+        """
+        from finwiz.crews.deep_analysis.deep_analysis import _build_asset_analyst_tools
+
+        assert _build_asset_analyst_tools() == []
+
     def test_build_asset_analyst_tools_returns_empty_even_with_pplx_key(self, monkeypatch) -> None:
         # Setting PPLX_API_KEY must NOT re-add the tool — the tool is gone for good.
         monkeypatch.setenv("PPLX_API_KEY", "fake-key-for-test")

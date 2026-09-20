@@ -58,7 +58,7 @@ deep_qualitative_analysis_task:
     - contextual_risks : risques réglementaires, géopolitiques, concurrentiels
       et opérationnels propres au holding, puis scénarios de stress.
     - investment_synthesis : thèse, scénarios bull, base et bear avec leurs
-      probabilités (somme 1,0), recommandation BUY, HOLD ou SELL avec sa
+      probabilités (somme 1.0), recommandation BUY, HOLD ou SELL avec sa
       confiance, plan d'action (actions immédiates, points de surveillance,
       déclencheurs de sortie).
 

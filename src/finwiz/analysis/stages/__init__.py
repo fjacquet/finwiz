@@ -40,7 +40,15 @@ def run_pipeline(
     ctx: AnalysisContext,
     prefetched_data: dict[str, Any] | None = None,
 ) -> tuple[DeepAnalysisResult, EnrichedAnalysis]:
-    """Sequential orchestration of the five deep-analysis stages.
+    """Sequential orchestration of the deep-analysis pipeline.
+
+    The sequence is: collect, quantify, fact_pack, strategic research,
+    qualify, synthesize, emit.
+
+    Strategic research (SWOT/Porter) is a plain function call between fact_pack
+    and qualify, not a ``@stage`` -- it has no timeout, retry or ledger entry of
+    its own; a failure there is swallowed and rendered as "no evidence" rather
+    than short-circuiting the holding (see ``_safe_strategic``).
 
     Any stage that returns FAILED (payload is None) immediately short-circuits to
     an AnalysePending placeholder. Silent fall-through to downstream stages is

@@ -51,11 +51,14 @@ The analysis pipeline follows functional programming principles with pure functi
 ┌──────────────────────────────────────────────────────────────────┐
 │  analyze_holding(ticker, asset_class, company_name)              │
 │  │                                                               │
-│  │  Seven stages, in finwiz.analysis.stages:                     │
+│  │  Six @stage steps, in finwiz.analysis.stages, plus one plain    │
+│  │  call between fact_pack and qualify:                          │
 │  │  ├── collect     -> RawData                   [Python tools]  │
 │  │  ├── quantify    -> Quant                        [$0 Python]  │
 │  │  ├── fact_pack   -> FactPack           [yfinance + gap-fill]  │
-│  │  ├── strategic   -> StrategicAnalysis         [web research]  │
+│  │  ├── strategic   -> StrategicAnalysis  [plain call, no        │
+│  │  │                  @stage: no timeout, provenance or ledger  │
+│  │  │                  entry -- web research]                    │
 │  │  ├── qualify     -> Qual                          [AI crew]   │
 │  │  ├── synthesize  -> Enriched                       [Python]   │
 │  │  └── emit        -> artifacts + RunLedger          [Python]   │
