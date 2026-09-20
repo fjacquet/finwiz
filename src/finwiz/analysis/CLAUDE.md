@@ -10,7 +10,7 @@ analysis/
 ├── deep_analysis_pipeline.py     # Backwards-compatible facade only
 ├── _helpers.py                   # Shared helpers
 ├── fact_pack_research.py         # Research gap-fill support (see analysis/fact_pack/)
-├── strategic_research.py         # Strategic framework research
+├── strategic_research.py         # 3b. strategic (OpenRouter web research), run before qualify
 ├── fact_pack/                    # Deterministic fact pack, one shape per asset class
 │   ├── __init__.py               # compose_fact_pack() — the only entry point
 │   ├── composer.py               # Routes stock/etf/crypto; builds the FactPack envelope
@@ -51,10 +51,11 @@ The analysis pipeline follows functional programming principles with pure functi
 ┌──────────────────────────────────────────────────────────────────┐
 │  analyze_holding(ticker, asset_class, company_name)              │
 │  │                                                               │
-│  │  Six stages, in finwiz.analysis.stages:                       │
+│  │  Seven stages, in finwiz.analysis.stages:                     │
 │  │  ├── collect     -> RawData                   [Python tools]  │
 │  │  ├── quantify    -> Quant                        [$0 Python]  │
 │  │  ├── fact_pack   -> FactPack           [yfinance + gap-fill]  │
+│  │  ├── strategic   -> StrategicAnalysis         [web research]  │
 │  │  ├── qualify     -> Qual                          [AI crew]   │
 │  │  ├── synthesize  -> Enriched                       [Python]   │
 │  │  └── emit        -> artifacts + RunLedger          [Python]   │
@@ -62,6 +63,10 @@ The analysis pipeline follows functional programming principles with pure functi
 │  └── Output: (DeepAnalysisResult, EnrichedAnalysis)              │
 └──────────────────────────────────────────────────────────────────┘
 ```
+
+Strategic research runs before qualify so the crew prompt carries it
+(`{strategic_block}`); its result is still attached to
+`qualitative.strategic_analysis` after qualify.
 
 ## Major Entry Points
 

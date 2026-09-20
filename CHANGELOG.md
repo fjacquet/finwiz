@@ -43,6 +43,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   no-news tickers collapsed to one line; stress-test per-holding tables
   fold per scenario. On the 67-holding run this cuts the collapsed page from
   a single ~90 000 px scroll to ~10 000 px.
+- Deep-analysis prompt revalidated. The task sends its schema once, as a
+  strict `json_schema` response format (`Task(response_model=...)`), instead
+  of also appending the 9 kB schema text and CrewAI's converter boilerplate
+  to every prompt. Every model-filled field in the qualitative, strategic,
+  fact-pack and news schemas now carries a French description with a length
+  target. `tasks.yaml` keeps static rules first and frames the task per asset
+  class (`{asset_focus}`). Strategic research (SWOT/Porter) runs before the
+  crew and is rendered into its prompt (`{strategic_block}`); the research
+  prompts carry the fact pack as verified facts. See ADR-013.
+
+### Fixed
+
+- `_FactPackRaw` accepts a null `leadership` / `corporate_structure` (mapped
+  to the placeholder) instead of failing validation and retrying.
+- The JSON-repair monkeypatch repairs only registered crew schemas; research
+  models no longer log "JSON repair failed".
+- Log labels: "Web research initiated/completed" replace the Perplexity
+  wording; the 2x-baseline warning is gone.
+
+### Removed
+
+- `get_configured_llm(force_json_object=...)`: the extra_body `json_object`
+  override never reached the request.
 
 ## [5.16.0] - 2026-09-09
 
