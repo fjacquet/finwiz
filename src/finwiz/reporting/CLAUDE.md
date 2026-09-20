@@ -59,6 +59,33 @@ producing byte-identical `{ticker}_enriched.html` files) was deleted; see #195.
 itself deleted from `base_report_generator.py` once its last subclass was
 gone — `create_report_jinja_env()` in the same file is unrelated and stays live.
 
+## Consolidated report layout (`python_report_generator.py`)
+
+`_generate_html_report()` holds a **section registry** — an ordered list of
+`(anchor_id, toc_label, html)` — and renders only the entries whose html is
+non-blank, so the sticky `<nav class="toc">` never links to a section that
+did not render. `_with_anchor()` tags each fragment's first
+`<div class="section">` with its `id`; generators do not know their anchor.
+Order is decision-first: résumé, allocation, posture, recommandations,
+shortlist, discovery, holdings, overview, macro, stress, calendrier,
+quintessence, sentiment, then the meta blocks (deep-analysis, performance, coût).
+
+Long per-holding content is folded behind `<details>`:
+
+| Section | Fold | Default |
+|---|---|---|
+| Allocation (`portfolio_summary.py`) | one `details.group` per asset class, subtotal in the summary | closed |
+| Holdings (`holdings.py`) | one `details.group` per asset class, SELL/BUY/HOLD counts in the summary | closed |
+| Quintessence (`insights.py`) | one `details.group` per grade, worst first (`common.GRADE_ORDER`) | D±/F open |
+| Sentiment (`sentiment.py`) | digest line + table sorted bearish-first; headlines folded per row; 0-article tickers on one line | — |
+| Stress (`analysis.py`) | per-holding impact table folded per scenario | closed |
+
+The report carries exactly one `<script>`: the "Tout déplier / Tout replier"
+buttons in the TOC, which set `open` on every `<details>`. Print relies on
+"Tout déplier" first — `@media print` hides the TOC but cannot open folds.
+Shared helpers (`GRADE_ORDER`, `ASSET_CLASS_LABELS`, `group_by_asset_class()`,
+`plural()`) live in `sections/common.py`.
+
 ## Entry Points
 
 | File | Class/Function | Purpose |

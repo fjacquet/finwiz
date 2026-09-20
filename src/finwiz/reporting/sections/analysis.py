@@ -192,6 +192,7 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
         </div>
       </div>
       <p><strong>Plus affectes :</strong> {most_html} &nbsp;|&nbsp; <strong>Moins affectes :</strong> {least_html}</p>
+      <details><summary>Impact par position ({len(holding_impacts)})</summary>
       <table>
         <thead>
           <tr><th>Ticker</th><th>Secteur</th><th>Beta</th><th>Variation projetee</th><th>Sensibilite</th></tr>
@@ -200,6 +201,7 @@ def generate_stress_test_section(stress_test_results: list[dict[str, Any]] | Non
         {impacts_html}
         </tbody>
       </table>
+      </details>
     </div>""")
 
     cards_html = "\n".join(scenario_cards)

@@ -271,6 +271,85 @@
       padding: 4px 0 4px 14px;
       margin: 12px 0;
     }
+    /* Sticky table of contents + fold controls (consolidated report) */
+    .toc {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 4px 14px;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      margin-bottom: 22px;
+      box-shadow: var(--shadow);
+      font-size: 0.86rem;
+    }
+    .toc a {
+      color: var(--ink-soft);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 4px 2px;
+      border-bottom: 2px solid transparent;
+    }
+    .toc a:hover { color: var(--accent-strong); border-bottom-color: var(--accent); }
+    .toc-actions { margin-left: auto; display: flex; gap: 6px; }
+    .toc button {
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      border: 1px solid #a7f3d0;
+      border-radius: 999px;
+      padding: 4px 12px;
+      cursor: pointer;
+    }
+    .toc button:hover { background: #d1fae5; }
+
+    /* Group folds: one <details class="group"> per asset class or per grade.
+       The summary line is the digest (label, count, subtotal / decision counts);
+       the body holds the rows the reader opted into. */
+    details.group {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin: 12px 0;
+      background: var(--card);
+    }
+    details.group > summary {
+      list-style: none;
+      cursor: pointer;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 16px;
+      padding: 12px 16px;
+      font-weight: 600;
+      color: var(--ink);
+    }
+    details.group > summary::-webkit-details-marker { display: none; }
+    details.group > summary::before { content: "▸"; color: var(--accent); font-size: 0.9em; }
+    details.group[open] > summary::before { content: "▾"; }
+    details.group > summary .group-label { min-width: 72px; }
+    details.group > summary .weight-bar { display: block; width: 140px; flex: 0 0 auto; }
+    details.group > summary .weight-bar-fill { display: block; }
+    details.group > summary .badge { font-weight: 600; }
+    details.group > .group-body { padding: 0 16px 12px; }
+    details.group > .group-body table { margin-top: 4px; }
+    details.group > .group-body .highlight:first-child { margin-top: 4px; }
+    .sentiment-digest { font-size: 0.95rem; margin: 8px 0 12px; }
+
+    @media (max-width: 768px) {
+      .toc { position: static; }
+      .toc-actions { margin-left: 0; }
+    }
+    @media print {
+      .toc { display: none; }
+    }
+
     footer {
       margin-top: 40px;
       padding: 24px;
@@ -330,6 +409,9 @@
       footer { border-top-color: var(--line); }
       .ticker-link { color: var(--accent-strong); border-bottom-color: #34d39966; }
       .ticker-link:hover { color: var(--accent); background-color: var(--accent-soft); }
+      .toc button { border-color: #14532d; }
+      .toc button:hover { background: #14532d; }
+      details.group { background: var(--card); }
     }
 
     /* Traffic-light indicators (Phase 16) */
