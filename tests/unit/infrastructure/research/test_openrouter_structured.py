@@ -109,6 +109,33 @@ async def test_schema_invalid_content_returns_none(mocker):
     assert await openrouter_structured(prompt="p", schema=_Payload, system="s", api_key="k") is None
 
 
+async def test_fenced_valid_json_is_recovered(mocker):
+    """A reply wrapped in a ```json fence still validates, mirroring the vendored
+    Perplexity client's tolerant two-step parse."""
+    _install(mocker, lambda r: httpx.Response(200, json=_ok_body('Voici le résultat:\n```json\n{"value": "ok"}\n```\nMerci.')))
+
+    result = await openrouter_structured(prompt="p", schema=_Payload, system="s", api_key="k")
+
+    assert result is not None
+    assert result.data == _Payload(value="ok")
+
+
+async def test_validation_error_logs_field_paths_not_values(mocker, caplog):
+    """A schema constraint violation (not a parse failure) logs loc+type, never the value."""
+
+    class _Scored(BaseModel):
+        strategic_score: float
+
+    _install(mocker, lambda r: httpx.Response(200, json=_ok_body('{"strategic_score": "top-secret-value-should-not-leak"}')))
+
+    with caplog.at_level("WARNING"):
+        result = await openrouter_structured(prompt="p", schema=_Scored, system="s", api_key="k")
+
+    assert result is None
+    assert "strategic_score" in caplog.text
+    assert "top-secret-value-should-not-leak" not in caplog.text
+
+
 async def test_non_200_returns_none(mocker):
     _install(mocker, lambda r: httpx.Response(429, json={"error": {"message": "rate limited"}}))
 
@@ -148,3 +175,16 @@ async def test_env_key_is_used_when_no_explicit_key(mocker, monkeypatch):
     await openrouter_structured(prompt="p", schema=_Payload, system="s")
 
     assert seen[0].headers["authorization"] == "Bearer env-test-key"
+
+
+def test_json_schema_for_is_cached_per_class():
+    first = module._json_schema_for(_Payload)
+    second = module._json_schema_for(_Payload)
+
+    assert first is second
+
+
+def test_web_max_results_falls_back_to_default_on_a_bad_env_value(monkeypatch):
+    monkeypatch.setenv("RESEARCH_WEB_MAX_RESULTS", "eight")
+
+    assert SearchOptions().max_results == 8

@@ -18,11 +18,13 @@ burning the attempt budget. The prompt body and the key are never logged.
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import dataclass, field
+from functools import cache
 from typing import Any
 
 import httpx
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from finwiz.config.endpoints import OPENROUTER_CHAT
 from finwiz.tools.logger import get_logger
@@ -50,7 +52,21 @@ _HEADERS_STATIC = {
 
 
 def _web_max_results() -> int:
-    return max(1, int(os.getenv("RESEARCH_WEB_MAX_RESULTS", str(_DEFAULT_WEB_MAX_RESULTS))))
+    """Read the web-plugin result cap from the environment; tolerant of a bad value.
+
+    Called from ``SearchOptions``'s field default at *import time* -- a raw
+    ``int()`` here would take down flow startup on one bad env value. A
+    non-integer value is logged (naming only the variable, never the value)
+    and the default is used instead of raising.
+    """
+    raw = os.getenv("RESEARCH_WEB_MAX_RESULTS")
+    if raw is None:
+        return _DEFAULT_WEB_MAX_RESULTS
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        logger.warning("RESEARCH_WEB_MAX_RESULTS is not a valid integer; using the default")
+        return _DEFAULT_WEB_MAX_RESULTS
 
 
 @dataclass(frozen=True)
@@ -87,6 +103,40 @@ def _build_client(timeout: float) -> httpx.AsyncClient:
     return httpx.AsyncClient(timeout=timeout)
 
 
+@cache
+def _json_schema_for(schema: type[BaseModel]) -> dict[str, Any]:
+    """Cache ``schema.model_json_schema()`` per class.
+
+    Every attempt (up to 4 OpenRouter retries plus the Perplexity fallback) for
+    every call site rebuilt the same dict from the same Pydantic class; a
+    Pydantic model class is hashable, so this is a plain per-class cache.
+    """
+    return schema.model_json_schema()
+
+
+_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$", re.MULTILINE)
+
+
+def _strip_json_fence(content: str) -> str:
+    """Best-effort recovery for a reply wrapped in a code fence or prose.
+
+    Mirrors the vendored Perplexity client's tolerant two-step parse: strip a
+    ```json / ``` fence, then trim to the outermost ``{...}`` brace pair so
+    leading/trailing prose around the JSON object doesn't block validation.
+    """
+    text = _FENCE_RE.sub("", content.strip()).strip()
+    start, end = text.find("{"), text.rfind("}")
+    if start != -1 and end != -1 and end > start:
+        text = text[start : end + 1]
+    return text
+
+
+def _log_validation_error(schema: type[BaseModel], exc: ValidationError) -> None:
+    """Log the failing field paths and error types only -- never the value or the raw content."""
+    details = "; ".join(f"{'.'.join(str(p) for p in e['loc'])} ({e['type']})" for e in exc.errors()[:5])
+    logger.warning(f"OpenRouter reply for {schema.__name__} failed validation: {details}")
+
+
 def _extract_citations(annotations: list[dict[str, Any]]) -> tuple[Citation, ...]:
     seen: set[str] = set()
     out: list[Citation] = []
@@ -109,7 +159,7 @@ def _build_payload(*, prompt: str, schema: type[BaseModel], system: str, search:
     payload: dict[str, Any] = {
         "model": os.getenv("RESEARCH_MODEL", _DEFAULT_MODEL),
         "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
-        "response_format": {"type": "json_schema", "json_schema": {"name": schema.__name__, "strict": True, "schema": schema.model_json_schema()}},
+        "response_format": {"type": "json_schema", "json_schema": {"name": schema.__name__, "strict": True, "schema": _json_schema_for(schema)}},
         "max_tokens": _MAX_TOKENS,
     }
     if search is not None:
@@ -165,11 +215,26 @@ async def openrouter_structured[T: BaseModel](
     try:
         body = response.json()
         message = body["choices"][0]["message"]
-        data = schema.model_validate_json(message.get("content") or "")
     except (ValueError, KeyError, IndexError, TypeError) as exc:
-        # pydantic.ValidationError and json.JSONDecodeError are both ValueError subclasses.
+        # json.JSONDecodeError is a ValueError subclass.
         logger.warning(f"OpenRouter reply for {schema.__name__} did not validate: {type(exc).__name__}")
         return None
+
+    content = message.get("content") or ""
+    try:
+        data = schema.model_validate_json(content)
+    except ValueError:
+        # pydantic.ValidationError and json.JSONDecodeError are both ValueError
+        # subclasses; either is worth one recovery attempt, the same two-step
+        # tolerant parse the vendored Perplexity client uses.
+        try:
+            data = schema.model_validate_json(_strip_json_fence(content))
+        except ValidationError as exc:
+            _log_validation_error(schema, exc)
+            return None
+        except ValueError as exc:
+            logger.warning(f"OpenRouter reply for {schema.__name__} did not validate: {type(exc).__name__}")
+            return None
 
     usage = body.get("usage") or {}
     raw_cost = usage.get("cost")
