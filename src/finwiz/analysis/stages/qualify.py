@@ -63,12 +63,29 @@ class _QualitativeInsightsRaw(BaseModel):
     silently rather than triggering a retry loop.
     """
 
-    investment_synthesis: InvestmentSynthesis | None = Field(default=None)
-    sec_insights: SecAnalysisInsights | None = Field(default=None)
-    fundamental_context: FundamentalContextInsights | None = Field(default=None)
-    technical_strategy: TechnicalStrategyInsights | None = Field(default=None)
-    contextual_risks: ContextualRiskInsights | None = Field(default=None)
-    ai_confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    investment_synthesis: InvestmentSynthesis | None = Field(default=None, description="Synthèse d'investissement et recommandation.")
+    sec_insights: SecAnalysisInsights | None = Field(
+        default=None,
+        description="Modèle économique, avantages, risques et initiatives du holding.",
+    )
+    fundamental_context: FundamentalContextInsights | None = Field(
+        default=None,
+        description="Contexte sectoriel, moteurs de croissance, positionnement, direction.",
+    )
+    technical_strategy: TechnicalStrategyInsights | None = Field(
+        default=None,
+        description="Lecture technique et plan d'entrée/sortie.",
+    )
+    contextual_risks: ContextualRiskInsights | None = Field(
+        default=None,
+        description="Risques réglementaires, géopolitiques, concurrentiels, opérationnels et scénarios de stress.",
+    )
+    ai_confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Confiance globale entre 0 et 1, fondée sur la couverture du FACT PACK et de la RECHERCHE STRATÉGIQUE.",
+    )
 
     model_config = ConfigDict(str_strip_whitespace=True, extra="ignore")
 
