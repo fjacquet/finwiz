@@ -108,6 +108,67 @@ def to_rows(pack: FactPack) -> list[Row]:
     return _equity_rows(details)
 
 
+# Rows below this length are kept whole; longer values are prose (a business
+# summary, a protocol description) that gets previewed rather than dropped.
+_RESEARCH_FACTS_SHORT_MAX_CHARS = 300
+
+# A long prose row is previewed to this many characters, on a word boundary,
+# before the research prompts ever see it -- so a hard cut lands between
+# words rather than mid-word.
+_RESEARCH_FACTS_PROSE_PREVIEW_CHARS = 600
+
+
+def _preview_on_word_boundary(text: str, limit: int) -> str:
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    boundary = cut.rfind(" ")
+    if boundary > 0:
+        cut = cut[:boundary]
+    return cut.rstrip() + "…"
+
+
+def to_research_facts(pack: FactPack, max_chars: int) -> str:
+    """The fact pack for the SWOT/Porter research prompts, budgeted by importance.
+
+    ``to_prompt_block`` is read in full by the qualitative crew, so it keeps
+    row order as-is. This renderer feeds a hard-capped research prompt instead,
+    where a tail cut would silently drop whichever facts the pack happens to
+    list last -- for an equity pack, that is the leadership row and every
+    dated event, under the long business summary. So rows are ranked before
+    truncation ever runs: list-valued rows (recent events, fund holdings, ...)
+    first, then short scalar facts, then long prose (business summary,
+    protocol description, ...) previewed on a word boundary. Only if the
+    assembled block still exceeds ``max_chars`` does a truncation land, and it
+    lands on a line boundary with an explicit marker, never mid-word.
+    """
+    header = f"📋 FACT PACK (sources structurées, fraîcheur : {pack.freshness}, confidence : {pack.confidence:.2f})"
+    rows = to_rows(pack)
+    list_rows = [(label, value) for label, value in rows if isinstance(value, list)]
+    short_rows = [(label, value) for label, value in rows if isinstance(value, str) and len(value) <= _RESEARCH_FACTS_SHORT_MAX_CHARS]
+    long_rows = [(label, value) for label, value in rows if isinstance(value, str) and len(value) > _RESEARCH_FACTS_SHORT_MAX_CHARS]
+
+    lines = [header]
+    for label, value in (*list_rows, *short_rows):
+        if isinstance(value, list):
+            lines.append(f"- {label} :")
+            lines.extend(f"  - {item}" for item in value)
+        else:
+            lines.append(f"- {label} : {value}")
+    for label, value in long_rows:
+        lines.append(f"- {label} : {_preview_on_word_boundary(value, _RESEARCH_FACTS_PROSE_PREVIEW_CHARS)}")
+
+    block = "\n".join(lines)
+    if len(block) <= max_chars:
+        return block
+    cut = block[:max_chars]
+    boundary = cut.rfind("\n")
+    if boundary > 0:
+        cut = cut[:boundary]
+    return cut + "\n- (suite tronquée)"
+
+
 def to_prompt_block(pack: FactPack) -> str:
     """The fact pack as one block for the qualitative prompt.
 

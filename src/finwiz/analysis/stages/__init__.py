@@ -29,9 +29,11 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# The fact pack rendered for the SWOT/Porter prompts; capped so a long fund
-# holdings list cannot crowd out the research question.
-_FACTS_MAX_CHARS = 1500
+# The fact pack rendered for the SWOT/Porter prompts. to_research_facts ranks
+# rows (lists and short facts before long prose) before this cap ever cuts, so
+# raising it further only buys more prose preview, not more of the facts that
+# matter -- 2000 is enough for a full equity pack's events and leadership.
+_FACTS_MAX_CHARS = 2000
 
 
 def run_pipeline(
@@ -93,13 +95,13 @@ def run_pipeline(
     # Phase 2d: Strategic research (SWOT/Porter) for every asset class, before the
     # crew so the qualitative prompt can carry it ({strategic_block}). Grounded by
     # the fact pack. Non-fatal: None means "no evidence", and the crew prompt says so.
-    from finwiz.analysis.fact_pack.render import to_prompt_block as fact_pack_to_prompt_block
+    from finwiz.analysis.fact_pack.render import to_research_facts
     from finwiz.analysis.stages.qualify import _safe_strategic
 
     sector = str(raw_data.get("sector") or raw_data.get("Sector") or "")
     industry = str(raw_data.get("industry") or raw_data.get("Industry") or "")
     description = str(raw_data.get("longBusinessSummary") or raw_data.get("description") or raw_data.get("company_description") or "")
-    facts = fact_pack_to_prompt_block(fpr.payload)[:_FACTS_MAX_CHARS]
+    facts = to_research_facts(fpr.payload, _FACTS_MAX_CHARS)
     strategic = _safe_strategic(ctx.ticker, sector, industry, description, asset_class=ctx.asset_class, facts=facts)
     stage_ctx.extras["strategic"] = strategic
 

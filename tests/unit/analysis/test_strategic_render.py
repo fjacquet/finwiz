@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from finwiz.analysis.strategic_render import RATIONALE_PREVIEW_CHARS, STRATEGIC_BLOCK_MAX_CHARS, UNAVAILABLE, to_prompt_block
-from finwiz.schemas.hybrid_analysis.strategic import FiveForcesAnalysis, ForceRating, StrategicAnalysis, SwotAnalysis
+from finwiz.analysis.strategic_render import BULLET_PREVIEW_CHARS, PROSE_PREVIEW_CHARS, RATIONALE_PREVIEW_CHARS, STRATEGIC_BLOCK_MAX_CHARS, UNAVAILABLE, to_prompt_block
+from finwiz.schemas.hybrid_analysis.strategic import MAX_BULLETS_SWOT, FiveForcesAnalysis, ForceRating, StrategicAnalysis, SwotAnalysis
 
 _DATE = "20 septembre 2026"
 
@@ -66,3 +66,49 @@ def test_missing_framework_renders_non_disponible() -> None:
 def test_empty_swot_lists_render_a_dash() -> None:
     empty = StrategicAnalysis(swot=SwotAnalysis(), five_forces=None)
     assert "- Forces : —" in to_prompt_block(empty, _DATE)
+
+
+def _maximal() -> StrategicAnalysis:
+    """Schema-legal content at every field's own maximum -- not the block cap.
+
+    A SWOT this size alone renders past the old 2000-char block cap, which
+    used to tail-cut the whole Porter section away. Per-item previews must
+    keep both frameworks intact instead.
+    """
+
+    def bullets() -> list[str]:
+        return [f"{i} " + "x" * 198 for i in range(MAX_BULLETS_SWOT)]
+
+    swot = SwotAnalysis(
+        strengths=bullets(),
+        weaknesses=bullets(),
+        opportunities=bullets(),
+        threats=bullets(),
+        strategic_assessment="s" * 400,
+        strategic_score=0.7,
+        confidence=0.8,
+    )
+    rationale = "r" * 250
+    porter = FiveForcesAnalysis(
+        threat_of_new_entrants=ForceRating(intensity="LOW", rationale=rationale),
+        bargaining_power_suppliers=ForceRating(intensity="MEDIUM", rationale=rationale),
+        bargaining_power_customers=ForceRating(intensity="HIGH", rationale=rationale),
+        threat_of_substitutes=ForceRating(intensity="LOW", rationale=rationale),
+        competitive_rivalry=ForceRating(intensity="HIGH", rationale=rationale),
+        competitive_position_summary="p" * 400,
+        strategic_score=0.65,
+        confidence=0.75,
+    )
+    return StrategicAnalysis(swot=swot, five_forces=porter)
+
+
+def test_maximal_legal_content_keeps_both_frameworks() -> None:
+    block = to_prompt_block(_maximal(), _DATE)
+    assert "Porter" in block
+    assert "- Position :" in block
+    for line in block.splitlines():
+        if line.startswith(("- Forces :", "- Faiblesses :", "- Opportunités :", "- Menaces :")):
+            for bullet in line.split(" : ", 1)[1].split(" | "):
+                assert len(bullet) <= BULLET_PREVIEW_CHARS + 1
+    assert len(block) <= STRATEGIC_BLOCK_MAX_CHARS
+    assert PROSE_PREVIEW_CHARS < 400  # the schema's own max_prose_chars is still bigger than the preview

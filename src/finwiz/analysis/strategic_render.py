@@ -2,16 +2,19 @@
 
 One renderer owns the wording, like ``analysis/fact_pack/render.py`` does for
 the fact pack, so the crew prompt cannot drift from what the research
-produced. The block is capped so a verbose model cannot push the per-holding
-data out of the model's attention or past the cache budget.
+produced. Every bullet, rationale and prose field is previewed to its own
+budget so a verbose model never crowds out either framework; the block-level
+cap below is a backstop that a schema-legal response should never reach.
 """
 
 from __future__ import annotations
 
 from finwiz.schemas.hybrid_analysis.strategic import MAX_BULLETS_SWOT, FiveForcesAnalysis, ForceRating, StrategicAnalysis, SwotAnalysis
 
-STRATEGIC_BLOCK_MAX_CHARS = 2000
+STRATEGIC_BLOCK_MAX_CHARS = 4000
 RATIONALE_PREVIEW_CHARS = 160
+BULLET_PREVIEW_CHARS = 120
+PROSE_PREVIEW_CHARS = 300
 UNAVAILABLE = "Recherche stratégique non disponible."
 
 _FORCE_LABELS: tuple[tuple[str, str], ...] = (
@@ -24,7 +27,7 @@ _FORCE_LABELS: tuple[tuple[str, str], ...] = (
 
 
 def _bullets(items: list[str]) -> str:
-    kept = [item.strip() for item in items[:MAX_BULLETS_SWOT] if item and item.strip()]
+    kept = [_preview(item.strip(), BULLET_PREVIEW_CHARS) for item in items[:MAX_BULLETS_SWOT] if item and item.strip()]
     return " | ".join(kept) if kept else "—"
 
 
@@ -42,7 +45,7 @@ def _swot_lines(swot: SwotAnalysis | None) -> list[str]:
         f"- Faiblesses : {_bullets(swot.weaknesses)}",
         f"- Opportunités : {_bullets(swot.opportunities)}",
         f"- Menaces : {_bullets(swot.threats)}",
-        f"- Synthèse : {_preview(swot.strategic_assessment, 400) or '—'}",
+        f"- Synthèse : {_preview(swot.strategic_assessment, PROSE_PREVIEW_CHARS) or '—'}",
     ]
 
 
@@ -55,7 +58,7 @@ def _porter_lines(porter: FiveForcesAnalysis | None) -> list[str]:
         return ["Porter : non disponible"]
     lines = ["Porter"]
     lines.extend(_force_line(label, getattr(porter, attr)) for attr, label in _FORCE_LABELS)
-    lines.append(f"- Position : {_preview(porter.competitive_position_summary, 400) or '—'}")
+    lines.append(f"- Position : {_preview(porter.competitive_position_summary, PROSE_PREVIEW_CHARS) or '—'}")
     return lines
 
 
