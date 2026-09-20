@@ -50,6 +50,38 @@ class CryptoAnalyzer(AssetAnalyzer):
         self.logger = logger
         self.thresholds = get_thresholds()  # Default thresholds
 
+    def _resolve_component(
+        self,
+        data: dict[str, Any],
+        field: str,
+        *,
+        weight: float,
+        score_fn: Any,
+        details: dict[str, Any],
+        components: list[tuple[str, float, float]],
+        excluded: list[str],
+        component_name: str,
+        score_key: str,
+    ) -> None:
+        """Resolve one fundamental component: extract, track, score-or-exclude.
+
+        Shared by the market_cap/volume/age branches of calculate_fundamental_score
+        (supply stays inline — it reads two source fields, not one). default=None
+        on the tracking call: _track_calculated_field records "calculated" for a
+        resolved value and "defaulted" for a None one — an honest classification,
+        without reintroducing a numeric default (that's what _optional_float's job
+        is to avoid; this only observes its outcome).
+        """
+        value = _optional_float(data.get(field))
+        self._track_calculated_field(field, value, None)
+        details[field] = value
+        if value is None:
+            details[score_key] = None
+            excluded.append(component_name)
+        else:
+            details[score_key] = score_fn(value)
+            components.append((component_name, weight, details[score_key]))
+
     def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
         """
         Calculate fundamental score for cryptocurrencies.
@@ -70,35 +102,35 @@ class CryptoAnalyzer(AssetAnalyzer):
         components: list[tuple[str, float, float]] = []
         excluded: list[str] = []
 
-        market_cap = _optional_float(data.get("market_cap"))
-        details["market_cap"] = market_cap
-        if market_cap is None:
-            details["market_cap_score"] = None
-            excluded.append("market_cap")
-        else:
-            details["market_cap_score"] = self._score_market_cap(market_cap)
-            components.append(("market_cap", 0.40, details["market_cap_score"]))
-
-        volume_24h = _optional_float(data.get("volume_24h"))
-        details["volume_24h"] = volume_24h
-        if volume_24h is None:
-            details["volume_score"] = None
-            excluded.append("volume")
-        else:
-            details["volume_score"] = self._score_volume(volume_24h)
-            components.append(("volume", 0.30, details["volume_score"]))
-
-        age_years = _optional_float(data.get("age_years"))
-        details["age_years"] = age_years
-        if age_years is None:
-            details["age_score"] = None
-            excluded.append("age")
-        else:
-            details["age_score"] = self._score_age(age_years)
-            components.append(("age", 0.20, details["age_score"]))
+        self._resolve_component(
+            data,
+            "market_cap",
+            weight=0.40,
+            score_fn=self._score_market_cap,
+            details=details,
+            components=components,
+            excluded=excluded,
+            component_name="market_cap",
+            score_key="market_cap_score",
+        )
+        self._resolve_component(
+            data,
+            "volume_24h",
+            weight=0.30,
+            score_fn=self._score_volume,
+            details=details,
+            components=components,
+            excluded=excluded,
+            component_name="volume",
+            score_key="volume_score",
+        )
+        self._resolve_component(
+            data, "age_years", weight=0.20, score_fn=self._score_age, details=details, components=components, excluded=excluded, component_name="age", score_key="age_score"
+        )
 
         circulating_supply = _optional_float(data.get("circulating_supply"))
         max_supply = _optional_float(data.get("max_supply"))
+        self._track_calculated_field("circulating_supply", circulating_supply, None)
         details["circulating_supply"] = circulating_supply
         details["max_supply"] = max_supply
         if circulating_supply is None:
