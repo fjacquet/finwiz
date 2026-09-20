@@ -299,7 +299,7 @@ class ScoreResultBuilder:
         # Combined confidence
         return float(min(1.0, max(0.3, consistency_confidence * data_quality)))
 
-    def is_quality_company(self, fundamental_score: float, fundamental_details: dict[str, Any]) -> bool:
+    def is_quality_company(self, fundamental_score: float | None, fundamental_details: dict[str, Any]) -> bool:
         """
         Detect if company qualifies as "quality" for adaptive weights.
 
@@ -310,14 +310,16 @@ class ScoreResultBuilder:
         - Strong margins (>=15%)
 
         Args:
-            fundamental_score: Overall fundamental score
+            fundamental_score: Overall fundamental score, or None if no component
+                survived (crypto only — the caller already short-circuits to False
+                in that case, but the signature should say so rather than lie)
             fundamental_details: Detailed fundamental metrics
 
         Returns:
             True if company qualifies as quality
         """
         # Require strong fundamental score first
-        if fundamental_score < 0.80:
+        if fundamental_score is None or fundamental_score < 0.80:
             return False
 
         # Stock-specific quality checks

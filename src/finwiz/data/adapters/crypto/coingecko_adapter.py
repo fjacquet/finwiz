@@ -13,9 +13,12 @@ from finwiz.tools.logger import get_logger
 
 logger = get_logger(__name__)
 
-# EnhancedCryptoAnalysisTool does not raise on an unknown symbol: it returns
-# invented numbers tagged with this marker. Treating that payload as data is
-# how every crypto holding came to be scored on a fabricated $10B market cap.
+# EnhancedCryptoAnalysisTool does not raise on an unknown symbol: it returns a
+# zeroed-out payload (market_cap: 0, etc.) tagged with this marker rather than
+# an error. This adapter checks for the marker below and discards that payload
+# as None. The old collector (now deleted) did not check for it: it treated
+# the tool's market_cap: 0 as merely "missing" and layered its own fabricated
+# $10B default on top. The $10B was the collector's, never this tool's.
 FALLBACK_MARKER = "Fallback Data"
 
 
