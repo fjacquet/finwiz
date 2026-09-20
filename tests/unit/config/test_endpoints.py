@@ -12,9 +12,6 @@ class TestEndpointDefaults:
     def test_twelve_data_base(self):
         assert endpoints.TWELVE_DATA_BASE == "https://api.twelvedata.com"
 
-    def test_perplexity_search(self):
-        assert endpoints.PERPLEXITY_SEARCH == "https://api.perplexity.ai/search"
-
     def test_openai_base(self):
         assert endpoints.OPENAI_BASE == "https://api.openai.com/v1"
 

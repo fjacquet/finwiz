@@ -14,11 +14,10 @@ from __future__ import annotations
 import os
 from typing import Any, Literal
 
-from crewai_custom_tools import PerplexitySearchTool
 from crewai_custom_tools.core.results import ToolResultError, ok, parse_tool_result
 
 from finwiz.infrastructure.research.openrouter_structured import ResearchResult
-from finwiz.infrastructure.resilience.research_retry import research_with_retry
+from finwiz.infrastructure.resilience.research_retry import has_openrouter_key, has_perplexity_key, research_with_retry
 from finwiz.schemas.perplexity import (
     NewsDigest,
     PerplexityConfig,
@@ -60,16 +59,13 @@ class PerplexityAnalysisIntegration:
 
     def __init__(self, config: PerplexityConfig | None = None) -> None:
         """Initialize the integration wrapper."""
-        try:
-            self.perplexity_tool = PerplexitySearchTool()
-        except ValueError:
-            self.perplexity_tool = None  # type: ignore[assignment]
-
         self.config = config or self._create_default_config()
 
-        # Available when the primary research provider has a key, or when the
-        # Perplexity fallback tool could be constructed.
-        self._api_available = bool(os.getenv("OPENROUTER_API_KEY")) or self.perplexity_tool is not None
+        # Available when either research provider has a key configured -- the
+        # same key-presence rule research_with_retry itself uses to decide
+        # whether to call OpenRouter first or go straight to the Perplexity
+        # fallback. No tool construction needed just to probe for a key.
+        self._api_available = has_openrouter_key() or has_perplexity_key()
         if not self._api_available:
             logger.warning("Neither OPENROUTER_API_KEY nor PERPLEXITY_API_KEY/PPLX_API_KEY found; news research will be disabled")
 
@@ -232,17 +228,6 @@ class PerplexityAnalysisIntegration:
             seen.add(cite.url)
             out.append({"title": cite.title or cite.url, "url": cite.url, "snippet": cite.content})
         return out[: max(1, max_results)]
-
-    def _extract_ticker_from_query(self, query: str) -> str | None:
-        """Extract ticker symbol from query for logging context."""
-        import re
-
-        # Look for ticker-like patterns (1-5 uppercase letters, possibly with numbers/dashes)
-        ticker_match = re.search(r"\b([A-Z]{1,5}(?:-[A-Z]{1,3})?)\b", query)
-        if ticker_match:
-            return ticker_match.group(1)
-
-        return None
 
     def _classify_error(self, error: Exception) -> str:
         """Classify error type for structured logging."""

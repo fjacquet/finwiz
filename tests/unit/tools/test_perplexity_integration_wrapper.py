@@ -440,23 +440,6 @@ class TestPerplexityIntegrationWrapper:
         status = integration._extract_http_status(error_no_status)
         assert status is None
 
-    def test_should_extract_ticker_from_query(self):
-        """Test ticker extraction from query strings."""
-        # Arrange
-        integration = PerplexityAnalysisIntegration(self.config)
-
-        # Test simple ticker
-        ticker = integration._extract_ticker_from_query("AAPL financial news")
-        assert ticker == "AAPL"
-
-        # Test ticker with dash
-        ticker = integration._extract_ticker_from_query("BRK-A earnings report")
-        assert ticker == "BRK-A"
-
-        # Test no ticker
-        ticker = integration._extract_ticker_from_query("general market news")
-        assert ticker is None
-
 
 class TestSonarArticleValidation:
     """Test SonarArticle model validation and serialization."""

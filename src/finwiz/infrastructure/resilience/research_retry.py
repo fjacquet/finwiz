@@ -77,11 +77,18 @@ async def _throttle_slot() -> AsyncIterator[None]:
         throttle.release()
 
 
-def _has_openrouter_key() -> bool:
+def has_openrouter_key() -> bool:
+    """Whether OPENROUTER_API_KEY is configured.
+
+    Public: callers that only need to know whether research can run at all
+    (e.g. the sentiment wrapper's availability check) use this instead of
+    constructing a client/tool just to probe for a key.
+    """
     return bool(os.getenv("OPENROUTER_API_KEY"))
 
 
-def _has_perplexity_key() -> bool:
+def has_perplexity_key() -> bool:
+    """Whether a Perplexity key (either env var) is configured. See :func:`has_openrouter_key`."""
     return bool(os.getenv("PERPLEXITY_API_KEY") or os.getenv("PPLX_API_KEY"))
 
 
@@ -102,7 +109,7 @@ def _record_cost(kind: str, result: ResearchResult[Any]) -> None:
 async def _perplexity_fallback[T: BaseModel](
     *, prompt: str, schema: type[T], system: str, search_recency_filter: str | None, timeout: float, kind: str
 ) -> ResearchResult[T] | None:
-    if not _has_perplexity_key():
+    if not has_perplexity_key():
         return None
     data = await perplexity_with_retry(prompt=prompt, schema=schema, system=system, search_recency_filter=search_recency_filter, timeout=timeout, max_attempts=1)
     if data is None:
@@ -142,7 +149,7 @@ async def research_with_retry[T: BaseModel](
     Returns:
         A :class:`ResearchResult` from whichever provider answered, or ``None``.
     """
-    if not _has_openrouter_key():
+    if not has_openrouter_key():
         logger.warning(f"research_{kind}: OPENROUTER_API_KEY not configured; trying the Perplexity fallback directly")
         return await _perplexity_fallback(prompt=prompt, schema=schema, system=system, search_recency_filter=search_recency_filter, timeout=timeout, kind=kind)
 

@@ -13,8 +13,8 @@ TWELVE_DATA_BASE: str = os.getenv("TD_BASE_URL", "https://api.twelvedata.com")
 # --- AI / Search ---
 # Perplexity's chat-completions endpoint (PPLX_BASE_URL) is now read directly by
 # crewai_custom_tools at import time; finwiz no longer has a production consumer
-# for it, so no local PERPLEXITY_CHAT constant is kept here.
-PERPLEXITY_SEARCH: str = os.getenv("PPLX_SEARCH_URL", "https://api.perplexity.ai/search")
+# for it, so no local PERPLEXITY_CHAT constant is kept here. PERPLEXITY_SEARCH
+# (PPLX_SEARCH_URL) was removed the same way: no production consumer either.
 # OpenRouter chat completions, used directly (httpx) by
 # infrastructure/research/openrouter_structured.py for web-grounded structured
 # research. RESEARCH_BASE_URL lets tests and proxies redirect it.

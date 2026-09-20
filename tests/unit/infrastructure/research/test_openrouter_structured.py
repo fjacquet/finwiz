@@ -128,12 +128,16 @@ async def test_validation_error_logs_field_paths_not_values(mocker, caplog):
 
     _install(mocker, lambda r: httpx.Response(200, json=_ok_body('{"strategic_score": "top-secret-value-should-not-leak"}')))
 
-    with caplog.at_level("WARNING"):
+    with caplog.at_level("WARNING", logger="finwiz.infrastructure.research.openrouter_structured"):
         result = await openrouter_structured(prompt="p", schema=_Scored, system="s", api_key="k")
 
     assert result is None
-    assert "strategic_score" in caplog.text
-    assert "top-secret-value-should-not-leak" not in caplog.text
+    # Scoped to this module's own logger: a process-wide pydantic patch some
+    # other test may have installed (crewai_json_patch) logs on its own
+    # logger and is not this module's concern.
+    our_text = "\n".join(r.getMessage() for r in caplog.records if r.name == "finwiz.infrastructure.research.openrouter_structured")
+    assert "strategic_score" in our_text
+    assert "top-secret-value-should-not-leak" not in our_text
 
 
 async def test_non_200_returns_none(mocker):
