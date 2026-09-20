@@ -13,7 +13,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
-from finwiz.reporting.sections.common import grade_css_class
+from finwiz.reporting.sections.common import OPEN_BY_DEFAULT_GRADES, grade_css_class, grade_sort_key, plural
 from finwiz.reporting.sections.factpack import _is_safe_url
 
 _REC_BADGE: dict[str, str] = {
@@ -184,22 +184,31 @@ def generate_holdings_insight_cards(insights: dict[str, dict] | None, holdings: 
         if t:
             grade_by_ticker[str(t)] = str(getattr(h, "grade", "") or "")
 
-    cards: list[str] = []
+    # Bucket by grade, worst first, so the reader meets the problem positions
+    # before the compounders; only the D/F buckets start expanded.
+    buckets: dict[str, list[str]] = {}
     for ticker, data in insights.items():
         if not isinstance(data, dict):
             continue
-        grade = grade_by_ticker.get(ticker) or str(data.get("grade", "") or "")
+        grade = grade_by_ticker.get(ticker) or str(data.get("grade", "") or "") or "N/A"
         report_link = data.get("report_link")
-        cards.append(_render_card(ticker, grade, data, report_link if isinstance(report_link, str) else None))
+        buckets.setdefault(grade, []).append(_render_card(ticker, grade, data, report_link if isinstance(report_link, str) else None))
 
-    if not cards:
+    if not buckets:
         return ""
+
+    groups: list[str] = []
+    for grade in sorted(buckets, key=grade_sort_key):
+        cards = buckets[grade]
+        open_attr = " open" if grade in OPEN_BY_DEFAULT_GRADES else ""
+        summary = f"<summary>Grade {escape(grade)} · {plural(len(cards), 'position')}</summary>"
+        groups.append(f'<details class="group"{open_attr}>{summary}<div class="group-body">{"".join(cards)}</div></details>')
 
     return f"""
   <div class="section">
     <h2>Quintessence par position</h2>
-    <p class="muted">Synthèse distillée de la recherche IA approfondie (thèse, scénarios, moat, risques, faits vérifiés). Cliquez pour déplier ; l'analyse complète reste dans le rapport détaillé de chaque position.</p>
-    {"".join(cards)}
+    <p class="muted">Synthèse distillée de la recherche IA approfondie (thèse, scénarios, moat, risques, faits vérifiés), groupée par grade — les moins bons d'abord. Cliquez pour déplier ; l'analyse complète reste dans le rapport détaillé de chaque position.</p>
+    {"".join(groups)}
   </div>
     """
 

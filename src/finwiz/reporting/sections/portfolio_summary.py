@@ -6,7 +6,8 @@ from html import escape
 from typing import Any
 
 from finwiz.reporting.markdown_fragment import render_markdown_inline
-from finwiz.schemas.portfolio_review import PortfolioReview
+from finwiz.reporting.sections.common import AssetGroup, group_by_asset_class, plural
+from finwiz.schemas.portfolio_review import HoldingDecision, PortfolioReview
 
 
 def _fmt_eur(value: float | None) -> str:
@@ -65,23 +66,10 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
         else ""
     )
 
-    # Sort by weight desc so the largest exposure leads.
-    rows = sorted(weighted, key=lambda h: h.weight or 0.0, reverse=True)
-    alloc_rows = []
-    for h in rows:
-        pct = (h.weight or 0.0) * 100
-        name_safe = escape(h.name or "Unknown")
-        ticker_safe = escape(h.ticker or "—")
-        alloc_rows.append(
-            f"""
-      <div class="alloc-row">
-        <div class="alloc-label"><strong>{ticker_safe}</strong> <span class="muted small">{name_safe}</span></div>
-        <div class="weight-bar"><div class="weight-bar-fill" style="width: {pct:.1f}%"></div></div>
-        <div class="alloc-pct num">{pct:.1f}%</div>
-        <div class="alloc-value num">{_fmt_eur(h.eur_value)}</div>
-      </div>"""
-        )
-    alloc_html = "".join(alloc_rows)
+    # One fold per asset class, largest class first; rows by weight desc inside.
+    # The collapsed view is itself the by-class digest: label, count, share, EUR.
+    groups = sorted(group_by_asset_class(weighted), key=_group_weight, reverse=True)
+    groups_html = "".join(_alloc_group(g) for g in groups)
 
     return f"""
   <div class="section">
@@ -93,12 +81,48 @@ def generate_allocation_section(portfolio_review: PortfolioReview) -> str:
       {unpriced_note}
     </div>
 
-    <h3>📊 Répartition par position</h3>
-    <div class="alloc-list">
-      {alloc_html}
-    </div>
+    <h3>📊 Répartition par classe d'actifs et par position</h3>
+    {groups_html}
   </div>
 """
+
+
+def _group_weight(group: AssetGroup) -> float:
+    return sum(h.weight or 0.0 for h in group.items)
+
+
+def _group_eur(group: AssetGroup) -> float | None:
+    """Class subtotal in EUR, or ``None`` when no member carries a value (never ``0 €``)."""
+    values = [h.eur_value for h in group.items if h.eur_value is not None]
+    return sum(values) if values else None
+
+
+def _alloc_row(h: HoldingDecision) -> str:
+    pct = (h.weight or 0.0) * 100
+    name_safe = escape(h.name or "Unknown")
+    ticker_safe = escape(h.ticker or "—")
+    return f"""
+      <div class="alloc-row">
+        <div class="alloc-label"><strong>{ticker_safe}</strong> <span class="muted small">{name_safe}</span></div>
+        <div class="weight-bar"><div class="weight-bar-fill" style="width: {pct:.1f}%"></div></div>
+        <div class="alloc-pct num">{pct:.1f}%</div>
+        <div class="alloc-value num">{_fmt_eur(h.eur_value)}</div>
+      </div>"""
+
+
+def _alloc_group(group: AssetGroup) -> str:
+    """One closed ``<details class="group">`` per asset class with its subtotal in the summary."""
+    pct = _group_weight(group) * 100
+    rows = sorted(group.items, key=lambda h: h.weight or 0.0, reverse=True)
+    summary = (
+        f'<summary><span class="group-label">{escape(group.label)}</span>'
+        f'<span class="muted">{plural(len(rows), "position")}</span>'
+        f'<span class="weight-bar"><span class="weight-bar-fill" style="width: {pct:.1f}%"></span></span>'
+        f'<span class="alloc-pct num">{pct:.1f}%</span>'
+        f'<span class="alloc-value num">{_fmt_eur(_group_eur(group))}</span></summary>'
+    )
+    body = "".join(_alloc_row(h) for h in rows)
+    return f'<details class="group">{summary}<div class="group-body"><div class="alloc-list">{body}</div></div></details>'
 
 
 def generate_strategic_posture_section(posture: dict | None) -> str:

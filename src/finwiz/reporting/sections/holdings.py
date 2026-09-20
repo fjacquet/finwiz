@@ -5,6 +5,7 @@ from __future__ import annotations
 from html import escape
 from typing import Any
 
+from finwiz.reporting.sections.common import AssetGroup, group_by_asset_class, plural
 from finwiz.reporting.sections.factpack import _fact_pack_provenance_footer
 from finwiz.reporting.sections.portfolio_summary import _fmt_eur
 from finwiz.schemas.portfolio_review import HoldingDecision
@@ -19,21 +20,27 @@ def _weight_cell(holding: HoldingDecision) -> str:
     return f'<td class="num"><div class="weight-bar weight-bar-sm"><div class="weight-bar-fill" style="width: {pct:.1f}%"></div></div><small>{pct:.1f}%</small></td>'
 
 
-def _get_recommendation_badge(grade: str, recommended_action: str | None) -> str:
-    """Get recommendation badge HTML based on grade."""
+def _recommendation_for(grade: str, recommended_action: str | None) -> str:
+    """``"BUY"`` / ``"HOLD"`` / ``"SELL"`` from the grade, falling back to the action text."""
     if grade in ["A+", "A"]:
-        return '<span class="badge badge-buy">BUY</span>'
+        return "BUY"
     if grade in ["D", "F", "N/A"]:
-        return '<span class="badge badge-sell">SELL</span>'
+        return "SELL"
     if grade in ["B+", "B", "C+", "C"]:
-        return '<span class="badge badge-hold">HOLD</span>'
+        return "HOLD"
 
     # Fallback to recommended_action
     if recommended_action and "BUY" in recommended_action:
-        return '<span class="badge badge-buy">BUY</span>'
+        return "BUY"
     if recommended_action and "SELL" in recommended_action:
-        return '<span class="badge badge-sell">SELL</span>'
-    return '<span class="badge badge-hold">HOLD</span>'
+        return "SELL"
+    return "HOLD"
+
+
+def _get_recommendation_badge(grade: str, recommended_action: str | None) -> str:
+    """Get recommendation badge HTML based on grade."""
+    rec = _recommendation_for(grade, recommended_action)
+    return f'<span class="badge badge-{rec.lower()}">{rec}</span>'
 
 
 def _get_deep_analysis_link(ticker: str, asset_class: str) -> str:
@@ -161,20 +168,7 @@ def _render_holding_row(holding: HoldingDecision) -> str:
         </tr>"""
 
 
-def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
-    """Generate detailed holdings analysis."""
-    sorted_holdings = sorted(holdings, key=lambda h: (h.grade or "Z", -(h.composite_score or 0)))
-
-    holdings_rows = []
-    for holding in sorted_holdings:
-        holdings_rows.append(_render_holding_row(holding))
-
-    holdings_html = "".join(holdings_rows)
-
-    return f"""
-  <div class="section">
-    <h2>Detailed Holdings Analysis</h2>
-
+_HOLDINGS_TABLE_HEAD = """
     <table>
       <thead>
         <tr>
@@ -190,12 +184,53 @@ def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
           <th>Niveau de vente</th>
         </tr>
       </thead>
-      <tbody>
-        {holdings_html}
-      </tbody>
-    </table>
+      <tbody>"""
 
-    <p class="small muted">Displaying all positions sorted by grade and score.</p>
+_HOLDINGS_TABLE_TAIL = """
+      </tbody>
+    </table>"""
+
+
+def _holdings_table(holdings: list[HoldingDecision]) -> str:
+    """The holdings table body, sorted by grade then score desc."""
+    sorted_holdings = sorted(holdings, key=lambda h: (h.grade or "Z", -(h.composite_score or 0)))
+    rows = "".join(_render_holding_row(h) for h in sorted_holdings)
+    return f"{_HOLDINGS_TABLE_HEAD}{rows}{_HOLDINGS_TABLE_TAIL}"
+
+
+def _holdings_group(group: AssetGroup) -> str:
+    """One closed ``<details class="group">`` per asset class; the summary carries the decision counts."""
+    counts = {"SELL": 0, "BUY": 0, "HOLD": 0}
+    for h in group.items:
+        counts[_recommendation_for(h.grade or "N/A", h.recommended_action)] += 1
+    summary = (
+        f'<summary><span class="group-label">{escape(group.label)}</span>'
+        f'<span class="muted">{plural(len(group.items), "position")}</span>'
+        f'<span class="badge badge-sell">{counts["SELL"]} SELL</span>'
+        f'<span class="badge badge-buy">{counts["BUY"]} BUY</span>'
+        f'<span class="badge badge-hold">{counts["HOLD"]} HOLD</span></summary>'
+    )
+    return f'<details class="group">{summary}<div class="group-body">{_holdings_table(group.items)}</div></details>'
+
+
+def generate_holdings_analysis(holdings: list[HoldingDecision]) -> str:
+    """Generate detailed holdings analysis, one fold per asset class.
+
+    An empty portfolio still renders the (empty) table so the section reads as
+    "nothing here" rather than as a missing section.
+    """
+    if not holdings:
+        body = _holdings_table([])
+        note = "Aucune position."
+    else:
+        body = "".join(_holdings_group(g) for g in group_by_asset_class(holdings))
+        note = "Positions groupées par classe d'actifs, triées par grade puis score."
+
+    return f"""
+  <div class="section">
+    <h2>Detailed Holdings Analysis</h2>
+    {body}
+    <p class="small muted">{note}</p>
   </div>
         """
 

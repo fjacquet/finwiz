@@ -24,6 +24,32 @@ _BANNER_CSS_CLASS: dict[str, str] = {
 }
 
 
+_SECTION_OPEN = '<div class="section">'
+
+# The report's only JavaScript: the two TOC buttons that open/close every
+# <details>. Everything else (folds, anchors, sticky nav) is plain HTML/CSS.
+_EXPAND_COLLAPSE_SCRIPT = """<script>
+  (function () {
+    function setAll(open) { document.querySelectorAll('details').forEach(function (d) { d.open = open; }); }
+    document.getElementById('toc-expand').addEventListener('click', function () { setAll(true); });
+    document.getElementById('toc-collapse').addEventListener('click', function () { setAll(false); });
+  })();
+  </script>"""
+
+
+def _with_anchor(html: str, anchor: str) -> str:
+    """Give a section fragment its TOC anchor by tagging its first ``.section`` div.
+
+    Generators own their markup (several have distinct empty/full branches);
+    tagging here keeps the anchor id in one place — the registry — instead of
+    threading it through every generator signature and branch. Blank input is
+    returned untouched so the registry can drop it.
+    """
+    if not html.strip():
+        return html
+    return html.replace(_SECTION_OPEN, f'<div class="section" id="{anchor}">', 1)
+
+
 def render_trust_banner(banner: TrustBanner) -> str:
     """Render the trust banner verbatim from the TrustBanner Pydantic model.
 
@@ -263,6 +289,31 @@ class PythonReportGenerator:
         cost_header = self._format_cost_header(cost_summary)
         cost_footer = self._format_cost_footer(cost_summary)
 
+        # Section registry: decision-first order, one anchor per section. Empty
+        # fragments (a generator returning "" for missing data) drop out of both
+        # the body and the table of contents, so the TOC never links to nothing.
+        sections: list[tuple[str, str, str]] = [
+            ("resume", "Résumé", self._generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)),
+            ("allocation", "Allocation", self._generate_allocation_section(portfolio_review)),
+            ("posture", "Posture stratégique", self._generate_strategic_posture_section(portfolio_strategic_posture)),
+            ("recommandations", "Recommandations", self._generate_recommendations(portfolio_stats, discovery_results)),
+            ("shortlist", "Opportunités ciblées", self._generate_gap_fill_shortlist_section(opportunity_shortlist)),
+            ("discovery", "Découvertes", self._generate_discovery_section(discovery_results)),
+            ("holdings", "Positions", self._generate_holdings_analysis(portfolio_review.holdings)),
+            ("overview", "Vue d'ensemble", self._generate_portfolio_overview(portfolio_review, portfolio_stats)),
+            ("macro", "Macro", self._generate_macro_dashboard_section(macro_snapshot)),
+            ("stress", "Stress", self._generate_stress_test_section(stress_test_results)),
+            ("calendrier", "Calendrier", self._generate_economic_calendar_section(economic_calendar)),
+            ("quintessence", "Quintessence", self._generate_holdings_insight_cards(holdings_insights, portfolio_review.holdings)),
+            ("sentiment", "Sentiment", self._generate_sentiment_section(holdings_sentiment)),
+            ("deep-analysis", "Analyse approfondie", self._generate_deep_analysis_section(deep_analysis_results)),
+            ("performance", "Performance", self._generate_performance_metrics(deep_analysis_results)),
+            ("cout", "Coût IA", self._generate_cost_summary_section(cost_summary)),
+        ]
+        rendered = [(anchor, label, _with_anchor(html, anchor)) for anchor, label, html in sections if html.strip()]
+        toc_links = "".join(f'<a href="#{anchor}">{label}</a>' for anchor, label, _ in rendered)
+        body = "\n\n  ".join(html for _, _, html in rendered)
+
         # Build HTML content
         html = f"""<!doctype html>
 <html lang="fr">
@@ -281,42 +332,21 @@ class PythonReportGenerator:
     <div class="muted">{cost_header}</div>
   </header>
 
-  {self._generate_executive_summary(portfolio_stats, trust_banner_html=trust_banner_html)}
+  <nav class="toc" aria-label="Sommaire">
+    {toc_links}
+    <span class="toc-actions">
+      <button type="button" id="toc-expand" title="Déplie toutes les sections repliées — à faire avant d'imprimer">Tout déplier</button>
+      <button type="button" id="toc-collapse">Tout replier</button>
+    </span>
+  </nav>
 
-  {self._generate_allocation_section(portfolio_review)}
-
-  {self._generate_strategic_posture_section(portfolio_strategic_posture)}
-
-  {self._generate_macro_dashboard_section(macro_snapshot)}
-
-  {self._generate_portfolio_overview(portfolio_review, portfolio_stats)}
-
-  {self._generate_holdings_analysis(portfolio_review.holdings)}
-
-  {self._generate_holdings_insight_cards(holdings_insights, portfolio_review.holdings)}
-
-  {self._generate_sentiment_section(holdings_sentiment)}
-
-  {self._generate_recommendations(portfolio_stats, discovery_results)}
-
-  {self._generate_gap_fill_shortlist_section(opportunity_shortlist)}
-
-  {self._generate_discovery_section(discovery_results)}
-
-  {self._generate_deep_analysis_section(deep_analysis_results)}
-
-  {self._generate_performance_metrics(deep_analysis_results)}
-
-  {self._generate_cost_summary_section(cost_summary)}
-
-  {self._generate_stress_test_section(stress_test_results)}
-
-  {self._generate_economic_calendar_section(economic_calendar)}
+  {body}
 
   <footer>
     <p>Rapport genere par FinWiz -- Analyse Python deterministe</p>
     <p class="small">{cost_footer}</p>
   </footer>
+  {_EXPAND_COLLAPSE_SCRIPT}
 </body>
 </html>"""
 

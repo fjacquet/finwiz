@@ -99,10 +99,11 @@ class TestGenerateAllocationSection:
         # eur values present
         assert "20 120 €" in html
 
-    def test_holdings_sorted_by_weight_desc(self) -> None:
+    def test_holdings_sorted_by_weight_desc_within_class_group(self) -> None:
         html = generate_allocation_section(_weighted_review())
-        # AAPL (37.4%) must appear before MSFT (25%) which appears before BTC (7.6%).
-        assert html.index("AAPL") < html.index("MSFT") < html.index("BTC-USD")
+        # Rows are grouped by asset class (stock 72.4% > etf 20% > crypto 7.6%);
+        # inside the stock group AAPL (37.4%) precedes MSFT (25%) precedes SAP (10%).
+        assert html.index("AAPL") < html.index("MSFT") < html.index("SAP") < html.index("VWCE") < html.index("BTC-USD")
 
     def test_graceful_when_no_total_or_weights(self) -> None:
         html = generate_allocation_section(_bare_review())

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Consolidated family report folded and reordered for reading. A sticky
+  table of contents with "Tout déplier / Tout replier" (the report's only
+  script) sits under the header; sections follow a decision-first order
+  (résumé, allocation, posture, recommandations, découvertes, positions,
+  vue d'ensemble, macro, stress, calendrier, quintessence, sentiment, meta).
+  Allocation and holdings fold by asset class with subtotals / decision
+  counts in the summary line; quintessence cards bucket by grade, worst
+  first, with only D/F open; sentiment renders a portfolio digest plus a
+  compact bearish-first table with headlines folded per row and the
+  no-news tickers collapsed to one line; stress-test per-holding tables
+  fold per scenario. On the 67-holding run this cuts the collapsed page from
+  a single ~90 000 px scroll to ~10 000 px.
+
 ## [5.16.0] - 2026-09-09
 
 ### Added
