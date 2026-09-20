@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import os
+from pathlib import Path
 
 import pytest
-from dotenv import load_dotenv
+from dotenv import dotenv_values
 
 from finwiz.analysis.strategic_research import SYSTEM_FR, _swot_prompt
 from finwiz.infrastructure.research.openrouter_structured import openrouter_structured
 from finwiz.schemas.hybrid_analysis.strategic import SwotAnalysis
 
-load_dotenv()
-_KEY = os.getenv("OPENROUTER_API_KEY")
+# dotenv_values() reads the file without mutating os.environ, unlike
+# load_dotenv() -- this module is imported at COLLECTION time on every
+# default `make test` (marker deselection happens after import), so a
+# load_dotenv() here loaded the whole .env into every test's environment.
+_KEY = os.getenv("OPENROUTER_API_KEY") or dotenv_values(Path(__file__).resolve().parents[2] / ".env").get("OPENROUTER_API_KEY")
 
 pytestmark = [pytest.mark.integration, pytest.mark.skipif(not _KEY, reason="OPENROUTER_API_KEY not set")]
 
