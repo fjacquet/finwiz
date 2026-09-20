@@ -67,10 +67,12 @@
 ### Task 1: Cost tracker accepts an exact provider cost
 
 **Files:**
+
 - Modify: `src/finwiz/infrastructure/monitoring/litellm_callback.py:97-155`
 - Test: `tests/unit/infrastructure/monitoring/test_litellm_callback_cost.py`
 
 **Interfaces:**
+
 - Produces: `TokenMonitorCallback.record_usage(crew_name: str, token_usage: Any, model: str | None = None, *, cost_usd: float | None = None) -> None`. When `cost_usd` is given it is used verbatim and the crew is marked priced; when it is `None` the existing litellm lookup runs (and with `model=None` the crew is marked `cost_known=False`).
 
 - [ ] **Step 1: Write the failing tests**
@@ -188,6 +190,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 2: OpenRouter structured client
 
 **Files:**
+
 - Modify: `src/finwiz/config/endpoints.py` (add after `PERPLEXITY_SEARCH`)
 - Create: `src/finwiz/infrastructure/research/__init__.py`
 - Create: `src/finwiz/infrastructure/research/openrouter_structured.py`
@@ -196,6 +199,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 - Create: `tests/unit/infrastructure/research/test_openrouter_structured.py`
 
 **Interfaces:**
+
 - Produces:
 
 ```python
@@ -646,11 +650,13 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 3: Retry, throttle, cost recording and Perplexity fallback
 
 **Files:**
+
 - Create: `src/finwiz/infrastructure/resilience/research_retry.py`
 - Modify: `src/finwiz/infrastructure/resilience/perplexity_retry.py:1-19` (docstring first paragraph)
 - Create: `tests/unit/infrastructure/resilience/test_research_retry.py`
 
 **Interfaces:**
+
 - Consumes: `openrouter_structured`, `SearchOptions`, `ResearchResult`, `Citation` from Task 2; `perplexity_with_retry` from `perplexity_retry`; `PerplexityFallbackManager.calculate_backoff_delay(attempt, base_delay, max_delay)`; `get_token_monitor()` and `record_usage(..., cost_usd=...)` from Task 1.
 - Produces:
 
@@ -1108,10 +1114,12 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 4: Strategic research (SWOT, Porter, posture)
 
 **Files:**
+
 - Modify: `src/finwiz/analysis/strategic_research.py:1-15,24,223-238,331-337`
 - Modify: `tests/unit/analysis/test_strategic_research_retry.py`
 
 **Interfaces:**
+
 - Consumes: `research_with_retry(..., kind=...) -> ResearchResult[T] | None`.
 - Produces: unchanged public signatures of `gather_strategic_analysis`, `gather_strategic_analysis_sync`, `synthesize_portfolio_posture`, `synthesize_portfolio_posture_sync`.
 
@@ -1310,6 +1318,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 5: Fact-pack gap-fill
 
 **Files:**
+
 - Rename: `src/finwiz/analysis/fact_pack/sources/perplexity_source.py` → `research_source.py`
 - Modify: `src/finwiz/analysis/fact_pack/composer.py:11,92,99`
 - Modify: `src/finwiz/analysis/fact_pack_research.py:1-17,138-143,146-152`
@@ -1319,6 +1328,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 - Test: any test asserting the `"perplexity.gap_fill"` literal or the "Perplexity" label (`rtk grep -rn "gap_fill\|\"Perplexity\"" tests`)
 
 **Interfaces:**
+
 - Produces: `finwiz.analysis.fact_pack.sources.research_source.fetch_missing_events(ticker: str, company_name: str, sector: str | None, industry: str | None, timeout: float = 15.0) -> tuple[str, ...]` (signature unchanged); provenance literal `"research.gap_fill"`; report label `"recherche web"`.
 
 - [ ] **Step 1: Rename and update the tests**
@@ -1447,6 +1457,7 @@ def fetch_missing_events(ticker: str, company_name: str, sector: str | None, ind
 - [ ] **Step 4: Composer, report label, docstrings**
 
 `src/finwiz/analysis/fact_pack/composer.py`:
+
 - Line 11: `perplexity_source` → `research_source` in the import.
 - Lines 73-78 docstring: `Perplexity is consulted only when filings and news both left` → `Web research is consulted only when filings and news both left`.
 - Line 92: `perplexity_source.fetch_missing_events(...)` → `research_source.fetch_missing_events(...)`.
@@ -1455,6 +1466,7 @@ def fetch_missing_events(ticker: str, company_name: str, sector: str | None, ind
 `src/finwiz/reporting/sections/factpack.py:98`: `"perplexity.gap_fill": "Perplexity",` → `"research.gap_fill": "recherche web",`.
 
 `src/finwiz/analysis/fact_pack_research.py`:
+
 - Line 7: `analysis.fact_pack.sources.perplexity_source.fetch_missing_events` → `analysis.fact_pack.sources.research_source.fetch_missing_events`.
 - Line 13: `` `perplexity_source` `` → `` `research_source` ``.
 - Line 39 (`_FactPackRaw` docstring): `Subset of FactPack returned by Perplexity` → `Subset of FactPack returned by the research provider`.
@@ -1462,6 +1474,7 @@ def fetch_missing_events(ticker: str, company_name: str, sector: str | None, ind
 - Line 150: `` `perplexity_source.fetch_missing_events` `` → `` `research_source.fetch_missing_events` ``.
 
 `src/finwiz/analysis/CLAUDE.md`:
+
 - Line 15: `# Perplexity gap-fill support (see analysis/fact_pack/)` → `# Research gap-fill support (see analysis/fact_pack/)`.
 - Line 26: `perplexity_source.py  # Equity gap-fill only, behind FF_PERPLEXITY_RESEARCH` → `research_source.py    # Equity gap-fill only (OpenRouter web research, Perplexity fallback), behind FF_PERPLEXITY_RESEARCH`.
 
@@ -1503,11 +1516,13 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 6: Sentiment news through research
 
 **Files:**
+
 - Modify: `src/finwiz/schemas/perplexity.py` (append two models)
 - Modify: `src/finwiz/tools/perplexity_analysis_integration.py:1-7,15-18,51-72,78-120,188-306`
 - Modify: `tests/unit/tools/test_perplexity_integration_wrapper.py:81-119,327-392`
 
 **Interfaces:**
+
 - Consumes: `research_with_retry(..., kind="news") -> ResearchResult[NewsDigest] | None`, `Citation`.
 - Produces: `NewsHeadline(title: str, url: str, one_line_summary: str = "")`, `NewsDigest(headlines: list[NewsHeadline])` in `finwiz.schemas.perplexity`; `PerplexityAnalysisIntegration.is_available` true when `OPENROUTER_API_KEY` is set or the Perplexity tool constructs; `search_financial_news` signature unchanged.
 
@@ -1819,6 +1834,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 7: Config and docs
 
 **Files:**
+
 - Modify: `.env.example:19,51,156,291-292`
 - Modify: `src/finwiz/config/features/definitions.py:148`
 - Create: `docs/adr/ADR-012-openrouter-research-provider.md`
@@ -2009,7 +2025,17 @@ Replace from `# Optional: ANTHROPIC_API_KEY, PERPLEXITY_API_KEY, ...` through `(
 
 `docs/how-to/setup_environment.md:104`: `PPLX_API_KEY=your_perplexity_api_key_here` → `PPLX_API_KEY=your_perplexity_api_key_here   # optional fallback, see ADR-012`.
 
-`docs/how-to/setup_environment.md:361`: `| `PPLX_API_KEY`          | No       | Perplexity search        |` → `| `PPLX_API_KEY`          | No       | Perplexity fallback for web research (primary is OpenRouter, ADR-012) |`.
+`docs/how-to/setup_environment.md:361` — the `PPLX_API_KEY` table row changes from:
+
+```text
+| `PPLX_API_KEY`          | No       | Perplexity search        |
+```
+
+to:
+
+```text
+| `PPLX_API_KEY`          | No       | Perplexity fallback for web research (primary is OpenRouter, ADR-012) |
+```
 
 In the Feature Flags table of the same file, `FF_PERPLEXITY_RESEARCH` description → `Web research for sentiment / gap-fill (circuit breaker)`.
 
@@ -2033,6 +2059,7 @@ Claude-Session: https://claude.ai/code/session_01VsJfUDq8AC2adLMMWRZuFB"
 ### Task 8: Integration test, live verification, PR
 
 **Files:**
+
 - Create: `tests/integration/test_openrouter_research_live.py`
 
 - [ ] **Step 1: Integration test (skipped without a key)**
