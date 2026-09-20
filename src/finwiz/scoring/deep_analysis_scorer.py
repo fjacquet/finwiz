@@ -270,7 +270,7 @@ class DeepAnalysisScorer:
         fundamental_score = scores["fundamental_score"]
         fundamental_details = scores.get("fundamental_details", {})
 
-        is_quality_company = self.result_builder.is_quality_company(fundamental_score, fundamental_details)
+        is_quality_company = False if fundamental_score is None else self.result_builder.is_quality_company(fundamental_score, fundamental_details)
 
         # Adaptive weights based on company quality
         if is_quality_company:
@@ -284,7 +284,15 @@ class DeepAnalysisScorer:
             weight_risk = self.thresholds.weight_risk
 
         # Calculate weighted composite score
-        composite_score = weight_fundamental * scores["fundamental_score"] + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
+        if fundamental_score is None:
+            # No fundamental component survived. Renormalize over the
+            # components that exist rather than scoring the gap as a zero.
+            remaining = weight_technical + weight_risk
+            composite_score = (weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]) / remaining
+            weight_fundamental = 0.0
+            self.logger.warning("Fundamental score unavailable; composite renormalized over technical and risk only")
+        else:
+            composite_score = weight_fundamental * fundamental_score + weight_technical * scores["technical_score"] + weight_risk * scores["risk_score"]
 
         # Phase 14: Additive sentiment overlay (SCORE-01)
         # Applied AFTER composite is computed. Does NOT change 40/30/30 weights.
@@ -434,7 +442,7 @@ class DeepAnalysisScorer:
 
         return adjustment, details
 
-    def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
         """
         Calculate fundamental score based on asset class.
 

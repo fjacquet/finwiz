@@ -45,7 +45,7 @@ class FundamentalScorer:
         self._current_ticker: str | None = None
         self.thresholds = thresholds or get_thresholds()
 
-    def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    def calculate_fundamental_score(self, asset_class: str, data: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
         """
         Calculate fundamental score based on asset class.
 

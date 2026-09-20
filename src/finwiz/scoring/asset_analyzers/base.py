@@ -71,7 +71,7 @@ class AssetAnalyzer(ABC):
             self._data_quality_metrics.record_calculated_field(field_name)
 
     @abstractmethod
-    def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
         """
         Calculate fundamental score for this asset type.
 
@@ -80,7 +80,8 @@ class AssetAnalyzer(ABC):
 
         Returns:
             Tuple of (score, details_dict) where:
-            - score: Float between 0.0 and 1.0
+            - score: Float between 0.0 and 1.0, or None if no scoring component
+              had usable data
             - details_dict: Dictionary with scoring breakdown
 
         """

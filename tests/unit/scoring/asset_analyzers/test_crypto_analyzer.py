@@ -115,3 +115,72 @@ class TestCryptoAnalyzer:
         """Test supply metrics with unlimited supply."""
         score = analyzer._score_supply_metrics(100e6, 0)  # No max supply
         assert score == approx(0.5)  # Neutral score
+
+
+def _full_data():
+    return {
+        "market_cap": 1629408510367.0,
+        "volume_24h": 23900006504.0,
+        "age_years": 17.0,
+        "circulating_supply": 20087096.0,
+        "max_supply": 21000000.0,
+    }
+
+
+class TestFundamentalScoreRenormalization:
+    """Missing components are dropped, not scored as zero."""
+
+    def test_all_components_present_uses_nominal_weights(self):
+        score, details = CryptoAnalyzer().calculate_fundamental_score(_full_data())
+
+        assert score == pytest.approx(1.0)
+        assert details["excluded_components"] == []
+        assert details["effective_weights"] == pytest.approx({"market_cap": 0.40, "volume": 0.30, "age": 0.20, "supply": 0.10})
+
+    def test_missing_market_cap_is_excluded_not_scored_zero(self):
+        data = _full_data()
+        data["market_cap"] = None
+
+        score, details = CryptoAnalyzer().calculate_fundamental_score(data)
+
+        assert "market_cap" in details["excluded_components"]
+        assert details["market_cap"] is None
+        assert details["market_cap_score"] is None
+        # The remaining 0.60 of weight renormalizes to 1.0, all components scoring 1.0
+        assert score == pytest.approx(1.0)
+        assert details["effective_weights"]["volume"] == pytest.approx(0.5)
+        assert details["effective_weights"]["age"] == pytest.approx(1.0 / 3.0)
+        assert details["effective_weights"]["supply"] == pytest.approx(1.0 / 6.0)
+
+    def test_missing_market_cap_beats_a_fabricated_worst_case(self):
+        data = _full_data()
+        data["market_cap"] = None
+        missing_score, _ = CryptoAnalyzer().calculate_fundamental_score(data)
+
+        data["market_cap"] = 1.0  # a real but tiny market cap scores 0.2
+        tiny_score, _ = CryptoAnalyzer().calculate_fundamental_score(data)
+
+        assert missing_score > tiny_score, "absence must not be graded as the worst observed value"
+
+    def test_every_component_missing_yields_none(self):
+        score, details = CryptoAnalyzer().calculate_fundamental_score({"market_cap": None, "volume_24h": None, "age_years": None, "circulating_supply": None, "max_supply": None})
+
+        assert score is None
+        assert details["fundamental_score"] is None
+        assert sorted(details["excluded_components"]) == ["age", "market_cap", "supply", "volume"]
+
+    def test_absent_keys_count_as_missing(self):
+        score, details = CryptoAnalyzer().calculate_fundamental_score({"age_years": 17.0})
+
+        assert sorted(details["excluded_components"]) == ["market_cap", "supply", "volume"]
+        assert score == pytest.approx(1.0)
+
+    def test_uncapped_supply_keeps_the_component_with_a_neutral_score(self):
+        data = _full_data()
+        data["max_supply"] = None
+
+        score, details = CryptoAnalyzer().calculate_fundamental_score(data)
+
+        assert "supply" not in details["excluded_components"]
+        assert details["supply_score"] == pytest.approx(0.5)
+        assert score == pytest.approx(0.95)
