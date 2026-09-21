@@ -149,7 +149,13 @@ class EnrichedAnalysisReportGenerator:
         qual = data.get("qualitative") or {}
 
         template_vars["composite_score"] = quant.get("composite_score", 0.0)
-        template_vars["fundamental_score"] = quant.get("fundamental_score", 0.0)
+        # fundamental_score is genuinely optional (None when no component survived,
+        # crypto only, ADR-014). `.get(key, 0.0)` only falls back when the key is
+        # ABSENT -- the enriched payload carries it with an explicit None, so the
+        # default never fires and None reaches the template. Pass it through
+        # unmodified; the template renders "Indisponible" for None instead of
+        # formatting it as a number (LIVE-1, post-PR review findings.md).
+        template_vars["fundamental_score"] = quant.get("fundamental_score")
         template_vars["technical_score"] = quant.get("technical_score", 0.0)
         template_vars["risk_score"] = quant.get("risk_score", 0.0)
         template_vars["grade"] = quant.get("grade", "N/A")

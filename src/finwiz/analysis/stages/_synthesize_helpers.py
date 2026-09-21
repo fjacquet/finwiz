@@ -38,7 +38,7 @@ def _generate_executive_summary(quant: QuantitativeAnalysis, qual: QualitativeIn
         fund_drivers.append(f"D/E {fund_metrics['debt_to_equity']:.2f}")
     if "expense_ratio" in fund_metrics:
         fund_drivers.append(f"frais {fund_metrics['expense_ratio'] * 100:.2f}%")
-    fund_text = f"Fondamentaux {quant.fundamental_score * 100:.0f}%"
+    fund_text = f"Fondamentaux {quant.fundamental_score * 100:.0f}%" if quant.fundamental_score is not None else "Fondamentaux indisponibles"
     if fund_drivers:
         fund_text += " — " + ", ".join(fund_drivers[:3])
     bullets.append(fund_text)

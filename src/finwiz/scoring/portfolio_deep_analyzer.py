@@ -238,11 +238,15 @@ class PortfolioDeepAnalyzer:
                     }
                 )
             elif asset_class == "crypto":
+                # No defaults: a fabricated market cap is indistinguishable from
+                # a real one downstream. Unlike the ETF branch above, absence
+                # does not raise either — CryptoAnalyzer renormalizes its
+                # weights over the components that survived.
                 data.update(
                     {
-                        "market_cap": perf_dict.get("market_cap", 100e9),
-                        "volume_24h": perf_dict.get("volume_24h", 1e9),
-                        "age_years": perf_dict.get("age_years", 5),
+                        "market_cap": perf_dict.get("market_cap"),
+                        "volume_24h": perf_dict.get("volume_24h"),
+                        "age_years": perf_dict.get("age_years"),
                     }
                 )
 
@@ -302,17 +306,31 @@ class PortfolioDeepAnalyzer:
         holding.grade = cast(Grade, analysis_result.grade)
         holding.recommended_action = f"{analysis_result.recommendation} - {analysis_result.rationale[:50]}..."
 
-        # Update risk assessment
-        holding.risk.score = 5.0 - (analysis_result.risk_score * 5.0)  # Convert to 0-5 scale
-        holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
+        # Update risk assessment. risk_score is float | None on DeepAnalysisResult
+        # (flow_state_models.py) -- the same optionality as fundamental_score, and
+        # it can go unresolved for the same reason (this legacy analyzer's crypto
+        # branch never resolves the supply fields, so a component can be excluded
+        # entirely). holding.risk.score is a required, non-Optional float
+        # (RiskAssessmentStandardized) with no "unavailable" representation, so
+        # there is nothing safe to write without fabricating a number -- skip the
+        # update and leave the holding's existing risk assessment as-is.
+        if analysis_result.risk_score is not None:
+            holding.risk.score = 5.0 - (analysis_result.risk_score * 5.0)  # Convert to 0-5 scale
+            holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
         holding.risk.risk_factors = list(analysis_result.risk_details.keys())[:5]
 
-        # Add analysis details to rationale
+        # Add analysis details to rationale. fundamental_score, technical_score
+        # and risk_score are all float | None on DeepAnalysisResult -- never
+        # format None as a number (LIVE-3, post-PR review findings.md, and its
+        # sibling technical_score/risk_score bullets found on re-review).
+        fundamental_bullet = f"📊 Fundamental: {analysis_result.fundamental_score:.3f}" if analysis_result.fundamental_score is not None else "📊 Fundamental: unavailable"
+        technical_bullet = f"📈 Technical: {analysis_result.technical_score:.3f}" if analysis_result.technical_score is not None else "📈 Technical: unavailable"
+        risk_bullet = f"⚠️ Risk: {analysis_result.risk_score:.3f}" if analysis_result.risk_score is not None else "⚠️ Risk: unavailable"
         holding.rationale_bullets = [
             f"🎯 Grade: {analysis_result.grade} (Score: {analysis_result.composite_score:.3f})",
-            f"📊 Fundamental: {analysis_result.fundamental_score:.3f}",
-            f"📈 Technical: {analysis_result.technical_score:.3f}",
-            f"⚠️ Risk: {analysis_result.risk_score:.3f}",
+            fundamental_bullet,
+            technical_bullet,
+            risk_bullet,
             f"💡 {analysis_result.recommendation}: {analysis_result.rationale[:100]}...",
             "⚡ Python-based analysis (0 LLM calls, <1s execution)",
         ]

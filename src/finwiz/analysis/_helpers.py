@@ -195,10 +195,15 @@ def _build_crew_inputs(
         "current_date": current_date,
         "current_date_iso": today.strftime("%Y-%m-%d"),
         # Numeric defaults prevent "unsupported format string passed to NoneType"
+        # for the required scores. fundamental_score is genuinely optional (None
+        # when no component survived, crypto only) -- a numeric stand-in there
+        # would feed the AI crew a fabricated "measured" value, the exact
+        # substitution this branch removes everywhere else. Render it as text
+        # instead, matching _qualify_fallbacks.py's fund_score_str convention.
         "grade": quant.grade or "C",
         "composite_score": quant.composite_score if quant.composite_score is not None else 0.5,
         "preliminary_recommendation": quant.preliminary_recommendation or "HOLD",
-        "fundamental_score": quant.fundamental_score if quant.fundamental_score is not None else 0.5,
+        "fundamental_score": (f"{quant.fundamental_score:.2f}" if quant.fundamental_score is not None else "indisponible"),
         "technical_score": quant.technical_score if quant.technical_score is not None else 0.5,
         "risk_score": quant.risk_score if quant.risk_score is not None else 0.5,
         # Pass SUMMARIES instead of full dicts to avoid token overflow

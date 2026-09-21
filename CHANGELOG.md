@@ -7,8 +7,96 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Crypto market data was fabricated in production. `_collect_crypto_data` sent
+  the yfinance-normalized ticker (`BTC-USD`) to CoinGecko, which keys on the
+  bare symbol, and the failure was swallowed into invented defaults
+  (`market_cap 10e9`, `volume_24h 1e9`, `age_years 3.0`). Those fields carry
+  80% of the crypto fundamental score. Resolved through a new
+  `CryptoSourceOrchestrator` over CoinGecko, yfinance and Kraken, with per-field
+  lineage and confidence (ADR-014).
+- `CryptoAnalyzer` scored a missing component as the worst possible value
+  (`_safe_get_float(..., 0.0)`). It now excludes the component and renormalizes
+  the remaining weights; with no component left the score is `None` and the
+  composite renormalizes over technical and risk.
+- `market_cap`, `volume_24h` and `age_years` were `CRITICAL_FIELDS` for crypto,
+  so once the fabricated defaults above were removed, a `None` in any of them
+  raised `CriticalFieldError` and silently dropped the holding from the
+  report — on every CoinGecko outage, and unconditionally for any symbol
+  outside the curated genesis-year table. Reclassified as `OPTIONAL_FIELDS`
+  (only `current_price` and `volatility` remain critical for crypto), so the
+  holding is kept and scored on whatever fundamental components survived, per
+  spec. Their now-unreachable `SANITY_CHECKS` entries were also deleted.
+- `data_quality.missing_fields` reported `[]` for crypto holdings whose every
+  fundamental field was fabricated, because a fabricated value counted as
+  present. Gaps are now `None` from acquisition through scoring, and
+  `CryptoAnalyzer` tracks each field's calculated/defaulted status instead of
+  silently reporting full completeness regardless of what actually resolved.
+  `market_cap` was also added to `CrewExportGenerator._identify_missing_fields`'s
+  crypto field list, but that generator has zero production callers today —
+  declaring these gaps in the *exported* quality metadata (`*_enriched.json`)
+  is a known follow-up blocked on reviving or replacing that dead export
+  path, not something this change delivers. `missing_fields` on the exported
+  JSON is `[]` for every asset class today, sourced from
+  `ScoreResultBuilder.build_result`'s hardcoded `warnings=[]`.
+- A crypto holding with no fundamental component resolved was scored
+  `fundamental_score = None` by `CryptoAnalyzer`, then coerced to a hard
+  `0.0` — the worst possible value — at the `QuantitativeAnalysis` schema
+  boundary (`fundamental_score=result.fundamental_score or 0.0`), inverting
+  "never measured" into "measured as catastrophic". The schema field is now
+  `float | None`, and every consumer that formats it (`ai_output.py`,
+  `_synthesize_helpers.py`, `_qualify_fallbacks.py`) renders "unavailable"
+  instead of a number. A post-PR review round found the list above was not
+  exhaustive — see the follow-up fixes below.
+- A post-PR review round found four more `fundamental_score = None`
+  consumers, one hop further out than any earlier review reached (report
+  generators, a template, and the AI crew's prompt-input builder), each the
+  same shape: a `.get(key, default)` / `setdefault(key, default)` that never
+  fires because the key is present with value `None`, or an f-string/format
+  filter applied directly to `None`.
+  `EnrichedAnalysisReportGenerator`/`enriched_analysis_report.html` and
+  `DeepAnalysisReportGenerator`/`deep_analysis_report.html.j2` formatted it
+  with `"%.0f"|format(fundamental_score * 100)` and raised `TypeError`
+  (the enriched path's exception is swallowed by
+  `_store_enriched_analysis`, so the holding silently lost its HTML report
+  while the JSON looked fine); `portfolio_deep_analyzer._update_holding_with_analysis`
+  formatted it into a rationale bullet with `:.3f` and raised the same way;
+  `_helpers._build_crew_inputs` coalesced it to a fabricated `0.5` and fed
+  that to the AI crew as if it had been measured. All four now render
+  "Indisponible" / "unavailable" instead of a number.
+  `crypto_source_orchestrator._resolve_market_data` also discarded a
+  CoinGecko-reported `max_supply` whenever `circulating_supply` was absent
+  (the assignment lived inside that `if` block); it is now copied
+  independently, while the supply component still counts as unresolved only
+  when `circulating_supply` is `None`.
+  `QuantitativeAnalysis.fundamental_score` is now a required field (still
+  `float | None`) so a construction site that omits it fails validation
+  instead of silently defaulting to `None` indistinguishable from a stated
+  "no component survived".
+- `DeepAnalysisDataCollector.__init__` constructed `CryptoSourceOrchestrator()`
+  (and its CoinGecko/Kraken adapters) unconditionally, so a construction
+  failure could abort a stock- or ETF-only run that never touches crypto.
+  Construction is now lazy, on first crypto use.
+- `synthesize.py`'s `_apply_strategic_recompute` substituted a neutral `0.5`
+  for a missing fundamental score before plugging it into
+  `recompute_with_strategic`'s fixed 35/25/25/15 weighting. Unlike the
+  display-string fixes above, this recompute's result — via `model_copy` —
+  *replaces* `composite_score`, `grade` and `recommendation` as the
+  holding's final, authoritative values whenever an AI strategic analysis
+  exists, which is the common case, not a failure path. Now skipped
+  entirely when the fundamental score is unavailable, keeping the primary
+  composite score, which `_compute_weighted_score` already renormalized
+  over the components that survived.
+- XRP was scored as three years old. Ages now derive from a curated genesis-year
+  table (XRP 2012), and an uncurated symbol yields no age instead of a default.
+
 ### Added
 
+- `data/adapters/crypto/` — CoinGecko and Kraken adapters, symbol normalization
+  and the curated genesis-year table.
+- `data/crypto_source_orchestrator.py` — multi-source resolution with lineage,
+  pinned confidence and price-divergence observation.
 - OpenRouter web-grounded research provider. SWOT/Porter, portfolio posture,
   equity fact-pack gap-fill and sentiment news now run on
   `google/gemini-3.8-flash` through OpenRouter's `web` plugin (Exa, 8 results)

@@ -17,6 +17,20 @@ from finwiz.scoring.thresholds import get_thresholds
 logger = logging.getLogger(__name__)
 
 
+def _optional_float(value: Any) -> float | None:
+    """Coerce to float, mapping missing or unparsable values to None.
+
+    Deliberately NOT `_safe_get_float`: that one substitutes a default, which
+    turns a missing measurement into the worst possible measurement.
+    """
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
 class CryptoAnalyzer(AssetAnalyzer):
     """
     Cryptocurrency-specific analysis strategy.
@@ -36,53 +50,109 @@ class CryptoAnalyzer(AssetAnalyzer):
         self.logger = logger
         self.thresholds = get_thresholds()  # Default thresholds
 
-    def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float, dict[str, Any]]:
+    def _resolve_component(
+        self,
+        data: dict[str, Any],
+        field: str,
+        *,
+        weight: float,
+        score_fn: Any,
+        details: dict[str, Any],
+        components: list[tuple[str, float, float]],
+        excluded: list[str],
+        component_name: str,
+        score_key: str,
+    ) -> None:
+        """Resolve one fundamental component: extract, track, score-or-exclude.
+
+        Shared by the market_cap/volume/age branches of calculate_fundamental_score
+        (supply stays inline — it reads two source fields, not one). default=None
+        on the tracking call: _track_calculated_field records "calculated" for a
+        resolved value and "defaulted" for a None one — an honest classification,
+        without reintroducing a numeric default (that's what _optional_float's job
+        is to avoid; this only observes its outcome).
+        """
+        value = _optional_float(data.get(field))
+        self._track_calculated_field(field, value, None)
+        details[field] = value
+        if value is None:
+            details[score_key] = None
+            excluded.append(component_name)
+        else:
+            details[score_key] = score_fn(value)
+            components.append((component_name, weight, details[score_key]))
+
+    def calculate_fundamental_score(self, data: dict[str, Any]) -> tuple[float | None, dict[str, Any]]:
         """
         Calculate fundamental score for cryptocurrencies.
 
-        Scoring components:
-        - Market cap (40%): Higher is better for stability
-        - Volume (30%): Higher is better for liquidity
-        - Age (20%): Older is more established
-        - Supply metrics (10%): Tokenomics quality
+        Nominal weights: market cap 40%, volume 30%, age 20%, supply 10%.
+        A component whose source data is missing is excluded and the remaining
+        weights are renormalized, so absence never scores as the worst observed
+        value. Returns None when no component survived.
 
         Args:
             data: Dictionary containing crypto analysis data
 
         Returns:
-            Tuple of (score, details_dict)
+            Tuple of (score or None, details_dict)
 
         """
-        details = {}
+        details: dict[str, Any] = {}
+        components: list[tuple[str, float, float]] = []
+        excluded: list[str] = []
 
-        # Market capitalization - higher is better for stability
-        market_cap = self._safe_get_float(data, "market_cap", 0.0)
-        market_cap_score = self._score_market_cap(market_cap)
-        details["market_cap"] = market_cap
-        details["market_cap_score"] = market_cap_score
+        self._resolve_component(
+            data,
+            "market_cap",
+            weight=0.40,
+            score_fn=self._score_market_cap,
+            details=details,
+            components=components,
+            excluded=excluded,
+            component_name="market_cap",
+            score_key="market_cap_score",
+        )
+        self._resolve_component(
+            data,
+            "volume_24h",
+            weight=0.30,
+            score_fn=self._score_volume,
+            details=details,
+            components=components,
+            excluded=excluded,
+            component_name="volume",
+            score_key="volume_score",
+        )
+        self._resolve_component(
+            data, "age_years", weight=0.20, score_fn=self._score_age, details=details, components=components, excluded=excluded, component_name="age", score_key="age_score"
+        )
 
-        # 24h trading volume - higher is better for liquidity
-        volume_24h = self._safe_get_float(data, "volume_24h", 0.0)
-        volume_score = self._score_volume(volume_24h)
-        details["volume_24h"] = volume_24h
-        details["volume_score"] = volume_score
-
-        # Age in years - older is more established
-        age_years = self._safe_get_float(data, "age_years", 0.0)
-        age_score = self._score_age(age_years)
-        details["age_years"] = age_years
-        details["age_score"] = age_score
-
-        # Supply metrics - tokenomics quality
-        circulating_supply = self._safe_get_float(data, "circulating_supply", 0.0)
-        max_supply = self._safe_get_float(data, "max_supply", 0.0)
-        supply_score = self._score_supply_metrics(circulating_supply, max_supply)
+        circulating_supply = _optional_float(data.get("circulating_supply"))
+        max_supply = _optional_float(data.get("max_supply"))
+        self._track_calculated_field("circulating_supply", circulating_supply, None)
         details["circulating_supply"] = circulating_supply
         details["max_supply"] = max_supply
-        details["supply_score"] = supply_score
+        if circulating_supply is None:
+            details["supply_score"] = None
+            excluded.append("supply")
+        else:
+            # A None max_supply means uncapped, which _score_supply_metrics
+            # already treats as neutral via its `max_supply <= 0` branch.
+            details["supply_score"] = self._score_supply_metrics(circulating_supply, max_supply or 0.0)
+            components.append(("supply", 0.10, details["supply_score"]))
 
-        # Weighted average (Market cap 40%, Volume 30%, Age 20%, Supply 10%)
-        fundamental_score = 0.40 * market_cap_score + 0.30 * volume_score + 0.20 * age_score + 0.10 * supply_score
+        details["excluded_components"] = excluded
+
+        if not components:
+            details["effective_weights"] = {}
+            details["fundamental_score"] = None
+            self.logger.warning("No crypto fundamental component available; score is None rather than 0.0")
+            return None, details
+
+        total_weight = sum(weight for _, weight, _ in components)
+        details["effective_weights"] = {name: weight / total_weight for name, weight, _ in components}
+        fundamental_score = sum(weight * score for _, weight, score in components) / total_weight
 
         details["fundamental_score"] = fundamental_score
         return fundamental_score, details

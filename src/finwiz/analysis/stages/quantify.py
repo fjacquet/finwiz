@@ -109,7 +109,11 @@ def _result_to_quantitative(result: DeepAnalysisResult, *, price_targets: PriceT
 
     return QuantitativeAnalysis(
         composite_score=result.composite_score,
-        fundamental_score=result.fundamental_score or 0.0,
+        # `or 0.0` used to coerce a genuinely-missing fundamental score to the worst
+        # possible value on the scale — the same inverted fabrication this branch
+        # removes from acquisition and scoring. A None here means no fundamental
+        # component survived (crypto only); it stays None through this schema too.
+        fundamental_score=result.fundamental_score,
         technical_score=result.technical_score or 0.0,
         risk_score=result.risk_score or 0.0,
         grade=result.grade,

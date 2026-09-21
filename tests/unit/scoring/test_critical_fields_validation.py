@@ -117,24 +117,59 @@ class TestCriticalFieldsValidation:
         # Implementation adds " (missing)" suffix to field names
         assert any("expense_ratio" in field for field in exc_info.value.missing_fields)
 
-    def test_should_fail_for_crypto_missing_critical_fields(self, scorer):
-        """Test that crypto analysis fails when critical fields missing."""
-        # Arrange - Crypto data missing market_cap (critical)
-        incomplete_crypto_data = {
+    def test_missing_crypto_market_cap_is_scored_not_dropped(self, scorer):
+        """C1: market_cap moved from critical to optional for crypto — a missing value
+        must not drop the holding (CriticalFieldError), and must not be scored as the
+        worst possible value either. The renormalizing scorer grades it on whatever
+        fundamental components survived.
+        """
+        # Arrange - Crypto data missing market_cap (now optional, not critical)
+        crypto_data = {
             "asset_class": "crypto",
             "current_price": 50000.0,
             "volume_24h": 1e9,
             "age_years": 5.0,
             "volatility": 0.60,
-            # Missing: market_cap (critical)
+            "circulating_supply": 19_000_000.0,
+            "max_supply": 21_000_000.0,
+            # market_cap deliberately absent — CoinGecko-only, no fallback source
         }
 
-        # Act & Assert
-        with pytest.raises(CriticalFieldError) as exc_info:
-            scorer.calculate_composite_score("BTC", "crypto", incomplete_crypto_data)
+        # Act — must not raise
+        result = scorer.calculate_composite_score("BTC", "crypto", crypto_data)
 
-        # Implementation adds " (missing)" suffix to field names
-        assert any("market_cap" in field for field in exc_info.value.missing_fields)
+        # Assert - the holding is scored, not dropped
+        assert result is not None
+        assert result.ticker == "BTC"
+        assert result.fundamental_score is not None
+        assert result.grade in ["A+", "A", "B+", "B", "C+", "C", "D", "F"]
+
+        # Assert - market_cap was excluded and the remaining weights renormalized
+        excluded = result.fundamental_details.get("excluded_components", [])
+        assert excluded == ["market_cap"]
+        effective_weights = result.fundamental_details.get("effective_weights", {})
+        assert "market_cap" not in effective_weights
+        assert effective_weights
+        assert sum(effective_weights.values()) == approx(1.0)
+
+    def test_missing_all_optional_crypto_fields_still_scores_via_renormalized_composite(self, scorer):
+        """When every crypto fundamental component is missing, fundamental_score is
+        None (not 0.0), and the composite renormalizes over technical and risk only —
+        C1's third consequence (Task 4's renormalization was otherwise unreachable).
+        """
+        crypto_data = {
+            "asset_class": "crypto",
+            "current_price": 50000.0,
+            "volatility": 0.60,
+            # market_cap, volume_24h, age_years, circulating_supply all absent
+        }
+
+        result = scorer.calculate_composite_score("ZZZ", "crypto", crypto_data)
+
+        assert result is not None
+        assert result.fundamental_score is None
+        assert result.composite_score >= 0.0
+        assert result.fundamental_details.get("excluded_components") == ["market_cap", "volume", "age", "supply"]
 
     def test_should_include_critical_field_error_in_lineage(self, scorer):
         """Test that critical field errors are tracked in lineage."""
@@ -245,16 +280,26 @@ class TestCriticalFieldsConfig:
         assert "aum" in optional  # Moved to optional - not available on all exchanges
 
     def test_crypto_critical_fields_defined(self):
-        """Test that crypto critical fields are properly defined."""
-        from finwiz.config.critical_fields_config import get_critical_fields
+        """C1: only current_price and volatility remain critical for crypto — without
+        a price there is nothing to analyze, and volatility drives the risk component.
+        market_cap, volume_24h and age_years moved to optional: CoinGecko can be down,
+        or the symbol can simply be outside the curated genesis-year table, on an
+        otherwise healthy run (see ADR-014).
+        """
+        from finwiz.config.critical_fields_config import get_critical_fields, get_optional_fields
 
         critical = get_critical_fields("crypto")
+        optional = get_optional_fields("crypto")
 
         assert "current_price" in critical
-        assert "market_cap" in critical
-        assert "volume_24h" in critical
         assert "volatility" in critical
-        assert "age_years" in critical
+        assert "market_cap" not in critical
+        assert "volume_24h" not in critical
+        assert "age_years" not in critical
+
+        assert "market_cap" in optional
+        assert "volume_24h" in optional
+        assert "age_years" in optional
 
     def test_optional_fields_have_safe_defaults(self):
         """Test that optional fields have safe default values."""

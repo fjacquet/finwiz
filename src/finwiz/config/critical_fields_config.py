@@ -27,10 +27,7 @@ CRITICAL_FIELDS = {
     ],
     "crypto": [
         "current_price",  # Cannot analyze without price
-        "market_cap",  # Core size metric
-        "volume_24h",  # Core liquidity metric
         "volatility",  # Core risk metric
-        "age_years",  # Core maturity metric
     ],
 }
 
@@ -51,6 +48,9 @@ OPTIONAL_FIELDS = {
         "macd",  # Technical indicator
     ],
     "crypto": [
+        "market_cap",  # Core size metric, but CoinGecko-only: no fallback source
+        "volume_24h",  # Core liquidity metric, but CoinGecko/Kraken can both be unavailable
+        "age_years",  # Core maturity metric, but only curated symbols have one
         "circulating_supply",  # Nice to have
         "max_supply",  # Nice to have
         "rsi",  # Technical indicator
@@ -206,10 +206,11 @@ def validate_critical_fields(ticker: str, asset_class: Literal["stock", "etf", "
         "beta": lambda v: v is None or v < -5.0 or v > 10.0,
         # ETF metrics
         "expense_ratio": lambda v: v is None or v < 0.0 or v > 0.10,  # 0-10%
-        # Crypto metrics
-        "market_cap": lambda v: v is None or v <= 0.0,
-        "volume_24h": lambda v: v is None or v < 0.0,
-        "age_years": lambda v: v is None or v < 0.0 or v > 50.0,
+        # market_cap, volume_24h and age_years used to have entries here, but they
+        # moved to OPTIONAL_FIELDS["crypto"] and this loop only iterates
+        # critical_fields — those entries were unreachable config. market_cap's
+        # `<= 0.0` backstop is already covered upstream by positive_or_none()
+        # (data/adapters/crypto/base.py), which maps 0 to None.
     }
 
     for field in critical_fields:

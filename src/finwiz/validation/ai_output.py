@@ -220,6 +220,10 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
 
     logger.warning("Creating Python-only qualitative insights. AI analysis failed after maximum retry attempts.")
 
+    # None when no fundamental component survived (crypto only) — never formatted
+    # as a number, which would report "measured" for a value that was never measured.
+    fund_score_str = f"{quantitative.fundamental_score:.2f}" if quantitative.fundamental_score is not None else "unavailable"
+
     # Create minimal qualitative insights from quantitative data
     return QualitativeInsights(
         sec_insights=SecAnalysisInsights(
@@ -238,7 +242,7 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
             industry_analysis=(
                 "Industry context analysis unavailable. AI crew execution failed. "
                 "Quantitative fundamental score available: "
-                f"{quantitative.fundamental_score:.2f}. "
+                f"{fund_score_str}. "
                 "For detailed industry analysis, AI crew must execute successfully. "
                 "This fallback provides only quantitative metrics without industry context."
             ),
@@ -270,7 +274,7 @@ def create_python_only_qualitative(quantitative: QuantitativeAnalysis) -> Qualit
                 f"Python-only analysis. "
                 f"Quantitative Grade: {quantitative.grade}. "
                 f"Composite Score: {quantitative.composite_score:.2f}. "
-                f"Fundamental Score: {quantitative.fundamental_score:.2f}. "
+                f"Fundamental Score: {fund_score_str}. "
                 f"Technical Score: {quantitative.technical_score:.2f}. "
                 f"Risk Score: {quantitative.risk_score:.2f}. "
                 f"Recommendation: {quantitative.preliminary_recommendation}. "

@@ -663,7 +663,11 @@ class TestResultToQuantitative:
         assert quant.confidence_level == 0.85
 
     def test_handles_none_scores(self):
-        """Test that None scores are converted to 0.0."""
+        """Test that None technical/risk scores are converted to 0.0, but a None
+        fundamental_score is passed through as None (I3/C1): coalescing it to 0.0
+        would report "measured as catastrophic" for a value that was never
+        measured — the same inverted fabrication ADR-014 removes elsewhere.
+        """
         result = DeepAnalysisResult(
             ticker="TEST",
             asset_class="stock",
@@ -684,7 +688,7 @@ class TestResultToQuantitative:
 
         quant = _result_to_quantitative(result)
 
-        assert quant.fundamental_score == 0.0
+        assert quant.fundamental_score is None
         assert quant.technical_score == 0.0
         assert quant.risk_score == 0.0
 

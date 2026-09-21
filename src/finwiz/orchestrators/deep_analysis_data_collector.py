@@ -1,10 +1,14 @@
 """Data collection for deep analysis using Python tools."""
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+from finwiz.data.adapters.crypto.genesis import crypto_age_years
 from finwiz.tools.logger import get_logger
 from finwiz.tools.standardized_sentiment_tool import get_standardized_sentiment_tool
+
+if TYPE_CHECKING:
+    from finwiz.data.crypto_source_orchestrator import CryptoSourceOrchestrator
 
 logger = get_logger(__name__)
 
@@ -44,6 +48,25 @@ class DeepAnalysisDataCollector:
             per_source_timeout=3.0,
             enable_validation=True,
         )
+
+        # Constructed lazily (see _get_crypto_orchestrator) on first crypto use,
+        # not here: CryptoSourceOrchestrator() builds CoinGeckoAdapter and
+        # KrakenAdapter eagerly, so building it unconditionally in __init__
+        # would let a construction failure (missing config, import error) abort
+        # a stock- or ETF-only run that never touches crypto (LIVE-5, post-PR
+        # review findings.md). Unit tests intercept this by patching the
+        # instance attribute directly (mocker.patch.object(collector,
+        # "_crypto_orchestrator", ...)), which _get_crypto_orchestrator()
+        # respects by skipping construction when the attribute is already set.
+        self._crypto_orchestrator: CryptoSourceOrchestrator | None = None
+
+    def _get_crypto_orchestrator(self) -> "CryptoSourceOrchestrator":
+        """Return the crypto source orchestrator, constructing it on first use."""
+        if self._crypto_orchestrator is None:
+            from finwiz.data.crypto_source_orchestrator import CryptoSourceOrchestrator
+
+            self._crypto_orchestrator = CryptoSourceOrchestrator()
+        return self._crypto_orchestrator
 
     def collect_data(
         self,
@@ -150,9 +173,9 @@ class DeepAnalysisDataCollector:
         except Exception as e:
             self.logger.error(f"❌ Asset-specific data collection failed: {e}", exc_info=True)
             if asset_class.lower() == "crypto":
-                collected_data["volume_24h"] = 1e9
-                collected_data["age_years"] = 3.0
-                collected_data["market_cap"] = 10e9
+                collected_data["volume_24h"] = None
+                collected_data["age_years"] = None
+                collected_data["market_cap"] = None
                 collected_data["crypto_info"] = {}
             elif asset_class.lower() == "etf":
                 collected_data["expense_ratio"] = None
@@ -162,53 +185,61 @@ class DeepAnalysisDataCollector:
         return collected_data
 
     def _collect_crypto_data(self, ticker: str, collected_data: dict[str, Any]) -> dict[str, Any]:
-        """Collect crypto-specific data."""
-        from finwiz.tools.enhanced_crypto_tool import EnhancedCryptoAnalysisTool
+        """Collect crypto market data from CoinGecko, yfinance and Kraken.
 
-        self.logger.info(f"🐍 Calling EnhancedCryptoAnalysisTool for {ticker}")
-        crypto_tool = EnhancedCryptoAnalysisTool()
-        crypto_result = crypto_tool._run(
-            symbol=ticker,
-            include_thesis=False,
-            include_risk_assessment=False,
-            include_perplexity=False,
+        Anything no source could resolve stays None. It is never replaced by a
+        plausible-looking constant: a fabricated market cap is indistinguishable
+        from a real one downstream, and 80% of the crypto fundamental score is
+        built from these fields.
+        """
+        self.logger.info(f"🐍 Resolving crypto market data for {ticker}")
+        yfinance_price = collected_data.get("current_price")
+
+        try:
+            resolved = self._get_crypto_orchestrator().fetch(ticker, yfinance_price=yfinance_price)
+        except Exception as e:
+            self.logger.error(f"❌ Crypto source orchestration failed for {ticker}: {e}", exc_info=True)
+            collected_data.update({"market_cap": None, "volume_24h": None, "circulating_supply": None, "max_supply": None, "age_years": crypto_age_years(ticker)})
+            collected_data["crypto_info"] = {"error": str(e)}
+            return collected_data
+
+        collected_data["market_cap"] = resolved.market_cap
+        collected_data["volume_24h"] = resolved.volume_24h
+        collected_data["circulating_supply"] = resolved.circulating_supply
+        collected_data["max_supply"] = resolved.max_supply
+        collected_data["age_years"] = crypto_age_years(ticker)
+
+        if resolved.price is not None:
+            collected_data["current_price"] = resolved.price
+
+        collected_data["crypto_info"] = {
+            "lineage": resolved.lineage.to_dict(),
+            "confidence": resolved.confidence,
+            "sources_succeeded": resolved.sources_succeeded,
+            "sources_failed": resolved.sources_failed,
+            "warnings": resolved.warnings,
+            "price_divergence_pct": resolved.price_divergence_pct,
+        }
+
+        # flatten_collected_data() only keeps top-level scalars and a fixed list of
+        # nested sections — "crypto_info" is neither, so it never reached any
+        # consumer (scorer, export, report). Mirror the fields an operator needs
+        # as scalars too. None of this replaces a real measurement; it only
+        # records where each measurement came from.
+        collected_data["crypto_confidence"] = resolved.confidence
+        collected_data["crypto_price_divergence_pct"] = resolved.price_divergence_pct
+        collected_data["crypto_price_source"] = resolved.lineage.price_source
+        collected_data["crypto_market_cap_source"] = resolved.lineage.market_cap_source
+        collected_data["crypto_volume_24h_source"] = resolved.lineage.volume_24h_source
+        collected_data["crypto_supply_source"] = resolved.lineage.supply_source
+        collected_data["crypto_sources_succeeded"] = ",".join(resolved.sources_succeeded) if resolved.sources_succeeded else None
+        collected_data["crypto_sources_failed"] = ",".join(resolved.sources_failed) if resolved.sources_failed else None
+        collected_data["crypto_warnings"] = "; ".join(resolved.warnings) if resolved.warnings else None
+
+        self.logger.info(
+            f"✅ Crypto data for {ticker}: market_cap={resolved.market_cap}, volume_24h={resolved.volume_24h}, "
+            f"age_years={collected_data['age_years']}, confidence={resolved.confidence:.2f}"
         )
-
-        if isinstance(crypto_result, dict):
-            crypto_data = crypto_result.get("crypto_data", crypto_result)
-            collected_data["volume_24h"] = crypto_data.get("total_volume", crypto_data.get("volume_24h", 0.0))
-
-            market_cap_raw = crypto_data.get("market_cap", 0.0)
-            collected_data["market_cap"] = market_cap_raw if market_cap_raw > 0 else 10e9
-
-            collected_data["circulating_supply"] = crypto_data.get("circulating_supply", 0.0)
-            collected_data["max_supply"] = crypto_data.get("max_supply", crypto_data.get("total_supply", 0.0))
-
-            # Age mapping for known cryptos
-            age_mapping = {
-                "BTC": 15.0,
-                "BTC-USD": 15.0,
-                "ETH": 9.0,
-                "ETH-USD": 9.0,
-                "ADA": 7.0,
-                "ADA-USD": 7.0,
-                "SOL": 4.0,
-                "SOL-USD": 4.0,
-                "AVAX": 4.0,
-                "AVAX-USD": 4.0,
-                "DOT": 4.0,
-                "DOT-USD": 4.0,
-            }
-            ticker_base = ticker.replace("-USD", "").upper()
-            collected_data["age_years"] = age_mapping.get(ticker_base, 3.0)
-
-            self.logger.info(f"✅ Got crypto data: volume_24h={collected_data['volume_24h']}, age_years={collected_data['age_years']}")
-            collected_data["crypto_info"] = crypto_result
-        else:
-            collected_data["volume_24h"] = 1e9
-            collected_data["age_years"] = 3.0
-            collected_data["market_cap"] = 10e9
-
         return collected_data
 
     def _collect_stock_data(self, ticker: str, collected_data: dict[str, Any]) -> dict[str, Any]:

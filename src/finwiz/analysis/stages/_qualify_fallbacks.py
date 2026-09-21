@@ -39,6 +39,13 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
     score = quant.composite_score
     rec = quant.preliminary_recommendation
     fund_score = quant.fundamental_score
+    # None when no fundamental component survived (crypto only). fund_score_str is
+    # for display — never formatted as a number, which would report "measured" for
+    # a value that was never measured. fund_score_cmp is a neutral centering value
+    # used only to pick a qualitative bucket ("solide"/"modéré"/...), never displayed
+    # as if it were the missing measurement itself.
+    fund_score_str = f"{fund_score:.2f}" if fund_score is not None else "indisponible"
+    fund_score_cmp = fund_score if fund_score is not None else 0.5
     tech_score = quant.technical_score
     risk_score = quant.risk_score
     rationale = quant.python_rationale
@@ -55,11 +62,11 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
     revenue_growth = fund_metrics.get("revenue_growth", 0)
 
     business_model = (
-        f"{ticker} présente un profil fondamental avec un score de {fund_score:.2f}. "
+        f"{ticker} présente un profil fondamental avec un score de {fund_score_str}. "
         f"Le rendement sur capitaux propres (ROE) est de {roe:.1%}, "
         f"avec un ratio dette/capitaux propres de {debt_ratio:.2f}. "
         f"La croissance des revenus est de {revenue_growth:.1%}. "
-        f"Ces métriques suggèrent un modèle d'affaires {'solide' if fund_score >= 0.6 else 'modéré' if fund_score >= 0.4 else 'à surveiller'}. "
+        f"Ces métriques suggèrent un modèle d'affaires {'solide' if fund_score_cmp >= 0.6 else 'modéré' if fund_score_cmp >= 0.4 else 'à surveiller'}. "
         f"{rationale} "
         f"L'analyse quantitative Python a attribué la note {grade} avec un score composite de {score:.2f}."
     )
@@ -94,7 +101,7 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
         f"Analyse quantitative complète pour {ticker} ({ctx.asset_class}). "
         f"Note finale: {grade} avec score composite {score:.2f}. "
         f"Recommandation Python: {rec}. "
-        f"Score fondamental: {fund_score:.2f} - ROE {roe:.1%}, ratio dette {debt_ratio:.2f}, croissance {revenue_growth:.1%}. "
+        f"Score fondamental: {fund_score_str} - ROE {roe:.1%}, ratio dette {debt_ratio:.2f}, croissance {revenue_growth:.1%}. "
         f"Score technique: {tech_score:.2f} - RSI {rsi:.1f}, MACD {macd:.3f}. "
         f"Score risque: {risk_score:.2f} - Volatilité {volatility:.1%}, Beta {beta:.2f}, Drawdown max {max_drawdown:.1%}. "
         f"Justification: {rationale} "
@@ -104,7 +111,7 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
     )
 
     bull_case = (
-        f"Scénario haussier: Si les fondamentaux s'améliorent au-delà du score actuel de {fund_score:.2f}, "
+        f"Scénario haussier: Si les fondamentaux s'améliorent au-delà du score actuel de {fund_score_str}, "
         f"et que les indicateurs techniques confirment avec RSI > 50 et MACD positif, "
         f"{ticker} pourrait surperformer. Catalyseurs potentiels: amélioration du ROE, réduction de la dette, "
         f"momentum technique positif. Probabilité estimée basée sur le grade {grade}."
@@ -117,7 +124,7 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
     )
 
     bear_case = (
-        f"Scénario baissier: Détérioration des fondamentaux en dessous du score {fund_score:.2f}, "
+        f"Scénario baissier: Détérioration des fondamentaux en dessous du score {fund_score_str}, "
         f"signaux techniques négatifs avec RSI < 30 et MACD négatif, "
         f"augmentation de la volatilité au-delà de {volatility:.1%}. "
         f"Risque de drawdown supérieur à {max_drawdown:.1%}."
@@ -134,12 +141,12 @@ def _create_python_qualitative(ctx: AnalysisContext, quant: QuantitativeAnalysis
     return QualitativeInsights(
         sec_insights=SecAnalysisInsights(
             business_model=business_model,
-            competitive_advantages=[f"Score fondamental {fund_score:.2f}", f"Grade {grade}"],
+            competitive_advantages=[f"Score fondamental {fund_score_str}", f"Grade {grade}"],
             risk_factors=[f"Volatilité {volatility:.1%}", f"Beta {beta:.2f}", f"Drawdown max {max_drawdown:.1%}"],
             strategic_initiatives=["Analyse Python MAXIMUM_SPEED mode"],
         ),
         fundamental_context=FundamentalContextInsights(
-            industry_analysis=f"Analyse sectorielle basée sur métriques quantitatives. Score fondamental: {fund_score:.2f}. {rationale}",
+            industry_analysis=f"Analyse sectorielle basée sur métriques quantitatives. Score fondamental: {fund_score_str}. {rationale}",
             growth_drivers=[f"ROE: {roe:.1%}", f"Croissance revenus: {revenue_growth:.1%}"],
             competitive_positioning=f"Position basée sur score {score:.2f} et grade {grade}. {sentiment.capitalize()} par rapport au marché.",
             management_assessment=f"Évaluation basée sur métriques quantitatives: ratio dette {debt_ratio:.2f}, ROE {roe:.1%}.",

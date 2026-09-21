@@ -280,6 +280,7 @@ class CrewExportGenerator:
 
     def _identify_missing_fields(self, data: dict[str, Any]) -> list[str]:
         """Identify missing or null fields in the data."""
+        is_crypto = "crypto" in str(data.get("asset_class", ""))
         key_fields = [
             "current_price",
             "volatility",
@@ -287,8 +288,11 @@ class CrewExportGenerator:
             "macd",
             "beta",
             "sentiment_score",
-            "volume_24h" if "crypto" in str(data.get("asset_class", "")) else "volume",
+            "volume_24h" if is_crypto else "volume",
         ]
+        if is_crypto:
+            # 40% of the crypto fundamental score; its absence has to be visible.
+            key_fields.append("market_cap")
         return [field for field in key_fields if field not in data or data[field] is None]
 
     def _map_risk_level(self, risk_score: float) -> str:
