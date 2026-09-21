@@ -306,24 +306,31 @@ class PortfolioDeepAnalyzer:
         holding.grade = cast(Grade, analysis_result.grade)
         holding.recommended_action = f"{analysis_result.recommendation} - {analysis_result.rationale[:50]}..."
 
-        # Update risk assessment
-        holding.risk.score = 5.0 - (analysis_result.risk_score * 5.0)  # Convert to 0-5 scale
-        holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
+        # Update risk assessment. risk_score is float | None on DeepAnalysisResult
+        # (flow_state_models.py) -- the same optionality as fundamental_score, and
+        # it can go unresolved for the same reason (this legacy analyzer's crypto
+        # branch never resolves the supply fields, so a component can be excluded
+        # entirely). holding.risk.score is a required, non-Optional float
+        # (RiskAssessmentStandardized) with no "unavailable" representation, so
+        # there is nothing safe to write without fabricating a number -- skip the
+        # update and leave the holding's existing risk assessment as-is.
+        if analysis_result.risk_score is not None:
+            holding.risk.score = 5.0 - (analysis_result.risk_score * 5.0)  # Convert to 0-5 scale
+            holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
         holding.risk.risk_factors = list(analysis_result.risk_details.keys())[:5]
 
-        # Add analysis details to rationale.
-        # fundamental_score is None when no component survived (crypto only,
-        # ADR-014) -- perf_dict never carries circulating_supply/max_supply on
-        # this legacy path (verified: absent from quantitative_analysis_tool.py
-        # and finwiz/quantitative/), so market_cap/volume_24h/age_years failing
-        # alone is enough to leave nothing for the fundamental component. Never
-        # format None as a number (LIVE-3, post-PR review findings.md).
+        # Add analysis details to rationale. fundamental_score, technical_score
+        # and risk_score are all float | None on DeepAnalysisResult -- never
+        # format None as a number (LIVE-3, post-PR review findings.md, and its
+        # sibling technical_score/risk_score bullets found on re-review).
         fundamental_bullet = f"📊 Fundamental: {analysis_result.fundamental_score:.3f}" if analysis_result.fundamental_score is not None else "📊 Fundamental: unavailable"
+        technical_bullet = f"📈 Technical: {analysis_result.technical_score:.3f}" if analysis_result.technical_score is not None else "📈 Technical: unavailable"
+        risk_bullet = f"⚠️ Risk: {analysis_result.risk_score:.3f}" if analysis_result.risk_score is not None else "⚠️ Risk: unavailable"
         holding.rationale_bullets = [
             f"🎯 Grade: {analysis_result.grade} (Score: {analysis_result.composite_score:.3f})",
             fundamental_bullet,
-            f"📈 Technical: {analysis_result.technical_score:.3f}",
-            f"⚠️ Risk: {analysis_result.risk_score:.3f}",
+            technical_bullet,
+            risk_bullet,
             f"💡 {analysis_result.recommendation}: {analysis_result.rationale[:100]}...",
             "⚡ Python-based analysis (0 LLM calls, <1s execution)",
         ]

@@ -158,3 +158,67 @@ def test_rationale_bullet_is_unavailable_when_fundamental_score_is_none():
 
     assert "📊 Fundamental: unavailable" in holding.rationale_bullets
     assert not any("None" in bullet for bullet in holding.rationale_bullets)
+
+
+def test_rationale_bullet_is_unavailable_when_technical_score_is_none():
+    """Sibling of the fundamental-score fix, found on re-review: technical_score
+    is float | None on DeepAnalysisResult (flow_state_models.py) too, and was
+    formatted with `:.3f` unguarded.
+    """
+    analyzer = PortfolioDeepAnalyzer()
+    holding = _holding()
+    result = DeepAnalysisResult(
+        ticker="BTC-USD",
+        asset_class="crypto",
+        crew_name="PythonDeepAnalyzer",
+        composite_score=0.5,
+        grade="C",
+        recommendation="HOLD",
+        rationale="No technical component survived",
+        risk_details={},
+        fundamental_score=0.5,
+        technical_score=None,
+        risk_score=0.5,
+        data_freshness_hours=1.0,
+        confidence_level=0.5,
+    )
+
+    analyzer._update_holding_with_analysis(holding, result)
+
+    assert "📈 Technical: unavailable" in holding.rationale_bullets
+    assert not any("None" in bullet for bullet in holding.rationale_bullets)
+
+
+def test_rationale_bullet_is_unavailable_when_risk_score_is_none():
+    """Sibling of the fundamental-score fix, found on re-review: risk_score is
+    float | None on DeepAnalysisResult too. Unlike fundamental_score, it also
+    feeds holding.risk.score -- a required, non-Optional float with no
+    "unavailable" representation -- so that update must be skipped (not
+    fabricated) rather than just the bullet text guarded.
+    """
+    analyzer = PortfolioDeepAnalyzer()
+    holding = _holding()
+    result = DeepAnalysisResult(
+        ticker="BTC-USD",
+        asset_class="crypto",
+        crew_name="PythonDeepAnalyzer",
+        composite_score=0.5,
+        grade="C",
+        recommendation="HOLD",
+        rationale="No risk component survived",
+        risk_details={},
+        fundamental_score=0.5,
+        technical_score=0.5,
+        risk_score=None,
+        data_freshness_hours=1.0,
+        confidence_level=0.5,
+    )
+
+    analyzer._update_holding_with_analysis(holding, result)
+
+    assert "⚠️ Risk: unavailable" in holding.rationale_bullets
+    assert not any("None" in bullet for bullet in holding.rationale_bullets)
+    # holding.risk.score is a required float with no None representation --
+    # the pre-existing value must survive untouched rather than be fabricated.
+    assert holding.risk.score == 3.0
+    assert holding.risk.level == "Medium"
