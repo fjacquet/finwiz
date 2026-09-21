@@ -156,6 +156,20 @@ class TestDeepAnalysisReportGenerator:
         assert "Volume 24h" in html_content
         assert "800.0B" in html_content  # Market cap value
 
+    def test_should_render_indisponible_when_crypto_fundamental_score_is_none(self, generator: DeepAnalysisReportGenerator, sample_crypto_data: dict[str, Any]):
+        """LIVE-2 (post-PR review, findings.md): a crypto holding where no
+        fundamental component survived (ADR-014) carries fundamental_score=None
+        explicitly. ``template_vars.setdefault("fundamental_score", 0.5)`` never
+        fires for a present-but-None key, so None reached
+        ``"%.0f"|format(fundamental_score * 100)`` and raised TypeError. Exercises
+        the real render path (generate_report -> template.render).
+        """
+        sample_crypto_data["fundamental_score"] = None
+
+        html_content = generator.generate_report(sample_crypto_data)
+
+        assert "Indisponible" in html_content
+
     def test_should_generate_all_grade_levels(self, generator: DeepAnalysisReportGenerator):
         """Test report generation for all grade levels (A+ to F)."""
         grades = ["A+", "A", "B", "C", "D", "F"]

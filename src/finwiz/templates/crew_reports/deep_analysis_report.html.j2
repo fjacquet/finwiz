@@ -51,7 +51,11 @@
         </div>
         <div class="metric-card">
             <h4>Score Fondamental</h4>
+            {% if fundamental_score is not none %}
             <p class="metric-value">{{ "%.0f"|format(fundamental_score * 100) }}%</p>
+            {% else %}
+            <p class="metric-value">Indisponible</p>
+            {% endif %}
         </div>
         <div class="metric-card">
             <h4>Score Technique</h4>
