@@ -150,3 +150,58 @@ def test_build_crew_inputs_renders_strategic_block() -> None:
     assert inputs["strategic_block"].startswith("🧭 RECHERCHE STRATÉGIQUE")
     assert "Marque forte" in inputs["strategic_block"]
     assert "Porter : non disponible" in inputs["strategic_block"]
+
+
+def _make_quant_no_fundamental() -> Any:
+    """Quant for a crypto holding where no fundamental component survived (ADR-014)."""
+    from datetime import datetime
+
+    from finwiz.schemas.hybrid_analysis import QuantitativeAnalysis
+    from finwiz.schemas.hybrid_analysis.metadata import DataQualityMetrics
+
+    return QuantitativeAnalysis(
+        composite_score=0.5,
+        fundamental_score=None,
+        technical_score=0.5,
+        risk_score=2.5,
+        grade="C",
+        preliminary_recommendation="HOLD",
+        fundamental_metrics={},
+        technical_indicators={},
+        risk_metrics={},
+        calculation_timestamp=datetime.now(),
+        data_quality=DataQualityMetrics(
+            completeness_score=0.5,
+            freshness_score=1.0,
+            accuracy_confidence=0.5,
+            source_reliability=0.5,
+            missing_fields=["market_cap", "volume_24h", "age_years"],
+        ),
+        confidence_level=0.5,
+        python_rationale="No fundamental component survived",
+    )
+
+
+def test_build_crew_inputs_renders_missing_fundamental_score_as_unavailable() -> None:
+    """LIVE-6 (post-PR review, findings.md): a crypto holding with no surviving
+    fundamental component must not feed the AI crew a fabricated 0.5 as if it
+    had been measured -- the exact substitution this branch removes everywhere
+    else. Matches _qualify_fallbacks.py's fund_score_str convention.
+    """
+    from finwiz.analysis._helpers import _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    ctx = AnalysisContext(ticker="BTC-USD", asset_class="crypto", company_name="Bitcoin")
+    inputs = _build_crew_inputs(ctx, _make_quant_no_fundamental(), {})
+
+    assert inputs["fundamental_score"] == "indisponible"
+
+
+def test_build_crew_inputs_formats_present_fundamental_score() -> None:
+    from finwiz.analysis._helpers import _build_crew_inputs
+    from finwiz.analysis.deep_analysis_pipeline import AnalysisContext
+
+    ctx = AnalysisContext(ticker="AAPL", asset_class="stock", company_name="Apple")
+    inputs = _build_crew_inputs(ctx, _make_quant(), {})
+
+    assert inputs["fundamental_score"] == "0.70"
