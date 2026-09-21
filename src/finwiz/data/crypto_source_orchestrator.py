@@ -148,8 +148,15 @@ class CryptoSourceOrchestrator:
                 result.lineage.market_cap_source = "coingecko"
             if gecko.circulating_supply is not None:
                 result.circulating_supply = gecko.circulating_supply
-                result.max_supply = gecko.max_supply
                 result.lineage.supply_source = "coingecko"
+            # Independent of circulating_supply: CoinGecko can report a cap
+            # without reporting circulating supply, and discarding it there
+            # loses data the source did provide. The supply COMPONENT still
+            # counts as unresolved only when circulating_supply is None (see
+            # _compute_confidence below) -- a None max_supply here still means
+            # uncapped, never missing (LIVE-4, post-PR review findings.md).
+            if gecko.max_supply is not None:
+                result.max_supply = gecko.max_supply
             if gecko.volume_24h is not None:
                 result.volume_24h = gecko.volume_24h
                 result.lineage.volume_24h_source = "coingecko"

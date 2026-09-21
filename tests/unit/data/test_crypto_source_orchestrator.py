@@ -129,6 +129,21 @@ def test_market_cap_and_supply_stay_none_when_coingecko_fails():
     assert result.lineage.supply_source is None
 
 
+def test_max_supply_survives_without_circulating_supply():
+    """LIVE-4 (post-PR review, findings.md): CoinGecko can report a supply cap
+    without reporting circulating supply. max_supply used to be copied only
+    inside the circulating_supply branch, discarding data the source did
+    provide. The supply component still counts as unresolved (confidence
+    penalty, lineage.supply_source stays None) because circulating_supply is
+    still None -- only max_supply itself must survive.
+    """
+    result = _orchestrator(_coingecko_data(circulating=None, max_supply=21000000.0), _kraken_data()).fetch("BTC-USD")
+
+    assert result.max_supply == 21000000.0
+    assert result.circulating_supply is None
+    assert result.lineage.supply_source is None
+
+
 def test_kraken_volume_is_marked_single_venue():
     result = _orchestrator(None, _kraken_data(volume=150074590.0)).fetch("BTC-USD", yfinance_price=81061.41)
 
