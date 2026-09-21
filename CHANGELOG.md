@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.17.0] - 2026-09-21
+
+
 ### Fixed
 
 - Crypto market data was fabricated in production. `_collect_crypto_data` sent
@@ -90,6 +93,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   over the components that survived.
 - XRP was scored as three years old. Ages now derive from a curated genesis-year
   table (XRP 2012), and an uncurated symbol yields no age instead of a default.
+- `_FactPackRaw` accepts a null `leadership` / `corporate_structure` (mapped
+  to the placeholder) instead of failing validation and retrying.
+- The JSON-repair monkeypatch repairs only registered crew schemas; research
+  models no longer log "JSON repair failed".
+- Log labels: "Web research initiated/completed" replace the Perplexity
+  wording; the 2x-baseline warning is gone.
 
 ### Added
 
@@ -141,19 +150,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   verified facts. `tests/unit/crews/test_deep_analysis_prompt_layout.py`
   pins the layout. See ADR-013.
 
-### Fixed
-
-- `_FactPackRaw` accepts a null `leadership` / `corporate_structure` (mapped
-  to the placeholder) instead of failing validation and retrying.
-- The JSON-repair monkeypatch repairs only registered crew schemas; research
-  models no longer log "JSON repair failed".
-- Log labels: "Web research initiated/completed" replace the Perplexity
-  wording; the 2x-baseline warning is gone.
-
 ### Removed
 
 - `get_configured_llm(force_json_object=...)`: the extra_body `json_object`
   override never reached the request.
+
 
 ## [5.16.0] - 2026-09-09
 
