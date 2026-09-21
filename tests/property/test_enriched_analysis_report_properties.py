@@ -369,3 +369,55 @@ class TestRendererShowsPriceTargets:
         assert "</html>" in html_content, "Report must close html tag"
         assert enriched_data["ticker"] in html_content, "Report must contain ticker"
         assert enriched_data["final_recommendation"] in html_content, "Report must contain recommendation"
+
+
+class TestRendererHandlesMissingFundamentalScore:
+    """LIVE-1 (post-PR review, findings.md): a crypto holding with no surviving
+    fundamental component (ADR-014) carries quantitative.fundamental_score=None.
+    ``template_vars["fundamental_score"] = quant.get("fundamental_score", 0.0)``
+    never fell back (the key is present, just None), so the template's
+    ``"%.0f"|format(fundamental_score * 100)`` raised ``TypeError`` -- and the
+    caller (deep_analysis_orchestrator._store_enriched_analysis) swallows that,
+    silently dropping the holding's HTML report. Exercises the real render
+    path (generate_report -> template.render), not just the variable dict.
+    """
+
+    def _payload(self, fundamental_score: float | None) -> dict:
+        return {
+            "ticker": "BTC-USD",
+            "company_name": "Bitcoin",
+            "asset_class": "crypto",
+            "analysis_date": datetime.now(),
+            "executive_summary": "summary " * 250,
+            "investment_rationale": "rat " * 600,
+            "final_grade": "C",
+            "final_recommendation": "HOLD",
+            "recommendation_confidence": "LOW",
+            "final_score": 0.5,
+            "report_word_count": 2200,
+            "unique_insights_count": 6,
+            "processing_time_seconds": 5.0,
+            "llm_cost_dollars": 0.0,
+            "quantitative": {
+                "composite_score": 0.5,
+                "fundamental_score": fundamental_score,
+                "technical_score": 0.5,
+                "risk_score": 1.5,
+                "grade": "C",
+                "preliminary_recommendation": "HOLD",
+                "fundamental_metrics": {},
+                "technical_indicators": {},
+                "risk_metrics": {},
+            },
+            "qualitative": {"ai_confidence": 0.5},
+        }
+
+    def test_renders_indisponible_instead_of_crashing_on_none(self) -> None:
+        gen = EnrichedAnalysisReportGenerator()
+        html = gen.generate_report(self._payload(None))
+        assert "Indisponible" in html
+
+    def test_still_renders_percentage_when_fundamental_score_present(self) -> None:
+        gen = EnrichedAnalysisReportGenerator()
+        html = gen.generate_report(self._payload(0.72))
+        assert "72%" in html
