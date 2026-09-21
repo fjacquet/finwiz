@@ -121,6 +121,25 @@ def test_orchestrator_failure_does_not_crash_the_holding(mocker):
     assert result["volume_24h"] is None
 
 
+def test_construction_failure_does_not_abort_the_collector(mocker):
+    """LIVE-5 (post-PR review, findings.md): CryptoSourceOrchestrator() builds
+    CoinGeckoAdapter/KrakenAdapter eagerly. Building it unconditionally in
+    __init__ let a construction failure (missing config, import error) abort
+    DeepAnalysisDataCollector.__init__ for stock- and ETF-only runs that never
+    touch crypto. Lazy construction defers the failure to first crypto use,
+    where it is already caught by _collect_crypto_data's except block.
+    """
+    mocker.patch("finwiz.data.data_source_orchestrator.DataSourceOrchestrator", autospec=True)
+    mocker.patch("finwiz.data.crypto_source_orchestrator.CryptoSourceOrchestrator", side_effect=RuntimeError("boom"))
+
+    collector = DeepAnalysisDataCollector(_FakeState())  # must not raise
+
+    result = collector._collect_crypto_data("BTC-USD", {})
+
+    assert result["market_cap"] is None
+    assert result["volume_24h"] is None
+
+
 def test_missing_market_cap_is_reported_for_crypto():
     generator = CrewExportGenerator()
 

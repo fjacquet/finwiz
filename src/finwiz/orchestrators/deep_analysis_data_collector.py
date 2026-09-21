@@ -1,11 +1,14 @@
 """Data collection for deep analysis using Python tools."""
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from finwiz.data.adapters.crypto.genesis import crypto_age_years
 from finwiz.tools.logger import get_logger
 from finwiz.tools.standardized_sentiment_tool import get_standardized_sentiment_tool
+
+if TYPE_CHECKING:
+    from finwiz.data.crypto_source_orchestrator import CryptoSourceOrchestrator
 
 logger = get_logger(__name__)
 
@@ -46,9 +49,24 @@ class DeepAnalysisDataCollector:
             enable_validation=True,
         )
 
-        from finwiz.data.crypto_source_orchestrator import CryptoSourceOrchestrator
+        # Constructed lazily (see _get_crypto_orchestrator) on first crypto use,
+        # not here: CryptoSourceOrchestrator() builds CoinGeckoAdapter and
+        # KrakenAdapter eagerly, so building it unconditionally in __init__
+        # would let a construction failure (missing config, import error) abort
+        # a stock- or ETF-only run that never touches crypto (LIVE-5, post-PR
+        # review findings.md). Unit tests intercept this by patching the
+        # instance attribute directly (mocker.patch.object(collector,
+        # "_crypto_orchestrator", ...)), which _get_crypto_orchestrator()
+        # respects by skipping construction when the attribute is already set.
+        self._crypto_orchestrator: CryptoSourceOrchestrator | None = None
 
-        self._crypto_orchestrator = CryptoSourceOrchestrator()
+    def _get_crypto_orchestrator(self) -> "CryptoSourceOrchestrator":
+        """Return the crypto source orchestrator, constructing it on first use."""
+        if self._crypto_orchestrator is None:
+            from finwiz.data.crypto_source_orchestrator import CryptoSourceOrchestrator
+
+            self._crypto_orchestrator = CryptoSourceOrchestrator()
+        return self._crypto_orchestrator
 
     def collect_data(
         self,
@@ -178,7 +196,7 @@ class DeepAnalysisDataCollector:
         yfinance_price = collected_data.get("current_price")
 
         try:
-            resolved = self._crypto_orchestrator.fetch(ticker, yfinance_price=yfinance_price)
+            resolved = self._get_crypto_orchestrator().fetch(ticker, yfinance_price=yfinance_price)
         except Exception as e:
             self.logger.error(f"❌ Crypto source orchestration failed for {ticker}: {e}", exc_info=True)
             collected_data.update({"market_cap": None, "volume_24h": None, "circulating_supply": None, "max_supply": None, "age_years": crypto_age_years(ticker)})
