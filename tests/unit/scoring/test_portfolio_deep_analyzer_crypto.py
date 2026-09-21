@@ -14,6 +14,9 @@ separately, through `DeepAnalysisScorer.calculate_composite_score`, in
 
 from dataclasses import dataclass
 
+from finwiz.flow_state_models import DeepAnalysisResult
+from finwiz.schemas.common import RiskAssessmentStandardized
+from finwiz.schemas.portfolio_review import HoldingDecision
 from finwiz.scoring.portfolio_deep_analyzer import PortfolioDeepAnalyzer
 
 
@@ -109,3 +112,49 @@ def test_resolved_crypto_fields_pass_through_unchanged(mocker):
     assert data["market_cap"] == 1_629_408_510_367.0
     assert data["volume_24h"] == 23_900_006_504.0
     assert data["age_years"] == 17.0
+
+
+def _holding() -> HoldingDecision:
+    return HoldingDecision(
+        asset_class="crypto",
+        name="Bitcoin",
+        ticker="BTC-USD",
+        currency="USD",
+        decision="KEEP",
+        composite_score=0.5,
+        grade="C",
+        grade_description="Placeholder",
+        recommended_action="Analyse en attente",
+        risk=RiskAssessmentStandardized(score=3.0, level="Medium"),
+    )
+
+
+def test_rationale_bullet_is_unavailable_when_fundamental_score_is_none():
+    """LIVE-3 (post-PR review, findings.md): the crypto branch of
+    _extract_holding_data never sets circulating_supply/max_supply, so the
+    supply component is always excluded on this path -- when perf_dict also
+    lacks market_cap/volume_24h/age_years, fundamental_score is None. The
+    rationale bullet used to format it with `:.3f`, raising TypeError.
+    """
+    analyzer = PortfolioDeepAnalyzer()
+    holding = _holding()
+    result = DeepAnalysisResult(
+        ticker="BTC-USD",
+        asset_class="crypto",
+        crew_name="PythonDeepAnalyzer",
+        composite_score=0.5,
+        grade="C",
+        recommendation="HOLD",
+        rationale="No fundamental component survived",
+        risk_details={},
+        fundamental_score=None,
+        technical_score=0.5,
+        risk_score=0.5,
+        data_freshness_hours=1.0,
+        confidence_level=0.5,
+    )
+
+    analyzer._update_holding_with_analysis(holding, result)
+
+    assert "📊 Fundamental: unavailable" in holding.rationale_bullets
+    assert not any("None" in bullet for bullet in holding.rationale_bullets)

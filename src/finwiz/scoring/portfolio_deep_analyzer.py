@@ -311,10 +311,17 @@ class PortfolioDeepAnalyzer:
         holding.risk.level = cast(RiskLevel, self._risk_score_to_level(holding.risk.score))
         holding.risk.risk_factors = list(analysis_result.risk_details.keys())[:5]
 
-        # Add analysis details to rationale
+        # Add analysis details to rationale.
+        # fundamental_score is None when no component survived (crypto only,
+        # ADR-014) -- perf_dict never carries circulating_supply/max_supply on
+        # this legacy path (verified: absent from quantitative_analysis_tool.py
+        # and finwiz/quantitative/), so market_cap/volume_24h/age_years failing
+        # alone is enough to leave nothing for the fundamental component. Never
+        # format None as a number (LIVE-3, post-PR review findings.md).
+        fundamental_bullet = f"📊 Fundamental: {analysis_result.fundamental_score:.3f}" if analysis_result.fundamental_score is not None else "📊 Fundamental: unavailable"
         holding.rationale_bullets = [
             f"🎯 Grade: {analysis_result.grade} (Score: {analysis_result.composite_score:.3f})",
-            f"📊 Fundamental: {analysis_result.fundamental_score:.3f}",
+            fundamental_bullet,
             f"📈 Technical: {analysis_result.technical_score:.3f}",
             f"⚠️ Risk: {analysis_result.risk_score:.3f}",
             f"💡 {analysis_result.recommendation}: {analysis_result.rationale[:100]}...",
