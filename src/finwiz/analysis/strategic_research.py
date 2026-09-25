@@ -241,6 +241,7 @@ async def gather_strategic_analysis(
         timeout=timeout,
         max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
         kind="swot",
+        cache_key=f"{ticker}|{asset_class}",
     )
     porter_coro = research_with_retry(
         prompt=_porter_prompt(ticker, sector, industry, description, date_anchor, asset_class=asset_class, facts=facts),
@@ -250,6 +251,7 @@ async def gather_strategic_analysis(
         timeout=timeout,
         max_attempts=_FRAMEWORK_MAX_ATTEMPTS,
         kind="porter",
+        cache_key=f"{ticker}|{asset_class}",
     )
     swot_result, porter_result = await asyncio.gather(swot_coro, porter_coro)
     # Citations are ignored here for now: SwotAnalysis / FiveForcesAnalysis have

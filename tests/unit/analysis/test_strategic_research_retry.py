@@ -58,6 +58,18 @@ async def test_strategic_calls_go_through_the_retry_wrapper(mocker):
 
 
 @pytest.mark.asyncio
+async def test_frameworks_are_cached_per_ticker_and_asset_class(mocker):
+    """Each framework passes a cache key so a same-day re-run pays nothing."""
+    from finwiz.analysis import strategic_research
+
+    wrapper = mocker.patch(_SEAM, new=mocker.AsyncMock(return_value=None))
+
+    await strategic_research.gather_strategic_analysis(ticker="ORCL", sector="Tech", industry="Software", description="desc", asset_class="stock")
+
+    assert [c.kwargs["cache_key"] for c in wrapper.await_args_list] == ["ORCL|stock", "ORCL|stock"]
+
+
+@pytest.mark.asyncio
 async def test_frameworks_are_unwrapped_from_the_research_result(mocker):
     from finwiz.analysis import strategic_research
     from finwiz.schemas.hybrid_analysis.strategic import FiveForcesAnalysis, SwotAnalysis

@@ -121,6 +121,7 @@ class PerplexityAnalysisIntegration:
                 timeout=self.config.timeout_seconds,
                 max_attempts=self.config.max_retries + 1,
                 kind="news",
+                cache_key=f"{ticker}|{asset_type}|{analysis_type}|{max_results}|{query}",
             )
             if research is None:
                 raise PerplexityAPIError(None, "web research returned no result")

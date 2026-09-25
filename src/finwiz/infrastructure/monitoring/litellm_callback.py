@@ -66,6 +66,12 @@ class TokenMonitorCallback(CustomLogger):
         self.crew_cost_known: dict[str, bool] = {}
         # Proxy model ids already announced in the log — one line per model, not per kickoff.
         self._priced_via_proxy: set[str] = set()
+        # Research answers served from ResearchCache: no request, no cost, just a count.
+        self.cache_hits: dict[str, int] = {}
+
+    def record_cache_hit(self, name: str) -> None:
+        """Count one answer served from cache under ``name`` (e.g. ``research_swot``)."""
+        self.cache_hits[name] = self.cache_hits.get(name, 0) + 1
 
     def log_success_event(self, kwargs: dict, response_obj: Any, start_time: float, end_time: float) -> None:
         """Called after successful LLM call. Tracks cost and crew attribution."""
@@ -188,8 +194,9 @@ class TokenMonitorCallback(CustomLogger):
         could not be priced show their tokens with "cost n/a" rather than $0.
         """
         summary = self.get_cost_summary()
+        hits_line = "  cache hits (no request, $0): " + ", ".join(f"{name} {count}" for name, count in self.cache_hits.items()) if self.cache_hits else None
         if summary["call_count"] == 0:
-            logger.info("LLM Cost Summary: no crew LLM usage measured this run")
+            logger.info("LLM Cost Summary: no crew LLM usage measured this run" + (f"\n{hits_line}" if hits_line else ""))
             return
 
         lines = ["LLM Cost Summary (estimated from CrewAI usage metrics):"]
@@ -205,6 +212,8 @@ class TokenMonitorCallback(CustomLogger):
         lines.append(f"  TOTAL: ~${summary['total_cost']:.4f} estimated across {summary['call_count']} calls")
         if any_unpriced:
             lines.append("  (some crews used an unpriced model; their tokens are counted but cost is not)")
+        if hits_line:
+            lines.append(hits_line)
         logger.info("\n".join(lines))
 
 
