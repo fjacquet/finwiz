@@ -12,9 +12,12 @@ from finwiz.infrastructure.monitoring.litellm_callback import (
 )
 
 
-def _usage(prompt: int = 100, completion: int = 50, requests: int = 1) -> SimpleNamespace:
-    """Build a CrewAI-like UsageMetrics object."""
-    return SimpleNamespace(prompt_tokens=prompt, completion_tokens=completion, successful_requests=requests)
+def _usage(prompt: int = 100, completion: int = 50, requests: int = 1, cached: int | None = None) -> SimpleNamespace:
+    """Build a CrewAI-like UsageMetrics object; ``cached`` omitted means the field is absent."""
+    usage = SimpleNamespace(prompt_tokens=prompt, completion_tokens=completion, successful_requests=requests)
+    if cached is not None:
+        usage.cached_prompt_tokens = cached
+    return usage
 
 
 class TestTokenMonitorCostTracking:
@@ -136,7 +139,7 @@ class TestRecordUsage:
 
         assert cb.call_count == 3
         assert cb.crew_calls["deep_analysis_stock"] == 3
-        assert cb.crew_tokens["deep_analysis_stock"] == {"prompt": 200, "completion": 100}
+        assert cb.crew_tokens["deep_analysis_stock"] == {"prompt": 200, "completion": 100, "cached": 0}
         assert cb.total_cost == pytest.approx(0.003)
         assert cb.crew_cost_known["deep_analysis_stock"] is True
 
@@ -159,7 +162,7 @@ class TestRecordUsage:
 
         cb.record_usage("weird_crew", _usage(100, 50, requests=1), model="vendor/unknown-model")
 
-        assert cb.crew_tokens["weird_crew"] == {"prompt": 100, "completion": 50}
+        assert cb.crew_tokens["weird_crew"] == {"prompt": 100, "completion": 50, "cached": 0}
         assert cb.crew_calls["weird_crew"] == 1
         assert cb.total_cost == 0.0  # no fabricated cost
         assert cb.crew_cost_known["weird_crew"] is False
@@ -224,7 +227,7 @@ class TestOpenRouterPricingFallback:
     """
 
     @staticmethod
-    def _gemini_only(model: str, prompt_tokens: int, completion_tokens: int):
+    def _gemini_only(model: str, prompt_tokens: int, completion_tokens: int, cache_read_input_tokens: int = 0):
         if model.startswith("openrouter/"):
             raise Exception("no pricing for model")
         assert model == "gemini/gemini-3.7-flash"
@@ -295,3 +298,53 @@ class TestExactProviderCost:
         assert crew["calls"] == 1
         assert crew["cost_known"] is False
         assert crew["cost"] == 0.0
+
+
+class TestCachedPromptTokens:
+    """Provider prompt-cache reads: counted, and priced at the cache-read rate."""
+
+    def test_cached_tokens_are_priced_at_the_cache_read_rate(self, mocker):
+        price = mocker.patch("litellm.cost_per_token", return_value=(0.001, 0.002))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("deep_analysis_stock", _usage(10_000, 500, cached=8_000), model="openrouter/google/gemini-3-flash-preview")
+
+        assert price.call_args.kwargs["cache_read_input_tokens"] == 8_000
+
+    def test_real_litellm_price_drops_when_tokens_are_cached(self):
+        model = "openrouter/google/gemini-3-flash-preview"
+        plain, cached = TokenMonitorCallback(), TokenMonitorCallback()
+
+        plain.record_usage("c", _usage(10_000, 0), model=model)
+        cached.record_usage("c", _usage(10_000, 0, cached=8_000), model=model)
+
+        assert cached.total_cost < plain.total_cost
+
+    def test_cached_tokens_accumulate_per_crew(self, mocker):
+        mocker.patch("litellm.cost_per_token", return_value=(0.0, 0.0))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("deep_analysis_stock", _usage(100, 50, cached=40), model="m")
+        cb.record_usage("deep_analysis_stock", _usage(100, 50, cached=60), model="m")
+
+        assert cb.get_cost_summary()["per_crew"]["deep_analysis_stock"]["tokens"] == {"prompt": 200, "completion": 100, "cached": 100}
+
+    def test_absent_field_counts_as_zero(self, mocker):
+        price = mocker.patch("litellm.cost_per_token", return_value=(0.0, 0.0))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("c", _usage(100, 50), model="m")
+
+        assert price.call_args.kwargs["cache_read_input_tokens"] == 0
+        assert cb.get_cost_summary()["per_crew"]["c"]["tokens"]["cached"] == 0
+
+    def test_summary_line_shows_the_cached_count(self, mocker, caplog):
+        mocker.patch("litellm.cost_per_token", return_value=(0.001, 0.001))
+        cb = TokenMonitorCallback()
+        cb.record_usage("deep_analysis_stock", _usage(1000, 500, cached=700), model="m")
+        caplog.set_level(logging.INFO)
+
+        cb.log_cost_summary()
+
+        msgs = " ".join(r.message for r in caplog.records)
+        assert "deep_analysis_stock: $0.0020 (1 calls, 1500 tokens, 700 cached)" in msgs
