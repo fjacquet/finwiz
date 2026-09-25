@@ -1,9 +1,12 @@
 # Cache Module
 
-Caching infrastructure for analysis results. Two distinct caches live here:
+Caching infrastructure for analysis results. Three distinct caches live here:
 - `AnalysisCacheManager` — per-ticker crew analysis results (24h TTL, JSON on disk)
 - `FactPackCache` — verified Perplexity fact packs (v5.2; freshness-banded, no
   hard TTL eviction). See ADR-010.
+- `ResearchCache` — successful web-research answers (SWOT, Porter, news),
+  used only by `research_with_retry` when a caller passes `cache_key`. TTL per
+  kind lives in `research_retry._CACHE_TTL`, not here. See ADR-015.
 
 ## Directory Structure
 
@@ -13,7 +16,8 @@ cache/
 ├── _models.py                  # CrewAnalysisResult, CachedAnalysis (Pydantic)
 ├── _helpers.py                 # verify/find/convert/clear_stale/get_stats helpers
 ├── analysis_cache_manager.py   # AnalysisCacheManager (thin coordinator)
-└── fact_pack_cache.py          # FactPackCache (v5.2 grounded qualitative)
+├── fact_pack_cache.py          # FactPackCache (v5.2 grounded qualitative)
+└── research_cache.py           # ResearchCache (web-research answers, ADR-015)
 ```
 
 `analysis_cache_manager.py` is split across `_models.py` and `_helpers.py` to
@@ -30,6 +34,7 @@ structural — the manager's public API (`get_cached_analysis`, `cache_analysis`
 | `_models.py` | `CrewAnalysisResult` | Pydantic model for cached analysis payload |
 | `_models.py` | `CachedAnalysis` | Cache envelope with TTL/age helpers |
 | `fact_pack_cache.py` | `FactPackCache` | v5.2 fact pack cache (path-traversal hardened) |
+| `research_cache.py` | `ResearchCache` | Web-research answers under `cache/research/<kind>/<sha256(key)>.json` |
 
 ## Usage
 

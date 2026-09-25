@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Web-research answers are cached on disk (`cache/research/`, ADR-015). SWOT
+  and Porter are reused for 72 h and news for 24 h, keyed per holding, so a
+  same-day re-run no longer pays the ~$4.58 of research again (82% of the
+  2026-09-21 run's cost). Failed calls are never cached; a hit records no cost
+  and is counted on its own line of the LLM cost summary. Delete
+  `cache/research/` to force fresh research.
+
 ## [5.17.0] - 2026-09-21
 
 

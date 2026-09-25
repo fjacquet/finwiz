@@ -252,3 +252,78 @@ async def test_a_cap_of_one_serialises_two_coroutines_on_the_same_loop(mocker, m
     first_exit_at = events[1][1]
     second_enter_at = events[2][1]
     assert second_enter_at >= first_exit_at
+
+
+# --- result cache -----------------------------------------------------------
+
+
+@pytest.fixture
+def research_cache(mocker, tmp_path):
+    from finwiz.cache.research_cache import ResearchCache
+
+    cache = ResearchCache(cache_dir=tmp_path)
+    mocker.patch.object(research_retry, "_get_research_cache", return_value=cache)
+    return cache
+
+
+async def test_cache_hit_skips_the_request_and_records_no_cost(mocker, monitor, research_cache):
+    client = mocker.patch(_CLIENT, new=mocker.AsyncMock(return_value=_result("first")))
+
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot", cache_key="AAPL|stock")
+    again = await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot", cache_key="AAPL|stock")
+
+    assert client.await_count == 1
+    assert again is not None
+    assert again.data == _Payload(value="first")
+    assert monitor.get_cost_summary()["per_crew"]["research_swot"]["calls"] == 1
+    assert monitor.cache_hits == {"research_swot": 1}
+
+
+async def test_no_cache_key_never_touches_the_cache(mocker, research_cache):
+    client = mocker.patch(_CLIENT, new=mocker.AsyncMock(return_value=_result()))
+
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot")
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot")
+
+    assert client.await_count == 2
+
+
+async def test_kind_without_a_ttl_is_not_cached(mocker, research_cache):
+    client = mocker.patch(_CLIENT, new=mocker.AsyncMock(return_value=_result()))
+
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="posture", cache_key="portfolio")
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="posture", cache_key="portfolio")
+
+    assert client.await_count == 2
+
+
+async def test_failed_research_is_not_cached(mocker, research_cache):
+    client = mocker.patch(_CLIENT, new=mocker.AsyncMock(side_effect=[None, _result("later")]))
+
+    first = await research_with_retry(prompt="p", schema=_Payload, system="s", kind="news", cache_key="AAPL", max_attempts=1)
+    second = await research_with_retry(prompt="p", schema=_Payload, system="s", kind="news", cache_key="AAPL", max_attempts=1)
+
+    assert first is None
+    assert second is not None
+    assert second.data == _Payload(value="later")
+    assert client.await_count == 2
+
+
+async def test_expired_entry_is_refetched(mocker, research_cache):
+    client = mocker.patch(_CLIENT, new=mocker.AsyncMock(side_effect=[_result("old"), _result("new")]))
+    mocker.patch.dict(research_retry._CACHE_TTL, {"news": research_retry.timedelta(0)})
+
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="news", cache_key="AAPL")
+    again = await research_with_retry(prompt="p", schema=_Payload, system="s", kind="news", cache_key="AAPL")
+
+    assert client.await_count == 2
+    assert again.data == _Payload(value="new")  # type: ignore[union-attr]
+
+
+async def test_cache_write_failure_still_returns_the_result(mocker, research_cache):
+    mocker.patch(_CLIENT, new=mocker.AsyncMock(return_value=_result()))
+    mocker.patch.object(research_cache, "put", side_effect=OSError("disk full"))
+
+    result = await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot", cache_key="AAPL|stock")
+
+    assert result == _result()

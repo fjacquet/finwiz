@@ -119,6 +119,7 @@ class TestPerplexityIntegrationWrapper:
         assert result.results[0].publisher == "Example"  # Extracted from example.com domain
         assert research.await_args.kwargs["kind"] == "news"
         assert research.await_args.kwargs["schema"] is NewsDigest
+        assert research.await_args.kwargs["cache_key"] == "AAPL|stock|sentiment|10|AAPL earnings analysis"
 
     def test_should_merge_citations_not_already_in_the_digest(self, mocker):
         mocker.patch.dict(os.environ, {"OPENROUTER_API_KEY": "test-openrouter-key"})

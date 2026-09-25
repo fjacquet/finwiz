@@ -12,6 +12,10 @@ Each successful OpenRouter call records its exact ``usage.cost`` under
 ``research_{kind}`` in the run's cost summary; a fallback answer is recorded
 as one call with unknown cost, so the summary shows ``cost n/a`` rather than a
 false zero.
+
+A caller that passes ``cache_key`` gets a recent answer from
+:class:`~finwiz.cache.research_cache.ResearchCache` without a request, when its
+``kind`` has a TTL in ``_CACHE_TTL``. A hit records no cost, only a hit count.
 """
 
 from __future__ import annotations
@@ -20,11 +24,13 @@ import asyncio
 import os
 import threading
 from contextlib import asynccontextmanager
+from datetime import timedelta
 from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel
 
+from finwiz.cache.research_cache import ResearchCache
 from finwiz.infrastructure.research.openrouter_structured import ResearchResult, SearchOptions, openrouter_structured
 from finwiz.infrastructure.resilience.perplexity_retry import perplexity_with_retry
 from finwiz.tools.logger import get_logger
@@ -42,6 +48,18 @@ RESEARCH_CONCURRENCY = max(1, int(os.getenv("RESEARCH_CONCURRENCY", "6")))
 
 _MAX_BACKOFF_DELAY = 60.0
 _SLOT_POLL_INTERVAL = 0.01
+
+# How long a research answer is reused, per kind. A kind absent here is never
+# cached: posture is one portfolio-level call; factpack has its own FactPackCache.
+# SWOT/Porter match the fact pack's 3-day "fresh" band; news asks for last week's
+# headlines, so a day-old answer is the most we reuse.
+_CACHE_TTL: dict[str, timedelta] = {
+    "swot": timedelta(hours=72),
+    "porter": timedelta(hours=72),
+    "news": timedelta(hours=24),
+}
+
+_research_cache: ResearchCache | None = None
 
 _throttle: threading.BoundedSemaphore | None = None
 _throttle_init_lock = threading.Lock()
@@ -77,6 +95,14 @@ async def _throttle_slot() -> AsyncIterator[None]:
         throttle.release()
 
 
+def _get_research_cache() -> ResearchCache:
+    """Process-wide research cache (test seam)."""
+    global _research_cache
+    if _research_cache is None:
+        _research_cache = ResearchCache()
+    return _research_cache
+
+
 def has_openrouter_key() -> bool:
     """Whether OPENROUTER_API_KEY is configured.
 
@@ -106,6 +132,18 @@ def _record_cost(kind: str, result: ResearchResult[Any]) -> None:
         logger.debug(f"Cost tracking skipped for research_{kind}: {exc}")
 
 
+def _record_cache_hit(kind: str) -> None:
+    """Count one cache hit under ``research_{kind}``; never raises."""
+    try:
+        from finwiz.infrastructure.monitoring.litellm_callback import get_token_monitor
+
+        monitor = get_token_monitor()
+        if monitor is not None:
+            monitor.record_cache_hit(f"research_{kind}")
+    except Exception as exc:  # pragma: no cover - defensive
+        logger.debug(f"Cache hit tracking skipped for research_{kind}: {exc}")
+
+
 async def _perplexity_fallback[T: BaseModel](
     *, prompt: str, schema: type[T], system: str, search_recency_filter: str | None, timeout: float, kind: str
 ) -> ResearchResult[T] | None:
@@ -130,6 +168,7 @@ async def research_with_retry[T: BaseModel](
     max_attempts: int = 4,
     base_delay: float = 1.0,
     kind: str = "research",
+    cache_key: str | None = None,
 ) -> ResearchResult[T] | None:
     """Call OpenRouter with bounded retries, then Perplexity once, then give up.
 
@@ -145,10 +184,48 @@ async def research_with_retry[T: BaseModel](
             jitter, capped at 60 s.
         kind: Cost attribution suffix (``swot``, ``porter``, ``posture``,
             ``factpack``, ``news``).
+        cache_key: Identifies the question (e.g. ``"AAPL|stock"``). When set and
+            ``kind`` has a TTL, a recent stored answer is returned without a
+            request and a fresh answer is stored. ``None`` disables the cache.
 
     Returns:
         A :class:`ResearchResult` from whichever provider answered, or ``None``.
     """
+    ttl = _CACHE_TTL.get(kind)
+    if cache_key is None or ttl is None:
+        return await _research_uncached(
+            prompt=prompt, schema=schema, system=system, search_recency_filter=search_recency_filter, timeout=timeout, max_attempts=max_attempts, base_delay=base_delay, kind=kind
+        )
+
+    cache = _get_research_cache()
+    cached = cache.get(kind, cache_key, schema, max_age=ttl)
+    if cached is not None:
+        _record_cache_hit(kind)
+        return cached
+
+    result = await _research_uncached(
+        prompt=prompt, schema=schema, system=system, search_recency_filter=search_recency_filter, timeout=timeout, max_attempts=max_attempts, base_delay=base_delay, kind=kind
+    )
+    if result is not None:
+        try:
+            cache.put(kind, cache_key, result)
+        except OSError as exc:
+            logger.warning(f"research_{kind}: could not store result in cache: {type(exc).__name__}")
+    return result
+
+
+async def _research_uncached[T: BaseModel](
+    *,
+    prompt: str,
+    schema: type[T],
+    system: str,
+    search_recency_filter: str | None,
+    timeout: float,
+    max_attempts: int,
+    base_delay: float,
+    kind: str,
+) -> ResearchResult[T] | None:
+    """The retry loop and fallback behind :func:`research_with_retry`, without the cache."""
     if not has_openrouter_key():
         logger.warning(f"research_{kind}: OPENROUTER_API_KEY not configured; trying the Perplexity fallback directly")
         return await _perplexity_fallback(prompt=prompt, schema=schema, system=system, search_recency_filter=search_recency_filter, timeout=timeout, kind=kind)

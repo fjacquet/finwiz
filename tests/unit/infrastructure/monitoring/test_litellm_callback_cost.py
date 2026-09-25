@@ -193,6 +193,26 @@ class TestHonestSummary:
         assert "cost n/a" in msgs
         assert "estimated" in msgs
 
+    def test_cache_hits_are_listed_with_the_summary(self, caplog):
+        cb = TokenMonitorCallback()
+        cb.record_usage("research_swot", _usage(100, 50, requests=1), model=None, cost_usd=0.02)
+        cb.record_cache_hit("research_swot")
+        cb.record_cache_hit("research_swot")
+        caplog.set_level(logging.INFO)
+        cb.log_cost_summary()
+        msgs = " ".join(r.message for r in caplog.records)
+        assert "cache hits (no request, $0): research_swot 2" in msgs
+        assert cb.get_cost_summary()["call_count"] == 1
+
+    def test_all_hits_run_still_reports_the_hits(self, caplog):
+        cb = TokenMonitorCallback()
+        cb.record_cache_hit("research_news")
+        caplog.set_level(logging.INFO)
+        cb.log_cost_summary()
+        msgs = " ".join(r.message for r in caplog.records)
+        assert "no crew LLM usage measured" in msgs
+        assert "research_news 1" in msgs
+
 
 class TestOpenRouterPricingFallback:
     """OpenRouter ids are unpriced in litellm; the vendor-native id usually is not.
