@@ -96,6 +96,8 @@ class ResearchResult[T: BaseModel]:
     cost_usd: float | None
     prompt_tokens: int
     completion_tokens: int
+    # Provider prompt-cache reads, a subset of prompt_tokens (already reflected in cost_usd).
+    cached_prompt_tokens: int = 0
 
 
 def _build_client(timeout: float) -> httpx.AsyncClient:
@@ -244,4 +246,5 @@ async def openrouter_structured[T: BaseModel](
         cost_usd=float(raw_cost) if raw_cost is not None else None,
         prompt_tokens=int(usage.get("prompt_tokens") or 0),
         completion_tokens=int(usage.get("completion_tokens") or 0),
+        cached_prompt_tokens=int((usage.get("prompt_tokens_details") or {}).get("cached_tokens") or 0),
     )

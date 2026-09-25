@@ -54,7 +54,16 @@ async def test_first_success_is_returned_and_costed(mocker, monitor):
     assert client.await_count == 1
     assert sleep.await_count == 0
     crew = monitor.get_cost_summary()["per_crew"]["research_swot"]
-    assert crew == {"cost": pytest.approx(0.01), "calls": 1, "tokens": {"prompt": 100, "completion": 50}, "cost_known": True}
+    assert crew == {"cost": pytest.approx(0.01), "calls": 1, "tokens": {"prompt": 100, "completion": 50, "cached": 0}, "cost_known": True}
+
+
+async def test_research_cached_prompt_tokens_reach_the_monitor(mocker, monitor):
+    result = ResearchResult(data=_Payload(value="ok"), citations=(), cost_usd=0.01, prompt_tokens=100, completion_tokens=50, cached_prompt_tokens=30)
+    mocker.patch(_CLIENT, new=mocker.AsyncMock(return_value=result))
+
+    await research_with_retry(prompt="p", schema=_Payload, system="s", kind="swot")
+
+    assert monitor.get_cost_summary()["per_crew"]["research_swot"]["tokens"]["cached"] == 30
 
 
 async def test_recency_filter_is_forwarded_as_the_search_hint(mocker):

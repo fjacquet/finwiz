@@ -126,7 +126,9 @@ def _record_cost(kind: str, result: ResearchResult[Any]) -> None:
         monitor = get_token_monitor()
         if monitor is None:
             return
-        usage = SimpleNamespace(prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, successful_requests=1)
+        usage = SimpleNamespace(
+            prompt_tokens=result.prompt_tokens, completion_tokens=result.completion_tokens, successful_requests=1, cached_prompt_tokens=result.cached_prompt_tokens
+        )
         monitor.record_usage(f"research_{kind}", usage, model=None, cost_usd=result.cost_usd)
     except Exception as exc:  # pragma: no cover - defensive
         logger.debug(f"Cost tracking skipped for research_{kind}: {exc}")

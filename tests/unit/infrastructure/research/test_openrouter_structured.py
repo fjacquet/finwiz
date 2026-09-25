@@ -165,6 +165,25 @@ async def test_missing_usage_cost_is_none_not_zero(mocker):
     assert (result.prompt_tokens, result.completion_tokens) == (10, 5)
 
 
+async def test_cached_prompt_tokens_are_read_from_usage_details(mocker):
+    usage = {"prompt_tokens": 10, "completion_tokens": 5, "cost": 0.001, "prompt_tokens_details": {"cached_tokens": 7}}
+    _install(mocker, lambda r: httpx.Response(200, json=_ok_body('{"value": "ok"}', usage=usage)))
+
+    result = await openrouter_structured(prompt="p", schema=_Payload, system="s", api_key="k")
+
+    assert result is not None
+    assert result.cached_prompt_tokens == 7
+
+
+async def test_no_usage_details_means_zero_cached_tokens(mocker):
+    _install(mocker, lambda r: httpx.Response(200, json=_ok_body('{"value": "ok"}', usage={"prompt_tokens": 10, "completion_tokens": 5})))
+
+    result = await openrouter_structured(prompt="p", schema=_Payload, system="s", api_key="k")
+
+    assert result is not None
+    assert result.cached_prompt_tokens == 0
+
+
 async def test_missing_key_raises_value_error(monkeypatch):
     monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 

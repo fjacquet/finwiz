@@ -93,7 +93,7 @@ class TokenMonitorCallback(CustomLogger):
         self.crew_costs[crew_name] = self.crew_costs.get(crew_name, 0.0) + cost
         self.crew_calls[crew_name] = self.crew_calls.get(crew_name, 0) + 1
         if crew_name not in self.crew_tokens:
-            self.crew_tokens[crew_name] = {"prompt": 0, "completion": 0}
+            self.crew_tokens[crew_name] = {"prompt": 0, "completion": 0, "cached": 0}
         self.crew_tokens[crew_name]["prompt"] += prompt_tokens
         self.crew_tokens[crew_name]["completion"] += completion_tokens
 
@@ -117,7 +117,9 @@ class TokenMonitorCallback(CustomLogger):
             crew_name: Crew attribution key (e.g. ``deep_analysis_stock``,
                 ``research_swot``).
             token_usage: CrewAI ``UsageMetrics``-shaped object (``prompt_tokens``,
-                ``completion_tokens``, ``successful_requests``).
+                ``completion_tokens``, ``successful_requests``, optionally
+                ``cached_prompt_tokens`` -- provider prompt-cache reads, a subset
+                of ``prompt_tokens`` priced at the cache-read rate).
             model: litellm model id for price lookup (e.g. ``openai/gpt-4o-mini``).
                 Ignored when ``cost_usd`` is given.
             cost_usd: Exact cost reported by the provider, when known.
@@ -125,6 +127,7 @@ class TokenMonitorCallback(CustomLogger):
         prompt_tokens = int(getattr(token_usage, "prompt_tokens", 0) or 0)
         completion_tokens = int(getattr(token_usage, "completion_tokens", 0) or 0)
         requests = int(getattr(token_usage, "successful_requests", 0) or 0)
+        cached_tokens = int(getattr(token_usage, "cached_prompt_tokens", 0) or 0)
         if prompt_tokens == 0 and completion_tokens == 0 and requests == 0:
             return  # nothing measurable (empty/cached-only result) — don't fabricate a call
 
@@ -140,6 +143,7 @@ class TokenMonitorCallback(CustomLogger):
                         model=candidate,
                         prompt_tokens=prompt_tokens,
                         completion_tokens=completion_tokens,
+                        cache_read_input_tokens=cached_tokens,
                     )
                 except Exception as exc:
                     # Expected for an unpriced id: try the next candidate, or stay honestly unknown.
@@ -154,9 +158,10 @@ class TokenMonitorCallback(CustomLogger):
         self.call_count += calls
         self.crew_calls[crew_name] = self.crew_calls.get(crew_name, 0) + calls
         if crew_name not in self.crew_tokens:
-            self.crew_tokens[crew_name] = {"prompt": 0, "completion": 0}
+            self.crew_tokens[crew_name] = {"prompt": 0, "completion": 0, "cached": 0}
         self.crew_tokens[crew_name]["prompt"] += prompt_tokens
         self.crew_tokens[crew_name]["completion"] += completion_tokens
+        self.crew_tokens[crew_name]["cached"] += cached_tokens
 
         # A crew's cost is "known" only if every kickoff for it could be priced.
         self.crew_cost_known[crew_name] = self.crew_cost_known.get(crew_name, True) and (cost is not None)
@@ -208,7 +213,7 @@ class TokenMonitorCallback(CustomLogger):
             else:
                 cost_str = "cost n/a (unpriced model)"
                 any_unpriced = True
-            lines.append(f"  {crew_name}: {cost_str} ({data['calls']} calls, {total_tokens} tokens)")
+            lines.append(f"  {crew_name}: {cost_str} ({data['calls']} calls, {total_tokens} tokens, {data['tokens'].get('cached', 0)} cached)")
         lines.append(f"  TOTAL: ~${summary['total_cost']:.4f} estimated across {summary['call_count']} calls")
         if any_unpriced:
             lines.append("  (some crews used an unpriced model; their tokens are counted but cost is not)")

@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The LLM cost summary ignored provider prompt-cache reads. Crew cost was
+  estimated as if every prompt token were billed at the full input rate, so the
+  cache-friendly prompt layout (#229) could never show a saving. CrewAI's
+  `cached_prompt_tokens` are now passed to litellm as `cache_read_input_tokens`
+  (10× cheaper on `gemini-3-flash-preview`), research calls read OpenRouter's
+  `prompt_tokens_details.cached_tokens`, and each summary line shows the count:
+  `deep_analysis_stock: $0.58 (38 calls, 342827 tokens, 120000 cached)`.
+
 ### Added
 
 - Web-research answers are cached on disk (`cache/research/`, ADR-015). SWOT
