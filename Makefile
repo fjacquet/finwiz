@@ -43,7 +43,7 @@ help:
 	@echo "  make coverage-check - Validate coverage meets threshold"
 	@echo ""
 	@echo "Maintenance:"
-	@echo "  make clean       - Clean cache directories"
+	@echo "  make clean       - Clean cache directories (keeps cache/research)"
 	@echo "  make cleanup     - Full codebase cleanup"
 	@echo "  make cleanup-temp - Clean temporary files only"
 
@@ -175,7 +175,9 @@ gate:
 
 # Cleanup
 clean:
-	rm -rf .mypy_cache .pytest_cache .ruff_cache htmlcov output cache logs
+	rm -rf .mypy_cache .pytest_cache .ruff_cache htmlcov output logs
+	# Keep cache/research: web-research answers cost ~$4.58 per full run to refetch (ADR-015).
+	find cache -mindepth 1 -maxdepth 1 ! -name research -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -name "*.pyc" -delete
 	find . -name ".DS_Store" -delete

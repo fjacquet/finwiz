@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `make clean` deleted `cache/research/` along with the other caches, so the
+  next full run paid for all web research again (~$4.58 on 67 holdings). It now
+  keeps that directory; delete it explicitly to force fresh research.
 - The LLM cost summary ignored provider prompt-cache reads. Crew cost was
   estimated as if every prompt token were billed at the full input rate, so the
   cache-friendly prompt layout (#229) could never show a saving. CrewAI's
