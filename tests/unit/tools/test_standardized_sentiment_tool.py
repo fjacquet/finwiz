@@ -463,3 +463,30 @@ class TestIntegrationScenarios:
         # Assert
         assert "error" in result
         assert "Collection error" in result["error"]
+
+
+class TestOneNewsSearchPerHolding:
+    """Each holding pays for one web news search, not two.
+
+    A second, "general" search per holding used to be merged with the sentiment
+    search and deduplicated: it doubled research_news cost (134 calls on 67
+    holdings) for overlapping articles.
+    """
+
+    @pytest.fixture
+    def perplexity(self, mocker):
+        mocker.patch("finwiz.config.features.flags.FeatureFlags.is_enabled", return_value=True)
+        integration = mocker.patch("finwiz.tools.perplexity_analysis_integration.PerplexityAnalysisIntegration").return_value
+        integration.is_available = True
+        return integration
+
+    @pytest.mark.parametrize(("asset_class", "source"), [("stock", "_get_financial_news"), ("etf", "_get_financial_news"), ("crypto", "_get_crypto_news")])
+    def test_collects_only_from_the_asset_class_source(self, mocker, perplexity, asset_class, source):
+        tool = StandardizedSentimentAnalysisTool()
+        article = {"headline": "H", "url": "http://x", "date": datetime.now(), "source": "S", "content": ""}
+        mocker.patch.object(tool, source, return_value=[article])
+
+        articles = tool._collect_news_articles("AAPL", asset_class, max_articles=50, days_back=30)
+
+        assert [a["headline"] for a in articles] == ["H"]
+        perplexity.search_financial_news.assert_not_called()

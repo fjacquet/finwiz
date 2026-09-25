@@ -114,9 +114,6 @@ class StandardizedSentimentAnalysisTool(BaseTool):
                 # Use crypto-specific news sources
                 articles.extend(self._get_crypto_news(symbol, max_articles // 2, days_back))
 
-            # Add general news from search engines
-            articles.extend(self._get_general_news(symbol, max_articles // 2, days_back))
-
             # Remove duplicates and limit to max_articles
             unique_articles = self._deduplicate_articles(articles)
             return unique_articles[:max_articles]
@@ -264,58 +261,6 @@ class StandardizedSentimentAnalysisTool(BaseTool):
 
         except Exception as e:
             logger.error(f"Error collecting crypto news for {symbol}: {e!s}")
-            return []
-
-    def _get_general_news(self, symbol: str, max_count: int, days_back: int) -> list[dict[str, Any]]:
-        """Get general news from real sources, not fake data."""
-        articles = []
-
-        try:
-            # Try to use Perplexity Sonar integration for general news
-            import asyncio
-
-            from finwiz.config.features.flags import FeatureFlags
-            from finwiz.tools.perplexity_analysis_integration import PerplexityAnalysisIntegration
-
-            flags = FeatureFlags()
-            if flags.is_enabled("perplexity_research"):
-                try:
-                    perplexity = PerplexityAnalysisIntegration()
-                    if perplexity.is_available:
-                        # Search for general news using Perplexity with asyncio.run()
-                        query = f"{symbol} news market updates business"
-
-                        # Use asyncio.run() to call async method from sync context
-                        sonar_result = asyncio.run(perplexity.search_financial_news(query=query, ticker=symbol, asset_type="stock", analysis_type="general", max_results=max_count))
-
-                        if sonar_result.success and sonar_result.results:
-                            logger.info(f"Retrieved {len(sonar_result.results)} general articles from Perplexity for {symbol}")
-
-                            # Convert Sonar articles to standardized format
-                            for sonar_article in sonar_result.results:
-                                articles.append(
-                                    {
-                                        "headline": sonar_article.title,
-                                        "url": sonar_article.url,
-                                        "date": datetime.now() - timedelta(days=1),  # Approximate date
-                                        "source": sonar_article.publisher or "Perplexity",
-                                        "content": sonar_article.summary,
-                                    }
-                                )
-
-                            if articles:
-                                return articles[:max_count]
-                        else:
-                            logger.debug(f"Perplexity general search returned no results for {symbol}")
-
-                except Exception as e:
-                    logger.warning(f"Perplexity general news integration failed for {symbol}: {e!s}")
-
-            # If Perplexity not available, return empty
-            return articles
-
-        except Exception as e:
-            logger.error(f"Error collecting general news for {symbol}: {e!s}")
             return []
 
     def _create_sample_financial_articles(self, symbol: str, _search_term: str) -> list[dict[str, Any]]:

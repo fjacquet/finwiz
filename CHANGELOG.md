@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (10× cheaper on `gemini-3-flash-preview`), research calls read OpenRouter's
   `prompt_tokens_details.cached_tokens`, and each summary line shows the count:
   `deep_analysis_stock: $0.58 (38 calls, 342827 tokens, 120000 cached)`.
+- Sentiment analysis paid for two web news searches per holding: the
+  asset-class sentiment search and a "general" search whose articles were
+  merged and deduplicated with it (134 `research_news` calls, $1.81, on the
+  67-holding run of 2026-09-21). The general search is removed, halving news
+  cost on a first run of the day. It also sent crypto holdings as
+  `asset_type="stock"`.
 
 ### Added
 
