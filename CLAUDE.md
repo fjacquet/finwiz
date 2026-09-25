@@ -158,7 +158,7 @@ SERPER_API_KEY=...              # Required
 #   PPLX_API_KEY only enable a one-attempt Perplexity fallback (ADR-012).
 # SWOT/Porter (72 h) and news (24 h) answers are cached in cache/research/
 #   (ADR-015); a hit is free and counted as "cache hits" in the cost summary.
-#   rm -rf cache/research forces fresh research.
+#   rm -rf cache/research forces fresh research; make clean keeps it.
 # Feature flags are all FF_-prefixed, e.g. FF_PERPLEXITY_RESEARCH
 #   (full registry: config/features/definitions.py)
 # FF_PERPLEXITY_RESEARCH=false makes fact packs fully deterministic: they are

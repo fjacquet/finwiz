@@ -37,7 +37,7 @@ no request; otherwise the call runs as before and a successful answer is stored.
 - A hit records no cost. The cost summary counts hits on its own line
   (`cache hits (no request, $0): research_swot 67, ...`).
 
-Delete `cache/research/` to force fresh research.
+Delete `cache/research/` to force fresh research. `make clean` keeps it.
 
 ## Consequences
 
