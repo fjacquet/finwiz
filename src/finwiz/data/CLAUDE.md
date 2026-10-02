@@ -93,9 +93,9 @@ print(result.revenue_growth)
 print(result.profit_margin)
 
 # Provenance
-print(result.confidence)          # 0.0-1.0
-print(result.sources_attempted)   # e.g. ["yfinance", "alpha_vantage"]
-print(result.lineage.to_dict())   # which source supplied which field
+print(result.confidence)  # 0.0-1.0
+print(result.sources_attempted)  # e.g. ["yfinance", "alpha_vantage"]
+print(result.lineage.to_dict())  # which source supplied which field
 print(result.is_complete())
 print(result.get_completeness_score())
 
@@ -112,7 +112,7 @@ from finwiz.data.adapters.yfinance_adapter import YFinanceAdapter
 adapter = YFinanceAdapter()
 
 if adapter.is_available():
-    data = await adapter.get_fundamental_data("AAPL")   # -> FundamentalData
+    data = await adapter.get_fundamental_data("AAPL")  # -> FundamentalData
     print(adapter.source_name, data.confidence, data.return_on_equity)
 ```
 

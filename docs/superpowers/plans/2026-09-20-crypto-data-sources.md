@@ -1255,9 +1255,7 @@ class TestFundamentalScoreRenormalization:
         assert missing_score > tiny_score, "absence must not be graded as the worst observed value"
 
     def test_every_component_missing_yields_none(self):
-        score, details = CryptoAnalyzer().calculate_fundamental_score(
-            {"market_cap": None, "volume_24h": None, "age_years": None, "circulating_supply": None, "max_supply": None}
-        )
+        score, details = CryptoAnalyzer().calculate_fundamental_score({"market_cap": None, "volume_24h": None, "age_years": None, "circulating_supply": None, "max_supply": None})
 
         assert score is None
         assert details["fundamental_score"] is None
