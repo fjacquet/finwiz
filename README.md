@@ -40,7 +40,7 @@ Reports are written to `output/` as styled HTML files, one per phase.
 - [Tutorials](docs/tutorials/) — step-by-step: [first analysis](docs/tutorials/first_analysis.md), [portfolio analysis](docs/tutorials/portfolio_analysis.md)
 - [How-to guides](docs/how-to/) — focused recipes (API keys, deployment, batch processing)
 - [Reference](docs/reference/) — env vars, CLI flags, schema definitions
-- [CHANGELOG](CHANGELOG.md) — version history (current: **v5.17.0** — fixed fabricated crypto market data via `CryptoSourceOrchestrator`)
+- [CHANGELOG](CHANGELOG.md) — version history (current: **v5.18.0** — research answers cached on disk, prompt-cache reads priced in the LLM cost summary)
 
 **For contributors / extenders** — modifying FinWiz:
 
