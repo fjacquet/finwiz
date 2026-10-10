@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.0] - 2026-10-02
+
 ### Fixed
 
 - `make clean` deleted `cache/research/` along with the other caches, so the
@@ -25,6 +27,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   67-holding run of 2026-09-21). The general search is removed, halving news
   cost on a first run of the day. It also sent crypto holdings as
   `asset_type="stock"`.
+
+### Changed
+
+- Refreshed `uv.lock` and the dependency floors in `pyproject.toml`:
+  `litellm` >=1.102.1, `ta-lib` >=0.8.1, `faker`, `pandas-stubs`,
+  `scipy-stubs`, `mkdocs-git-revision-date-localized-plugin` and
+  `pymdown-extensions`.
+- Removed the stale `.planning/` directory and editor rule files.
+- `ruff format` now also formats Python code blocks in the Markdown docs.
 
 ### Added
 
