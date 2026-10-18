@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "5.18.0"
+version = "5.18.1"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 license = "MIT"
@@ -31,7 +31,7 @@ dependencies = [
     "tenacity>=9.1.4",
     "crewai>=1.15.21",
     "litellm>=1.103.2",
-    "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.31.1",
+    "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.0",
 ]
 
 [project.scripts]
