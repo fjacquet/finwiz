@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.1] - 2026-10-18
+
+### Security
+
+- `mcp` moves from 1.28.1 to 2.3.0 for GHSA-84m7-p3x7-pcfv (fixed in 1.30.0).
+  crewai pins `mcp~=1.28.1`, so `pyproject.toml` lifts it with a uv
+  `override-dependencies` entry. finwiz does not import `mcp` directly.
+
+### Changed
+
+- `crewai-custom-tools` pinned to `v0.32.0` (was `v0.31.1`), the release that
+  moves its MCP server to the mcp 2 API.
+- `hypothesis` is exempt from the 7-day `exclude-newer` cooldown so the
+  Dependabot floor (>=6.169.4) resolves.
+- Dependency floors raised by Dependabot: `faker`, `hypothesis`, `gnews`,
+  `bandit`, `pandas`, `mypy`, `pytest-mock`, `types-psutil`, `litellm`, plus
+  GitHub Actions patch and minor bumps.
+
 ## [5.18.0] - 2026-10-02
 
 ### Fixed

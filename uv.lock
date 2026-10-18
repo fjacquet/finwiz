@@ -806,8 +806,8 @@ wheels = [
 
 [[package]]
 name = "crewai-custom-tools"
-version = "0.31.1"
-source = { git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.31.1#19d78f7d14dbddcf5db14222ff94c8fc16678396" }
+version = "0.32.0"
+source = { git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.32.0#0623e0fafa4131bd73ef1e6fbed871ecee0f452d" }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "crewai" },
@@ -1171,7 +1171,7 @@ wheels = [
 
 [[package]]
 name = "finwiz"
-version = "5.18.0"
+version = "5.18.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
@@ -1240,7 +1240,7 @@ requires-dist = [
     { name = "backtrader", specifier = ">=1.9.78.123" },
     { name = "beautifulsoup4", specifier = ">=4.15.0" },
     { name = "crewai", specifier = ">=1.15.21" },
-    { name = "crewai-custom-tools", git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.31.1" },
+    { name = "crewai-custom-tools", git = "https://github.com/fjacquet/crewai-custom-tools.git?rev=v0.32.0" },
     { name = "empyrical-reloaded", specifier = ">=0.5.12" },
     { name = "fear-and-greed", specifier = ">=0.4" },
     { name = "feedparser", specifier = ">=6.0.14" },
