@@ -475,5 +475,6 @@ constraint-dependencies = [
 #   cyclonedx-bom's >=8,<12 and pip-audit's own >=5 floor), which allows
 #   lxml<7 and unblocks the lxml 6.1.0+ security fix.
 override-dependencies = [
+    "mcp>=1.30.0",  # crewai pins mcp~=1.28.1; GHSA-84m7-p3x7-pcfv fixed in 1.30.0
     "cyclonedx-python-lib[validation]>=11,<12",
 ]
