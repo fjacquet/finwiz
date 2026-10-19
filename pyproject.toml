@@ -421,7 +421,7 @@ dev = [
     "pandas-stubs>=3.0.5.260914",
     "scipy-stubs>=1.18.1.1",
     "hypothesis>=6.169.4",
-    "pre-commit>=4.6.2",
+    "pre-commit>=4.7.0",
     "ruff>=0.16.2,<1.0.0",
     "pytest>=9.1.1",
     "pytest-socket>=0.8.1",
@@ -434,7 +434,7 @@ docs = [
     "mkdocs-mermaid2-plugin>=1.2.3",
     "mkdocs-git-revision-date-localized-plugin>=1.6.0",
     "pymdown-extensions>=12.1",
-    "pre-commit>=4.6.2",
+    "pre-commit>=4.7.0",
 ]
 
 [tool.uv]
