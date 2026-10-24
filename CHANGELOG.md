@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.2] - 2026-10-24
+
+### Security
+
+- Full `uv lock --upgrade` refresh: `pillow` 12.3.0 → 13.0.0 (41 advisories), `certifi`,
+  `setuptools`, `uv` 0.11.33 → 0.13.5 and `virtualenv` to their patched releases, `crewai` 1.15.30.
+- `certifi`, `filelock`, `setuptools`, `uv` and `virtualenv` join `exclude-newer-package`: as
+  transitive dependencies the 7-day cooldown was holding back their security releases.
+- `filelock` 3.32.7 → 4.2.4 for GHSA-v4x8-3wr5-3wq8 (High), GHSA-9vhv-jxww-xfm5 and GHSA-567q-5qvw-pf92,
+  through a uv `override-dependencies` entry `filelock>=4.2.1,<5`: litellm caps `filelock<4`.
+  Dependents use only `FileLock`, `SoftFileLock`, `BaseFileLock` and `Timeout`. Drop the override
+  once litellm allows filelock 4.2.1.
+
+### Fixed
+
+- Cost tracking: litellm's cost map no longer carries `openrouter/google/gemini-3*` ids and answers
+  `(0.0, 0.0)` for them instead of raising, so every deep-analysis crew was recorded as a known $0.
+  `record_usage` now treats a zero price for non-zero tokens as unpriced and falls through to the
+  `gemini/` id, or marks the cost unknown.
+
 ## [5.18.1] - 2026-10-18
 
 ### Security

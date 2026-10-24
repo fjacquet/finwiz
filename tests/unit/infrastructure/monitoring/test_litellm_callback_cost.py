@@ -243,6 +243,27 @@ class TestOpenRouterPricingFallback:
         assert cb.total_cost == pytest.approx(0.003)
         assert [c.kwargs["model"] for c in spy.call_args_list] == ["openrouter/google/gemini-3.7-flash", "gemini/gemini-3.7-flash"]
 
+    def test_zero_price_for_real_tokens_falls_through_to_the_gemini_id(self, mocker):
+        # litellm answers (0.0, 0.0) rather than raising for an id its cost map dropped
+        def zero_for_openrouter(model: str, prompt_tokens: int, completion_tokens: int, cache_read_input_tokens: int = 0):
+            return (0.0, 0.0) if model.startswith("openrouter/") else (0.001, 0.002)
+
+        mocker.patch("litellm.cost_per_token", side_effect=zero_for_openrouter)
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("deep_analysis_stock", _usage(100, 50), model="openrouter/google/gemini-3.7-flash")
+
+        assert cb.crew_cost_known["deep_analysis_stock"] is True
+        assert cb.total_cost == pytest.approx(0.003)
+
+    def test_zero_price_everywhere_marks_cost_unknown(self, mocker):
+        mocker.patch("litellm.cost_per_token", return_value=(0.0, 0.0))
+        cb = TokenMonitorCallback()
+
+        cb.record_usage("x", _usage(100, 50), model="openrouter/google/gemini-3.7-flash")
+
+        assert cb.crew_cost_known["x"] is False
+
     def test_proxy_pricing_is_logged_once_per_model(self, mocker, caplog):
         mocker.patch("litellm.cost_per_token", side_effect=self._gemini_only)
         cb = TokenMonitorCallback()
