@@ -280,7 +280,7 @@ security:  ## Semgrep SAST scan (advisory; non-blocking — fjacquet/ci canonica
 	uvx semgrep scan --config auto --skip-unknown-extensions || true
 
 vuln:  ## OSV vulnerability scan against uv.lock (fjacquet/ci canonical target)
-	uvx osv-scanner scan --lockfile=uv.lock || true
+	osv-scanner scan source --recursive .
 
 coverage-upload:  ## Upload coverage.xml to Codecov (fjacquet/ci canonical target)
 	uvx --from codecov-cli codecov upload-process --file coverage.xml || true
