@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.2] - 2026-10-24
+
+### Security
+
+- Full `uv lock --upgrade` refresh: `pillow` 12.3.0 → 13.0.0 (41 advisories), `certifi`,
+  `setuptools`, `uv` 0.11.33 → 0.13.5 and `virtualenv` to their patched releases, `crewai` 1.15.30.
+- `certifi`, `filelock`, `setuptools`, `uv` and `virtualenv` join `exclude-newer-package`: as
+  transitive dependencies the 7-day cooldown was holding back their security releases.
+- `litellm` excludes 1.106.2: its bundled cost map dropped every `openrouter/google/gemini-3*`
+  entry, so token costs for the models finwiz runs read as $0. Locked at 1.106.1.
+- `filelock` stays on 3.32.7 (litellm caps it below 4.0; fix is 4.2.1).
+
 ## [5.18.1] - 2026-10-18
 
 ### Security

@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "5.18.1"
+version = "5.18.2"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 license = "MIT"
@@ -30,7 +30,7 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "tenacity>=9.2.1",
     "crewai>=1.15.21",
-    "litellm>=1.103.2",
+    "litellm>=1.103.2,!=1.106.2",  # 1.106.2 bundled cost map dropped openrouter/google/gemini-3* (costs read $0)
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.0",
 ]
 
@@ -447,8 +447,10 @@ docs = [
 # explicitly in reviewed commits (see git log "security bump" / dependency
 # update commits), so the cooldown adds no protection there and only blocks
 # `uv sync` from resolving the floor we just deliberately set.
+# certifi/filelock/setuptools/uv/virtualenv are transitive but exempted so
+# their security patches (Dependabot, Oct 2026) are not held back a week.
 exclude-newer = "7 days"
-exclude-newer-package = { hypothesis = "P0D", crewai = "P0D", crewai-core = "P0D", crewai-cli = "P0D", crewai-tools = "P0D", langchain-core = "P0D", litellm = "P0D", python-dotenv = "P0D", yfinance = "P0D", ta-lib = "P0D", backtrader = "P0D", quantlib = "P0D", pyportfolioopt = "P0D", plotly = "P0D", numpy = "P0D", scipy = "P0D", pandas = "P0D", beautifulsoup4 = "P0D", nest-asyncio = "P0D", empyrical-reloaded = "P0D", finnhub-python = "P0D", fredapi = "P0D", vaderSentiment = "P0D", feedparser = "P0D", gnews = "P0D", fear-and-greed = "P0D", aiohttp = "P0D", httpx = "P0D", jinja2 = "P0D", psutil = "P0D", python-dateutil = "P0D", tenacity = "P0D", gitpython = "P0D" }
+exclude-newer-package = { hypothesis = "P0D", crewai = "P0D", crewai-core = "P0D", crewai-cli = "P0D", crewai-tools = "P0D", langchain-core = "P0D", litellm = "P0D", python-dotenv = "P0D", yfinance = "P0D", ta-lib = "P0D", backtrader = "P0D", quantlib = "P0D", pyportfolioopt = "P0D", plotly = "P0D", numpy = "P0D", scipy = "P0D", pandas = "P0D", beautifulsoup4 = "P0D", nest-asyncio = "P0D", empyrical-reloaded = "P0D", finnhub-python = "P0D", fredapi = "P0D", vaderSentiment = "P0D", feedparser = "P0D", gnews = "P0D", fear-and-greed = "P0D", aiohttp = "P0D", httpx = "P0D", jinja2 = "P0D", psutil = "P0D", python-dateutil = "P0D", tenacity = "P0D", gitpython = "P0D", certifi = "P0D", filelock = "P0D", setuptools = "P0D", uv = "P0D", virtualenv = "P0D" }
 
 # Security floors for transitive dependencies (Dependabot). These packages are
 # pulled in indirectly (mostly via crewai/langchain); constraint-dependencies
