@@ -149,6 +149,10 @@ class TokenMonitorCallback(CustomLogger):
                     # Expected for an unpriced id: try the next candidate, or stay honestly unknown.
                     logger.debug(f"No litellm price for {candidate}: {exc}")
                     continue
+                if prompt_cost + completion_cost == 0 and prompt_tokens + completion_tokens > 0:
+                    # litellm returns (0.0, 0.0) instead of raising for an id missing from its cost map.
+                    logger.debug(f"No litellm price for {candidate}: zero cost for non-zero tokens")
+                    continue
                 cost = float(prompt_cost) + float(completion_cost)
                 if candidate != model and candidate not in self._priced_via_proxy:
                     self._priced_via_proxy.add(candidate)
