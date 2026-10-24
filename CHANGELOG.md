@@ -15,9 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `setuptools`, `uv` 0.11.33 → 0.13.5 and `virtualenv` to their patched releases, `crewai` 1.15.30.
 - `certifi`, `filelock`, `setuptools`, `uv` and `virtualenv` join `exclude-newer-package`: as
   transitive dependencies the 7-day cooldown was holding back their security releases.
-- `litellm` excludes 1.106.2: its bundled cost map dropped every `openrouter/google/gemini-3*`
-  entry, so token costs for the models finwiz runs read as $0. Locked at 1.106.1.
-- `filelock` stays on 3.32.7 (litellm caps it below 4.0; fix is 4.2.1).
+- `filelock` 3.32.7 → 4.2.4 via a uv `override-dependencies` entry, for GHSA-v4x8-3wr5-3wq8 (High)
+  and two Windows-only LOW advisories, all fixed in 4.2.1. litellm caps `filelock<4`, but its
+  dependents here use only `FileLock`, `SoftFileLock`, `Timeout` and `BaseFileLock`; filelock 4.0
+  changed only `SoftReadWriteLock`.
+
+### Fixed
+
+- Cost tracking: litellm's cost map no longer carries `openrouter/google/gemini-3*` ids and answers
+  `(0.0, 0.0)` for them instead of raising, so every deep-analysis crew was recorded as a known $0.
+  `record_usage` now treats a zero price for non-zero tokens as unpriced and falls through to the
+  `gemini/` id, or marks the cost unknown.
 
 ## [5.18.1] - 2026-10-18
 

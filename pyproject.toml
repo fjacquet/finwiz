@@ -30,7 +30,7 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "tenacity>=9.2.1",
     "crewai>=1.15.21",
-    "litellm>=1.103.2,!=1.106.2",  # 1.106.2 bundled cost map dropped openrouter/google/gemini-3* (costs read $0)
+    "litellm>=1.103.2",
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.0",
 ]
 
@@ -479,4 +479,5 @@ constraint-dependencies = [
 override-dependencies = [
     "mcp>=1.30.0",  # crewai pins mcp~=1.28.1; GHSA-84m7-p3x7-pcfv fixed in 1.30.0
     "cyclonedx-python-lib[validation]>=11,<12",
+    "filelock>=4.2.1",  # litellm caps filelock<4; GHSA-v4x8-3wr5-3wq8 fixed in 4.2.1, dependents use only FileLock/SoftFileLock/Timeout
 ]
