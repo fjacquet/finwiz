@@ -55,7 +55,7 @@ yfinance = { timestamp = "0001-01-01T00:00:00Z", span = "PT0S" }
 constraints = [{ name = "gitpython", specifier = ">=3.1.58" }]
 overrides = [
     { name = "cyclonedx-python-lib", extras = ["validation"], specifier = ">=11,<12" },
-    { name = "filelock", specifier = ">=4.2.1" },
+    { name = "filelock", specifier = ">=4.2.1,<5" },
     { name = "mcp", specifier = ">=1.30.0" },
 ]
 

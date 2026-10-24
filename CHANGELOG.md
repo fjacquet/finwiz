@@ -15,10 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `setuptools`, `uv` 0.11.33 → 0.13.5 and `virtualenv` to their patched releases, `crewai` 1.15.30.
 - `certifi`, `filelock`, `setuptools`, `uv` and `virtualenv` join `exclude-newer-package`: as
   transitive dependencies the 7-day cooldown was holding back their security releases.
-- `filelock` 3.32.7 → 4.2.4 via a uv `override-dependencies` entry, for GHSA-v4x8-3wr5-3wq8 (High)
-  and two Windows-only LOW advisories, all fixed in 4.2.1. litellm caps `filelock<4`, but its
-  dependents here use only `FileLock`, `SoftFileLock`, `Timeout` and `BaseFileLock`; filelock 4.0
-  changed only `SoftReadWriteLock`.
+- `filelock` 3.32.7 → 4.2.4 for GHSA-v4x8-3wr5-3wq8 (High), GHSA-9vhv-jxww-xfm5 and GHSA-567q-5qvw-pf92,
+  through a uv `override-dependencies` entry `filelock>=4.2.1,<5`: litellm caps `filelock<4`.
+  Dependents use only `FileLock`, `SoftFileLock`, `BaseFileLock` and `Timeout`. Drop the override
+  once litellm allows filelock 4.2.1.
 
 ### Fixed
 
