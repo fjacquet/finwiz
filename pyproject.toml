@@ -423,7 +423,7 @@ dev = [
     "hypothesis>=6.169.4",
     "pre-commit>=4.6.2",
     "ruff>=0.16.2,<1.0.0",
-    "pytest>=9.1.1",
+    "pytest>=9.2.0",
     "pytest-socket>=0.8.1",
 ]
 
