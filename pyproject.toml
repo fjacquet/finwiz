@@ -8,14 +8,14 @@ license-files = ["LICENSE"]
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "python-dotenv>=1.2.4",
-    "yfinance>=1.7.0",
+    "yfinance>=1.8.0",
     "ta-lib>=0.8.2",
     "backtrader>=1.9.78.123",
     "pyportfolioopt>=1.6.0",
     "plotly>=7.1.0",
     "numpy>=2.5.4",
     "scipy>=1.18.0",
-    "pandas>=3.0.6",
+    "pandas>=3.1.1",
     "beautifulsoup4>=4.15.0",
     "empyrical-reloaded>=0.5.12",
     "finnhub-python>=2.4.29",
@@ -31,7 +31,7 @@ dependencies = [
     "tenacity>=9.2.1",
     "crewai>=1.15.21",
     "litellm>=1.106.6",
-    "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.0",
+    "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.3",
 ]
 
 [project.scripts]
@@ -413,17 +413,17 @@ dev = [
     "pytest-mock>=3.17.0",
     "pytest-timeout>=2.4.0",
     "pytest-xdist>=3.8.0",
-    "types-pyyaml>=6.0.12.20260518",
+    "types-pyyaml>=6.0.12.20261103",
     "faker>=40.43.0",
     "pytest-cov>=7.1.0",
     "types-requests>=2.33.0.20261006",
     "types-psutil>=7.2.2.20260906",
     "pandas-stubs>=3.0.5.260914",
     "scipy-stubs>=1.18.1.1",
-    "hypothesis>=6.169.4",
+    "hypothesis>=6.170.14",
     "pre-commit>=4.6.2",
     "ruff>=0.16.2,<1.0.0",
-    "pytest>=9.1.1",
+    "pytest>=9.2.0",
     "pytest-socket>=0.8.1",
 ]
 
