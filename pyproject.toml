@@ -1,6 +1,6 @@
 [project]
 name = "finwiz"
-version = "5.18.2"
+version = "5.18.3"
 description = "finwiz using crewAI"
 authors = [{ name = "Frederic Jacquet", email = "fred.jacquet@gmail.com" }]
 license = "MIT"
