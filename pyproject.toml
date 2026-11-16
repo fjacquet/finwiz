@@ -30,7 +30,7 @@ dependencies = [
     "python-dateutil>=2.9.0.post0",
     "tenacity>=9.2.1",
     "crewai>=1.15.41",
-    "litellm>=1.106.6",
+    "litellm>=1.109.1",
     "crewai-custom-tools @ git+https://github.com/fjacquet/crewai-custom-tools.git@v0.32.3",
 ]
 
