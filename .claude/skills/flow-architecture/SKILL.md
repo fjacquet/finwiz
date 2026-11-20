@@ -130,7 +130,7 @@ def check_investment_discovery(self):
 
 ### The Problem
 
-Discovery crews (StockCrew, EtfCrew, CryptoCrew) were being misused for single-ticker deep analysis, causing:
+Discovery-style crews were being misused for single-ticker deep analysis, causing:
 
 - 3-6 hour hangs
 - Reasoning agents asking for "10 tickers"
@@ -140,14 +140,14 @@ Discovery crews (StockCrew, EtfCrew, CryptoCrew) were being misused for single-t
 
 Create separate crews with clear purposes:
 
-**Discovery Crews** (existing):
+**Discovery** (Python scoring, no crew):
 
 - Purpose: Screen and find "top 10" assets
 - Input: No specific tickers
 - Output: List of opportunities
 - Use case: Investment discovery
 
-**Deep Analysis Crew** (new):
+**Deep Analysis Crew** (`crews/deep_analysis`, the only crew):
 
 - Purpose: Analyze ONE specific ticker
 - Input: ticker + asset_class

@@ -109,5 +109,4 @@ uv run pytest tests/unit/crews/ -v
 ## Related Modules
 
 - `finwiz.tools.tool_factories` - Tool initialization
-- `finwiz.schemas.crew_exports` - Pydantic export schemas
 - `finwiz.infrastructure.decorators.task_decorators` - Decorators for tasks

@@ -12,26 +12,25 @@ Comprehensive testing standards for FinWiz using pytest-mock exclusively.
 ### 1. Mock All External Dependencies
 
 - **Always use `pytest-mock`** (never `unittest.mock`)
-- **unittest.mock is BANNED** - 4 enforcement layers prevent its use
+- **unittest.mock is BANNED** - enforced statically (ruff, pre-commit, `make check-unittest-mock`)
 - Mock APIs, file system, network requests, LLM calls
 - No real external calls in tests
 - Deterministic test execution
 
-### unittest.mock Enforcement (CRITICAL)
+### unittest.mock Enforcement
 
-**unittest.mock is COMPLETELY BANNED from this codebase.**
-
-We have 4 layers of enforcement:
+unittest.mock is banned from this codebase. Enforced statically:
 
 1. **Ruff Linting** - TID rules automatically catch unittest.mock imports
 2. **Pre-commit Hook** - Blocks commits containing unittest.mock
-3. **Runtime Blocker** - Raises ImportError if unittest.mock is imported
-4. **Manual Check** - `make check-unittest-mock` for verification
+3. **Manual Check** - `make check-unittest-mock` for verification
+
+(`tests/conftest_unittest_blocker.py` exists but nothing loads it.)
 
 ### Migration Required
 
 ```python
-# ❌ BANNED - Will be blocked by all 4 enforcement layers
+# ❌ BANNED - Will be blocked by all 3 enforcement layers
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
 

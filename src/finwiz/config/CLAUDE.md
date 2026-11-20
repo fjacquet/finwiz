@@ -14,7 +14,6 @@ config/
 ├── resilience_config.py             # Retry, timeout, circuit breaker config
 ├── yfinance_config.py               # Yahoo Finance configuration
 ├── manager.py                       # Runtime config management
-├── loader.py                        # Config loading utilities
 │
 ├── features/                        # Feature flag system
 │   ├── __init__.py

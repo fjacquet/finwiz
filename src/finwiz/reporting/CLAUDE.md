@@ -106,5 +106,4 @@ generator.generate_and_save_report(data={...}, output_path="output/stock/AAPL_re
 ## Related Modules
 
 - `finwiz.templates` — Jinja2 HTML templates
-- `finwiz.schemas.crew_exports` — Export schemas for report data
 - `finwiz.orchestrators.reporting_orchestrator` — Orchestrates report generation

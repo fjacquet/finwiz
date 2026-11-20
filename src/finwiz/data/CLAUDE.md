@@ -26,7 +26,6 @@ data/
 ├── __init__.py
 ├── data_source_orchestrator.py    # MAIN: Multi-source orchestration (equities)
 ├── crypto_source_orchestrator.py  # MAIN: Multi-source orchestration (crypto)
-├── exceptions.py                  # Data-specific exceptions
 ├── fx_rates.py                    # Currency conversion
 ├── news_utils.py                  # News fetch/normalize helpers
 └── sentiment_collector.py         # Sentiment aggregation

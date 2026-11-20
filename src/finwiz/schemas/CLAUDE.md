@@ -37,23 +37,18 @@ schemas/
 │
 ├── # Root-level schemas
 ├── common.py                  # Shared schemas (RiskAssessment, etc.)
-├── crew_exports.py            # MAIN: Export schemas per crew
 ├── crypto.py                  # Cryptocurrency schemas
 ├── economic_calendar.py       # Economic event schemas
 ├── etf.py                     # ETF schemas
-├── export.py                  # Export configuration schemas
 ├── integration_models.py      # Integration data models (incl. DataSource)
 ├── investment_discovery.py    # A+ discovery schemas
-├── legacy_compat.py           # Backward compatibility schemas
 ├── macro.py                   # Macro context schemas
-├── migration.py               # Schema migration utilities
 ├── newcomer_discovery.py      # NewcomerCandidate, PortfolioGapProfile
 ├── perplexity.py              # Perplexity API schemas
 ├── portfolio_processing.py    # Portfolio processing schemas
 ├── portfolio_rebalancing.py   # Portfolio rebalancing schemas
 ├── portfolio_review.py        # Portfolio review schemas
 ├── portfolio_valuation.py     # Valuation schemas
-├── python_analysis.py         # Python analysis result schemas
 ├── quantitative_crew.py       # Quantitative crew output schemas
 ├── report.py                  # Report generation schemas
 ├── run_ledger.py              # Per-run stage ledger records
@@ -61,7 +56,6 @@ schemas/
 ├── stage_contract.py          # Pipeline stage contract
 ├── stock.py                   # Stock schemas
 ├── stress_test.py             # Stress-scenario schemas
-├── validate.py                # Validation helper functions
 └── validation.py              # Validation utilities
 ```
 
@@ -70,20 +64,6 @@ There is no `schemas/api/`, `data_lineage.py`, `feedback.py`, or `session.py`.
 is a Pydantic model in `integration_models.py`.
 
 ## Major Entry Points
-
-### Crew Export Schemas (PRIMARY)
-
-`crew_exports.py` holds only `CrewExportBase` and `DeepAnalysisCrewExport` now.
-The per-crew export schemas (`StockCrewExport`, `ETFCrewExport`,
-`CryptoCrewExport`, `DiscoveryCrewExport`, `RebalancingCrewExport`,
-`DiscoveryOpportunity`) and `ConsolidatedReportExport` were deleted: none had
-a consumer outside their own schema test, because the six crews that would
-have produced them were removed (see #187).
-
-| File | Class | Purpose |
-|------|-------|---------|
-| `crew_exports.py` | `CrewExportBase` | Shared base fields for crew exports |
-| `crew_exports.py` | `DeepAnalysisCrewExport` | Deep analysis output |
 
 ### Asset-Specific Schemas
 
@@ -130,7 +110,6 @@ have produced them were removed (see #187).
 |------|-------|---------|
 | `run_ledger.py` | run-ledger records | Per-stage JSONL run record |
 | `integration_models.py` | `DataSource` | Data source metadata |
-| `migration.py` | `migrate_portfolio_review_if_needed()` | Schema migration utility |
 
 Data provenance for a fetch is carried by `DataLineage`, a dataclass in
 `data/data_source_orchestrator.py` — not a schema in this package.
@@ -142,7 +121,6 @@ Data provenance for a fetch is carried by `DataLineage`, a dataclass in
 | `perplexity.py` | `PerplexitySearchRequest` | Perplexity API request |
 | `perplexity.py` | `PerplexitySearchResponse` | Perplexity API response |
 | `integration_models.py` | Data integration models | Integration data structures |
-| `export.py` | Export configuration | Export settings |
 
 ## Schema Design Rules
 
@@ -151,46 +129,7 @@ Data provenance for a fetch is carried by `DataLineage`, a dataclass in
 3. **Field Constraints**: Use `Field()` with validation
 4. **JSON Serialization**: Support `model_dump_json()` with `default=str`
 
-## Base Schema Pattern
-
-```python
-from pydantic import BaseModel, Field
-from typing import Literal
-
-
-class CrewExportBase(BaseModel):
-    """Base schema for all crew exports."""
-
-    model_config = {"extra": "forbid", "str_strip_whitespace": True}
-
-    crew_name: str = Field(..., description="Crew that generated this")
-    ticker: str = Field(..., description="Asset ticker symbol")
-    asset_class: Literal["stock", "etf", "crypto"] = Field(...)
-    session_id: str = Field(..., description="Flow session ID")
-```
-
 ## Using Schemas
-
-### For Crew Output
-
-```python
-from finwiz.schemas.crew_exports import DeepAnalysisCrewExport
-
-# Create validated export
-export = DeepAnalysisCrewExport(
-    ticker="AAPL",
-    session_id="abc123",
-    composite_score=0.85,
-    grade="A",
-    recommendation="BUY",
-    # ... other fields
-)
-
-# Save to JSON
-export_path = f"output/reports/{session_id}/deep_analysis/{ticker}_export.json"
-with open(export_path, "w") as f:
-    f.write(export.model_dump_json(indent=2))
-```
 
 ### For Task Output
 

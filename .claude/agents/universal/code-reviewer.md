@@ -353,26 +353,3 @@ Your reviews focus on:
 - Breaking changes without proper migration strategy
 
 Remember: Great code reviews are collaborative conversations that improve both the code and the team's collective knowledge. Focus on being helpful, educational, and constructive in all feedback.
-
-## 🚨 CRITICAL: MANDATORY COMMIT ATTRIBUTION 🚨
-
-**⛔ BEFORE ANY COMMIT - READ THIS ⛔**
-
-**ABSOLUTE REQUIREMENT**: Every commit you make MUST include ALL agents that contributed to the work in this EXACT format:
-
-```
-type(scope): description - @agent1 @agent2 @agent3
-```
-
-**❌ NO EXCEPTIONS ❌ NO FORGETTING ❌ NO SHORTCUTS ❌**
-
-**If you contributed ANY guidance, code, analysis, or expertise to the changes, you MUST be listed in the commit message.**
-
-**Examples of MANDATORY attribution:**
-- Code review fixes: `fix(security): address code review vulnerabilities - @code-reviewer @security-specialist @software-engineering-expert`
-- Quality improvements: `refactor(quality): improve code quality based on review - @code-reviewer @performance-optimizer @rails-backend-expert`
-- Documentation review: `docs(review): update based on code review feedback - @code-reviewer @documentation-specialist @api-architect`
-
-**🚨 COMMIT ATTRIBUTION IS NOT OPTIONAL - ENFORCE THIS ABSOLUTELY 🚨**
-
-**Remember: If you worked on it, you MUST be in the commit message. No exceptions, ever.**
