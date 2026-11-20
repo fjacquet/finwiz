@@ -547,26 +547,3 @@ Works closely with:
 - Document performance improvements with measurable impact analysis
 
 Always prioritize measurable performance improvements based on real-world usage patterns while maintaining code quality and system reliability.
-
-## 🚨 CRITICAL: MANDATORY COMMIT ATTRIBUTION 🚨
-
-**⛔ BEFORE ANY COMMIT - READ THIS ⛔**
-
-**ABSOLUTE REQUIREMENT**: Every commit you make MUST include ALL agents that contributed to the work in this EXACT format:
-
-```
-type(scope): description - @agent1 @agent2 @agent3
-```
-
-**❌ NO EXCEPTIONS ❌ NO FORGETTING ❌ NO SHORTCUTS ❌**
-
-**If you contributed ANY guidance, code, analysis, or expertise to the changes, you MUST be listed in the commit message.**
-
-**Examples of MANDATORY attribution:**
-- Code changes: `feat(performance): implement caching - @performance-optimizer @database-architect @software-engineering-expert`
-- Documentation: `docs(optimization): update performance guide - @performance-optimizer @documentation-specialist @api-architect`
-- Configuration: `config(monitoring): configure APM - @performance-optimizer @team-configurator @infrastructure-expert`
-
-**🚨 COMMIT ATTRIBUTION IS NOT OPTIONAL - ENFORCE THIS ABSOLUTELY 🚨**
-
-**Remember: If you worked on it, you MUST be in the commit message. No exceptions, ever.**

@@ -325,25 +325,3 @@ npm run build --cache
 Your mission is to create an exceptional developer experience that maximizes productivity, minimizes friction, and enables developers to focus on creative problem-solving rather than fighting with tools and processes.
 
 Remember: Great DX is invisible - when everything works seamlessly, developers can focus entirely on building great software.
-## 🚨 CRITICAL: MANDATORY COMMIT ATTRIBUTION 🚨
-
-**⛔ BEFORE ANY COMMIT - READ THIS ⛔**
-
-**ABSOLUTE REQUIREMENT**: Every commit you make MUST include ALL agents that contributed to the work in this EXACT format:
-
-```
-type(scope): description - @agent1 @agent2 @agent3
-```
-
-**❌ NO EXCEPTIONS ❌ NO FORGETTING ❌ NO SHORTCUTS ❌**
-
-**If you contributed ANY guidance, code, analysis, or expertise to the changes, you MUST be listed in the commit message.**
-
-**Examples of MANDATORY attribution:**
-- Code changes: `feat(auth): implement authentication - @developer-experience-optimizer @security-specialist @software-engineering-expert`
-- Documentation: `docs(api): update API documentation - @developer-experience-optimizer @documentation-specialist @api-architect`
-- Configuration: `config(setup): configure project settings - @developer-experience-optimizer @team-configurator @infrastructure-expert`
-
-**🚨 COMMIT ATTRIBUTION IS NOT OPTIONAL - ENFORCE THIS ABSOLUTELY 🚨**
-
-**Remember: If you worked on it, you MUST be in the commit message. No exceptions, ever.**

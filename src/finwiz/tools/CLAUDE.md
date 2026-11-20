@@ -13,7 +13,6 @@ tools/
 ├── # Data source tools (still local)
 ├── alpha_vantage_tool.py            # AlphaVantageTool (company overview)
 ├── twelve_data_tool.py              # TwelveDataIndicatorTool
-├── twelve_data_multi_indicator_tool.py # TwelveDataMultiIndicatorTool
 ├── (Yahoo Finance, Perplexity search, ticker validation, Kraken, AlphaVantage
 ├──  news sentiment, ChartImg, and DeFi metrics tools come from
 ├──  crewai-custom-tools — see "Centralized tools" below)
@@ -41,8 +40,6 @@ tools/
 ├── sec_filing_url_generator.py      # SECFilingURLGenerator
 │
 ├── # Reporting infrastructure
-├── portfolio_holdings_html_generator.py # PortfolioHoldingsHTMLGenerator
-├── run_helpers.py                   # json_ok()/json_error() — shared _run JSON envelopes
 ├── robust_tool_wrapper.py           # RobustToolWrapper / make_tools_robust()
 ├── _text_chunking.py                # TextChunk / chunk_text()
 │
@@ -55,8 +52,6 @@ tools/
 │
 ├── # Subdirectories
 ├── analysis/                        # Analysis coordination
-│   ├── analysis_coordinator.py      # HoldingAnalyzerOrchestrator
-│   └── holding_processors.py        # HoldingProcessor
 └── etf/                             # ETF data fetchers/analyzers
     ├── etf_analyzers.py             # ETFAnalyzer
     └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
@@ -101,7 +96,6 @@ from finwiz.tools.tool_factories import get_stock_crew_tools
 tools = get_stock_crew_tools(include_quantitative=True)
 ```
 
-Tool `_run` JSON envelopes should use `json_ok`/`json_error` from `run_helpers`; adopt opportunistically when touching older tools.
 
 Rate limiting and fail-fast API key validation are no longer local infrastructure —
 `crewai_custom_tools.core.rate_limiter` (provider-keyed token buckets, e.g.

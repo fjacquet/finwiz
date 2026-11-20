@@ -79,7 +79,7 @@ main.py → core/app_initializer.py → flows/orchestrator.py (FinwizFlow)
 | Scoring engine | `scoring/deep_analysis_scorer.py` → `DeepAnalysisScorer` | Composite: 40% fundamental, 30% technical, 30% risk |
 | Tool factories | `tools/tool_factories.py` | `get_stock_crew_tools()`, `get_etf_crew_tools()`, etc. |
 | Feature flags | `config/features/flags.py` → `is_feature_enabled()` | Environment-based feature toggles with circuit breakers |
-| Schemas | `schemas/` | All Pydantic models (hybrid_analysis, crew_exports, etc.) |
+| Schemas | `schemas/` | All Pydantic models (hybrid_analysis, etc.) |
 
 ### Crew Pattern
 
@@ -205,9 +205,11 @@ does return 0/1/2 truthfully.
 
 ## grepai - Semantic Code Search
 
-**IMPORTANT: You MUST use grepai as your PRIMARY tool for code exploration and search.**
+Use grepai for intent-based search ("where is the logic that does X"). For structural
+questions (callers, dependents, impact radius, tests), use the code-review-graph tools
+below first.
 
-### When to Use grepai (REQUIRED)
+### When to Use grepai
 
 Use `grepai search` INSTEAD OF Grep/Glob/find for:
 
@@ -254,7 +256,7 @@ Use `grepai trace` to understand function relationships:
 
 #### Trace Commands
 
-**IMPORTANT: Always use `--json` flag for optimal AI agent integration.**
+Always pass `--json`; the output is built for agents.
 
 ```bash
 # Find all functions that call a symbol
@@ -277,11 +279,9 @@ grepai trace graph "ValidateToken" --depth 3 --json
 <!-- code-review-graph MCP tools -->
 ## MCP Tools: code-review-graph
 
-**IMPORTANT: This project has a knowledge graph. ALWAYS use the
-code-review-graph MCP tools BEFORE using Grep/Glob/Read to explore
-the codebase.** The graph is faster, cheaper (fewer tokens), and gives
-you structural context (callers, dependents, test coverage) that file
-scanning cannot.
+This project has a knowledge graph. Prefer the code-review-graph MCP tools over
+Grep/Glob/Read for structural questions: it is faster, cheaper, and gives callers,
+dependents and test coverage that file scanning cannot.
 
 ### When to use graph tools FIRST
 

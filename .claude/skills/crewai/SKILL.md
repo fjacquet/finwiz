@@ -36,7 +36,7 @@ def analyst(self) -> Agent:
     )
 ```
 
-### Final Reporter Pattern (CRITICAL)
+### Final Reporter Pattern
 
 ```python
 from finwiz.utils.agent_validators import final_reporter
@@ -67,9 +67,9 @@ stock_analysis_task:
   async_execution: true           # Enable for I/O-bound tasks
 ```
 
-### JSON Output Requirements (CRITICAL)
+### JSON Output Requirements
 
-Every task with `output_json: true` MUST include:
+Every task with `output_json: true` includes:
 
 ```yaml
 analysis_task:
@@ -77,13 +77,13 @@ analysis_task:
     Analyze {ticker} with quantitative metrics
 
     🚨 JSON OUTPUT REQUIREMENTS 🚨
-    - Output MUST be ONLY valid JSON
+    - Output only valid JSON
     - Your ENTIRE response must be a single JSON object
     - Do NOT include any text outside the JSON
     - NO trailing commas in JSON
 ```
 
-## Flow Architecture (CRITICAL)
+## Flow Architecture
 
 ### Structured State Pattern
 
@@ -107,8 +107,8 @@ class FinwizFlow(Flow[FinwizState]):
 
     @listen(initialize)
     def analyze_data(self, data: dict[str, Any]) -> dict[str, Any]:
-        # Direct crew instantiation (CrewAI Flow standard)
-        crew = StockCrew()
+        # Direct crew instantiation (CrewAI Flow standard); deep_analysis is the only crew
+        crew = DeepAnalysisCrew()
         result = crew.crew().kickoff(inputs={"ticker": "AAPL"})
 
         # Update structured state

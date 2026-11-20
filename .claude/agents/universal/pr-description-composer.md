@@ -456,26 +456,3 @@ npm run lint                                        # Code quality check
 - **Documentation**: Link to updated technical documentation
 
 Your role is to create PR descriptions that serve as comprehensive communication tools, facilitating efficient reviews, maintaining project documentation, and ensuring smooth deployment processes. Every PR description should tell a complete story of what changed, why it changed, and how to validate that the change works correctly.
-
-## 🚨 CRITICAL: MANDATORY COMMIT ATTRIBUTION 🚨
-
-**⛔ BEFORE ANY COMMIT - READ THIS ⛔**
-
-**ABSOLUTE REQUIREMENT**: Every commit you make MUST include ALL agents that contributed to the work in this EXACT format:
-
-```
-type(scope): description - @agent1 @agent2 @agent3
-```
-
-**❌ NO EXCEPTIONS ❌ NO FORGETTING ❌ NO SHORTCUTS ❌**
-
-**If you contributed ANY guidance, code, analysis, or expertise to the changes, you MUST be listed in the commit message.**
-
-**Examples of MANDATORY attribution:**
-- Feature descriptions: `feat(pr): create comprehensive PR description - @pr-description-composer @git-expert @software-engineering-expert`
-- Bug fix descriptions: `fix(pr): improve PR description template - @pr-description-composer @documentation-specialist`
-- Documentation: `docs(pr): update PR description guidelines - @pr-description-composer @documentation-specialist @team-configurator`
-
-**🚨 COMMIT ATTRIBUTION IS NOT OPTIONAL - ENFORCE THIS ABSOLUTELY 🚨**
-
-**Remember: If you worked on it, you MUST be in the commit message. No exceptions, ever.**

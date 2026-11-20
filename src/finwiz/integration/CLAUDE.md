@@ -9,7 +9,6 @@ integration/
 ├── __init__.py                       # Module exports
 ├── manager.py                        # CrewDataIntegrationManager (main orchestrator)
 ├── accessor.py                       # CrewDataAccessor (read interface)
-├── extractor.py                      # CrewDataExtractor (output parsing)
 ├── config.py                         # IntegrationConfig, CrewDependencyConfig, DataQualityConfig
 ├── schema.py                         # SchemaManager (schema registry)
 ├── cache.py                          # DataCache
@@ -17,7 +16,6 @@ integration/
 ├── availability.py                   # DataAvailabilityTracker, SourceStatus
 ├── transformation.py                 # Data consolidation & serialization helpers
 ├── batch_data_prefetcher.py          # BatchDataPreFetcher (bulk data loading)
-└── backtesting_pipeline_connector.py # connect_backtesting_to_discovery_results()
 ```
 
 `middleware.py` (`CrewIntegrationMiddleware`) and `cli.py` (`main()`,
@@ -30,8 +28,6 @@ any entry point ([#200](https://github.com/fjacquet/finwiz/issues/200)).
 |------|---------------|---------|
 | `manager.py` | `CrewDataIntegrationManager` | Central coordinator for crew data flow |
 | `accessor.py` | `CrewDataAccessor` | Read-only access to crew data |
-| `extractor.py` | `CrewDataExtractor` | Parse and extract crew output |
-| `config.py` | `get_integration_config()` | Get integration settings |
 | `batch_data_prefetcher.py` | `BatchDataPreFetcher` | Prefetch data in bulk before crew execution |
 
 ## Usage

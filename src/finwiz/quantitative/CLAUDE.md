@@ -14,7 +14,6 @@ quantitative/
 ├── cost_analyzer.py                 # CostAnalyzer (19 methods)
 ├── performance.py                   # PerformanceAnalyzer, get_performance_analyzer()
 ├── data.py                          # HistoricalDataManager, DataQualityValidator
-├── derivative_pricing.py            # BlackScholesCalculator, QuantLibPricer, SimpleBondPricer
 │
 ├── # Backtesting subsystem
 ├── backtesting_models.py            # BacktestingResult, PositionSizingMethod
@@ -24,14 +23,11 @@ quantitative/
 │
 ├── # Portfolio management
 ├── rebalancing_history_tracker.py   # RebalancingHistoryTracker
-├── scenario_analysis.py             # ScenarioAnalysisEngine
 │
 ├── # Risk, performance, screening
 ├── risk_calculations.py             # Risk math
 ├── risk_recommendations.py          # Risk reduction suggestions
 ├── performance_metrics.py           # PerformanceMetrics
-├── screening_criteria.py            # Screening criteria
-├── screening_filters.py             # Screening filters
 ├── tactical_pricing.py              # Tactical price targets (uses central's
 │                                     #  calculate_support_resistance_targets)
 │
@@ -64,7 +60,6 @@ quantitative/
 | `cost_analyzer.py` | `CostAnalyzer` | Trading cost analysis |
 | `performance.py` | `PerformanceAnalyzer` | Performance attribution |
 | `technical/engine.py` | `TechnicalAnalysisEngine` | Technical indicator calculation |
-| `scenario_analysis.py` | `ScenarioAnalysisEngine` | What-if analysis |
 
 ## Usage
 

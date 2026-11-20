@@ -31,9 +31,6 @@ orchestrators/
 │
 ├── # Subdirectories
 ├── discovery/                           # Discovery sub-pipeline
-│   ├── aplus_discovery_accessor.py
-│   ├── aplus_discovery_integrator.py
-│   ├── excellence_hunter.py
 │   └── extractors/                      # Per-asset extraction
 │       ├── base.py                      # BaseExtractor
 │       ├── stock_extractor.py
