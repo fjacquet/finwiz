@@ -57,13 +57,6 @@ tools/
     └── etf_data_fetchers.py         # ETFDataFetcher (9 methods)
 ```
 
-The `tools/rebalancing/` re-export shim (`__init__.py`, re-exporting
-`TemplateBuilder`/`TemplateRenderer`) was deleted. It had zero consumers even
-at merge-base `171b8145`, so it was originally left in place for issue #194 —
-but this branch deleted its targets from `finwiz.reporting.rebalancing`,
-which left it import-broken (not just unused) with no path forward except
-deletion, so it was deleted here rather than left broken for #194 to find.
-
 ## Entry Points
 
 | File | Function/Class | Purpose |
@@ -100,9 +93,7 @@ tools = get_stock_crew_tools(include_quantitative=True)
 Rate limiting and fail-fast API key validation are no longer local infrastructure —
 `crewai_custom_tools.core.rate_limiter` (provider-keyed token buckets, e.g.
 `"YahooFinance"`, `"AlphaVantage"`) and `crewai_custom_tools.core.keys.require_api_key()`
-cover both concerns for every central tool. The old local retry-patch chain,
-`base_tools.py` (`AsyncFeedbackTool`), and `tool_result.py` (`ToolResult`) were
-removed in Wave 4 once their only remaining consumers were their own tests.
+cover both concerns for every central tool.
 
 ## Related Modules
 

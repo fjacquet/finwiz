@@ -181,7 +181,7 @@ def analyze_portfolio(holdings: list[Holding]) -> PortfolioAnalysis:
 
 - **Write tests for new functionality**
 - **Run tests before committing** changes
-- **Maintain high test coverage** (>80% for critical modules)
+- **Maintain test coverage** (65% minimum, enforced by `make coverage`)
 - **Use appropriate test types** (unit, integration, end-to-end)
 
 ### Code Review Process
@@ -201,7 +201,7 @@ make test      # Unit tests
 make check     # All quality checks
 
 # CI pipeline should run
-make check-all  # Complete validation suite
+make ci  # Complete validation suite
 ```
 
 ## Configuration Management
