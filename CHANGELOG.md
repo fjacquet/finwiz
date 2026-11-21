@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.4] - 2026-11-21
+
+### Security
+
+- Dependency refresh: `types-psutil` 7.2.2.20261111 and `pymdown-extensions` 13.1 (dev/docs groups), plus the
+  lockfile updates merged since 5.18.3.
+
 ## [5.18.3] - 2026-11-14
 
 ### Security
