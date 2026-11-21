@@ -36,6 +36,7 @@ _EXPECTED_QUOTE_TYPES: dict[str, frozenset[str]] = {
 # promise: every non-None outcome is a valid FactPack, however thin.
 _CORPORATE_STRUCTURE_MAX_CHARS = 2000
 _LEADERSHIP_MAX_CHARS = 1000
+_SECTOR_MAX_CHARS = 100
 _MAX_CITATIONS = 20
 
 # Marks a pack the try/except backstop below built, not a legitimately thin one.
@@ -101,6 +102,7 @@ def _equity_details(
     facts = EquityFacts(
         business_summary=_clamp_text(ticker, "business_summary", fragment.corporate_structure or PLACEHOLDER, _CORPORATE_STRUCTURE_MAX_CHARS),
         leadership=_clamp_text(ticker, "leadership", fragment.leadership or PLACEHOLDER, _LEADERSHIP_MAX_CHARS),
+        sector=_clamp_text(ticker, "sector", str(sector or info.get("sector") or "").strip(), _SECTOR_MAX_CHARS) or None,
         recent_events=list(recent_events),
         events_from_filings=events_from_filings,
     )

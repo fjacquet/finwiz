@@ -13,6 +13,7 @@ from finwiz.orchestrators.alternatives_matching_orchestrator import (
     _extract_expense_ratio,
     _extract_sector,
 )
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts
 
 
 class TestAlternativesMatchingOrchestrator:
@@ -461,6 +462,11 @@ class TestHoldingProfileEnrichment:
 
     def test_should_read_equity_sector_directly(self):
         assert _extract_sector(self._analysis({"sector": " Healthcare "})) == "Healthcare"
+
+    def test_should_read_sector_from_a_real_equity_fact_pack(self):
+        """Pins the real schema shape, not a hand-built dict."""
+        facts = EquityFacts(business_summary="x", leadership="y", sector="Energy")
+        assert _extract_sector(SimpleNamespace(fact_pack={"details": facts.model_dump()})) == "Energy"
 
     def test_should_use_dominant_sector_for_a_concentrated_fund(self):
         analysis = self._analysis({"sector_weights": {"technology": 0.62, "financial_services": 0.20, "realestate": 0.18}})
