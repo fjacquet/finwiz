@@ -709,6 +709,12 @@ class TestGenerateExecutiveSummary:
 
         assert "BUY" in summary or "recommendation" in summary.lower()
 
+    def test_risk_bullet_reads_risk_score_as_percent(self, mock_quantitative_analysis, mock_qualitative_insights):
+        """risk_score 0.80 (0-1, higher = safer) renders as "Solidité face au risque 80%"."""
+        summary = _generate_executive_summary(mock_quantitative_analysis, mock_qualitative_insights)
+
+        assert "Solidité face au risque 80%" in summary
+
 
 class TestExtractQualitative:
     """Tests for _extract_qualitative helper."""

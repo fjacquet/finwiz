@@ -9,6 +9,7 @@ from typing import Literal
 
 import pytest
 
+from finwiz.cache import fact_pack_cache
 from finwiz.cache.fact_pack_cache import FactPackCache
 from finwiz.schemas.hybrid_analysis.fact_pack import CryptoFacts, EquityFacts, FactPack, FundFacts, FundHolding
 
@@ -23,6 +24,10 @@ def _build_fp(days_old: float = 0) -> FactPack:
         confidence=0.5,
         source_citations=[],
     )
+
+
+def test_schema_version_is_5_4() -> None:
+    assert fact_pack_cache._SCHEMA_VERSION == "5.4"
 
 
 class TestFactPackCache:

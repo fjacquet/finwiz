@@ -46,9 +46,9 @@ def state(tmp_path, mocker) -> FinwizState:
     )
     s = FinwizState()
     s.deep_analysis_results = {
-        "AAPL": _dar("AAPL", grade="A", risk_score=1.0),
-        "MSFT": _dar("MSFT", grade="B", risk_score=2.0),
-        "JNJ": _dar("JNJ", grade="D", risk_score=4.0),
+        "AAPL": _dar("AAPL", grade="A", risk_score=0.8),
+        "MSFT": _dar("MSFT", grade="B", risk_score=0.6),
+        "JNJ": _dar("JNJ", grade="D", risk_score=0.2),
     }
     return s
 
@@ -82,8 +82,12 @@ def test_underperformer_slots_from_low_grades(state: FinwizState) -> None:
 
 def test_mean_risk_normalized_to_low_risk_scale(state: FinwizState) -> None:
     GapProfileOrchestrator(state).build_gap_profile()
-    # risk_scores 1,2,4 on 0-5 (5=high) -> low-risk 0.8,0.6,0.2 -> mean ~0.533
+    # risk_scores are 0-1, higher = safer: 0.8,0.6,0.2 -> mean ~0.533
     assert state.portfolio_gap_profile["mean_risk_score"] == pytest.approx((0.8 + 0.6 + 0.2) / 3)
+
+
+def test_to_low_risk_passes_zero_to_one_score_through() -> None:
+    assert GapProfileOrchestrator._to_low_risk(0.42) == 0.42
 
 
 def test_build_is_fail_soft(state: FinwizState, mocker) -> None:

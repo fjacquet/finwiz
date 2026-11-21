@@ -3,6 +3,8 @@
 import os
 from typing import Any
 
+from pydantic import BaseModel
+
 from finwiz.flow_state import FinwizState
 from finwiz.tools.logger import get_logger
 
@@ -21,6 +23,8 @@ def _fact_pack_details(analysis: Any) -> dict[str, Any]:
     if fact_pack is None:
         return {}
     details = fact_pack.get("details") if isinstance(fact_pack, dict) else getattr(fact_pack, "details", None)
+    if isinstance(details, BaseModel):  # at runtime fact_pack is a live FactPack, not a dict
+        details = details.model_dump()
     return details if isinstance(details, dict) else {}
 
 
@@ -103,34 +107,20 @@ class AlternativesMatchingOrchestrator:
             discovery_results: Discovery crew results (currently unused, for future enhancement)
 
         Returns:
-            dict: Alternatives data keyed by ticker, empty dict if disabled or no alternatives
+            dict: Alternatives data keyed by ticker, empty dict if no alternatives
 
         """
-        # Check if alternative matching is enabled
-        enabled = (os.getenv("PORTFOLIO_ENABLE_ALTERNATIVES") or "true").strip().lower() in {"1", "true", "yes", "on"}
-        if not enabled:
-            self.logger.info("Alternative matching disabled via PORTFOLIO_ENABLE_ALTERNATIVES")
-            return {}
-
         if not holdings:
             self.logger.warning("No holdings provided for alternative matching")
             return {}
 
         # Import here to avoid circular dependencies
-        from finwiz.tools.alternative_finder_tool import AlternativeFinder, HoldingProfile
+        from finwiz.tools.alternative_finder_tool import GRADE_VALUES, AlternativeFinder, HoldingProfile
 
-        # Check if any holdings need alternatives before instantiating finder
-        needs_alternatives = any(holding.get("grade") in ["C", "D", "F"] for holding in holdings)
-
-        if not needs_alternatives:
-            self.logger.info("No underperforming holdings (all grades B or above)")
-            return {}
-
-        # Only instantiate AlternativeFinder if needed
         alternative_finder = AlternativeFinder()
         max_alternatives = int(os.getenv("PORTFOLIO_MAX_ALTERNATIVES", "5"))
 
-        # Process holdings with grade C or below
+        # AlternativeFinder owns the underperformer rule (returns [] for B and above)
         alternatives_data = {}
         alternatives_count = 0
 
@@ -165,9 +155,9 @@ class AlternativesMatchingOrchestrator:
                 sector = getattr(holding, "sector", None)
                 expense_ratio = getattr(holding, "expense_ratio", None)
 
-            # Only find alternatives for grades C, D, or F (Requirement 4.1)
-            if grade not in ["C", "D", "F"]:
-                self.logger.debug(f"Skipping alternative matching for {ticker} (grade: {grade} - B or above)")
+            # Pending placeholders carry grade "N/A" and no risk data: nothing to match, not an error
+            if grade not in GRADE_VALUES:
+                self.logger.debug(f"Skipping {ticker}: no usable grade ({grade!r})")
                 continue
 
             try:

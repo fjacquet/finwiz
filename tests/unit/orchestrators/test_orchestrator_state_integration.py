@@ -136,7 +136,7 @@ class TestOrchestratorStateIntegration:
             rationale="Strong",
             data_freshness_hours=0.5,
             confidence_level=0.85,
-            risk_score=2.0,
+            risk_score=0.4,
         )
 
         orch = DeepAnalysisOrchestrator(
@@ -151,7 +151,6 @@ class TestOrchestratorStateIntegration:
             new_callable=mocker.AsyncMock,
             return_value={"AAPL": mock_deep_result},
         )
-        mocker.patch.object(orch, "_match_alternatives", return_value={})
         mocker.patch.object(orch, "_update_portfolio_review_with_enriched_data")
 
         await orch.analyze_and_update_portfolio()
@@ -159,6 +158,36 @@ class TestOrchestratorStateIntegration:
         assert state.deep_analysis_success is True
         assert "AAPL" in state.deep_analysis_results
         assert state.deep_analysis_results["AAPL"].grade == "A"
+
+    @pytest.mark.asyncio
+    async def test_deep_analysis_does_not_match_alternatives(self, state, mocker):
+        """Phase 3 must not match alternatives: discovery has not run yet (Phase 4.5 does it)."""
+        mock_deep_result = DeepAnalysisResult(
+            ticker="AAPL",
+            asset_class="stock",
+            crew_name="test",
+            grade="A",
+            composite_score=0.82,
+            recommendation="BUY",
+            rationale="Strong",
+            data_freshness_hours=0.5,
+            confidence_level=0.85,
+            risk_score=0.4,
+        )
+        orch = DeepAnalysisOrchestrator(state, integration_manager=mocker.Mock(), error_handler=mocker.Mock())
+        mocker.patch.object(
+            orch,
+            "run_deep_analysis_concurrent",
+            new_callable=mocker.AsyncMock,
+            return_value={"AAPL": mock_deep_result},
+        )
+        spy = mocker.patch("finwiz.orchestrators.alternatives_matching_orchestrator.AlternativesMatchingOrchestrator.match_alternatives_for_holdings")
+        before = state.portfolio_alternatives
+
+        await orch.analyze_and_update_portfolio()
+
+        spy.assert_not_called()
+        assert state.portfolio_alternatives == before
 
     @pytest.mark.asyncio
     async def test_deep_analysis_sets_error_state_on_failure(self, state, mocker):

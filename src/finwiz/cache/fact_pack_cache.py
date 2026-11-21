@@ -1,4 +1,4 @@
-"""Fact pack cache adapter (v5.3).
+"""Fact pack cache adapter (v5.4).
 
 Thin wrapper over AnalysisCacheManager with schema-version tagging so cache
 entries can detect schema migrations and force re-fetch.
@@ -8,6 +8,8 @@ and became an envelope over a discriminated `details` payload. A v5.2 entry
 still parses as JSON and would otherwise reach `model_validate`, which rejects
 it -- a re-fetch either way, but logged as a corrupt entry rather than as the
 migration it is. The bump makes the version check do the job it exists for.
+
+v5.4 adds `EquityFacts.sector`; the bump forces stock packs to be fetched again so the sector appears.
 """
 
 from __future__ import annotations
@@ -26,7 +28,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-_SCHEMA_VERSION = "5.3"
+_SCHEMA_VERSION = "5.4"
 _DEFAULT_DIR = Path("cache/fact_packs")
 
 
@@ -34,7 +36,7 @@ class FactPackCache:
     """Cache for fact packs, version-tagged for safe schema migrations.
 
     Storage: cache/fact_packs/<TICKER>.json. Each file carries
-    `schema_version: "5.3"` — entries with mismatched version trigger silent
+    `schema_version: "5.4"` — entries with mismatched version trigger silent
     re-fetch (caller's responsibility — `get()` returns None for mismatches).
     """
 

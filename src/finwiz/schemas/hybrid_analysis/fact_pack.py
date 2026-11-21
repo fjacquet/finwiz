@@ -43,6 +43,7 @@ class EquityFacts(BaseModel):
     kind: Literal["equity"] = "equity"
     business_summary: str = Field(min_length=1, max_length=2000)
     leadership: str = Field(min_length=1, max_length=1000)
+    sector: str | None = Field(default=None, max_length=100)
     recent_events: list[str] = Field(default_factory=list, max_length=10)
     events_from_filings: bool = False
 

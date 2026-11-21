@@ -66,7 +66,7 @@ def _generate_executive_summary(quant: QuantitativeAnalysis, qual: QualitativeIn
         risk_drivers.append(f"drawdown {risk_metrics['max_drawdown'] * 100:.0f}%")
     if "beta" in risk_metrics:
         risk_drivers.append(f"β {risk_metrics['beta']:.2f}")
-    risk_text = f"Risque {quant.risk_score:.1f}/5"
+    risk_text = f"Solidité face au risque {quant.risk_score * 100:.0f}%"
     if risk_drivers:
         risk_text += " — " + ", ".join(risk_drivers[:3])
     bullets.append(risk_text)

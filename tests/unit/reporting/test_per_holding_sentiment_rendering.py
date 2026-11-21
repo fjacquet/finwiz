@@ -69,7 +69,7 @@ def _make_enriched_data(sentiment_data: dict[str, Any] | None = None) -> dict[st
             "composite_score": 0.85,
             "fundamental_score": 0.88,
             "technical_score": 0.80,
-            "risk_score": 2.5,
+            "risk_score": 0.25,
             "grade": "A",
             "preliminary_recommendation": "BUY",
             "fundamental_metrics": {"roe": 0.25},
@@ -147,6 +147,12 @@ class TestEnrichedSentimentRendering:
     def generator(self) -> EnrichedAnalysisReportGenerator:
         """Create enriched analysis report generator."""
         return EnrichedAnalysisReportGenerator()
+
+    def test_enriched_risk_score_rendered_as_percent(self, generator: EnrichedAnalysisReportGenerator) -> None:
+        """risk_score is 0-1 (higher = safer) and renders as a percent, not as x/5.0."""
+        html = generator.generate_report(_make_enriched_data(SAMPLE_SENTIMENT_DATA))
+        assert '<p class="metric-value">25%</p>' in html
+        assert "/5.0" not in html
 
     def test_enriched_sentiment_section_present(self, generator: EnrichedAnalysisReportGenerator) -> None:
         """Enriched template shows sentiment section when data is available."""

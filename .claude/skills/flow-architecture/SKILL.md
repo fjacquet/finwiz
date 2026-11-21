@@ -76,18 +76,17 @@ Consolidate into ONE atomic operation:
 ```python
 @listen("check_portfolio")
 def analyze_and_update_portfolio(self) -> dict[str, Any]:
-    """Atomic operation: deep analysis + alternatives + portfolio update."""
+    """Atomic operation: deep analysis + portfolio update."""
     # Step 1: Deep analysis
     deep_results = self._run_deep_analysis_on_holdings()
 
-    # Step 2: Match alternatives
-    alternatives = self._match_alternatives_for_holdings(deep_results)
-
-    # Step 3: Update portfolio (ONCE)
-    portfolio_updated = self._update_portfolio_review_with_enriched_data()
+    # Step 2: Update portfolio (ONCE)
+    portfolio_updated = self._update_portfolio_review_with_enriched_data(deep_results)
 
     return consolidated_results
 ```
+
+Alternatives are not matched here: they need this run's discovery, so they are matched after it (Phase 4.5, `AlternativesMatchingOrchestrator.match_alternatives_after_discovery`).
 
 ### Implementation Rule
 

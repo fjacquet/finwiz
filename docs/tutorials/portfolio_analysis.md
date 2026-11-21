@@ -187,10 +187,9 @@ Rationale: Below key support, invalidates thesis
 
 ### When Alternatives Are Suggested
 
-Alternatives appear for holdings graded **C, D, or F**. C+ holdings are
-skipped (the orchestrator only gates on the grade set `["C", "D", "F"]`), so
-a C+ holding is treated the same as a B or above. The system identifies
-better investment options by:
+Alternatives appear for holdings graded **below B** (C+, C, D, F). The single
+rule lives in `AlternativeFinder`, which returns nothing for B and above. The
+system identifies better investment options by:
 
 1. **Prioritizing A+ Candidates**: First checks for A+ rated alternatives
 2. **Matching Asset Class**: Ensures alternatives are in the same asset class

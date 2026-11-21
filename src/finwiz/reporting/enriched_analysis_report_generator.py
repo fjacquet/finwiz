@@ -275,7 +275,7 @@ class EnrichedAnalysisReportGenerator:
                 "composite_score": 0.85,
                 "fundamental_score": 0.90,
                 "technical_score": 0.80,
-                "risk_score": 2.5,
+                "risk_score": 0.5,
                 "grade": "A",
                 "preliminary_recommendation": "BUY",
                 "fundamental_metrics": {"roe": 0.25, "debt_to_equity": 0.3, "revenue_growth": 0.15},

@@ -106,6 +106,19 @@ class TestPackConstruction:
         assert pack.details.description == PLACEHOLDER
         assert pack.confidence == 0.0
 
+    def _equity_pack(self, mocker, sector):
+        info = {"quoteType": "EQUITY", "longBusinessSummary": "Pharma.", "sector": "Healthcare"}
+        mocker.patch.object(composer.yfinance_source, "resolve", return_value=info)
+        mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())
+        mocker.patch.object(composer.yfinance_source, "news_events", return_value=FactPackFragment())
+        return composer.compose_fact_pack("MRK", "Merck", sector, None, "stock")
+
+    def test_equity_sector_comes_from_info_when_caller_has_none(self, mocker):
+        assert self._equity_pack(mocker, None).details.sector == "Healthcare"
+
+    def test_equity_sector_from_caller_wins_over_info(self, mocker):
+        assert self._equity_pack(mocker, "Health Care").details.sector == "Health Care"
+
     def test_freshness_stays_python_owned(self, mocker):
         mocker.patch.object(composer.yfinance_source, "resolve", return_value={"quoteType": "EQUITY", "longBusinessSummary": "Designs phones."})
         mocker.patch.object(composer.yfinance_source, "filing_events", return_value=FactPackFragment())

@@ -1,6 +1,9 @@
 """Unit tests for AlternativesMatchingOrchestrator."""
 
+import functools
+import json
 import os
+from datetime import UTC, datetime
 from types import SimpleNamespace
 
 import pytest
@@ -13,6 +16,8 @@ from finwiz.orchestrators.alternatives_matching_orchestrator import (
     _extract_expense_ratio,
     _extract_sector,
 )
+from finwiz.schemas.hybrid_analysis.fact_pack import EquityFacts, FactPack
+from finwiz.tools.alternative_finder_tool import AlternativeFinder
 
 
 class TestAlternativesMatchingOrchestrator:
@@ -68,25 +73,49 @@ class TestAlternativesMatchingOrchestrator:
         assert orchestrator._rerank_by_slot_fit("JNJ", alts) == alts
 
     def test_should_return_empty_dict_when_disabled(self, orchestrator, mocker):
-        """Test alternative matching returns empty dict when disabled."""
+        """The after-discovery entry point owns the PORTFOLIO_ENABLE_ALTERNATIVES switch."""
         # Arrange
         mocker.patch.dict(os.environ, {"PORTFOLIO_ENABLE_ALTERNATIVES": "false"})
-        holdings = [
-            {
-                "ticker": "IBM",
-                "grade": "D",
-                "composite_score": 0.55,
-                "risk_score": 7.0,
-                "name": "IBM Corp",
-                "asset_class": "stock",
-            }
-        ]
+        orchestrator.state.deep_analysis_results = {
+            "IBM": DeepAnalysisResult(
+                ticker="IBM",
+                asset_class="stock",
+                grade="D",
+                composite_score=0.55,
+                fundamental_score=0.5,
+                technical_score=0.6,
+                risk_score=0.9,
+                recommendation="SELL",
+                rationale="Underperforming",
+                data_freshness_hours=24,
+                confidence_level=0.8,
+                crew_name="TestCrew",
+                cached=False,
+            )
+        }
+        spy = mocker.spy(orchestrator, "match_alternatives_for_holdings")
 
         # Act
-        result = orchestrator.match_alternatives_for_holdings(holdings, {})
+        result = orchestrator.match_alternatives_after_discovery({})
 
         # Assert
         assert result == {}
+        spy.assert_not_called()
+
+    def test_c_plus_holding_gets_same_sector_alternative(self, orchestrator, tmp_path, mocker):
+        """A C+ holding reaches the finder and gets a same-sector swap (case/space-insensitive)."""
+        mocker.patch.dict(os.environ, {"PORTFOLIO_ENABLE_ALTERNATIVES": "true"})
+        discovery_dir = tmp_path / "discovery"
+        discovery_dir.mkdir()
+        (discovery_dir / "consolidated_discovery.json").write_text(
+            json.dumps({"opportunities": [{"ticker": "PSX", "asset_class": "stock", "grade": "B", "composite_score": 0.75, "sector": "energy ", "name": "Phillips 66"}]})
+        )
+        mocker.patch("finwiz.tools.alternative_finder_tool.AlternativeFinder", functools.partial(AlternativeFinder, output_dir=tmp_path))
+        holding = {"ticker": "SLB", "grade": "C+", "composite_score": 0.71, "risk_score": 0.5, "asset_class": "stock", "sector": "Energy", "name": "SLB"}
+
+        result = orchestrator.match_alternatives_for_holdings([holding], {})
+
+        assert [a["ticker"] for a in result["SLB"]] == ["PSX"]
 
     def test_should_return_empty_dict_when_no_holdings(self, orchestrator, mocker):
         """Test alternative matching with no holdings."""
@@ -138,13 +167,13 @@ class TestAlternativesMatchingOrchestrator:
         assert result["IBM"][0]["ticker"] == "MSFT"
         assert result["IBM"][0]["grade"] == "A+"
 
-    def test_should_skip_high_grade_holdings(self, orchestrator, mocker):
+    def test_should_skip_high_grade_holdings(self, orchestrator, tmp_path, mocker):
         """Test that high-grade holdings (A+, A, B) are skipped."""
         # Arrange
         mocker.patch.dict(os.environ, {"PORTFOLIO_ENABLE_ALTERNATIVES": "true"})
 
-        # Mock AlternativeFinder - should not be called
-        mock_finder = mocker.patch("finwiz.tools.alternative_finder_tool.AlternativeFinder")
+        # Real finder: the B-and-above rule lives there, not in the orchestrator
+        mocker.patch("finwiz.tools.alternative_finder_tool.AlternativeFinder", functools.partial(AlternativeFinder, output_dir=tmp_path))
 
         holdings = [
             {
@@ -178,7 +207,6 @@ class TestAlternativesMatchingOrchestrator:
 
         # Assert
         assert result == {}
-        mock_finder.assert_not_called()
 
     def test_should_validate_alternative_structure(self, orchestrator, mocker):
         """Test that alternatives have proper structure (ticker, asset_class, grade)."""
@@ -246,6 +274,19 @@ class TestAlternativesMatchingOrchestrator:
         # Assert - no alternatives found due to error
         assert result == {}
 
+    def test_should_skip_pending_placeholder_without_error_log(self, orchestrator, mocker, caplog):
+        """A pending placeholder (grade N/A, risk_score None) is skipped quietly, not logged as CRITICAL."""
+        from finwiz.analysis.stages.emit import _emit_pending
+
+        mocker.patch.dict(os.environ, {"PORTFOLIO_ENABLE_ALTERNATIVES": "true"})
+        pending = _emit_pending(SimpleNamespace(ticker="PEND")).model_dump()
+
+        with caplog.at_level("DEBUG"):
+            result = orchestrator.match_alternatives_for_holdings([pending], {})
+
+        assert "PEND" not in result
+        assert not [r for r in caplog.records if r.levelname == "ERROR"]
+
     def test_should_handle_missing_composite_score(self, orchestrator, mocker):
         """Test that missing composite_score is logged and skipped."""
         # Arrange
@@ -281,7 +322,7 @@ class TestAlternativesMatchingOrchestrator:
             composite_score=0.55,
             fundamental_score=0.5,
             technical_score=0.6,
-            risk_score=4.5,  # Must be <= 5
+            risk_score=0.9,  # Must be <= 1
             recommendation="SELL",
             rationale="Underperforming",
             data_freshness_hours=24,
@@ -320,9 +361,9 @@ class TestAlternativesMatchingOrchestrator:
 
 @settings(max_examples=100, deadline=None)
 @given(
-    grade=st.sampled_from(["A+", "A", "B", "C", "D", "F"]),
+    grade=st.sampled_from(["A+", "A", "B+", "B", "C+", "C", "D", "F", "N/A"]),
     composite_score=st.floats(min_value=0.0, max_value=1.0),
-    risk_score=st.floats(min_value=0.0, max_value=10.0),
+    risk_score=st.floats(min_value=0.0, max_value=1.0),
 )
 def test_property_alternative_matching_conditional(grade, composite_score, risk_score):
     """
@@ -365,8 +406,8 @@ def test_property_alternative_matching_conditional(grade, composite_score, risk_
     result = orchestrator.match_alternatives_for_holdings([holding], {})
 
     # Assert
-    if grade in ["A+", "A", "B"]:
-        # High-grade holdings should not have alternatives
+    if grade in ["A+", "A", "B+", "B", "N/A"]:
+        # High-grade (and ungraded) holdings should not have alternatives
         assert "TEST" not in result or len(result.get("TEST", [])) == 0
     # For grades C, D, F, alternatives may or may not be found (depends on AlternativeFinder)
 
@@ -390,11 +431,11 @@ def test_property_alternative_structure_validation_with_mocker(mocker):
 
     # Test with multiple parameter combinations
     test_cases = [
-        ("AAPL", "C", 0.65, 6.0),
-        ("IBM", "D", 0.55, 7.0),
-        ("TSLA", "F", 0.45, 8.0),
-        ("MSFT", "C", 0.70, 5.5),
-        ("GOOGL", "D", 0.50, 7.5),
+        ("AAPL", "C", 0.65, 0.4),
+        ("IBM", "D", 0.55, 0.3),
+        ("TSLA", "F", 0.45, 0.2),
+        ("MSFT", "C", 0.70, 0.45),
+        ("GOOGL", "D", 0.50, 0.35),
     ]
 
     for ticker, grade, composite_score, risk_score in test_cases:
@@ -439,15 +480,14 @@ def test_property_alternative_structure_validation_with_mocker(mocker):
         result = orchestrator.match_alternatives_for_holdings([holding], {})
 
         # Assert
-        if ticker in result and len(result[ticker]) > 0:
-            # If alternatives were found, validate structure
-            for alternative in result[ticker]:
-                assert "ticker" in alternative, f"Alternative for {ticker} must have ticker field"
-                assert "asset_class" in alternative, f"Alternative for {ticker} must have asset_class field"
-                assert "grade" in alternative, f"Alternative for {ticker} must have grade field"
-                assert isinstance(alternative["ticker"], str)
-                assert isinstance(alternative["asset_class"], str)
-                assert isinstance(alternative["grade"], str)
+        assert ticker in result and len(result[ticker]) > 0, f"{ticker} (grade {grade}) must reach the finder"
+        for alternative in result[ticker]:
+            assert "ticker" in alternative, f"Alternative for {ticker} must have ticker field"
+            assert "asset_class" in alternative, f"Alternative for {ticker} must have asset_class field"
+            assert "grade" in alternative, f"Alternative for {ticker} must have grade field"
+            assert isinstance(alternative["ticker"], str)
+            assert isinstance(alternative["asset_class"], str)
+            assert isinstance(alternative["grade"], str)
 
         # Reset mock for next iteration
         mocker.stop(mock_finder)
@@ -461,6 +501,18 @@ class TestHoldingProfileEnrichment:
 
     def test_should_read_equity_sector_directly(self):
         assert _extract_sector(self._analysis({"sector": " Healthcare "})) == "Healthcare"
+
+    def test_should_read_sector_from_a_real_equity_fact_pack(self):
+        """At runtime fact_pack is a live FactPack model, not a dict."""
+        fetched = datetime.now(UTC)
+        pack = FactPack(
+            asset_class="stock",
+            details=EquityFacts(business_summary="x", leadership="y", sector="Energy"),
+            fetched_at=fetched,
+            freshness=FactPack.derive_freshness(fetched),
+            confidence=0.5,
+        )
+        assert _extract_sector(SimpleNamespace(fact_pack=pack)) == "Energy"
 
     def test_should_use_dominant_sector_for_a_concentrated_fund(self):
         analysis = self._analysis({"sector_weights": {"technology": 0.62, "financial_services": 0.20, "realestate": 0.18}})

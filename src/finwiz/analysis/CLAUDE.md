@@ -178,7 +178,7 @@ class DeepAnalysisResult(BaseModel):
     # optional component scores
     fundamental_score: float | None  # 0.0-1.0
     technical_score: float | None  # 0.0-1.0
-    risk_score: float | None  # 0.0-5.0  (note: 0-5, not 0-1)
+    risk_score: float | None  # 0.0-1.0, higher = safer
 ```
 
 ### EnrichedAnalysis (Pydantic)
