@@ -32,6 +32,9 @@ logger = get_logger(__name__)
 # composite score, which is rare in practice.
 _A_BAND_GRADES: frozenset[str] = frozenset({"A+", "A"})
 
+# Grade hierarchy for comparison; its keys are the grades a holding can usefully carry.
+GRADE_VALUES: dict[str, int] = {"A+": 10, "A": 9, "B+": 8, "B": 7, "C+": 6, "C": 5, "D": 4, "F": 3}
+
 
 def _coerce_expense_ratio(value: Any) -> float | None:
     """Return an expense ratio as a fraction, or None when absent or unusable.
@@ -82,16 +85,7 @@ class AlternativeFinder:
         self.logger = logger
 
         # Grade hierarchy for comparison
-        self.grade_values = {
-            "A+": 10,
-            "A": 9,
-            "B+": 8,
-            "B": 7,
-            "C+": 6,
-            "C": 5,
-            "D": 4,
-            "F": 3,
-        }
+        self.grade_values = GRADE_VALUES
 
     def find_alternatives(
         self,

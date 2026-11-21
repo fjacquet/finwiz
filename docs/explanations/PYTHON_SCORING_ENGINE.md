@@ -135,33 +135,19 @@ def calculate_technical_score(self, data: dict) -> float:
     return max(0.0, min(1.0, base_score))
 ```
 
-#### Risk Score (30% weight, inverted)
+#### Risk Score (30% weight)
 
-Lower risk = higher contribution to composite score:
+`RiskScorer` (`scoring/risk_scorer.py`) returns `risk_score` on a **0-1 scale where higher = safer**,
+so it feeds the composite directly (no inversion). It is a weighted blend of three sub-scores, each
+between 0.2 (worst) and 1.0 (best):
 
-```python
-def calculate_risk_score(self, data: dict) -> int:
-    """Calculate risk score (0-5 scale, 0=Very Low, 5=Very High)."""
-    risk_score = 2  # Base moderate risk
+| Component | Weight |
+|-----------|--------|
+| Volatility | 0.5 |
+| Max drawdown | 0.3 |
+| Beta | 0.2 |
 
-    # Volatility adjustment
-    volatility = data.get("volatility", 0.2)
-    if volatility > 0.4:  # High volatility
-        risk_score += 2
-    elif volatility > 0.3:
-        risk_score += 1
-    elif volatility < 0.15:  # Low volatility
-        risk_score -= 1
-
-    # Maximum drawdown adjustment
-    max_drawdown = abs(data.get("max_drawdown", 0.1))
-    if max_drawdown > 0.3:  # >30% drawdown
-        risk_score += 1
-    elif max_drawdown < 0.1:  # <10% drawdown
-        risk_score -= 1
-
-    return max(0, min(5, risk_score))
-```
+Reports show it as a percentage ("Solidité face au risque NN%").
 
 ### Grade Assignment
 

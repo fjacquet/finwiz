@@ -115,7 +115,7 @@ class AlternativesMatchingOrchestrator:
             return {}
 
         # Import here to avoid circular dependencies
-        from finwiz.tools.alternative_finder_tool import AlternativeFinder, HoldingProfile
+        from finwiz.tools.alternative_finder_tool import GRADE_VALUES, AlternativeFinder, HoldingProfile
 
         alternative_finder = AlternativeFinder()
         max_alternatives = int(os.getenv("PORTFOLIO_MAX_ALTERNATIVES", "5"))
@@ -154,6 +154,11 @@ class AlternativesMatchingOrchestrator:
                 asset_class = getattr(holding, "asset_class", "stock")
                 sector = getattr(holding, "sector", None)
                 expense_ratio = getattr(holding, "expense_ratio", None)
+
+            # Pending placeholders carry grade "N/A" and no risk data: nothing to match, not an error
+            if grade not in GRADE_VALUES:
+                self.logger.debug(f"Skipping {ticker}: no usable grade ({grade!r})")
+                continue
 
             try:
                 # FAIL LOUDLY - NO DEFAULTS FOR FINANCIAL DATA

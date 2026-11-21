@@ -274,6 +274,19 @@ class TestAlternativesMatchingOrchestrator:
         # Assert - no alternatives found due to error
         assert result == {}
 
+    def test_should_skip_pending_placeholder_without_error_log(self, orchestrator, mocker, caplog):
+        """A pending placeholder (grade N/A, risk_score None) is skipped quietly, not logged as CRITICAL."""
+        from finwiz.analysis.stages.emit import _emit_pending
+
+        mocker.patch.dict(os.environ, {"PORTFOLIO_ENABLE_ALTERNATIVES": "true"})
+        pending = _emit_pending(SimpleNamespace(ticker="PEND")).model_dump()
+
+        with caplog.at_level("DEBUG"):
+            result = orchestrator.match_alternatives_for_holdings([pending], {})
+
+        assert "PEND" not in result
+        assert not [r for r in caplog.records if r.levelname == "ERROR"]
+
     def test_should_handle_missing_composite_score(self, orchestrator, mocker):
         """Test that missing composite_score is logged and skipped."""
         # Arrange
@@ -348,7 +361,7 @@ class TestAlternativesMatchingOrchestrator:
 
 @settings(max_examples=100, deadline=None)
 @given(
-    grade=st.sampled_from(["A+", "A", "B+", "B", "C+", "C", "D", "F"]),
+    grade=st.sampled_from(["A+", "A", "B+", "B", "C+", "C", "D", "F", "N/A"]),
     composite_score=st.floats(min_value=0.0, max_value=1.0),
     risk_score=st.floats(min_value=0.0, max_value=1.0),
 )
@@ -393,8 +406,8 @@ def test_property_alternative_matching_conditional(grade, composite_score, risk_
     result = orchestrator.match_alternatives_for_holdings([holding], {})
 
     # Assert
-    if grade in ["A+", "A", "B+", "B"]:
-        # High-grade holdings should not have alternatives
+    if grade in ["A+", "A", "B+", "B", "N/A"]:
+        # High-grade (and ungraded) holdings should not have alternatives
         assert "TEST" not in result or len(result.get("TEST", [])) == 0
     # For grades C, D, F, alternatives may or may not be found (depends on AlternativeFinder)
 
@@ -418,11 +431,11 @@ def test_property_alternative_structure_validation_with_mocker(mocker):
 
     # Test with multiple parameter combinations
     test_cases = [
-        ("AAPL", "C", 0.65, 6.0),
-        ("IBM", "D", 0.55, 7.0),
-        ("TSLA", "F", 0.45, 8.0),
-        ("MSFT", "C", 0.70, 5.5),
-        ("GOOGL", "D", 0.50, 7.5),
+        ("AAPL", "C", 0.65, 0.4),
+        ("IBM", "D", 0.55, 0.3),
+        ("TSLA", "F", 0.45, 0.2),
+        ("MSFT", "C", 0.70, 0.45),
+        ("GOOGL", "D", 0.50, 0.35),
     ]
 
     for ticker, grade, composite_score, risk_score in test_cases:
@@ -467,15 +480,14 @@ def test_property_alternative_structure_validation_with_mocker(mocker):
         result = orchestrator.match_alternatives_for_holdings([holding], {})
 
         # Assert
-        if ticker in result and len(result[ticker]) > 0:
-            # If alternatives were found, validate structure
-            for alternative in result[ticker]:
-                assert "ticker" in alternative, f"Alternative for {ticker} must have ticker field"
-                assert "asset_class" in alternative, f"Alternative for {ticker} must have asset_class field"
-                assert "grade" in alternative, f"Alternative for {ticker} must have grade field"
-                assert isinstance(alternative["ticker"], str)
-                assert isinstance(alternative["asset_class"], str)
-                assert isinstance(alternative["grade"], str)
+        assert ticker in result and len(result[ticker]) > 0, f"{ticker} (grade {grade}) must reach the finder"
+        for alternative in result[ticker]:
+            assert "ticker" in alternative, f"Alternative for {ticker} must have ticker field"
+            assert "asset_class" in alternative, f"Alternative for {ticker} must have asset_class field"
+            assert "grade" in alternative, f"Alternative for {ticker} must have grade field"
+            assert isinstance(alternative["ticker"], str)
+            assert isinstance(alternative["asset_class"], str)
+            assert isinstance(alternative["grade"], str)
 
         # Reset mock for next iteration
         mocker.stop(mock_finder)

@@ -214,10 +214,10 @@ class TestApplyStrategicRecomputeMissingFundamental:
 def test_scenario_probabilities_read_risk_score_as_zero_to_one_higher_is_safer() -> None:
     from finwiz.analysis.stages.synthesize import _compute_scenario_probabilities
 
-    quant = QuantitativeAnalysis.model_construct(composite_score=0.5, risk_score=0.8)
+    quant = QuantitativeAnalysis.model_construct(composite_score=0.5, risk_score=0.7)
 
     probs = _compute_scenario_probabilities(quant)
 
-    # signal = 0.7*0.5 + 0.3*0.8 = 0.59 -> bull 0.10+0.45*0.59, bear 0.60-0.50*0.59
-    assert probs.bull == 0.37
-    assert probs.bear == 0.3
+    # signal = 0.7*0.5 + 0.3*0.7 = 0.56 -> bull 0.10+0.45*0.56 = 0.352, bear 0.60-0.50*0.56 = 0.32
+    assert probs.bull == 0.35
+    assert probs.bear == 0.32
