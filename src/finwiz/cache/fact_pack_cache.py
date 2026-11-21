@@ -36,7 +36,7 @@ class FactPackCache:
     """Cache for fact packs, version-tagged for safe schema migrations.
 
     Storage: cache/fact_packs/<TICKER>.json. Each file carries
-    `schema_version: "5.3"` — entries with mismatched version trigger silent
+    `schema_version: "5.4"` — entries with mismatched version trigger silent
     re-fetch (caller's responsibility — `get()` returns None for mismatches).
     """
 

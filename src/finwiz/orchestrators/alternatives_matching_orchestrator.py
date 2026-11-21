@@ -3,6 +3,8 @@
 import os
 from typing import Any
 
+from pydantic import BaseModel
+
 from finwiz.flow_state import FinwizState
 from finwiz.tools.logger import get_logger
 
@@ -21,6 +23,8 @@ def _fact_pack_details(analysis: Any) -> dict[str, Any]:
     if fact_pack is None:
         return {}
     details = fact_pack.get("details") if isinstance(fact_pack, dict) else getattr(fact_pack, "details", None)
+    if isinstance(details, BaseModel):  # at runtime fact_pack is a live FactPack, not a dict
+        details = details.model_dump()
     return details if isinstance(details, dict) else {}
 
 
