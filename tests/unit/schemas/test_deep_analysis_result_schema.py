@@ -269,7 +269,7 @@ class TestDeepAnalysisResultSchemaValidation:
         assert "data_freshness_hours" in error_str.lower()
 
     def test_should_validate_risk_score_range(self):
-        """Test that risk_score (optional) must be between 0.0 and 5.0."""
+        """Test that risk_score (optional) must be between 0.0 and 1.0."""
         # Arrange - Valid range
         valid_data = {
             "ticker": "AAPL",
@@ -279,7 +279,7 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
-            "risk_score": 2.5,
+            "risk_score": 0.5,
             "recommendation": "BUY",
             "rationale": "Strong fundamentals and technical indicators",
         }
@@ -288,10 +288,10 @@ class TestDeepAnalysisResultSchemaValidation:
         result = DeepAnalysisResult(**valid_data)
 
         # Assert
-        assert result.risk_score == approx(2.5)
+        assert result.risk_score == approx(0.5)
 
-    def test_should_reject_risk_score_above_five(self):
-        """Test that risk_score above 5.0 is rejected."""
+    def test_should_reject_risk_score_above_one(self):
+        """Test that risk_score above 1.0 is rejected."""
         # Arrange
         invalid_data = {
             "ticker": "AAPL",
@@ -301,7 +301,7 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "data_freshness_hours": 1.0,
             "confidence_level": 0.9,
-            "risk_score": 6.0,  # Invalid
+            "risk_score": 1.5,  # Invalid
             "recommendation": "BUY",
             "rationale": "Strong fundamentals and technical indicators",
         }
@@ -540,7 +540,7 @@ class TestDeepAnalysisResultSchemaValidation:
             "grade": "A",
             "fundamental_score": 0.9,
             "technical_score": 0.85,
-            "risk_score": 2.3,
+            "risk_score": 0.46,
             "data_freshness_hours": 1.5,
             "confidence_level": 0.92,
             "warnings": [
@@ -563,7 +563,7 @@ class TestDeepAnalysisResultSchemaValidation:
         assert result.grade == "A"
         assert result.fundamental_score == approx(0.9)
         assert result.technical_score == approx(0.85)
-        assert result.risk_score == approx(2.3)
+        assert result.risk_score == approx(0.46)
         assert result.data_freshness_hours == approx(1.5)
         assert result.confidence_level == approx(0.92)
         assert len(result.warnings) == 2

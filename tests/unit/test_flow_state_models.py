@@ -105,14 +105,14 @@ class TestDeepAnalysisResultInstantiation:
             confidence_level=0.85,
             fundamental_score=0.80,
             technical_score=0.75,
-            risk_score=2.5,
+            risk_score=0.5,
             data_quality=data_quality,
             lineage=lineage,
         )
 
         assert result.fundamental_score == 0.80
         assert result.technical_score == 0.75
-        assert result.risk_score == 2.5
+        assert result.risk_score == 0.5
         assert result.data_quality == data_quality
         assert result.lineage == lineage
 
@@ -367,9 +367,9 @@ class TestDeepAnalysisResultValidation:
             )
 
     def test_risk_score_validation(self):
-        """Test risk_score validation (0-5 scale)."""
+        """Test risk_score validation (0-1 scale)."""
         # Valid
-        for score in [0.0, 2.5, 5.0]:
+        for score in [0.0, 0.5, 1.0]:
             result = DeepAnalysisResult(
                 ticker="AAPL",
                 asset_class="stock",
@@ -396,7 +396,7 @@ class TestDeepAnalysisResultValidation:
                 rationale="Test",
                 data_freshness_hours=1.0,
                 confidence_level=0.90,
-                risk_score=5.5,  # Too high
+                risk_score=1.5,  # Too high
             )
 
     def test_data_freshness_hours_non_negative(self):
@@ -1168,10 +1168,10 @@ class TestFlowStateModelsEdgeCases:
             confidence_level=0.0,
             fundamental_score=0.0,
             technical_score=1.0,  # Maximum
-            risk_score=5.0,  # Maximum risk
+            risk_score=1.0,  # Maximum (safest)
         )
 
         assert result.composite_score == 0.0
         assert result.confidence_level == 0.0
         assert result.technical_score == 1.0
-        assert result.risk_score == 5.0
+        assert result.risk_score == 1.0

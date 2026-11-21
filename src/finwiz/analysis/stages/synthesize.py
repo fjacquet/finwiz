@@ -53,7 +53,7 @@ def _compute_scenario_probabilities(quant: QuantitativeAnalysis) -> ScenarioProb
       signal=0.5 (median) → bull≈0.33, base≈0.32, bear=0.35
       signal=1.0 (best)   → bull=0.55, base=0.35, bear=0.10
     """
-    risk_normalized = 1.0 - min(quant.risk_score / 5.0, 1.0)
+    risk_normalized = quant.risk_score  # scorer emits 0-1, higher = safer; signal wants favourability
     signal = 0.7 * quant.composite_score + 0.3 * risk_normalized
     bull = round(0.10 + 0.45 * signal, 2)
     bear = round(0.60 - 0.50 * signal, 2)
@@ -94,15 +94,14 @@ def _apply_strategic_recompute(result: DeepAnalysisResult, enriched: EnrichedAna
     if fundamental is None:
         return result
     technical = result.technical_score if result.technical_score is not None else (quant.technical_score if quant else 0.5)
-    raw_risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 2.5)
-    # Risk is stored on a 0-5 scale where lower = better; convert to 0-1 favorability.
-    risk_favorability = max(0.0, min(1.0, 1.0 - (raw_risk / 5.0)))
+    # The scorer emits 0-1, higher = safer (scoring/risk_scorer.py); pass it through unconverted.
+    risk = result.risk_score if result.risk_score is not None else (quant.risk_score if quant else 0.5)
 
     scorer = DeepAnalysisScorer()
     new_composite, new_grade, new_recommendation = scorer.recompute_with_strategic(
         fundamental_score=fundamental,
         technical_score=technical,
-        risk_score=risk_favorability,
+        risk_score=risk,
         strategic_score=strategic_score,
     )
 

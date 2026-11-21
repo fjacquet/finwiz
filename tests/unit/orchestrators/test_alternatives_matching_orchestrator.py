@@ -281,7 +281,7 @@ class TestAlternativesMatchingOrchestrator:
             composite_score=0.55,
             fundamental_score=0.5,
             technical_score=0.6,
-            risk_score=4.5,  # Must be <= 5
+            risk_score=0.9,  # Must be <= 1
             recommendation="SELL",
             rationale="Underperforming",
             data_freshness_hours=24,
@@ -322,7 +322,7 @@ class TestAlternativesMatchingOrchestrator:
 @given(
     grade=st.sampled_from(["A+", "A", "B", "C", "D", "F"]),
     composite_score=st.floats(min_value=0.0, max_value=1.0),
-    risk_score=st.floats(min_value=0.0, max_value=10.0),
+    risk_score=st.floats(min_value=0.0, max_value=1.0),
 )
 def test_property_alternative_matching_conditional(grade, composite_score, risk_score):
     """

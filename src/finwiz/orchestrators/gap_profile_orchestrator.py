@@ -121,10 +121,10 @@ class GapProfileOrchestrator:
 
     @staticmethod
     def _to_low_risk(raw: float | None) -> float | None:
-        """Convert risk_score (0-5, 5=high risk) to a 0-1 low-risk-is-high score."""
+        """Clamp risk_score (already 0-1, higher = safer) to [0, 1]."""
         if raw is None:
             return None
-        return 1.0 - max(0.0, min(1.0, float(raw) / 5.0))
+        return max(0.0, min(1.0, float(raw)))
 
     @classmethod
     def _mean_low_risk_score(cls, results: dict[str, Any]) -> float | None:

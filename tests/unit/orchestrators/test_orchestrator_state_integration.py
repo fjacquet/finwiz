@@ -136,7 +136,7 @@ class TestOrchestratorStateIntegration:
             rationale="Strong",
             data_freshness_hours=0.5,
             confidence_level=0.85,
-            risk_score=2.0,
+            risk_score=0.4,
         )
 
         orch = DeepAnalysisOrchestrator(

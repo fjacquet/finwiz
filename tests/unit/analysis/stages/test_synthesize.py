@@ -115,13 +115,13 @@ class TestApplyStrategicRecomputeMissingFundamental:
     """
 
     @staticmethod
-    def _enriched_with_strategic_score(quant_fundamental: float | None) -> Any:
+    def _enriched_with_strategic_score(quant_fundamental: float | None, strategic_score: float = 0.9) -> Any:
         from finwiz.schemas.hybrid_analysis.strategic import (
             StrategicAnalysis,
             SwotAnalysis,
         )
 
-        qual = QualitativeInsights.model_construct(strategic_analysis=StrategicAnalysis(swot=SwotAnalysis(strategic_score=0.9)))
+        qual = QualitativeInsights.model_construct(strategic_analysis=StrategicAnalysis(swot=SwotAnalysis(strategic_score=strategic_score)))
         quant = QuantitativeAnalysis.model_construct(fundamental_score=quant_fundamental)
         return EnrichedAnalysis.model_construct(
             qualitative=qual,
@@ -184,3 +184,40 @@ class TestApplyStrategicRecomputeMissingFundamental:
         assert enriched.final_score == updated.composite_score
         assert enriched.final_grade == updated.grade
         assert enriched.final_recommendation == updated.recommendation
+
+    def test_recompute_uses_risk_score_on_its_zero_to_one_scale(self) -> None:
+        """risk_score is 0-1, higher = safer; it must not be rescaled as if 0-5."""
+        import pytest
+
+        from finwiz.analysis.stages.synthesize import _apply_strategic_recompute
+        from finwiz.flow_state_models import DeepAnalysisResult
+
+        result = DeepAnalysisResult.model_construct(
+            ticker="HPE",
+            composite_score=0.558,
+            grade="D",
+            recommendation="SELL",
+            fundamental_score=0.66,
+            technical_score=0.56,
+            risk_score=0.42,
+        )
+        enriched = self._enriched_with_strategic_score(quant_fundamental=0.66, strategic_score=0.64)
+        strategic = enriched.qualitative.strategic_analysis.composite_strategic_score
+
+        updated = _apply_strategic_recompute(result, enriched)
+
+        expected = 0.35 * 0.66 + 0.25 * 0.56 + 0.25 * 0.42 + 0.15 * strategic
+        assert updated.composite_score == pytest.approx(expected, abs=1e-6)
+        assert updated.grade == "D"
+
+
+def test_scenario_probabilities_read_risk_score_as_zero_to_one_higher_is_safer() -> None:
+    from finwiz.analysis.stages.synthesize import _compute_scenario_probabilities
+
+    quant = QuantitativeAnalysis.model_construct(composite_score=0.5, risk_score=0.8)
+
+    probs = _compute_scenario_probabilities(quant)
+
+    # signal = 0.7*0.5 + 0.3*0.8 = 0.59 -> bull 0.10+0.45*0.59, bear 0.60-0.50*0.59
+    assert probs.bull == 0.37
+    assert probs.bear == 0.3
