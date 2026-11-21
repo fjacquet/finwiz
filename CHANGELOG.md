@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Strategic risk scale.** The synthesize recompute read `risk_score` as 0-5 (lower = better); it is 0-1
+  (higher = safer). Final grades shift for every holding with a strategy score: risky holdings were inflated
+  (HPE D → C, 0.558 → 0.696, correct ≈ 0.572) and very safe ones deflated. The shift is the correction, not a
+  regression. Same fix in the gap-profile `_to_low_risk` and the scenario-probability signal; the "Risque x/5"
+  text now reads "Solidité face au risque NN%". `DeepAnalysisResult.risk_score` is bounded `le=1.0`.
+- **Stock sector reaches alternatives matching.** `EquityFacts.sector` is filled from yfinance
+  `info["sector"]` (caller's sector wins), and `_fact_pack_details` reads a live `FactPack` instead of
+  returning `{}`. The fact-pack cache schema moves 5.3 → 5.4, so the first run after the upgrade re-fetches
+  stock fact packs.
+- **Alternatives only match after discovery.** The Phase 3 alternatives pass, which read the previous run's
+  discovery file, is removed; alternatives are matched in Phase 4.5 only.
+- **One underperformer rule.** It lives in `AlternativeFinder` (B and above get none), so C+ holdings now get
+  alternatives. The `PORTFOLIO_ENABLE_ALTERNATIVES` check lives only in `match_alternatives_after_discovery`,
+  and the "(feature not yet implemented)" log lines are fixed.
+
 ## [5.18.4] - 2026-11-21
 
 ### Security
