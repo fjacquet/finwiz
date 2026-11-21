@@ -219,13 +219,14 @@ class DeepAnalysisOrchestrator:
         """
         Perform deep analysis and update portfolio review (atomic operation).
 
-        This method consolidates three related operations:
+        This method consolidates two related operations:
         1. Run deep analysis on holdings
-        2. Match alternatives for underperforming holdings
-        3. Update portfolio review with enriched data
+        2. Update portfolio review with enriched data
+
+        Alternatives are matched later, in Phase 4.5, once discovery has run.
 
         Returns:
-            dict: Consolidated results with deep analysis and alternatives
+            dict: Consolidated results with deep analysis
         """
         self.logger.info("=" * 80)
         self.logger.info("Phase 3: Deep Analysis & Portfolio Update (Atomic Operation)")
@@ -299,17 +300,13 @@ class DeepAnalysisOrchestrator:
         else:
             self.logger.info(f"✅ Deep analysis complete: {analyzed}/{total} holdings analyzed")
 
-        # Step 2: Match alternatives for underperforming holdings
-        alternatives_data = self._match_alternatives(deep_results)
-
-        # Step 3: Update portfolio review with enriched data
-        self._update_portfolio_review_with_enriched_data(deep_results, alternatives_data)
+        # Step 2: Update portfolio review with enriched data
+        self._update_portfolio_review_with_enriched_data(deep_results)
 
         self.logger.info("=" * 80)
 
         return {
             "deep_analysis_results": deep_results,
-            "alternatives": alternatives_data,
             "portfolio_updated": True,
         }
 
@@ -603,49 +600,11 @@ class DeepAnalysisOrchestrator:
         except Exception as e:
             self.logger.debug(f"Macro snapshot collection for state skipped: {e}")
 
-    def _match_alternatives(self, deep_results: dict[str, DeepAnalysisResult]) -> dict[str, list[dict[str, Any]]]:
-        """Match alternatives for underperforming holdings."""
-        try:
-            from finwiz.orchestrators.alternatives_matching_orchestrator import AlternativesMatchingOrchestrator
-
-            alternatives_orch = AlternativesMatchingOrchestrator(
-                state=self.state,
-                integration_manager=self.integration_manager,
-                error_handler=self.error_handler,
-            )
-
-            holdings_with_analysis = [
-                {
-                    "ticker": ticker,
-                    "grade": analysis.grade,
-                    "composite_score": analysis.composite_score,
-                    "risk_score": analysis.risk_score,
-                    "name": getattr(analysis, "name", ticker),
-                    "asset_class": analysis.asset_class,
-                }
-                for ticker, analysis in deep_results.items()
-            ]
-
-            alternatives_data = alternatives_orch.match_alternatives_for_holdings(holdings_with_analysis, {})
-
-            self.state.portfolio_alternatives = alternatives_data
-            self.state.alternatives_success = True
-            self.state.alternatives_count = sum(len(alts) for alts in alternatives_data.values())
-
-            self.logger.info(f"Alternative matching completed: {self.state.alternatives_count} alternatives found")
-            return alternatives_data
-
-        except Exception as e:
-            self.logger.error(f"Alternative matching failed: {e}", exc_info=True)
-            self.state.alternatives_success = False
-            return {}
-
     def _update_portfolio_review_with_enriched_data(
         self,
         deep_results: dict[str, DeepAnalysisResult],
-        alternatives_data: dict[str, list[dict[str, Any]]],
     ) -> None:
-        """Update portfolio review with deep analysis results and alternatives."""
+        """Update portfolio review with deep analysis results."""
         try:
             if not self.state.portfolio_review:
                 return
@@ -662,11 +621,8 @@ class DeepAnalysisOrchestrator:
                     holding["composite_score"] = analysis.composite_score
                     holding["grade"] = analysis.grade
 
-                if ticker in alternatives_data:
-                    holding["alternatives"] = alternatives_data[ticker]
-
             self.state.portfolio_review["holdings"] = holdings
-            self.logger.info("Portfolio review updated with deep analysis and alternatives")
+            self.logger.info("Portfolio review updated with deep analysis")
 
         except Exception as e:
             self.logger.error(f"Portfolio review update failed: {e}", exc_info=True)
