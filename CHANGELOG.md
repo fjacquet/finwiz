@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.18.5] - 2026-11-21
+
 ### Fixed
 
 - **Strategic risk scale.** The synthesize recompute read `risk_score` as 0-5 (lower = better); it is 0-1
