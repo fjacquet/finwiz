@@ -59,11 +59,10 @@ main.py → core/app_initializer.py → flows/orchestrator.py (FinwizFlow)
                                           ├── Phase 1: Data Validation (ValidationOrchestrator)
                                           ├── Phase 2: Portfolio Review (ValidationOrchestrator)
                                           ├── Phase 3: Deep Analysis per holding
-                                          │     └── analysis/deep_analysis_pipeline.py
-                                          │           1. collect_raw_data()     [Python tools, $0]
-                                          │           2. calculate_quantitative() [Python scorer, $0]
-                                          │           3. generate_qualitative()  [AI crew, ~$0.05]
-                                          │           4. synthesize()           [Python, $0]
+                                          │     └── analysis/stages/ (run_pipeline; see analysis/CLAUDE.md)
+                                          │           collect, quantify, fact_pack [Python, $0]
+                                          │           strategic (web research), qualify [AI crew, ~$0.05]
+                                          │           synthesize, emit [Python, $0]
                                           ├── Phase 4: Discovery (Python scoring, $0 — NOT the crews)
                                           ├── Phase 5: Alternative Matching
                                           └── Phase 6: Reporting (ReportingOrchestrator)
@@ -75,7 +74,7 @@ main.py → core/app_initializer.py → flows/orchestrator.py (FinwizFlow)
 |-----------|----------|------|
 | Main flow | `flows/orchestrator.py` → `FinwizFlow(Flow[FinwizState])` | Coordinates all phases via orchestrator delegation |
 | Flow state | `flow_state.py` → `FinwizState` (Pydantic) | Type-safe state shared across flow phases |
-| Analysis pipeline | `analysis/deep_analysis_pipeline.py` | Functional pipeline: Python scoring + AI insights |
+| Analysis pipeline | `analysis/stages/` (`run_pipeline`) | Python scoring + AI insights; `deep_analysis_pipeline.py` is a facade |
 | Scoring engine | `scoring/deep_analysis_scorer.py` → `DeepAnalysisScorer` | Composite: 40% fundamental, 30% technical, 30% risk |
 | Tool factories | `tools/tool_factories.py` | `get_stock_crew_tools()`, `get_etf_crew_tools()`, etc. |
 | Feature flags | `config/features/flags.py` → `is_feature_enabled()` | Environment-based feature toggles with circuit breakers |

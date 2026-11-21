@@ -159,8 +159,8 @@ If AI fails, the pipeline returns a degraded but valid result:
 ### DeepAnalysisResult
 
 Used for caching and flow state. A Pydantic model (`flow_state_models.py:14`),
-**not** a dataclass — and several fields the older docs omitted are required, so
-constructing it from a partial shape raises `ValidationError`:
+**not** a dataclass. Required fields are listed below; a partial shape raises
+`ValidationError`:
 
 ```python
 class DeepAnalysisResult(BaseModel):
