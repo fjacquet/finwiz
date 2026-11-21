@@ -1136,7 +1136,7 @@ Complete guide for FinWiz system operations including feedback learning, knowled
 
 ## Table of Contents
 
-1. [Feedback Learning System](#feedback-learning-system)
+1. [Feedback Learning System](#feedback-learning-system--not-implemented)
 2. [Knowledge Base Strategy](#knowledge-base-strategy)
 3. [Intelligent Caching System](#intelligent-caching-system)
 4. [Feature Flags & Configuration](#feature-flags--configuration)

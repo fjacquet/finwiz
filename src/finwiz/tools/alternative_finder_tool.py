@@ -152,7 +152,7 @@ class AlternativeFinder:
                 self.logger.info(f"Found {len(sector_alternatives)} sector alternatives for {holding.ticker}")
                 alternatives.extend(sector_alternatives)
             else:
-                self.logger.info(f"No sector alternatives found for {holding.ticker} (feature not yet implemented)")
+                self.logger.info(f"No sector alternatives found for {holding.ticker}")
 
         # Step 3: Find lower-cost alternatives for ETFs
         if holding.asset_class == "etf" and len(alternatives) < max_alternatives:
@@ -162,7 +162,7 @@ class AlternativeFinder:
                 self.logger.info(f"Found {len(cost_alternatives)} lower-cost alternatives for {holding.ticker}")
                 alternatives.extend(cost_alternatives)
             else:
-                self.logger.info(f"No lower-cost alternatives found for {holding.ticker} (feature not yet implemented)")
+                self.logger.info(f"No lower-cost alternatives found for {holding.ticker}")
 
         # Remove duplicates and limit to max
         seen_tickers = set()

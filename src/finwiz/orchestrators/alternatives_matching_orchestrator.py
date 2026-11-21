@@ -107,15 +107,9 @@ class AlternativesMatchingOrchestrator:
             discovery_results: Discovery crew results (currently unused, for future enhancement)
 
         Returns:
-            dict: Alternatives data keyed by ticker, empty dict if disabled or no alternatives
+            dict: Alternatives data keyed by ticker, empty dict if no alternatives
 
         """
-        # Check if alternative matching is enabled
-        enabled = (os.getenv("PORTFOLIO_ENABLE_ALTERNATIVES") or "true").strip().lower() in {"1", "true", "yes", "on"}
-        if not enabled:
-            self.logger.info("Alternative matching disabled via PORTFOLIO_ENABLE_ALTERNATIVES")
-            return {}
-
         if not holdings:
             self.logger.warning("No holdings provided for alternative matching")
             return {}
@@ -123,18 +117,10 @@ class AlternativesMatchingOrchestrator:
         # Import here to avoid circular dependencies
         from finwiz.tools.alternative_finder_tool import AlternativeFinder, HoldingProfile
 
-        # Check if any holdings need alternatives before instantiating finder
-        needs_alternatives = any(holding.get("grade") in ["C", "D", "F"] for holding in holdings)
-
-        if not needs_alternatives:
-            self.logger.info("No underperforming holdings (all grades B or above)")
-            return {}
-
-        # Only instantiate AlternativeFinder if needed
         alternative_finder = AlternativeFinder()
         max_alternatives = int(os.getenv("PORTFOLIO_MAX_ALTERNATIVES", "5"))
 
-        # Process holdings with grade C or below
+        # AlternativeFinder owns the underperformer rule (returns [] for B and above)
         alternatives_data = {}
         alternatives_count = 0
 
@@ -168,11 +154,6 @@ class AlternativesMatchingOrchestrator:
                 asset_class = getattr(holding, "asset_class", "stock")
                 sector = getattr(holding, "sector", None)
                 expense_ratio = getattr(holding, "expense_ratio", None)
-
-            # Only find alternatives for grades C, D, or F (Requirement 4.1)
-            if grade not in ["C", "D", "F"]:
-                self.logger.debug(f"Skipping alternative matching for {ticker} (grade: {grade} - B or above)")
-                continue
 
             try:
                 # FAIL LOUDLY - NO DEFAULTS FOR FINANCIAL DATA
